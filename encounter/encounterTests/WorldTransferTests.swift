@@ -548,6 +548,17 @@ struct WorldTransferTests {
         #expect(pages["The Great Drowning"]?.eventOrigin == .backstory)
         #expect(world.maps?.first?.pins?.count == 3)
 
+        // Mentions in the notes point at the imported pages, and their links are rebuilt from the text.
+        #expect(pages["Brackwater"]?.mentionedPages.map(\.title) == ["Captain Odric Vane", "Harbor Guild", "The Gilded Gull"])
+        #expect(pages["Mira Thorne"]?.mentionedPages.map(\.title) == ["Brackwater", "Mistfen", "Pip"])
+        #expect(pages["Saltmarch Coast"]?.mentionedPages.map(\.title) == ["Brackwater", "Mistfen"])
+        #expect(pages["Lantern of the Drowned"]?.mentionedPages.map(\.title) == ["Old Lighthouse"])
+        #expect(Set(pages["Mistfen"]?.backlinks.map(\.source.title) ?? []) == ["Saltmarch Coast", "Mira Thorne", "Grishka the Mist-Hag"])
+        let validIDs = Set((world.pages ?? []).map(\.id))
+        for page in world.pages ?? [] {
+            #expect(Mention.mentionedIDs(in: page.body).allSatisfy(validIDs.contains), "\(page.title) mentions a page that isn't in the world")
+        }
+
         // Every date in the sample must be valid in the sample's own calendar.
         let calendar = try #require(world.calendar)
         for page in world.pages ?? [] {

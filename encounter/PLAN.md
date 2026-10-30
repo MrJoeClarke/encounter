@@ -140,6 +140,18 @@ protocol RuleSystem {
 - Deleting a world leaves its screens first and deletes afterwards, so nothing is ever showing a deleted world.
 - Images are shared code: pages and worlds both conform to `ImageOwner`, which holds the default-image, ordering and removal rules. World images are exported and imported with the world (an optional field, so older files still read).
 
+### 5.1b Mentions and backlinks (as built, milestone 5)
+- **Storage:** a mention is a standard link run in the notes pointing at `encounter://page/<page id>`. A custom text attribute was ruled out because it doesn't survive being saved or exported with the default coders. Tests check that links survive SwiftData and the JSON coder.
+- **Typing:** `@` at the start of the text or after whitespace or `(` opens suggestions for pages in the same world. The query may contain spaces and stops at a line break or after 40 characters, so email addresses and stray `@`s don't trigger it. Choosing a page replaces `@query` with a mention and a trailing unlinked space, and puts the cursor after it. (SwiftUI otherwise leaves the inserted text selected, so the next key would replace the mention.) A **Mention Page…** button does the same for touch devices.
+- **Links:** `MentionSync` keeps one `PageLink` with the role "mention" per distinct page mentioned. Mention links are derived from the text, so they are not exported, and import rebuilds them. Other roles are never touched.
+- **Maintenance:** renaming a page updates the text of mentions of it (a blank title is ignored). Deleting a page turns mentions of it into plain text first.
+- **Import:** mention URLs are remapped to the new page IDs, and a mention of a page that isn't in the file becomes plain text.
+- **Navigation:** `WorldNavigation` holds the sidebar selection and open page, shared through the environment, so a mention or a Referenced By row can open a page of any kind.
+- **Referenced By:** lists mentions and structured links (race, location, participant and so on), each described from the target's side ("Has this race", "Happened here").
+- **Mentions as blocks:** the editor treats a link as ordinary text, so `Mention.normalize` corrects the notes after every edit. Deleting any part of a mention deletes all of it, text typed against a mention loses the link, and text typed inside one turns it into plain text. A mention whose text has gone stale is left alone unless it is edited.
+- **Clicking a mention:** `TextEditor` hands link clicks to the system, not to the app, which showed "no application set to open the URL". So the app registers the `encounter://` scheme in `Info.plist`, receives the URL with `onOpenURL`, and `LinkRouter` opens the page in the world that is showing. `handlesExternalEvents` keeps the existing window from being duplicated. With several windows open, the world shown last receives links. macOS learns a new URL scheme at launch, and may send links to an older build of the app if several exist.
+- **Known limit:** the suggestion list appears under the notes, not at the cursor, because the editor doesn't expose the cursor position.
+
 ### 5.2 Place hierarchy
 - Places have a `parent`, with a place type (region, settlement, building, wilderness, point of interest and so on).
 - The UI shows a tree (outline) and breadcrumbs.
@@ -233,7 +245,7 @@ Each milestone ends with a building app and passing tests. I'll stop and show yo
 | 2 | **Images** | Done | Multiple images per page, a default image, thumbnails in lists, drag to reorder, drag in from Finder. |
 | 3 | **Rule systems** | Done | The system picker per World. D&D 5e attributes appear for the relevant kinds, including ability score modifiers. |
 | 4 | **JSON import / export** | Done | Versioned `.encounterworld` package for a whole world (including images and maps), Import World and Export in the world list, and a sample world (`Samples/Saltmarch Coast.encounterworld`) for test data. |
-| 5 | **Links and mentions** | Planned | `@` mentions, `PageLink`s, backlinks. |
+| 5 | **Links and mentions** | Done | `@` mentions in notes, kept in step with `PageLink`s, a Referenced By section, tappable mentions, and navigation between pages of any kind. |
 | 6 | **D&D content library** | Planned | Content pack format and loader, bundled read-only SRD 5.1 and 5.2 races/species and classes with attribution, structured trait and feature entries, per-world edition setting, Library section in the sidebar, Create Custom Version, Class page kind (shown when relevant), race and class references (library or world) and Class Level on characters. |
 | 7 | **Character builder (level 1)** | Planned | Guided flow (name, race, class, ability scores, review) that creates a level 1 playable character page. |
 | 8 | **Character levelling** | Planned | Level a character up to 20: hit points, proficiency bonus, class features gained, subclass choice. |

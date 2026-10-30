@@ -114,6 +114,9 @@ let names = [
 let ids: [String: UUID] = Dictionary(uniqueKeysWithValues: names.map { ($0, UUID()) })
 func id(_ name: String) -> UUID { ids[name]! }
 
+/// A mention of another page, as the Markdown link the app stores in notes.
+func m(_ name: String) -> String { "[\(name)](encounter://page/\(id(name)))" }
+
 let campaignID = UUID()
 let base = Date(timeIntervalSince1970: 1_790_000_000)
 var order = 0
@@ -168,11 +171,11 @@ var pages: [PageRecord] = []
 // Places
 pages.append(page("Saltmarch Coast", kind: "place",
     summary: "A windswept stretch of coast, fen and fishing towns.",
-    body: "The **Saltmarch Coast** runs for two hundred miles between the grey cliffs of the north and the Mistfen in the south. Its people live by fishing, salvage and trade, and watch the tide tables more closely than the calendar.",
+    body: "The **Saltmarch Coast** runs for two hundred miles between the grey cliffs of the north and the \(m("Mistfen")) in the south. Its largest town is \(m("Brackwater")). Its people live by fishing, salvage and trade, and watch the tide tables more closely than the calendar.",
     attributes: ["core.placeType": .text("Region"), "core.population": .number(48_000)], tags: ["coast"]))
 pages.append(page("Brackwater", kind: "place",
     summary: "A busy harbor town built on the ruins of an older one.",
-    body: "**Brackwater** is the largest town on the coast. Its lower streets flood at spring tides, and the oldest cellars are said to open into the drowned city beneath.",
+    body: "**Brackwater** is the largest town on the coast. Its lower streets flood at spring tides, and the oldest cellars are said to open into the drowned city beneath. The harbor is run by \(m("Captain Odric Vane")) and the \(m("Harbor Guild")), and every job starts at \(m("The Gilded Gull")).",
     attributes: ["core.placeType": .text("Settlement"), "core.population": .number(6_200)], tags: ["town", "harbor"], parent: "Saltmarch Coast"))
 pages.append(page("The Gilded Gull", kind: "place",
     summary: "A dockside tavern where every job on the coast starts.",
@@ -205,7 +208,7 @@ pages.append(page("Marshkin", kind: "race",
 // Characters
 pages.append(page("Mira Thorne", kind: "character",
     summary: "A ranger who guides travellers through the Mistfen.",
-    body: "**Mira** grew up between Brackwater and the fen, and knows both. She took the guiding trade when her father vanished in the fog, and has never stopped looking for him.",
+    body: "**Mira** grew up between \(m("Brackwater")) and the \(m("Mistfen")), and knows both. She took the guiding trade when her father vanished in the fog, and has never stopped looking for him. \(m("Pip")) follows her everywhere.",
     role: "playable",
     attributes: ["core.creatureType": .text("Humanoid"), "core.age": .text("27"), "core.occupation": .text("Marsh guide"),
                  "dnd5e.size": .text("Medium"), "dnd5e.alignment": .text("Neutral Good"), "dnd5e.speed": .text("30 ft."),
@@ -236,7 +239,7 @@ pages.append(page("Captain Odric Vane", kind: "character",
     images: [("Captain Vane", portrait(top: color(0.8, 0.8, 0.85), bottom: color(0.3, 0.3, 0.4), figure: color(0.15, 0.15, 0.22)))]))
 pages.append(page("Grishka the Mist-Hag", kind: "character",
     summary: "A hag who trades in lost things, and lost people.",
-    body: "**Grishka** lives deep in the Mistfen and collects whatever the fog takes. She will sell it back, for a price that is never money.",
+    body: "**Grishka** lives deep in the \(m("Mistfen")) and collects whatever the fog takes. She will sell it back, for a price that is never money.",
     role: "nonPlayable",
     attributes: ["core.creatureType": .text("Fey"), "dnd5e.size": .text("Medium"), "dnd5e.alignment": .text("Neutral Evil"),
                  "dnd5e.challengeRating": .text("3"), "dnd5e.armorClass": .number(17), "dnd5e.hitPoints": .number(82)]
@@ -255,7 +258,7 @@ pages.append(page("Pip", kind: "character",
 // Items
 pages.append(page("Lantern of the Drowned", kind: "item",
     summary: "A storm lantern whose light shows what the sea has taken.",
-    body: "Found in the Old Lighthouse. When lit, its pale flame shows drowned things in the water within sixty feet.",
+    body: "Found in the \(m("Old Lighthouse")). When lit, its pale flame shows drowned things in the water within sixty feet.",
     attributes: ["core.itemType": .text("Wondrous Item"), "dnd5e.rarity": .text("Rare"), "dnd5e.requiresAttunement": .bool(true), "core.value": .text("1,500 gp")],
     tags: ["magic", "quest"]))
 pages.append(page("Brackwater Charter", kind: "item",

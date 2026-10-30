@@ -10,17 +10,18 @@ import SwiftData
 ///
 /// This sits in the detail area of the world's sidebar split, so that screens such as the home page can
 /// use the whole width instead of being squeezed into a middle column. The caller should give it `.id(kind)`
-/// so the selection resets when the kind changes.
+/// so its views are rebuilt when the kind changes. The open page lives in `WorldNavigation`, so a mention
+/// or a "Referenced by" row can open a page from anywhere.
 struct PagesBrowser: View {
     let world: World
     let kind: PageKind
 
-    @State private var selectedPage: Page?
+    @Environment(WorldNavigation.self) private var navigation
 
     var body: some View {
         #if os(macOS)
         HSplitView {
-            PageListView(world: world, kind: kind, selection: $selectedPage)
+            PageListView(world: world, kind: kind, selection: selectedPage)
                 .frame(minWidth: 240, idealWidth: 300, maxWidth: 420, maxHeight: .infinity)
                 .layoutPriority(-1)
             detail
@@ -30,18 +31,25 @@ struct PagesBrowser: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         #else
         NavigationSplitView {
-            PageListView(world: world, kind: kind, selection: $selectedPage)
+            PageListView(world: world, kind: kind, selection: selectedPage)
         } detail: {
             detail
         }
         #endif
     }
 
+    private var selectedPage: Binding<Page?> {
+        Binding(
+            get: { navigation.selectedPage },
+            set: { navigation.selectedPage = $0 }
+        )
+    }
+
     @ViewBuilder
     private var detail: some View {
-        if let selectedPage {
-            PageEditorView(page: selectedPage)
-                .id(selectedPage.id)
+        if let page = navigation.selectedPage {
+            PageEditorView(page: page)
+                .id(page.id)
         } else {
             ContentUnavailableView("No Page Selected", systemImage: "doc.text")
         }
@@ -56,6 +64,7 @@ struct PagesBrowser: View {
             PagesBrowser(world: world, kind: .character)
         }
     }
+    .environment(WorldNavigation())
     .frame(width: 900, height: 600)
     .modelContainer(container)
 }

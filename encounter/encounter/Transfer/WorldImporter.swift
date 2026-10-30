@@ -78,8 +78,15 @@ enum WorldImporter {
             summary.pages += 1
         }
 
+        // Mentions in the notes point at the old page IDs. Point them at the new pages, and turn any that
+        // point outside the file into plain text.
+        let newIDs = pages.mapValues(\.id)
+
         for record in archive.pages {
             guard let page = pages[record.id] else { continue }
+            var body = page.body
+            Mention.remapMentions(in: &body, using: newIDs)
+            page.body = body
             if let parentID = record.parentID, let parent = pages[parentID], !wouldCreateCycle(making: parent, parentOf: page) {
                 page.parent = parent
             }
@@ -90,13 +97,18 @@ enum WorldImporter {
             await importImages(record.images, into: page, files: contents.files, context: context, summary: &summary)
         }
 
-        for record in archive.links {
+        for record in archive.links where record.role != LinkRole.mention {
             guard let source = pages[record.sourceID], let target = pages[record.targetID] else {
                 summary.skippedLinks += 1
                 continue
             }
             context.insert(PageLink(source: source, target: target, role: record.role))
             summary.links += 1
+        }
+
+        // Rebuild the mention links from the notes.
+        for page in pages.values {
+            MentionSync.sync(page, in: context)
         }
 
         for record in archive.maps {

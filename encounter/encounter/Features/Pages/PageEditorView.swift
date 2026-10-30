@@ -61,10 +61,9 @@ struct PageEditorView: View {
                     }
             }
 
-            Section("Notes") {
-                TextEditor(text: $page.body)
-                    .frame(minHeight: 200)
-            }
+            NotesSection(page: page)
+
+            ReferencedBySection(page: page)
         }
         .formStyle(.grouped)
         .navigationTitle(page.title.isEmpty ? String(localized: "Untitled") : page.title)
@@ -109,15 +108,25 @@ struct PageEditorView: View {
     }
 }
 
-#Preview {
+#Preview("Aria Vale") {
+    previewEditor(titled: "Aria Vale", height: 1900)
+}
+
+#Preview("Elf (referenced by others)") {
+    previewEditor(titled: "Elf", height: 1500)
+}
+
+@MainActor
+private func previewEditor(titled title: String, height: CGFloat) -> some View {
     let container = SampleData.makePreviewContainer()
     let page = (try? container.mainContext.fetch(FetchDescriptor<Page>(sortBy: [SortDescriptor(\.title)])))?
-        .first { $0.title == "Aria Vale" }
+        .first { $0.title == title }
     return NavigationStack {
         if let page {
             PageEditorView(page: page)
         }
     }
-    .frame(width: 600, height: 1500)
+    .environment(WorldNavigation())
+    .frame(width: 600, height: height)
     .modelContainer(container)
 }

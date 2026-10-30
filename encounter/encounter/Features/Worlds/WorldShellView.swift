@@ -19,7 +19,8 @@ struct WorldShellView: View {
     /// Called when the user deletes the world from its home page.
     let onDelete: (World) -> Void
 
-    @State private var selection: WorldSidebarItem = .home
+    @State private var navigation = WorldNavigation()
+    @Environment(LinkRouter.self) private var linkRouter
 
     var body: some View {
         NavigationSplitView {
@@ -41,7 +42,7 @@ struct WorldShellView: View {
             }
             .navigationTitle(world.name)
         } detail: {
-            switch selection {
+            switch navigation.selection {
             case .home:
                 WorldHomeView(world: world, onDelete: onDelete)
             case .kind(let kind):
@@ -49,13 +50,17 @@ struct WorldShellView: View {
                     .id(kind)
             }
         }
+        .environment(navigation)
+        // Mention links that arrive from the system are opened in the world that's showing.
+        .onAppear { linkRouter.activate(world: world, navigation: navigation) }
+        .onDisappear { linkRouter.deactivate(navigation: navigation) }
     }
 
     /// The list reports nil selection on some clicks (notably on macOS). Something is always selected, so ignore those.
     private var sidebarSelection: Binding<WorldSidebarItem?> {
         Binding(
-            get: { selection },
-            set: { if let item = $0 { selection = item } }
+            get: { navigation.selection },
+            set: { if let item = $0 { navigation.choose(item) } }
         )
     }
 
@@ -72,6 +77,7 @@ struct WorldShellView: View {
             WorldShellView(world: world) { _ in }
         }
     }
+    .environment(LinkRouter())
     .frame(width: 1100, height: 800)
     .modelContainer(container)
 }

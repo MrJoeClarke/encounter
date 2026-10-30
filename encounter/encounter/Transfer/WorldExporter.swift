@@ -40,7 +40,10 @@ enum WorldExporter {
             ))
 
             for link in page.outgoingLinks ?? [] {
-                guard let targetID = link.target?.id, pageIDs.contains(targetID) else { continue }
+                // Mention links are derived from the notes text, which is exported, so they aren't stored.
+                guard link.role != LinkRole.mention,
+                      let targetID = link.target?.id, pageIDs.contains(targetID)
+                else { continue }
                 linkRecords.append(LinkRecord(id: link.id, role: link.role, sourceID: page.id, targetID: targetID))
             }
         }

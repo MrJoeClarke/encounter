@@ -18,9 +18,16 @@ struct encounterApp: App {
         }
     }()
 
+    @State private var linkRouter = LinkRouter()
+
     var body: some Scene {
         WindowGroup {
             WorldListView()
+                .environment(linkRouter)
+                // Mention links come back from the system as encounter:// URLs.
+                .onOpenURL { linkRouter.open($0) }
+                // Without this, each incoming URL would open a new window instead of using this one.
+                .handlesExternalEvents(preferring: ["*"], allowing: ["*"])
         }
         .modelContainer(modelContainer)
     }

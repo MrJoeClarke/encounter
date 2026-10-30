@@ -47,6 +47,14 @@ enum SampleData {
         hero.setLinkedPage(elf, role: "race", in: context)
         guide.setLinkedPage(human, role: "race", in: context)
 
+        hero.body = AttributedString("Born near ") + Mention.mention(title: settlement.title, pageID: settlement.id)
+            + AttributedString(", with the blood of the ") + Mention.mention(title: elf.title, pageID: elf.id)
+            + AttributedString(". Friends with ") + Mention.mention(title: guide.title, pageID: guide.id)
+            + AttributedString(".")
+        for page in [hero, guide, region, settlement, elf] {
+            MentionSync.sync(page, in: context)
+        }
+
         hero.setAttributeText("core.creatureType", "Humanoid")
         hero.setAttributeText("dnd5e.size", "Medium")
         hero.setAttributeText("dnd5e.alignment", "Neutral Good")
