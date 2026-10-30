@@ -4,7 +4,11 @@
 //
 
 #if DEBUG
+import CoreGraphics
+import Foundation
+import ImageIO
 import SwiftData
+import UniformTypeIdentifiers
 
 /// Small in-memory data set for previews and tests.
 enum SampleData {
@@ -43,7 +47,51 @@ enum SampleData {
         hero.setLinkedPage(elf, role: "race", in: context)
         guide.setLinkedPage(human, role: "race", in: context)
 
+        let portraits: [(red: Double, green: Double, blue: Double)] = [(0.25, 0.45, 0.8), (0.8, 0.45, 0.25), (0.3, 0.7, 0.4)]
+        for color in portraits {
+            let data = solidImage(width: 600, height: 400, red: color.red, green: color.green, blue: color.blue)
+            if let prepared = ImageProcessing.prepareSynchronously(data) {
+                hero.addImage(prepared, in: context)
+            }
+        }
+
         context.insert(World(name: "Homebrew Isles"))
+    }
+
+    /// A plain-colour image, JPEG normally or PNG with an alpha channel. For previews and tests.
+    static func solidImage(
+        width: Int,
+        height: Int,
+        red: Double = 0.5,
+        green: Double = 0.5,
+        blue: Double = 0.5,
+        withAlpha: Bool = false
+    ) -> Data {
+        let alphaInfo: CGImageAlphaInfo = withAlpha ? .premultipliedLast : .noneSkipLast
+        guard let context = CGContext(
+            data: nil,
+            width: width,
+            height: height,
+            bitsPerComponent: 8,
+            bytesPerRow: 0,
+            space: CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: alphaInfo.rawValue
+        ) else {
+            fatalError("Could not create bitmap context")
+        }
+        context.setFillColor(red: red, green: green, blue: blue, alpha: 1)
+        context.fill(CGRect(x: 0, y: 0, width: width, height: height))
+
+        let output = NSMutableData()
+        let type = withAlpha ? UTType.png : UTType.jpeg
+        guard let image = context.makeImage(),
+              let destination = CGImageDestinationCreateWithData(output, type.identifier as CFString, 1, nil)
+        else {
+            fatalError("Could not encode sample image")
+        }
+        CGImageDestinationAddImage(destination, image, nil)
+        CGImageDestinationFinalize(destination)
+        return output as Data
     }
 }
 #endif

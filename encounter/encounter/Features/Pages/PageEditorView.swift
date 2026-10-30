@@ -47,6 +47,8 @@ struct PageEditorView: View {
                 }
             }
 
+            PageImagesSection(page: page)
+
             Section("Tags") {
                 ForEach(page.tags, id: \.self) { tag in
                     Text(tag)
@@ -115,5 +117,6 @@ struct PageEditorView: View {
             PageEditorView(page: page)
         }
     }
+    .frame(width: 600, height: 1000)
     .modelContainer(container)
 }

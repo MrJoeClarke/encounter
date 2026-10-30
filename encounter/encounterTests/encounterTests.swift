@@ -258,6 +258,229 @@ struct PageEditingTests {
     }
 }
 
+struct ImageProcessingTests {
+    @Test func smallImagesKeepTheirOriginalBytesAndGetAThumbnailNoLargerThanTheImage() throws {
+        let data = SampleData.solidImage(width: 100, height: 50)
+        let prepared = try #require(ImageProcessing.prepareSynchronously(data))
+
+        #expect(prepared.imageData == data)
+        let thumbnailSize = try #require(ImageProcessing.pixelSize(of: prepared.thumbnailData))
+        #expect(thumbnailSize.width == 100)
+        #expect(thumbnailSize.height == 50)
+    }
+
+    @Test func largeImagesAreDownscaledKeepingAspectRatio() throws {
+        let data = SampleData.solidImage(width: 4500, height: 2250)
+        let prepared = try #require(ImageProcessing.prepareSynchronously(data))
+
+        let original = try #require(ImageProcessing.pixelSize(of: prepared.imageData))
+        #expect(max(original.width, original.height) == ImageProcessing.maxOriginalDimension)
+        #expect(original.width == 2 * original.height)
+
+        let thumbnail = try #require(ImageProcessing.pixelSize(of: prepared.thumbnailData))
+        #expect(max(thumbnail.width, thumbnail.height) == ImageProcessing.thumbnailDimension)
+        #expect(thumbnail.width == 2 * thumbnail.height)
+    }
+
+    @Test func customLimitsAreRespected() throws {
+        let data = SampleData.solidImage(width: 800, height: 400)
+        let prepared = try #require(
+            ImageProcessing.prepareSynchronously(data, maxDimension: 500, thumbnailDimension: 50)
+        )
+        #expect(ImageProcessing.pixelSize(of: prepared.imageData)?.width == 500)
+        #expect(ImageProcessing.pixelSize(of: prepared.thumbnailData)?.width == 50)
+    }
+
+    @Test func downscalingKeepsTransparencyAsPNG() throws {
+        let data = SampleData.solidImage(width: 600, height: 300, withAlpha: true)
+        let prepared = try #require(
+            ImageProcessing.prepareSynchronously(data, maxDimension: 400, thumbnailDimension: 100)
+        )
+        // PNG files start with this signature. JPEG would have lost the alpha channel.
+        let pngSignature = Data([0x89, 0x50, 0x4E, 0x47])
+        #expect(prepared.imageData.prefix(4) == pngSignature)
+        #expect(prepared.thumbnailData.prefix(4) == pngSignature)
+    }
+
+    @Test func undecodableDataIsRejected() {
+        #expect(ImageProcessing.prepareSynchronously(Data("not an image".utf8)) == nil)
+        #expect(ImageProcessing.prepareSynchronously(Data()) == nil)
+    }
+}
+
+@MainActor
+struct PageImageRulesTests {
+    private func makeContext() throws -> ModelContext {
+        ModelContext(try AppSchema.makeContainer(inMemory: true))
+    }
+
+    private func prepared(_ red: Double = 0.5) throws -> PreparedImage {
+        try #require(
+            ImageProcessing.prepareSynchronously(SampleData.solidImage(width: 40, height: 40, red: red))
+        )
+    }
+
+    @Test func firstImageBecomesDefaultAndLaterOnesDoNot() throws {
+        let context = try makeContext()
+        let page = Page(title: "Aria", kind: .character)
+        context.insert(page)
+
+        let first = page.addImage(try prepared(0.1), in: context)
+        let second = page.addImage(try prepared(0.2), in: context)
+
+        #expect(first.isDefault)
+        #expect(!second.isDefault)
+        #expect(page.defaultImage === first)
+        #expect(page.sortedImages.map(\.sortOrder) == [0, 1])
+        #expect(first.thumbnailData != nil)
+    }
+
+    @Test func settingADefaultClearsTheOthers() throws {
+        let context = try makeContext()
+        let page = Page(title: "Aria", kind: .character)
+        context.insert(page)
+        let first = page.addImage(try prepared(0.1), in: context)
+        let second = page.addImage(try prepared(0.2), in: context)
+        let third = page.addImage(try prepared(0.3), in: context)
+
+        page.setDefaultImage(third)
+
+        #expect(page.sortedImages.filter(\.isDefault).count == 1)
+        #expect(page.defaultImage === third)
+        #expect(!first.isDefault)
+        #expect(!second.isDefault)
+    }
+
+    @Test func removingTheDefaultPromotesTheNextImage() throws {
+        let context = try makeContext()
+        let page = Page(title: "Aria", kind: .character)
+        context.insert(page)
+        let first = page.addImage(try prepared(0.1), in: context)
+        let second = page.addImage(try prepared(0.2), in: context)
+        page.addImage(try prepared(0.3), in: context)
+
+        page.removeImage(first, in: context)
+
+        #expect(page.sortedImages.count == 2)
+        #expect(page.defaultImage === second)
+        try context.save()
+        #expect(try context.fetchCount(FetchDescriptor<PageImage>()) == 2)
+    }
+
+    @Test func removingANonDefaultImageKeepsTheDefault() throws {
+        let context = try makeContext()
+        let page = Page(title: "Aria", kind: .character)
+        context.insert(page)
+        let first = page.addImage(try prepared(0.1), in: context)
+        let second = page.addImage(try prepared(0.2), in: context)
+
+        page.removeImage(second, in: context)
+
+        #expect(page.defaultImage === first)
+        #expect(page.sortedImages.count == 1)
+    }
+
+    @Test func removingTheLastImageLeavesNoDefault() throws {
+        let context = try makeContext()
+        let page = Page(title: "Aria", kind: .character)
+        context.insert(page)
+        let only = page.addImage(try prepared(), in: context)
+
+        page.removeImage(only, in: context)
+
+        #expect(page.sortedImages.isEmpty)
+        #expect(page.defaultImage == nil)
+    }
+
+    @Test func addingAfterARemovalDoesNotReuseASortOrder() throws {
+        let context = try makeContext()
+        let page = Page(title: "Aria", kind: .character)
+        context.insert(page)
+        page.addImage(try prepared(0.1), in: context)
+        let second = page.addImage(try prepared(0.2), in: context)
+        page.removeImage(second, in: context)
+
+        let third = page.addImage(try prepared(0.3), in: context)
+
+        #expect(third.sortOrder == 1)
+        #expect(!third.isDefault)
+    }
+
+    @Test func imagesCanBeMovedButNotPastEitherEnd() throws {
+        let context = try makeContext()
+        let page = Page(title: "Aria", kind: .character)
+        context.insert(page)
+        let first = page.addImage(try prepared(0.1), in: context)
+        let second = page.addImage(try prepared(0.2), in: context)
+        let third = page.addImage(try prepared(0.3), in: context)
+
+        page.moveImage(third, by: -1)
+        #expect(page.sortedImages.map(\.id) == [first.id, third.id, second.id])
+
+        page.moveImage(first, by: -1)
+        page.moveImage(second, by: 1)
+        #expect(page.sortedImages.map(\.id) == [first.id, third.id, second.id])
+
+        page.moveImage(first, by: 1)
+        #expect(page.sortedImages.map(\.id) == [third.id, first.id, second.id])
+        #expect(page.sortedImages.map(\.sortOrder) == [0, 1, 2])
+    }
+
+    @Test func dragReorderMovesImagesBeforeATargetOrToTheEnd() throws {
+        let context = try makeContext()
+        let page = Page(title: "Aria", kind: .character)
+        context.insert(page)
+        let a = page.addImage(try prepared(0.1), in: context)
+        let b = page.addImage(try prepared(0.2), in: context)
+        let c = page.addImage(try prepared(0.3), in: context)
+        let d = page.addImage(try prepared(0.4), in: context)
+
+        page.moveImages(withIDs: [d.id], before: a.id)
+        #expect(page.sortedImages.map(\.id) == [d.id, a.id, b.id, c.id])
+
+        page.moveImages(withIDs: [d.id, a.id], before: nil)
+        #expect(page.sortedImages.map(\.id) == [b.id, c.id, d.id, a.id])
+
+        // Dropping onto the dragged item itself changes nothing.
+        page.moveImages(withIDs: [c.id], before: c.id)
+        #expect(page.sortedImages.map(\.id) == [b.id, c.id, d.id, a.id])
+
+        // An unknown target moves to the end, without losing or duplicating images.
+        page.moveImages(withIDs: [b.id], before: UUID())
+        #expect(page.sortedImages.map(\.id) == [c.id, d.id, a.id, b.id])
+        #expect(page.sortedImages.map(\.sortOrder) == [0, 1, 2, 3])
+    }
+
+    @Test func dragReorderDoesNotChangeTheDefault() throws {
+        let context = try makeContext()
+        let page = Page(title: "Aria", kind: .character)
+        context.insert(page)
+        let first = page.addImage(try prepared(0.1), in: context)
+        let second = page.addImage(try prepared(0.2), in: context)
+
+        page.moveImages(withIDs: [second.id], before: first.id)
+
+        #expect(page.defaultImage === first)
+        #expect(page.sortedImages.first === second)
+    }
+
+    @Test func imagesSurviveSaveAndReload() throws {
+        let container = try AppSchema.makeContainer(inMemory: true)
+        let context = ModelContext(container)
+        let page = Page(title: "Aria", kind: .character)
+        context.insert(page)
+        let image = page.addImage(try prepared(), caption: "Portrait", in: context)
+        try context.save()
+
+        let fresh = ModelContext(container)
+        let loaded = try #require(try fresh.fetch(FetchDescriptor<Page>()).first)
+        let loadedImage = try #require(loaded.defaultImage)
+        #expect(loadedImage.caption == "Portrait")
+        #expect(loadedImage.imageData == image.imageData)
+        #expect(loadedImage.thumbnailData == image.thumbnailData)
+    }
+}
+
 @MainActor
 struct CalendarTests {
     private func calendar() -> CalendarDefinition {

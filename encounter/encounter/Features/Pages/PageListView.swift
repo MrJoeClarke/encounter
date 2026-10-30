@@ -90,20 +90,40 @@ struct PageListView: View {
 private struct PageRow: View {
     let page: Page
 
+    private let thumbnailSize: CGFloat = 40
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            if page.title.isEmpty {
-                Text("Untitled")
-                    .foregroundStyle(.secondary)
-            } else {
-                Text(page.title)
+        HStack(spacing: 10) {
+            thumbnail
+            VStack(alignment: .leading, spacing: 2) {
+                if page.title.isEmpty {
+                    Text("Untitled")
+                        .foregroundStyle(.secondary)
+                } else {
+                    Text(page.title)
+                }
+                if !page.summary.isEmpty {
+                    Text(page.summary)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
             }
-            if !page.summary.isEmpty {
-                Text(page.summary)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-            }
+        }
+    }
+
+    /// The default image's thumbnail, or the kind's icon if the page has no image.
+    @ViewBuilder
+    private var thumbnail: some View {
+        if let data = page.defaultImage?.thumbnailData {
+            DataImage(data: data)
+                .frame(width: thumbnailSize, height: thumbnailSize)
+                .clipShape(RoundedRectangle(cornerRadius: 6))
+        } else {
+            Image(systemName: page.kind.systemImage)
+                .foregroundStyle(.secondary)
+                .frame(width: thumbnailSize, height: thumbnailSize)
+                .background(.quaternary, in: RoundedRectangle(cornerRadius: 6))
         }
     }
 }

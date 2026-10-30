@@ -25,7 +25,7 @@ A multiplatform (macOS, iOS, iPadOS) SwiftUI app for building and browsing campa
 | Persistence | SwiftData, with a CloudKit-compatible schema from day one. | CloudKit can be enabled later with no migration pain. |
 | Concurrency | async/await and `@Observable`. No Combine. | Project guideline. |
 | Tests | Swift Testing for unit tests, XCUIAutomation for UI tests. | Project guideline. |
-| Targets | One multiplatform app target. Minimum OS is 26 on iOS, iPadOS and macOS. | Gives `TextEditor` with `AttributedString` and current SwiftUI APIs. |
+| Targets | One multiplatform app target. Minimum OS is 27 on iOS, iPadOS and macOS. | Gives `TextEditor` with `AttributedString`, drag-to-reorder (`reorderable()`) and current SwiftUI APIs. |
 
 **CloudKit-compatible schema rules.** These apply to every model from the start:
 - No `@Attribute(.unique)`.
@@ -230,7 +230,7 @@ Please edit anything here that doesn't suit you.
 
 ## 9. Decisions Made
 
-1. **Minimum OS:** 26 and later on all platforms.
+1. **Minimum OS:** 27 and later on all platforms (raised from 26 to use SwiftUI's drag-to-reorder).
 2. **Worlds:** the top-level container. A creator can have several, each with one rule system.
 3. **Dates:** custom in-world calendars in v1. The creator sets hours per day, the number of months, days per month (editable per month) and month names. Years are fixed length, with no leap rules.
 4. **Characters:** playable, NPCs and monsters share one form and attribute set. A playable / non-playable flag distinguishes them, so playable characters can get extra attributes later. Monsters and friendly animals are non-playable characters, told apart by a creature type attribute only, with no separate filter.
