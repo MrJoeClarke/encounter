@@ -14,6 +14,8 @@ A multiplatform (macOS, iOS, iPadOS) SwiftUI app for building and browsing campa
 
 8. Multiple images per page with a default image, and a custom in-world calendar per world.
 9. JSON import and export of a world.
+10. A D&D 5e content library (races and their traits, classes and their features) that can be added to a world as ordinary, editable pages.
+11. A guided character builder that creates a playable character from that content.
 
 **Non-goals for v1:** CloudKit sync, sharing or collaboration, player and DM visibility controls, other TTRPG systems, other import/export formats (Markdown, VTT), a combat tracker.
 
@@ -120,7 +122,8 @@ protocol RuleSystem {
 - `DnD5eSystem` adds attributes such as AC, HP, CR, ability scores, alignment, size, creature type, item rarity and attunement.
 - The editor builds its forms from definitions, so adding a system means adding a file and no new UI.
 - Values are stored by stable key. Switching or removing a system never deletes data. Unused attributes are hidden and kept.
-- The SRD content is open, but v1 ships attribute definitions only, with no copyrighted text.
+- Until the D&D content milestone, the app ships attribute definitions only, with no rules text. Bundled content (section 5.6) is limited to openly licensed SRD material.
+- **Built so far:** the `RuleSystem` protocol, the `RuleSystems` registry, `NoRuleSystem` and `DnD5eSystem`. A system can override a core attribute by reusing its key (D&D turns Creature Type, Item Type and a race's Size into pickers). The field types are text, number, bool, ability score (shown with its modifier), choice and page reference.
 
 ## 5. Features
 
@@ -153,6 +156,32 @@ protocol RuleSystem {
 - **v1:** a SwiftData predicate search over title, summary, tags and body text, with a kind filter. The same query backs the `@` picker.
 - **Later:** Core Spotlight indexing, and `searchable` scopes by kind.
 
+### 5.6 D&D 5e content library
+
+Races with their traits, and classes with their features, as data a creator can add to a world.
+
+- **Content packs:** bundled JSON files in the same format as world export (section 7), so the importer does the work. Importing a pack into a world creates ordinary pages. They are editable copies, and each remembers a stable `sourceKey` so a later pack update can find them.
+- **Races:** one page per race or subrace, with size, speed, darkvision, languages and a list of **traits** (name plus description). Subraces link to their parent race.
+- **Classes:** a new page kind, **Class**, with hit die, primary ability, saving throw proficiencies, armor and weapon proficiencies, spellcasting ability, and **features by level** (level, name, description). Subclasses are linked pages.
+- **Structured entries:** traits and class features need a repeated name/description/level structure, so `AttributeValue` gains an entries case and the editor gains a list editor for it.
+- **Characters:** a character links to its class page (link role "class") and has Class Level, so a character's race and class both cross-reference the content pages. Playable and non-playable characters still share one form.
+- **Licensing:** only openly licensed SRD content is bundled. It carries the required attribution, shown in the app (Settings or About) and inside each pack. Anything outside the SRD isn't shipped, but creators can enter their own or import their own packs.
+
+### 5.7 Character builder
+
+A guided flow that produces a playable character page.
+
+1. **Name and concept:** name, alignment, optional portrait.
+2. **Race:** pick from the world's race pages, and from subraces where there are any. Traits and ability bonuses are shown.
+3. **Class:** pick from the world's class pages, with a summary of level 1 features.
+4. **Ability scores:** standard array, point buy, or manual entry. Rolling in the app can come later. Racial bonuses are applied and the modifiers shown.
+5. **Review:** a summary with derived values such as proficiency bonus, hit points (hit die maximum plus Constitution modifier) and armor class (10 plus Dexterity modifier, until equipment exists).
+6. **Create:** makes a playable character page with its race and class links and all attributes filled in. The creator can then edit it like any other page.
+
+- Derivations live in plain Swift types (a `CharacterDraft` plus calculators) so they're unit-tested without UI.
+- The builder reads the world's own pages, so homebrew races and classes work the same as bundled ones.
+- The first version targets level 1. Skills, equipment, spells and levelling up come later.
+
 ## 6. Architecture and Layout
 
 ```
@@ -160,12 +189,14 @@ encounter/
   App/            encounterApp, root navigation, ModelContainer setup
   Models/         World, Campaign, Page, PageLink, WorldMap, MapPin, InWorldDate
   Systems/        RuleSystem, AttributeDefinition, Core, DnD5e
+  Content/        bundled content packs (SRD races, classes), attribution
   Features/
     Pages/        list, detail, editor, attribute form
     Mentions/     AttributedString scope, @ picker, link syncing
     Places/       hierarchy tree, breadcrumbs
     Maps/         importer, viewer, pins
     Timeline/     event timeline, character journey
+    CharacterBuilder/  guided flow, draft, calculators
     Search/
   Shared/         components, extensions
 encounterTests/   Swift Testing: models, link syncing, journey derivation, search
@@ -177,23 +208,25 @@ SwiftUI views read from `@Query` and `@Environment(\.modelContext)`. Logic that 
 
 Each milestone ends with a building app and passing tests. I'll stop and show you the result before the next one.
 
-| # | Milestone | Outcome |
-|---|---|---|
-| 0 | **Foundation** | Remove template `Item`. Set up the models, the container, a world list and picker, an empty split-view shell and a sample-data preview. |
-| 1 | **Pages and attributes** | Create, edit and delete pages of every kind. Core attribute forms. Playable / non-playable for characters. |
-| 2 | **Images** | Multiple images per page, a default image, thumbnails in lists. |
-| 3 | **Rule systems** | The system picker per World. D&D 5e attributes appear for the relevant kinds. |
-| 4 | **JSON import / export** | Versioned format for a whole world (including images and maps). Used to create the first test data. |
-| 5 | **Links and mentions** | `@` mentions, `PageLink`s, backlinks. |
-| 6 | **Place hierarchy** | Parenting, outline, breadcrumbs. |
-| 7 | **Search** | Global search and kind filters. |
-| 8 | **Calendars** | Custom calendar editor per world, `InWorldDate` entry and formatting. |
-| 9 | **Maps** | Import, view, pins, nested maps. |
-| 10 | **Events and timelines** | Event fields, campaign vs backstory, timeline view, character journey. |
-| 11 | **Polish** | Keyboard shortcuts and menus on Mac, iPad multitasking, accessibility audit (Dynamic Type, VoiceOver, contrast), empty states. |
-| 12 | **CloudKit** (when a developer account exists) | Capability, container, conflict testing on multiple devices. |
+| # | Milestone | Status | Outcome |
+|---|---|---|---|
+| 0 | **Foundation** | Done | Remove template `Item`. Set up the models, the container, a world list and picker, an empty split-view shell and a sample-data preview. |
+| 1 | **Pages and attributes** | Done | Create, edit and delete pages of every kind. Core attribute forms. Playable / non-playable for characters. Race picker on characters. |
+| 2 | **Images** | Done | Multiple images per page, a default image, thumbnails in lists, drag to reorder, drag in from Finder. |
+| 3 | **Rule systems** | Done | The system picker per World. D&D 5e attributes appear for the relevant kinds, including ability score modifiers. |
+| 4 | **JSON import / export** | Planned | Versioned format for a whole world (including images and maps). Used to create the first test data. |
+| 5 | **Links and mentions** | Planned | `@` mentions, `PageLink`s, backlinks. |
+| 6 | **D&D content** | Planned | Class page kind, structured trait and feature entries, content pack format and importer, bundled SRD races and classes with attribution, Class and Class Level on characters. |
+| 7 | **Character builder** | Planned | Guided flow (name, race, class, ability scores, review) that creates a playable character page. Level 1 first. |
+| 8 | **Place hierarchy** | Planned | Parenting, outline, breadcrumbs. |
+| 9 | **Search** | Planned | Global search and kind filters. |
+| 10 | **Calendars** | Planned | Custom calendar editor per world, `InWorldDate` entry and formatting. |
+| 11 | **Maps** | Planned | Import, view, pins, nested maps. |
+| 12 | **Events and timelines** | Planned | Event fields, campaign vs backstory, timeline view, character journey. |
+| 13 | **Polish** | Planned | Keyboard shortcuts and menus on Mac, iPad multitasking, accessibility audit (Dynamic Type, VoiceOver, contrast), empty states. |
+| 14 | **CloudKit** (when a developer account exists) | Planned | Capability, container, conflict testing on multiple devices. |
 
-Search comes before maps because the `@` picker needs it. Import/export comes early so every later feature can be tested against realistic data, and the export format grows with each milestone (maps, events and so on).
+Search comes before maps because the `@` picker needs it. Import/export comes early so every later feature can be tested against realistic data, and the export format grows with each milestone (maps, events and so on). D&D content follows import/export and links because content packs reuse the import format and a character cross-references its race and class pages. The character builder follows the content because it reads those pages.
 
 ### JSON format notes
 - Top-level `formatVersion`, so older files can still be read.
@@ -237,6 +270,14 @@ Please edit anything here that doesn't suit you.
 5. **Images:** pages hold multiple images, one of which is the default.
 6. **Import/export:** JSON, also used to create initial test data. The format is a `.encounterworld` package (a folder holding `world.json` and `images/`).
 
+7. **D&D content and character builder:** both are in scope for v1 (sections 5.6 and 5.7, milestones 6 and 7).
+
 ## 10. Open Questions
 
-None at the moment.
+These need an answer before milestone 6 starts. I've noted what I'd recommend.
+
+1. **Which rules edition?** The open SRD exists in two versions: 5.1 (the 2014 rules) and 5.2 (the 2024 rules). Their races/species and classes differ. I'd start with 5.1, since that's the version most existing campaigns use, and design the packs so 5.2 can be added as a second pack. I'll check the exact licence and attribution wording before bundling either.
+2. **How is content delivered?** I'd recommend importing a pack into a world as editable copies of pages (as in section 5.6). The alternative is a read-only shared library that worlds reference, which is simpler to update but can't be edited per world.
+3. **Is Class a new page kind?** I'd add it as a seventh kind that appears in every world. The alternative is a kind that only appears when the world's rule system has classes, which means the sidebar changes with the system.
+4. **Traits and features as entries or pages?** I'd store them as structured entries (name, description, level) on the race or class page. The alternative, one page per trait or feature, gives you links and backlinks but clutters the page lists.
+5. **Builder scope for the first version.** I'd do level 1 only, with standard array, point buy and manual ability scores. Skills, equipment, spells, backgrounds and levelling up would follow. Say if anything in that list needs to come first.
