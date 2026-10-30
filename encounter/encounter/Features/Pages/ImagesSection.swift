@@ -1,5 +1,5 @@
 //
-//  PageImagesSection.swift
+//  ImagesSection.swift
 //  encounter
 //
 
@@ -8,9 +8,10 @@ import SwiftData
 import PhotosUI
 import UniformTypeIdentifiers
 
-/// The Images section of the page editor: a thumbnail strip with add, default, reorder and delete.
-struct PageImagesSection: View {
-    @Bindable var page: Page
+/// The Images section of an editor: a thumbnail strip with add, default, reorder and delete.
+/// Used for pages and for worlds.
+struct ImagesSection<Owner: ImageOwner & Observable>: View {
+    @Bindable var owner: Owner
 
     @Environment(\.modelContext) private var modelContext
     @State private var photoSelection: [PhotosPickerItem] = []
@@ -25,7 +26,7 @@ struct PageImagesSection: View {
 
     var body: some View {
         Section("Images") {
-            let images = page.sortedImages
+            let images = owner.sortedImages
             Group {
                 if images.isEmpty {
                     Text("No images yet. Drop image files here, or use the buttons below.")
@@ -41,7 +42,7 @@ struct PageImagesSection: View {
                         }
                         .reorderContainer(for: PageImage.self) { difference in
                             let before: UUID? = if case .before(let id) = difference.destination.position { id } else { nil }
-                            page.moveImages(withIDs: difference.sources, before: before)
+                            owner.moveImages(withIDs: difference.sources, before: before)
                         }
                         .padding(.vertical, 4)
                     }
@@ -82,7 +83,7 @@ struct PageImagesSection: View {
             Task { await importPhotos(items) }
         }
         .sheet(item: $imageToShow) { image in
-            PageImageDetailSheet(page: page, image: image) {
+            ImageDetailSheet(owner: owner, image: image) {
                 imageToDelete = image
             }
         }
@@ -91,10 +92,10 @@ struct PageImagesSection: View {
             isPresented: Binding(get: { imageToDelete != nil }, set: { if !$0 { imageToDelete = nil } }),
             presenting: imageToDelete
         ) { image in
-            Button("Delete", role: .destructive) { page.removeImage(image, in: modelContext) }
+            Button("Delete", role: .destructive) { owner.removeImage(image, in: modelContext) }
             Button("Cancel", role: .cancel) {}
         } message: { _ in
-            Text("This image will be removed from the page. This can’t be undone.")
+            Text("This image will be removed. This can’t be undone.")
         }
         .alert(
             "Some Images Couldn’t Be Added",
@@ -128,11 +129,11 @@ struct PageImagesSection: View {
         .accessibilityLabel(image.caption.isEmpty ? String(localized: "Image") : image.caption)
         .accessibilityValue(image.isDefault ? String(localized: "Default image") : "")
         .contextMenu {
-            Button("Make Default", systemImage: "star") { page.setDefaultImage(image) }
+            Button("Make Default", systemImage: "star") { owner.setDefaultImage(image) }
                 .disabled(image.isDefault)
-            Button("Move Earlier", systemImage: "arrow.left") { page.moveImage(image, by: -1) }
+            Button("Move Earlier", systemImage: "arrow.left") { owner.moveImage(image, by: -1) }
                 .disabled(index == 0)
-            Button("Move Later", systemImage: "arrow.right") { page.moveImage(image, by: 1) }
+            Button("Move Later", systemImage: "arrow.right") { owner.moveImage(image, by: 1) }
                 .disabled(index == images.count - 1)
             Button("Edit Caption…", systemImage: "text.cursor") { imageToShow = image }
             Button("Delete…", systemImage: "trash", role: .destructive) { imageToDelete = image }
@@ -161,13 +162,13 @@ struct PageImagesSection: View {
             failedImportCount += 1
             return
         }
-        page.addImage(prepared, in: modelContext)
+        owner.addImage(prepared, in: modelContext)
     }
 }
 
 /// A large view of one image, with caption editing and the per-image actions.
-private struct PageImageDetailSheet: View {
-    @Bindable var page: Page
+private struct ImageDetailSheet<Owner: ImageOwner>: View {
+    let owner: Owner
     @Bindable var image: PageImage
     let onDelete: () -> Void
 
@@ -184,7 +185,7 @@ private struct PageImageDetailSheet: View {
                     .textFieldStyle(.roundedBorder)
                 HStack {
                     Button(image.isDefault ? "Default Image" : "Make Default", systemImage: "star") {
-                        page.setDefaultImage(image)
+                        owner.setDefaultImage(image)
                     }
                     .disabled(image.isDefault)
                     Spacer()

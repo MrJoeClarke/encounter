@@ -133,6 +133,13 @@ protocol RuleSystem {
 - Typing `@` opens a search popover. Selecting a result inserts a mention run and creates or updates a `PageLink`.
 - A **Backlinks** section lists everything that references this page.
 
+### 5.1a World home page
+- Each world has a **Home** entry at the top of its sidebar, selected when the world opens. Its page holds the world's name, a free-text summary, the rule system picker, and the world's own images (several, with a default, same as pages).
+- Export and Delete are on the home page, and are the only places to do them. The worlds list is for opening, creating and importing, with no context menu or swipe actions.
+- The window is two columns, sidebar and detail, so the home page uses the whole width beside the sidebar. For a page kind, the detail area holds the page list and the editor side by side (a split view on the Mac, a nested split view on iPad and iPhone). SwiftUI can't hide only the middle column of a three-column split, which is why the structure changed.
+- Deleting a world leaves its screens first and deletes afterwards, so nothing is ever showing a deleted world.
+- Images are shared code: pages and worlds both conform to `ImageOwner`, which holds the default-image, ordering and removal rules. World images are exported and imported with the world (an optional field, so older files still read).
+
 ### 5.2 Place hierarchy
 - Places have a `parent`, with a place type (region, settlement, building, wilderness, point of interest and so on).
 - The UI shows a tree (outline) and breadcrumbs.
@@ -225,7 +232,7 @@ Each milestone ends with a building app and passing tests. I'll stop and show yo
 | 1 | **Pages and attributes** | Done | Create, edit and delete pages of every kind. Core attribute forms. Playable / non-playable for characters. Race picker on characters. |
 | 2 | **Images** | Done | Multiple images per page, a default image, thumbnails in lists, drag to reorder, drag in from Finder. |
 | 3 | **Rule systems** | Done | The system picker per World. D&D 5e attributes appear for the relevant kinds, including ability score modifiers. |
-| 4 | **JSON import / export** | Planned | Versioned format for a whole world (including images and maps). Used to create the first test data. |
+| 4 | **JSON import / export** | Done | Versioned `.encounterworld` package for a whole world (including images and maps), Import World and Export in the world list, and a sample world (`Samples/Saltmarch Coast.encounterworld`) for test data. |
 | 5 | **Links and mentions** | Planned | `@` mentions, `PageLink`s, backlinks. |
 | 6 | **D&D content library** | Planned | Content pack format and loader, bundled read-only SRD 5.1 and 5.2 races/species and classes with attribution, structured trait and feature entries, per-world edition setting, Library section in the sidebar, Create Custom Version, Class page kind (shown when relevant), race and class references (library or world) and Class Level on characters. |
 | 7 | **Character builder (level 1)** | Planned | Guided flow (name, race, class, ability scores, review) that creates a level 1 playable character page. |
@@ -246,6 +253,15 @@ Search comes before maps because the `@` picker needs it. Import/export comes ea
 - Worlds are exported as a package (`.encounterworld`, a directory with `world.json` and `images/`) so files stay small and readable. It will be declared as a document package type.
 - Import creates a new world by default and never overwrites an existing one silently.
 - Round-trip tests (export, import, compare) are required for every model added.
+
+**As built (milestone 4):**
+- `world.json` holds plain `Codable` records (`WorldArchive` and friends), separate from the SwiftData models. `formatVersion` is 1. Fields added later should be optional so older files still decode, and a file with a newer version is refused with a clear message.
+- Page notes keep their formatting. Thumbnails aren't exported, and are regenerated on import.
+- Imports always create a new world, with fresh IDs for every record. A name clash gets a suffix ("Name (2)"). A link to a missing page, or an image that is missing or can't be decoded, is skipped and counted in the summary the user sees.
+- Imports repair a parent loop in a file, and a missing or duplicated default image.
+- The `.encounterworld` type is declared as an exported type in the app's Info.plist (conforming to `com.apple.package`), and the app's sandbox can read and write files the user picks.
+- Library references (milestone 6) will be stored as keys, not content.
+- `Samples/make-sample-world/` regenerates the sample world. It is compiled against the app's own format types and checks its own output, so the sample can't drift from the format.
 
 ## 8. Working Agreement (proposed behaviours)
 

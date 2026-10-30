@@ -6,8 +6,8 @@
 import Foundation
 import SwiftData
 
-/// An image attached to a page. A page can have many; one is flagged as the default.
-/// The rules that keep exactly one default live in `Page+Images.swift`.
+/// An image attached to a page or to a world. Either can have many; one is flagged as the default.
+/// The rules that keep exactly one default live in `ImageOwner.swift`.
 @Model
 final class PageImage {
     var id: UUID = UUID()
@@ -18,7 +18,10 @@ final class PageImage {
     var caption: String = ""
     var sortOrder: Int = 0
     var isDefault: Bool = false
+    /// Set when the image belongs to a page. At most one of `page` and `world` is set.
     var page: Page?
+    /// Set when the image belongs to a world.
+    var world: World?
 
     init(imageData: Data? = nil, caption: String = "", sortOrder: Int = 0, isDefault: Bool = false) {
         self.imageData = imageData

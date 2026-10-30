@@ -1,12 +1,32 @@
 //
-//  Page+Images.swift
+//  ImageOwner.swift
 //  encounter
 //
 
 import Foundation
 import SwiftData
 
-extension Page {
+/// Something that owns an ordered set of images with a single default: a page or a world.
+/// The rules for adding, ordering and removing images are shared, in the extension below.
+protocol ImageOwner: AnyObject {
+    var images: [PageImage]? { get }
+    /// Sets the image's inverse relationship to this owner.
+    func attach(_ image: PageImage)
+}
+
+extension Page: ImageOwner {
+    func attach(_ image: PageImage) {
+        image.page = self
+    }
+}
+
+extension World: ImageOwner {
+    func attach(_ image: PageImage) {
+        image.world = self
+    }
+}
+
+extension ImageOwner {
     /// Images in display order. Excludes images deleted but not yet saved.
     var sortedImages: [PageImage] {
         (images ?? [])
@@ -18,7 +38,7 @@ extension Page {
         sortedImages.first { $0.isDefault }
     }
 
-    /// Adds an image at the end. The first image a page gets becomes its default.
+    /// Adds an image at the end. The first image an owner gets becomes its default.
     @discardableResult
     func addImage(_ prepared: PreparedImage, caption: String = "", in context: ModelContext) -> PageImage {
         let existing = sortedImages
@@ -30,7 +50,7 @@ extension Page {
         )
         image.thumbnailData = prepared.thumbnailData
         context.insert(image)
-        image.page = self
+        attach(image)
         return image
     }
 
@@ -38,6 +58,17 @@ extension Page {
     func setDefaultImage(_ image: PageImage) {
         for other in sortedImages {
             other.isDefault = (other === image)
+        }
+    }
+
+    /// Repairs the default flag after bulk changes such as an import: exactly one default if there are any
+    /// images, keeping the first flagged one (or the first image if none was flagged).
+    func ensureSingleDefaultImage() {
+        let images = sortedImages
+        guard let first = images.first else { return }
+        let flagged = images.filter(\.isDefault)
+        if flagged.count != 1 {
+            setDefaultImage(flagged.first ?? first)
         }
     }
 

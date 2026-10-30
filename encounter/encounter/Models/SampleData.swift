@@ -66,6 +66,13 @@ enum SampleData {
             }
         }
 
+        for color in [(0.2, 0.4, 0.6), (0.6, 0.35, 0.2)] {
+            let data = solidImage(width: 900, height: 500, red: color.0, green: color.1, blue: color.2)
+            if let prepared = ImageProcessing.prepareSynchronously(data) {
+                world.addImage(prepared, in: context)
+            }
+        }
+
         context.insert(World(name: "Homebrew Isles"))
     }
 

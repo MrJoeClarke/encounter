@@ -6,46 +6,56 @@
 import SwiftUI
 import SwiftData
 
-/// The working area for one world: page kinds, the pages of the selected kind, and a detail pane.
+/// What's selected in a world's sidebar: its home page, or one kind of page.
+enum WorldSidebarItem: Hashable {
+    case home
+    case kind(PageKind)
+}
+
+/// The working area for one world: a sidebar (home page and page kinds) and, beside it, the selection
+/// using the rest of the window.
 struct WorldShellView: View {
     let world: World
+    /// Called when the user deletes the world from its home page.
+    let onDelete: (World) -> Void
 
-    @State private var selectedKind: PageKind = .character
-    @State private var selectedPage: Page?
+    @State private var selection: WorldSidebarItem = .home
 
     var body: some View {
         NavigationSplitView {
-            List(PageKind.allCases, selection: kindSelection) { kind in
-                Label {
-                    Text(kind.title)
-                } icon: {
-                    Image(systemName: kind.systemImage)
+            List(selection: sidebarSelection) {
+                Label("Home", systemImage: "house")
+                    .tag(WorldSidebarItem.home)
+
+                Section("Pages") {
+                    ForEach(PageKind.allCases) { kind in
+                        Label {
+                            Text(kind.title)
+                        } icon: {
+                            Image(systemName: kind.systemImage)
+                        }
+                        .badge(count(of: kind))
+                        .tag(WorldSidebarItem.kind(kind))
+                    }
                 }
-                .badge(count(of: kind))
-                .tag(kind)
             }
             .navigationTitle(world.name)
-        } content: {
-            PageListView(world: world, kind: selectedKind, selection: $selectedPage)
-                .id(selectedKind)
         } detail: {
-            if let selectedPage {
-                PageEditorView(page: selectedPage)
-                    .id(selectedPage.id)
-            } else {
-                ContentUnavailableView("No Page Selected", systemImage: "doc.text")
+            switch selection {
+            case .home:
+                WorldHomeView(world: world, onDelete: onDelete)
+            case .kind(let kind):
+                PagesBrowser(world: world, kind: kind)
+                    .id(kind)
             }
-        }
-        .onChange(of: selectedKind) {
-            selectedPage = nil
         }
     }
 
-    /// The list reports nil selection on some clicks (notably on macOS). A kind is always selected, so ignore those.
-    private var kindSelection: Binding<PageKind?> {
+    /// The list reports nil selection on some clicks (notably on macOS). Something is always selected, so ignore those.
+    private var sidebarSelection: Binding<WorldSidebarItem?> {
         Binding(
-            get: { selectedKind },
-            set: { if let kind = $0 { selectedKind = kind } }
+            get: { selection },
+            set: { if let item = $0 { selection = item } }
         )
     }
 
@@ -54,13 +64,14 @@ struct WorldShellView: View {
     }
 }
 
-#Preview {
+#Preview("Home") {
     let container = SampleData.makePreviewContainer()
     let world = (try? container.mainContext.fetch(FetchDescriptor<World>(sortBy: [SortDescriptor(\.name)])))?.first
     return Group {
         if let world {
-            WorldShellView(world: world)
+            WorldShellView(world: world) { _ in }
         }
     }
+    .frame(width: 1100, height: 800)
     .modelContainer(container)
 }

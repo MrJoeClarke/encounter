@@ -1,0 +1,1304 @@
+{
+  "campaigns" : [
+    {
+      "createdAt" : "2026-09-21T14:13:20Z",
+      "id" : "3EE463FF-FAAB-4FCD-B880-89635F2030FB",
+      "name" : "Tides of Brackwater",
+      "summary" : "A low-level mystery campaign on the Saltmarch Coast."
+    }
+  ],
+  "exportedAt" : "2026-09-21T14:13:20Z",
+  "formatVersion" : 1,
+  "links" : [
+    {
+      "id" : "1F0AB206-4C53-465F-B1EA-A049375280D2",
+      "role" : "race",
+      "sourceID" : "BA6E708C-DF0F-4355-A4A2-B870663B69DB",
+      "targetID" : "19A0FD81-D532-46AA-BCFD-FB425AA1CFBB"
+    },
+    {
+      "id" : "531D7172-D6BA-4D9E-99F0-B288D04CE647",
+      "role" : "race",
+      "sourceID" : "1831D77D-2E5D-46B0-A88D-30108BBF5779",
+      "targetID" : "444C1B82-F3A3-4062-868D-E3F66DD0D4C4"
+    },
+    {
+      "id" : "201A0C9A-A14D-46B9-BCBC-A11105D86839",
+      "role" : "race",
+      "sourceID" : "A7493ECC-8CEB-4CB8-B104-711296CFA03D",
+      "targetID" : "19A0FD81-D532-46AA-BCFD-FB425AA1CFBB"
+    },
+    {
+      "id" : "04B962E9-C408-415B-9ADD-E7AD7C266FDB",
+      "role" : "home",
+      "sourceID" : "003417E4-A3E9-4132-8CD0-B21708894BAC",
+      "targetID" : "CE75E188-EC36-4F67-B342-A6FC78F21F8E"
+    },
+    {
+      "id" : "F7B47417-2A1B-46CB-A401-84F78648FEB5",
+      "role" : "member",
+      "sourceID" : "A7493ECC-8CEB-4CB8-B104-711296CFA03D",
+      "targetID" : "DE84ACF4-EECF-4AF5-81DC-02C7DA67D5A4"
+    },
+    {
+      "id" : "694A16F1-A6CB-475F-A0FB-CD414A957818",
+      "role" : "home",
+      "sourceID" : "1831D77D-2E5D-46B0-A88D-30108BBF5779",
+      "targetID" : "DADB153E-1330-4519-969E-994FEB70C01A"
+    },
+    {
+      "id" : "49C43B0A-4DB8-4753-8B00-B14AB693C498",
+      "role" : "location",
+      "sourceID" : "8B150DF2-1B41-4360-AD2D-55C6B34F1346",
+      "targetID" : "6264A81C-E79D-49D2-8851-502C190FC116"
+    },
+    {
+      "id" : "24BF28CB-28BC-45A6-99C1-230E1C09995B",
+      "role" : "participant",
+      "sourceID" : "8B150DF2-1B41-4360-AD2D-55C6B34F1346",
+      "targetID" : "BA6E708C-DF0F-4355-A4A2-B870663B69DB"
+    },
+    {
+      "id" : "337A7400-C0C7-4155-9B8E-08892E355285",
+      "role" : "participant",
+      "sourceID" : "8B150DF2-1B41-4360-AD2D-55C6B34F1346",
+      "targetID" : "1831D77D-2E5D-46B0-A88D-30108BBF5779"
+    },
+    {
+      "id" : "D49FA813-8EB8-4B54-A6DF-342D5488AA13",
+      "role" : "participant",
+      "sourceID" : "8B150DF2-1B41-4360-AD2D-55C6B34F1346",
+      "targetID" : "A7493ECC-8CEB-4CB8-B104-711296CFA03D"
+    },
+    {
+      "id" : "2776E063-4740-4B8B-BE32-4F48A0A68908",
+      "role" : "location",
+      "sourceID" : "F76E7DB1-7830-4584-B03F-CA0EFA7A1C4D",
+      "targetID" : "33845A45-1FED-48D7-85A3-4D5A3DB8A1C8"
+    },
+    {
+      "id" : "7A64C031-9831-4922-9298-CD4B5F938080",
+      "role" : "participant",
+      "sourceID" : "F76E7DB1-7830-4584-B03F-CA0EFA7A1C4D",
+      "targetID" : "BA6E708C-DF0F-4355-A4A2-B870663B69DB"
+    },
+    {
+      "id" : "B8B89011-2FF7-46D6-97D8-EDFFD407706F",
+      "role" : "participant",
+      "sourceID" : "F76E7DB1-7830-4584-B03F-CA0EFA7A1C4D",
+      "targetID" : "1831D77D-2E5D-46B0-A88D-30108BBF5779"
+    },
+    {
+      "id" : "3DB96249-A6FD-47B5-91CD-7A77D29C9F72",
+      "role" : "location",
+      "sourceID" : "BBD76B21-3BB7-4189-B1EE-C129BF7B5CBE",
+      "targetID" : "DADB153E-1330-4519-969E-994FEB70C01A"
+    },
+    {
+      "id" : "494AF3F8-6506-4BD8-8043-27359CFB8E92",
+      "role" : "location",
+      "sourceID" : "A0D8CC86-D750-4DD2-A24F-71BDCECD32E6",
+      "targetID" : "DADB153E-1330-4519-969E-994FEB70C01A"
+    }
+  ],
+  "maps" : [
+    {
+      "id" : "D037691E-5916-496F-8934-533C10BC3DBB",
+      "imageFile" : "D037691E-5916-496F-8934-533C10BC3DBB.jpeg",
+      "name" : "The Saltmarch Coast",
+      "pins" : [
+        {
+          "id" : "D3FB5838-7637-48B6-8E84-4E253816DAA4",
+          "targetID" : "DADB153E-1330-4519-969E-994FEB70C01A",
+          "x" : 0.46,
+          "y" : 0.42
+        },
+        {
+          "id" : "A78F8C5F-446A-4C3C-AD80-8EFE83734AF7",
+          "targetID" : "CE75E188-EC36-4F67-B342-A6FC78F21F8E",
+          "x" : 0.22,
+          "y" : 0.48
+        },
+        {
+          "id" : "1764A959-E5CB-4A49-9B2E-47B9E9184C7B",
+          "targetID" : "33845A45-1FED-48D7-85A3-4D5A3DB8A1C8",
+          "x" : 0.66,
+          "y" : 0.24
+        }
+      ],
+      "placeID" : "DB14ECDE-612C-4227-B729-7DA5C3C85555"
+    }
+  ],
+  "pages" : [
+    {
+      "attributes" : {
+        "core.placeType" : {
+          "text" : {
+            "_0" : "Region"
+          }
+        },
+        "core.population" : {
+          "number" : {
+            "_0" : 48000
+          }
+        }
+      },
+      "body" : [
+        "The ",
+        {
+
+        },
+        "Saltmarch Coast",
+        {
+          "NSInlinePresentationIntent" : 2
+        },
+        " runs for two hundred miles between the grey cliffs of the north and the Mistfen in the south. Its people live by fishing, salvage and trade, and watch the tide tables more closely than the calendar.",
+        {
+
+        }
+      ],
+      "createdAt" : "2026-09-21T14:14:20Z",
+      "id" : "DB14ECDE-612C-4227-B729-7DA5C3C85555",
+      "images" : [
+
+      ],
+      "kind" : "place",
+      "summary" : "A windswept stretch of coast, fen and fishing towns.",
+      "tags" : [
+        "coast"
+      ],
+      "title" : "Saltmarch Coast",
+      "updatedAt" : "2026-09-21T14:14:20Z"
+    },
+    {
+      "attributes" : {
+        "core.placeType" : {
+          "text" : {
+            "_0" : "Settlement"
+          }
+        },
+        "core.population" : {
+          "number" : {
+            "_0" : 6200
+          }
+        }
+      },
+      "body" : [
+        "Brackwater",
+        {
+          "NSInlinePresentationIntent" : 2
+        },
+        " is the largest town on the coast. Its lower streets flood at spring tides, and the oldest cellars are said to open into the drowned city beneath.",
+        {
+
+        }
+      ],
+      "createdAt" : "2026-09-21T14:15:20Z",
+      "id" : "DADB153E-1330-4519-969E-994FEB70C01A",
+      "images" : [
+
+      ],
+      "kind" : "place",
+      "parentID" : "DB14ECDE-612C-4227-B729-7DA5C3C85555",
+      "summary" : "A busy harbor town built on the ruins of an older one.",
+      "tags" : [
+        "town",
+        "harbor"
+      ],
+      "title" : "Brackwater",
+      "updatedAt" : "2026-09-21T14:15:20Z"
+    },
+    {
+      "attributes" : {
+        "core.placeType" : {
+          "text" : {
+            "_0" : "Building"
+          }
+        }
+      },
+      "body" : [
+        "Run by a retired smuggler, the ",
+        {
+
+        },
+        "Gilded Gull",
+        {
+          "NSInlinePresentationIntent" : 2
+        },
+        " has a stuffed gull above the bar that is, regulars insist, the original owner.",
+        {
+
+        }
+      ],
+      "createdAt" : "2026-09-21T14:16:20Z",
+      "id" : "6264A81C-E79D-49D2-8851-502C190FC116",
+      "images" : [
+
+      ],
+      "kind" : "place",
+      "parentID" : "DADB153E-1330-4519-969E-994FEB70C01A",
+      "summary" : "A dockside tavern where every job on the coast starts.",
+      "tags" : [
+        "tavern"
+      ],
+      "title" : "The Gilded Gull",
+      "updatedAt" : "2026-09-21T14:16:20Z"
+    },
+    {
+      "attributes" : {
+        "core.placeType" : {
+          "text" : {
+            "_0" : "Wilderness"
+          }
+        }
+      },
+      "body" : [
+        "Travellers cross the ",
+        {
+
+        },
+        "Mistfen",
+        {
+          "NSInlinePresentationIntent" : 2
+        },
+        " only with a marsh guide. The fog carries sounds in odd directions, and the lights seen at night are not all swamp gas.",
+        {
+
+        }
+      ],
+      "createdAt" : "2026-09-21T14:17:20Z",
+      "id" : "CE75E188-EC36-4F67-B342-A6FC78F21F8E",
+      "images" : [
+
+      ],
+      "kind" : "place",
+      "parentID" : "DB14ECDE-612C-4227-B729-7DA5C3C85555",
+      "summary" : "A fog-bound fen where paths shift overnight.",
+      "tags" : [
+        "wilderness",
+        "danger"
+      ],
+      "title" : "Mistfen",
+      "updatedAt" : "2026-09-21T14:17:20Z"
+    },
+    {
+      "attributes" : {
+        "core.placeType" : {
+          "text" : {
+            "_0" : "Point of Interest"
+          }
+        }
+      },
+      "body" : [
+        "The ",
+        {
+
+        },
+        "Old Lighthouse",
+        {
+          "NSInlinePresentationIntent" : 2
+        },
+        " went dark the night of the Great Drowning. Locals say its lamp still turns, though nobody has found the keeper.",
+        {
+
+        }
+      ],
+      "createdAt" : "2026-09-21T14:18:20Z",
+      "id" : "33845A45-1FED-48D7-85A3-4D5A3DB8A1C8",
+      "images" : [
+
+      ],
+      "kind" : "place",
+      "parentID" : "DB14ECDE-612C-4227-B729-7DA5C3C85555",
+      "summary" : "A dark tower on the point, long abandoned.",
+      "tags" : [
+        "ruin",
+        "mystery"
+      ],
+      "title" : "Old Lighthouse",
+      "updatedAt" : "2026-09-21T14:18:20Z"
+    },
+    {
+      "attributes" : {
+        "core.lifespan" : {
+          "text" : {
+            "_0" : "About 80 years"
+          }
+        },
+        "core.raceSize" : {
+          "text" : {
+            "_0" : "Medium"
+          }
+        },
+        "dnd5e.languages" : {
+          "text" : {
+            "_0" : "Common and one other"
+          }
+        },
+        "dnd5e.speed" : {
+          "text" : {
+            "_0" : "30 ft."
+          }
+        }
+      },
+      "body" : "Humans arrived on the coast last, and now run most of its ports.",
+      "createdAt" : "2026-09-21T14:19:20Z",
+      "id" : "19A0FD81-D532-46AA-BCFD-FB425AA1CFBB",
+      "images" : [
+
+      ],
+      "kind" : "race",
+      "summary" : "Adaptable and ambitious, found in every harbor.",
+      "tags" : [
+
+      ],
+      "title" : "Human",
+      "updatedAt" : "2026-09-21T14:19:20Z"
+    },
+    {
+      "attributes" : {
+        "core.lifespan" : {
+          "text" : {
+            "_0" : "About 350 years"
+          }
+        },
+        "core.raceSize" : {
+          "text" : {
+            "_0" : "Medium"
+          }
+        },
+        "dnd5e.darkvision" : {
+          "text" : {
+            "_0" : "60 ft."
+          }
+        },
+        "dnd5e.languages" : {
+          "text" : {
+            "_0" : "Common and Dwarvish"
+          }
+        },
+        "dnd5e.speed" : {
+          "text" : {
+            "_0" : "25 ft."
+          }
+        }
+      },
+      "body" : "Coastal dwarves trade the mountain halls of their ancestors for the dive-bells and breakwaters of the harbors.",
+      "createdAt" : "2026-09-21T14:20:20Z",
+      "id" : "444C1B82-F3A3-4062-868D-E3F66DD0D4C4",
+      "images" : [
+
+      ],
+      "kind" : "race",
+      "summary" : "Stout salvage-divers and stonemasons.",
+      "tags" : [
+
+      ],
+      "title" : "Dwarf",
+      "updatedAt" : "2026-09-21T14:20:20Z"
+    },
+    {
+      "attributes" : {
+        "core.lifespan" : {
+          "text" : {
+            "_0" : "About 100 years"
+          }
+        },
+        "core.raceSize" : {
+          "text" : {
+            "_0" : "Medium"
+          }
+        },
+        "dnd5e.darkvision" : {
+          "text" : {
+            "_0" : "30 ft."
+          }
+        },
+        "dnd5e.languages" : {
+          "text" : {
+            "_0" : "Common and Marsh-tongue"
+          }
+        },
+        "dnd5e.speed" : {
+          "text" : {
+            "_0" : "30 ft., swim 30 ft."
+          }
+        }
+      },
+      "body" : [
+        "Marshkin",
+        {
+          "NSInlinePresentationIntent" : 2
+        },
+        " have webbed fingers, pale green eyes and a knack for finding the one safe path through the fen. They keep to themselves, and are wary of the Order of the Pale Lamp.",
+        {
+
+        }
+      ],
+      "createdAt" : "2026-09-21T14:21:20Z",
+      "id" : "E0BADA33-0E16-4827-8956-CAD5D6CD902C",
+      "images" : [
+
+      ],
+      "kind" : "race",
+      "summary" : "A homebrew people of the Mistfen, at home in water and fog.",
+      "tags" : [
+        "homebrew"
+      ],
+      "title" : "Marshkin",
+      "updatedAt" : "2026-09-21T14:21:20Z"
+    },
+    {
+      "attributes" : {
+        "core.age" : {
+          "text" : {
+            "_0" : "27"
+          }
+        },
+        "core.creatureType" : {
+          "text" : {
+            "_0" : "Humanoid"
+          }
+        },
+        "core.occupation" : {
+          "text" : {
+            "_0" : "Marsh guide"
+          }
+        },
+        "dnd5e.alignment" : {
+          "text" : {
+            "_0" : "Neutral Good"
+          }
+        },
+        "dnd5e.armorClass" : {
+          "number" : {
+            "_0" : 15
+          }
+        },
+        "dnd5e.charisma" : {
+          "number" : {
+            "_0" : 9
+          }
+        },
+        "dnd5e.constitution" : {
+          "number" : {
+            "_0" : 14
+          }
+        },
+        "dnd5e.dexterity" : {
+          "number" : {
+            "_0" : 17
+          }
+        },
+        "dnd5e.hitDice" : {
+          "text" : {
+            "_0" : "4d10"
+          }
+        },
+        "dnd5e.hitPoints" : {
+          "number" : {
+            "_0" : 31
+          }
+        },
+        "dnd5e.intelligence" : {
+          "number" : {
+            "_0" : 10
+          }
+        },
+        "dnd5e.size" : {
+          "text" : {
+            "_0" : "Medium"
+          }
+        },
+        "dnd5e.speed" : {
+          "text" : {
+            "_0" : "30 ft."
+          }
+        },
+        "dnd5e.strength" : {
+          "number" : {
+            "_0" : 11
+          }
+        },
+        "dnd5e.wisdom" : {
+          "number" : {
+            "_0" : 15
+          }
+        }
+      },
+      "body" : [
+        "Mira",
+        {
+          "NSInlinePresentationIntent" : 2
+        },
+        " grew up between Brackwater and the fen, and knows both. She took the guiding trade when her father vanished in the fog, and has never stopped looking for him.",
+        {
+
+        }
+      ],
+      "characterRole" : "playable",
+      "createdAt" : "2026-09-21T14:22:20Z",
+      "id" : "BA6E708C-DF0F-4355-A4A2-B870663B69DB",
+      "images" : [
+        {
+          "caption" : "Mira at the fen's edge",
+          "file" : "9D1B4B3D-2B92-49DF-BABE-C6960F08B1ED.jpeg",
+          "id" : "9D1B4B3D-2B92-49DF-BABE-C6960F08B1ED",
+          "isDefault" : true,
+          "sortOrder" : 0
+        },
+        {
+          "caption" : "Mira at the Gilded Gull",
+          "file" : "57A1C344-17E7-4413-BA9A-146E77744175.jpeg",
+          "id" : "57A1C344-17E7-4413-BA9A-146E77744175",
+          "isDefault" : false,
+          "sortOrder" : 1
+        }
+      ],
+      "kind" : "character",
+      "summary" : "A ranger who guides travellers through the Mistfen.",
+      "tags" : [
+        "party",
+        "ranger"
+      ],
+      "title" : "Mira Thorne",
+      "updatedAt" : "2026-09-21T14:22:20Z"
+    },
+    {
+      "attributes" : {
+        "core.age" : {
+          "text" : {
+            "_0" : "112"
+          }
+        },
+        "core.creatureType" : {
+          "text" : {
+            "_0" : "Humanoid"
+          }
+        },
+        "core.occupation" : {
+          "text" : {
+            "_0" : "Priest"
+          }
+        },
+        "dnd5e.alignment" : {
+          "text" : {
+            "_0" : "Lawful Good"
+          }
+        },
+        "dnd5e.armorClass" : {
+          "number" : {
+            "_0" : 18
+          }
+        },
+        "dnd5e.charisma" : {
+          "number" : {
+            "_0" : 12
+          }
+        },
+        "dnd5e.constitution" : {
+          "number" : {
+            "_0" : 15
+          }
+        },
+        "dnd5e.dexterity" : {
+          "number" : {
+            "_0" : 8
+          }
+        },
+        "dnd5e.hitDice" : {
+          "text" : {
+            "_0" : "4d8"
+          }
+        },
+        "dnd5e.hitPoints" : {
+          "number" : {
+            "_0" : 38
+          }
+        },
+        "dnd5e.intelligence" : {
+          "number" : {
+            "_0" : 10
+          }
+        },
+        "dnd5e.size" : {
+          "text" : {
+            "_0" : "Medium"
+          }
+        },
+        "dnd5e.speed" : {
+          "text" : {
+            "_0" : "25 ft."
+          }
+        },
+        "dnd5e.strength" : {
+          "number" : {
+            "_0" : 14
+          }
+        },
+        "dnd5e.wisdom" : {
+          "number" : {
+            "_0" : 17
+          }
+        }
+      },
+      "body" : [
+        "Bram",
+        {
+          "NSInlinePresentationIntent" : 2
+        },
+        " keeps the shrine at the end of the longest pier, and hears confession from sailors who won't tell anyone else. He blames himself for the Great Drowning, though he was not yet born.",
+        {
+
+        }
+      ],
+      "characterRole" : "playable",
+      "createdAt" : "2026-09-21T14:23:20Z",
+      "id" : "1831D77D-2E5D-46B0-A88D-30108BBF5779",
+      "images" : [
+        {
+          "caption" : "Bram at the shrine",
+          "file" : "C30F7132-98B9-4E65-87C1-CD326CAE8EBC.jpeg",
+          "id" : "C30F7132-98B9-4E65-87C1-CD326CAE8EBC",
+          "isDefault" : true,
+          "sortOrder" : 0
+        }
+      ],
+      "kind" : "character",
+      "summary" : "A dwarf cleric who tends the harbor shrine.",
+      "tags" : [
+        "party",
+        "cleric"
+      ],
+      "title" : "Bram Ironvale",
+      "updatedAt" : "2026-09-21T14:23:20Z"
+    },
+    {
+      "attributes" : {
+        "core.age" : {
+          "text" : {
+            "_0" : "58"
+          }
+        },
+        "core.creatureType" : {
+          "text" : {
+            "_0" : "Humanoid"
+          }
+        },
+        "core.occupation" : {
+          "text" : {
+            "_0" : "Harbor master"
+          }
+        },
+        "dnd5e.alignment" : {
+          "text" : {
+            "_0" : "Lawful Neutral"
+          }
+        },
+        "dnd5e.armorClass" : {
+          "number" : {
+            "_0" : 16
+          }
+        },
+        "dnd5e.challengeRating" : {
+          "text" : {
+            "_0" : "2"
+          }
+        },
+        "dnd5e.charisma" : {
+          "number" : {
+            "_0" : 14
+          }
+        },
+        "dnd5e.constitution" : {
+          "number" : {
+            "_0" : 14
+          }
+        },
+        "dnd5e.dexterity" : {
+          "number" : {
+            "_0" : 12
+          }
+        },
+        "dnd5e.hitPoints" : {
+          "number" : {
+            "_0" : 52
+          }
+        },
+        "dnd5e.intelligence" : {
+          "number" : {
+            "_0" : 12
+          }
+        },
+        "dnd5e.size" : {
+          "text" : {
+            "_0" : "Medium"
+          }
+        },
+        "dnd5e.strength" : {
+          "number" : {
+            "_0" : 13
+          }
+        },
+        "dnd5e.wisdom" : {
+          "number" : {
+            "_0" : 15
+          }
+        }
+      },
+      "body" : [
+        "Odric Vane",
+        {
+          "NSInlinePresentationIntent" : 2
+        },
+        " has run the harbor for thirty years. He knows what every ship carries, which is why he cannot be bribed and rarely needs to be.",
+        {
+
+        }
+      ],
+      "characterRole" : "nonPlayable",
+      "createdAt" : "2026-09-21T14:24:20Z",
+      "id" : "A7493ECC-8CEB-4CB8-B104-711296CFA03D",
+      "images" : [
+        {
+          "caption" : "Captain Vane",
+          "file" : "C5D18EDA-F6EF-41ED-B31E-819CE4F29ADA.jpeg",
+          "id" : "C5D18EDA-F6EF-41ED-B31E-819CE4F29ADA",
+          "isDefault" : true,
+          "sortOrder" : 0
+        }
+      ],
+      "kind" : "character",
+      "summary" : "Harbor master of Brackwater, and nobody's fool.",
+      "tags" : [
+        "npc",
+        "ally"
+      ],
+      "title" : "Captain Odric Vane",
+      "updatedAt" : "2026-09-21T14:24:20Z"
+    },
+    {
+      "attributes" : {
+        "core.creatureType" : {
+          "text" : {
+            "_0" : "Fey"
+          }
+        },
+        "dnd5e.alignment" : {
+          "text" : {
+            "_0" : "Neutral Evil"
+          }
+        },
+        "dnd5e.armorClass" : {
+          "number" : {
+            "_0" : 17
+          }
+        },
+        "dnd5e.challengeRating" : {
+          "text" : {
+            "_0" : "3"
+          }
+        },
+        "dnd5e.charisma" : {
+          "number" : {
+            "_0" : 14
+          }
+        },
+        "dnd5e.constitution" : {
+          "number" : {
+            "_0" : 16
+          }
+        },
+        "dnd5e.dexterity" : {
+          "number" : {
+            "_0" : 12
+          }
+        },
+        "dnd5e.hitPoints" : {
+          "number" : {
+            "_0" : 82
+          }
+        },
+        "dnd5e.intelligence" : {
+          "number" : {
+            "_0" : 13
+          }
+        },
+        "dnd5e.size" : {
+          "text" : {
+            "_0" : "Medium"
+          }
+        },
+        "dnd5e.strength" : {
+          "number" : {
+            "_0" : 18
+          }
+        },
+        "dnd5e.wisdom" : {
+          "number" : {
+            "_0" : 14
+          }
+        }
+      },
+      "body" : [
+        "Grishka",
+        {
+          "NSInlinePresentationIntent" : 2
+        },
+        " lives deep in the Mistfen and collects whatever the fog takes. She will sell it back, for a price that is never money.",
+        {
+
+        }
+      ],
+      "characterRole" : "nonPlayable",
+      "createdAt" : "2026-09-21T14:25:20Z",
+      "id" : "003417E4-A3E9-4132-8CD0-B21708894BAC",
+      "images" : [
+        {
+          "caption" : "Grishka",
+          "file" : "2280D94C-4ABB-476D-9B54-CFA29FE1EABC.jpeg",
+          "id" : "2280D94C-4ABB-476D-9B54-CFA29FE1EABC",
+          "isDefault" : true,
+          "sortOrder" : 0
+        }
+      ],
+      "kind" : "character",
+      "summary" : "A hag who trades in lost things, and lost people.",
+      "tags" : [
+        "monster",
+        "villain"
+      ],
+      "title" : "Grishka the Mist-Hag",
+      "updatedAt" : "2026-09-21T14:25:20Z"
+    },
+    {
+      "attributes" : {
+        "core.creatureType" : {
+          "text" : {
+            "_0" : "Beast"
+          }
+        },
+        "dnd5e.alignment" : {
+          "text" : {
+            "_0" : "Unaligned"
+          }
+        },
+        "dnd5e.armorClass" : {
+          "number" : {
+            "_0" : 11
+          }
+        },
+        "dnd5e.challengeRating" : {
+          "text" : {
+            "_0" : "0"
+          }
+        },
+        "dnd5e.charisma" : {
+          "number" : {
+            "_0" : 5
+          }
+        },
+        "dnd5e.constitution" : {
+          "number" : {
+            "_0" : 8
+          }
+        },
+        "dnd5e.dexterity" : {
+          "number" : {
+            "_0" : 13
+          }
+        },
+        "dnd5e.hitPoints" : {
+          "number" : {
+            "_0" : 3
+          }
+        },
+        "dnd5e.intelligence" : {
+          "number" : {
+            "_0" : 2
+          }
+        },
+        "dnd5e.size" : {
+          "text" : {
+            "_0" : "Tiny"
+          }
+        },
+        "dnd5e.strength" : {
+          "number" : {
+            "_0" : 2
+          }
+        },
+        "dnd5e.wisdom" : {
+          "number" : {
+            "_0" : 12
+          }
+        }
+      },
+      "body" : [
+        "Pip",
+        {
+          "NSInlinePresentationIntent" : 2
+        },
+        " steals chips, lands on shoulders and, somehow, always knows when a storm is coming.",
+        {
+
+        }
+      ],
+      "characterRole" : "nonPlayable",
+      "createdAt" : "2026-09-21T14:26:20Z",
+      "id" : "0EECDEF5-378D-44A8-8FA9-3BCC60EEB7A3",
+      "images" : [
+
+      ],
+      "kind" : "character",
+      "summary" : "A very smart gull who has adopted Mira.",
+      "tags" : [
+        "animal",
+        "companion"
+      ],
+      "title" : "Pip",
+      "updatedAt" : "2026-09-21T14:26:20Z"
+    },
+    {
+      "attributes" : {
+        "core.itemType" : {
+          "text" : {
+            "_0" : "Wondrous Item"
+          }
+        },
+        "core.value" : {
+          "text" : {
+            "_0" : "1,500 gp"
+          }
+        },
+        "dnd5e.rarity" : {
+          "text" : {
+            "_0" : "Rare"
+          }
+        },
+        "dnd5e.requiresAttunement" : {
+          "bool" : {
+            "_0" : true
+          }
+        }
+      },
+      "body" : "Found in the Old Lighthouse. When lit, its pale flame shows drowned things in the water within sixty feet.",
+      "createdAt" : "2026-09-21T14:27:20Z",
+      "id" : "FAC87FCC-02AE-40F3-A791-43EDFDEC249E",
+      "images" : [
+
+      ],
+      "kind" : "item",
+      "summary" : "A storm lantern whose light shows what the sea has taken.",
+      "tags" : [
+        "magic",
+        "quest"
+      ],
+      "title" : "Lantern of the Drowned",
+      "updatedAt" : "2026-09-21T14:27:20Z"
+    },
+    {
+      "attributes" : {
+        "core.itemType" : {
+          "text" : {
+            "_0" : "Document"
+          }
+        },
+        "dnd5e.rarity" : {
+          "text" : {
+            "_0" : "Common"
+          }
+        }
+      },
+      "body" : "A sea-stained scroll. Its last clause, which nobody mentions, grants the town to whoever can prove they hold the lighthouse.",
+      "createdAt" : "2026-09-21T14:28:20Z",
+      "id" : "4A7BB8F5-ACFF-444D-A8F3-DCCB35945B6C",
+      "images" : [
+
+      ],
+      "kind" : "item",
+      "summary" : "The founding charter, kept in the harbor master's office.",
+      "tags" : [
+        "document",
+        "plot"
+      ],
+      "title" : "Brackwater Charter",
+      "updatedAt" : "2026-09-21T14:28:20Z"
+    },
+    {
+      "attributes" : {
+        "core.organisationSize" : {
+          "text" : {
+            "_0" : "About 200 members"
+          }
+        },
+        "core.organisationType" : {
+          "text" : {
+            "_0" : "Trade guild"
+          }
+        },
+        "dnd5e.alignment" : {
+          "text" : {
+            "_0" : "Lawful Neutral"
+          }
+        }
+      },
+      "body" : [
+        "The ",
+        {
+
+        },
+        "Harbor Guild",
+        {
+          "NSInlinePresentationIntent" : 2
+        },
+        " sets the fees, keeps the tide tables and quietly decides which captains get the good berths.",
+        {
+
+        }
+      ],
+      "createdAt" : "2026-09-21T14:29:20Z",
+      "id" : "DE84ACF4-EECF-4AF5-81DC-02C7DA67D5A4",
+      "images" : [
+
+      ],
+      "kind" : "organisation",
+      "summary" : "The guild that licenses every boat in Brackwater.",
+      "tags" : [
+        "guild"
+      ],
+      "title" : "Harbor Guild",
+      "updatedAt" : "2026-09-21T14:29:20Z"
+    },
+    {
+      "attributes" : {
+        "core.organisationSize" : {
+          "text" : {
+            "_0" : "About 40 members"
+          }
+        },
+        "core.organisationType" : {
+          "text" : {
+            "_0" : "Secret order"
+          }
+        },
+        "dnd5e.alignment" : {
+          "text" : {
+            "_0" : "Lawful Evil"
+          }
+        }
+      },
+      "body" : [
+        "The ",
+        {
+
+        },
+        "Order of the Pale Lamp",
+        {
+          "NSInlinePresentationIntent" : 2
+        },
+        " claims to guard the coast against what rose from the Great Drowning. Its methods are less gentle than its name.",
+        {
+
+        }
+      ],
+      "createdAt" : "2026-09-21T14:30:20Z",
+      "id" : "97F06126-5904-4713-8D64-32B07BC83C6C",
+      "images" : [
+
+      ],
+      "kind" : "organisation",
+      "summary" : "A secretive order hunting for the Lighthouse's lost keeper.",
+      "tags" : [
+        "secret",
+        "villain"
+      ],
+      "title" : "Order of the Pale Lamp",
+      "updatedAt" : "2026-09-21T14:30:20Z"
+    },
+    {
+      "attributes" : {
+
+      },
+      "body" : "The first charter was signed on the beach, in the rain, by seven families.",
+      "createdAt" : "2026-09-21T14:31:20Z",
+      "eventOrigin" : "backstory",
+      "id" : "A0D8CC86-D750-4DD2-A24F-71BDCECD32E6",
+      "images" : [
+
+      ],
+      "kind" : "event",
+      "startDate" : {
+        "day" : 9,
+        "hour" : 10,
+        "month" : 4,
+        "year" : 112
+      },
+      "summary" : "Settlers land on the coast and raise the first quay.",
+      "tags" : [
+        "history"
+      ],
+      "title" : "The Founding of Brackwater",
+      "updatedAt" : "2026-09-21T14:31:20Z"
+    },
+    {
+      "attributes" : {
+
+      },
+      "body" : "A storm, a tidal wave and a dark lighthouse. By dawn the lower city was gone, and the survivors built Brackwater on the high ground.",
+      "createdAt" : "2026-09-21T14:32:20Z",
+      "endDate" : {
+        "day" : 21,
+        "hour" : 5,
+        "month" : 9,
+        "year" : 301
+      },
+      "eventOrigin" : "backstory",
+      "id" : "BBD76B21-3BB7-4189-B1EE-C129BF7B5CBE",
+      "images" : [
+
+      ],
+      "kind" : "event",
+      "startDate" : {
+        "day" : 20,
+        "hour" : 22,
+        "month" : 9,
+        "year" : 301
+      },
+      "summary" : "The old city sinks in a single night.",
+      "tags" : [
+        "history",
+        "disaster"
+      ],
+      "title" : "The Great Drowning",
+      "updatedAt" : "2026-09-21T14:32:20Z"
+    },
+    {
+      "attributes" : {
+
+      },
+      "body" : "Mira and Bram are hired to find out why the lighthouse lamp turned last night.",
+      "campaignID" : "3EE463FF-FAAB-4FCD-B880-89635F2030FB",
+      "createdAt" : "2026-09-21T14:33:20Z",
+      "eventOrigin" : "campaign",
+      "id" : "8B150DF2-1B41-4360-AD2D-55C6B34F1346",
+      "images" : [
+
+      ],
+      "kind" : "event",
+      "startDate" : {
+        "day" : 5,
+        "hour" : 18,
+        "month" : 3,
+        "year" : 342
+      },
+      "summary" : "The party meets at the Gilded Gull and takes a job from Captain Vane.",
+      "tags" : [
+        "session 1"
+      ],
+      "title" : "Arrival at Brackwater",
+      "updatedAt" : "2026-09-21T14:33:20Z"
+    },
+    {
+      "attributes" : {
+
+      },
+      "body" : "The lamp is cold, the keeper's room is untouched and the Lantern of the Drowned is waiting on the table.",
+      "campaignID" : "3EE463FF-FAAB-4FCD-B880-89635F2030FB",
+      "createdAt" : "2026-09-21T14:34:20Z",
+      "endDate" : {
+        "day" : 8,
+        "hour" : 4,
+        "month" : 3,
+        "year" : 342
+      },
+      "eventOrigin" : "campaign",
+      "id" : "F76E7DB1-7830-4584-B03F-CA0EFA7A1C4D",
+      "images" : [
+
+      ],
+      "kind" : "event",
+      "startDate" : {
+        "day" : 7,
+        "hour" : 23,
+        "month" : 3,
+        "year" : 342
+      },
+      "summary" : "The party reaches the Old Lighthouse and finds the lantern.",
+      "tags" : [
+        "session 2"
+      ],
+      "title" : "Night at the Lighthouse",
+      "updatedAt" : "2026-09-21T14:34:20Z"
+    }
+  ],
+  "world" : {
+    "calendar" : {
+      "hoursPerDay" : 24,
+      "months" : [
+        {
+          "dayCount" : 36,
+          "name" : "Frostwane"
+        },
+        {
+          "dayCount" : 34,
+          "name" : "Thawmoot"
+        },
+        {
+          "dayCount" : 36,
+          "name" : "Seedfall"
+        },
+        {
+          "dayCount" : 38,
+          "name" : "Greenreach"
+        },
+        {
+          "dayCount" : 36,
+          "name" : "Highsun"
+        },
+        {
+          "dayCount" : 36,
+          "name" : "Emberturn"
+        },
+        {
+          "dayCount" : 34,
+          "name" : "Harvestide"
+        },
+        {
+          "dayCount" : 36,
+          "name" : "Leaffall"
+        },
+        {
+          "dayCount" : 36,
+          "name" : "Duskwane"
+        },
+        {
+          "dayCount" : 38,
+          "name" : "Deepwinter"
+        }
+      ],
+      "weekdays" : [
+        "Moonday",
+        "Tideday",
+        "Windday",
+        "Hearthday",
+        "Starday",
+        "Restday"
+      ]
+    },
+    "createdAt" : "2026-09-21T14:13:20Z",
+    "id" : "28B1D31F-F29A-4DD2-887C-A8D8AC78A18F",
+    "images" : [
+      {
+        "caption" : "The Old Lighthouse at dusk",
+        "file" : "2E30BB41-C604-4762-8633-1EA5E08834F5.jpeg",
+        "id" : "2E30BB41-C604-4762-8633-1EA5E08834F5",
+        "isDefault" : true,
+        "sortOrder" : 0
+      }
+    ],
+    "name" : "Saltmarch Coast",
+    "summary" : "An original sample world: a foggy coast, a drowned city and a lighthouse that went dark. Made for trying out Encounter.",
+    "system" : "dnd5e"
+  }
+}

@@ -1,27 +1,13 @@
 //
-//  WorldEditorSheet.swift
+//  NewWorldSheet.swift
 //  encounter
 //
 
 import SwiftUI
 import SwiftData
 
-enum WorldEditorMode: Identifiable {
-    case create
-    case edit(World)
-
-    var id: String {
-        switch self {
-        case .create: "create"
-        case .edit(let world): world.id.uuidString
-        }
-    }
-}
-
-/// Creates a new world or edits an existing one.
-struct WorldEditorSheet: View {
-    let mode: WorldEditorMode
-
+/// Creates a new world. An existing world is edited on its home page.
+struct NewWorldSheet: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
 
@@ -48,7 +34,7 @@ struct WorldEditorSheet: View {
                 }
             }
             .formStyle(.grouped)
-            .navigationTitle(isEditing ? "Edit World" : "New World")
+            .navigationTitle("New World")
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
             #endif
@@ -57,7 +43,7 @@ struct WorldEditorSheet: View {
                     Button("Cancel") { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button(isEditing ? "Save" : "Create", action: save)
+                    Button("Create", action: create)
                         .disabled(trimmedName.isEmpty)
                 }
             }
@@ -65,38 +51,19 @@ struct WorldEditorSheet: View {
         #if os(macOS)
         .frame(minWidth: 420, minHeight: 320)
         #endif
-        .onAppear(perform: load)
-    }
-
-    private var isEditing: Bool {
-        if case .edit = mode { true } else { false }
     }
 
     private var trimmedName: String {
         name.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    private func load() {
-        guard case .edit(let world) = mode else { return }
-        name = world.name
-        summary = world.summary
-        system = world.system
-    }
-
-    private func save() {
-        switch mode {
-        case .create:
-            modelContext.insert(World(name: trimmedName, summary: summary, system: system))
-        case .edit(let world):
-            world.name = trimmedName
-            world.summary = summary
-            world.system = system
-        }
+    private func create() {
+        modelContext.insert(World(name: trimmedName, summary: summary, system: system))
         dismiss()
     }
 }
 
-#Preview("New") {
-    WorldEditorSheet(mode: .create)
+#Preview {
+    NewWorldSheet()
         .modelContainer(SampleData.makePreviewContainer(populated: false))
 }

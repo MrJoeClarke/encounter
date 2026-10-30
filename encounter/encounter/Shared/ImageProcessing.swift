@@ -67,6 +67,16 @@ nonisolated enum ImageProcessing {
         return PreparedImage(imageData: reducedData, thumbnailData: thumbnailData)
     }
 
+    /// A file extension matching the encoded format ("jpeg", "png", "heic" and so on), or "img" if unknown.
+    static func fileExtension(for data: Data) -> String {
+        guard let source = CGImageSourceCreateWithData(data as CFData, nil),
+              let identifier = CGImageSourceGetType(source) as String?,
+              let type = UTType(identifier),
+              let fileExtension = type.preferredFilenameExtension
+        else { return "img" }
+        return fileExtension
+    }
+
     /// The pixel size of encoded image data, or nil if it can't be read.
     static func pixelSize(of data: Data) -> (width: Int, height: Int)? {
         guard let source = CGImageSourceCreateWithData(data as CFData, nil),

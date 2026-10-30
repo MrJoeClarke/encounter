@@ -482,6 +482,101 @@ struct PageImageRulesTests {
 }
 
 @MainActor
+struct WorldImageTests {
+    private func makeContext() throws -> ModelContext {
+        ModelContext(try AppSchema.makeContainer(inMemory: true))
+    }
+
+    private func prepared(_ red: Double = 0.5) throws -> PreparedImage {
+        try #require(
+            ImageProcessing.prepareSynchronously(SampleData.solidImage(width: 40, height: 40, red: red))
+        )
+    }
+
+    @Test func aWorldFollowsTheSameDefaultImageRulesAsAPage() throws {
+        let context = try makeContext()
+        let world = World(name: "W")
+        context.insert(world)
+
+        let first = world.addImage(try prepared(0.1), in: context)
+        let second = world.addImage(try prepared(0.2), in: context)
+        #expect(first.isDefault)
+        #expect(!second.isDefault)
+        #expect(first.world === world)
+        #expect(first.page == nil)
+
+        world.setDefaultImage(second)
+        #expect(world.defaultImage === second)
+        #expect(world.sortedImages.filter(\.isDefault).count == 1)
+
+        world.removeImage(second, in: context)
+        #expect(world.defaultImage === first)
+        #expect(world.sortedImages.count == 1)
+    }
+
+    @Test func aWorldsImagesAreSeparateFromItsPagesImages() throws {
+        let context = try makeContext()
+        let world = World(name: "W")
+        context.insert(world)
+        let page = world.addPage(kind: .character, in: context)
+
+        let worldImage = world.addImage(try prepared(0.1), in: context)
+        let pageImage = page.addImage(try prepared(0.2), in: context)
+
+        #expect(world.sortedImages.map(\.id) == [worldImage.id])
+        #expect(page.sortedImages.map(\.id) == [pageImage.id])
+        // Each starts with its own default.
+        #expect(worldImage.isDefault)
+        #expect(pageImage.isDefault)
+    }
+
+    @Test func worldImagesCanBeReorderedByDragAndByMenu() throws {
+        let context = try makeContext()
+        let world = World(name: "W")
+        context.insert(world)
+        let a = world.addImage(try prepared(0.1), in: context)
+        let b = world.addImage(try prepared(0.2), in: context)
+        let c = world.addImage(try prepared(0.3), in: context)
+
+        world.moveImages(withIDs: [c.id], before: a.id)
+        #expect(world.sortedImages.map(\.id) == [c.id, a.id, b.id])
+        world.moveImage(c, by: 1)
+        #expect(world.sortedImages.map(\.id) == [a.id, c.id, b.id])
+        #expect(world.defaultImage === a)
+    }
+
+    @Test func deletingAWorldDeletesItsImages() throws {
+        let context = try makeContext()
+        let world = World(name: "W")
+        context.insert(world)
+        world.addImage(try prepared(0.1), in: context)
+        world.addImage(try prepared(0.2), in: context)
+        try context.save()
+        #expect(try context.fetchCount(FetchDescriptor<PageImage>()) == 2)
+
+        context.delete(world)
+        try context.save()
+
+        #expect(try context.fetchCount(FetchDescriptor<PageImage>()) == 0)
+    }
+
+    @Test func worldImagesAndSummarySurviveSaveAndReload() throws {
+        let container = try AppSchema.makeContainer(inMemory: true)
+        let context = ModelContext(container)
+        let world = World(name: "Home test", summary: "A long summary.\nOn two lines.", system: .dnd5e)
+        context.insert(world)
+        world.addImage(try prepared(), caption: "Cover", in: context)
+        try context.save()
+
+        let loaded = try #require(try ModelContext(container).fetch(FetchDescriptor<World>()).first)
+        #expect(loaded.summary == "A long summary.\nOn two lines.")
+        #expect(loaded.system == .dnd5e)
+        #expect(loaded.defaultImage?.caption == "Cover")
+        #expect(loaded.defaultImage?.thumbnailData != nil)
+    }
+}
+
+@MainActor
 struct RuleSystemTests {
     private func keys(_ kind: PageKind, _ system: RuleSystemID) -> [String] {
         RuleSystems.definitions(for: kind, system: system).map(\.key)

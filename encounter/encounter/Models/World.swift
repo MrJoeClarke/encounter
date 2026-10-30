@@ -27,6 +27,9 @@ final class World {
     @Relationship(deleteRule: .cascade, inverse: \WorldMap.world)
     var maps: [WorldMap]?
 
+    @Relationship(deleteRule: .cascade, inverse: \PageImage.world)
+    var images: [PageImage]?
+
     init(name: String, summary: String = "", system: RuleSystemID = .none) {
         self.name = name
         self.summary = summary

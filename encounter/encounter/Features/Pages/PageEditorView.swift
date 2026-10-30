@@ -47,7 +47,7 @@ struct PageEditorView: View {
                 }
             }
 
-            PageImagesSection(page: page)
+            ImagesSection(owner: page)
 
             Section("Tags") {
                 ForEach(page.tags, id: \.self) { tag in

@@ -1,0 +1,111 @@
+//
+//  WorldArchive.swift
+//  encounter
+//
+
+import Foundation
+
+/// The contents of a world's `world.json`, as plain value types.
+///
+/// These are deliberately separate from the SwiftData models, so a change to a model can't silently change
+/// the file format. Records refer to each other by UUID. Image data lives in separate files, named by
+/// `file` properties relative to the package's `images` folder.
+///
+/// Evolving the format: bump `currentFormatVersion` for changes older apps can't read. Fields added later
+/// should be optional so older files still decode.
+nonisolated struct WorldArchive: Codable, Sendable {
+    static let currentFormatVersion = 1
+
+    var formatVersion: Int = WorldArchive.currentFormatVersion
+    var exportedAt: Date
+    var world: WorldRecord
+    var campaigns: [CampaignRecord]
+    var pages: [PageRecord]
+    var links: [LinkRecord]
+    var maps: [MapRecord]
+}
+
+nonisolated struct WorldRecord: Codable, Sendable {
+    var id: UUID
+    var name: String
+    var summary: String
+    /// `RuleSystemID` raw value. Kept as a string so a system this app doesn't know survives a round trip.
+    var system: String
+    var createdAt: Date
+    var calendar: CalendarRecord?
+    /// The world's own images. Optional, because files written before world images existed don't have it.
+    var images: [ImageRecord]?
+}
+
+nonisolated struct CalendarRecord: Codable, Sendable {
+    var hoursPerDay: Int
+    var months: [MonthRecord]
+    var weekdays: [String]
+}
+
+nonisolated struct MonthRecord: Codable, Sendable {
+    var name: String
+    var dayCount: Int
+}
+
+nonisolated struct CampaignRecord: Codable, Sendable {
+    var id: UUID
+    var name: String
+    var summary: String
+    var createdAt: Date
+}
+
+nonisolated struct PageRecord: Codable, Sendable {
+    var id: UUID
+    var title: String
+    var summary: String
+    /// `PageKind` raw value.
+    var kind: String
+    /// `CharacterRole` raw value, for characters.
+    var characterRole: String?
+    var body: AttributedString
+    var attributes: [String: AttributeValue]
+    var tags: [String]
+    var createdAt: Date
+    var updatedAt: Date
+    /// `EventOrigin` raw value, for events.
+    var eventOrigin: String?
+    var startDate: InWorldDate?
+    var endDate: InWorldDate?
+    var campaignID: UUID?
+    var parentID: UUID?
+    var images: [ImageRecord]
+}
+
+nonisolated struct ImageRecord: Codable, Sendable {
+    var id: UUID
+    var caption: String
+    var sortOrder: Int
+    var isDefault: Bool
+    /// File name in the package's `images` folder. Nil if the page image had no data.
+    var file: String?
+}
+
+nonisolated struct LinkRecord: Codable, Sendable {
+    var id: UUID
+    var role: String
+    var sourceID: UUID
+    var targetID: UUID
+}
+
+nonisolated struct MapRecord: Codable, Sendable {
+    var id: UUID
+    var name: String
+    /// File name in the package's `images` folder.
+    var imageFile: String?
+    /// The page this map depicts.
+    var placeID: UUID?
+    var pins: [PinRecord]
+}
+
+nonisolated struct PinRecord: Codable, Sendable {
+    var id: UUID
+    var x: Double
+    var y: Double
+    var targetID: UUID?
+}
