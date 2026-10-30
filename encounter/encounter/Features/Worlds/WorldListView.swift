@@ -17,6 +17,7 @@ struct WorldListView: View {
     @State private var isCreatingWorld = false
     @State private var isChoosingImportFile = false
     @State private var isImporting = false
+    @State private var isShowingAbout = false
     @State private var transferResult: TransferResult?
 
     var body: some View {
@@ -46,6 +47,9 @@ struct WorldListView: View {
             }
             .toolbar {
                 ToolbarItem {
+                    Button("About", systemImage: "info.circle") { isShowingAbout = true }
+                }
+                ToolbarItem {
                     Button("Import World", systemImage: "square.and.arrow.down") { isChoosingImportFile = true }
                 }
                 ToolbarItem {
@@ -54,6 +58,9 @@ struct WorldListView: View {
             }
             .sheet(isPresented: $isCreatingWorld) {
                 NewWorldSheet()
+            }
+            .sheet(isPresented: $isShowingAbout) {
+                AboutView()
             }
             .fileImporter(isPresented: $isChoosingImportFile, allowedContentTypes: [.encounterWorld]) { result in
                 switch result {

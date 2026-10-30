@@ -9,6 +9,11 @@ import Foundation
 struct DnD5eSystem: RuleSystem {
     let id = RuleSystemID.dnd5e
 
+    var additionalPageKinds: Set<PageKind> { [.characterClass] }
+    var hasContentLibrary: Bool { true }
+
+    static let hitDice = ["d6", "d8", "d10", "d12"]
+
     static let sizes = ["Tiny", "Small", "Medium", "Large", "Huge", "Gargantuan"]
 
     static let alignments = [
@@ -52,6 +57,19 @@ struct DnD5eSystem: RuleSystem {
         .init(key: "core.creatureType", label: "Creature Type", type: .choice(creatureTypes), appliesTo: [.character], group: "Details"),
         .init(key: "core.itemType", label: "Item Type", type: .choice(itemTypes), appliesTo: [.item], group: "Details"),
         .init(key: "core.raceSize", label: "Size", type: .choice(sizes), appliesTo: [.race], group: "Details"),
+
+        // A character's class and level. The class can be a page in the world or a library entry.
+        .init(key: "core.class", label: "Class", type: .contentReference(.characterClass, role: LinkRole.characterClass), appliesTo: [.character], group: "D&D 5e"),
+        .init(key: "dnd5e.classLevel", label: "Class Level", type: .number, appliesTo: [.character], group: "D&D 5e"),
+
+        // Classes
+        .init(key: "dnd5e.hitDie", label: "Hit Die", type: .choice(hitDice), appliesTo: [.characterClass], group: "D&D 5e"),
+        .init(key: "dnd5e.primaryAbility", label: "Primary Ability", type: .text, appliesTo: [.characterClass], group: "D&D 5e"),
+        .init(key: "dnd5e.savingThrows", label: "Saving Throws", type: .text, appliesTo: [.characterClass], group: "D&D 5e"),
+        .init(key: "dnd5e.armorProficiencies", label: "Armor Proficiencies", type: .text, appliesTo: [.characterClass], group: "D&D 5e"),
+        .init(key: "dnd5e.weaponProficiencies", label: "Weapon Proficiencies", type: .text, appliesTo: [.characterClass], group: "D&D 5e"),
+        .init(key: "dnd5e.toolProficiencies", label: "Tool Proficiencies", type: .text, appliesTo: [.characterClass], group: "D&D 5e"),
+        .init(key: "dnd5e.skillChoices", label: "Skill Choices", type: .text, appliesTo: [.characterClass], group: "D&D 5e"),
 
         // Characters and monsters
         .init(key: "dnd5e.size", label: "Size", type: .choice(sizes), appliesTo: [.character], group: "D&D 5e"),

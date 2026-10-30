@@ -1,0 +1,44 @@
+{
+  "formatVersion": 1,
+  "id": "srd52",
+  "name": "SRD 5.2.1",
+  "edition": "5.2.1 (2024 rules)",
+  "attribution": "This work includes material from the System Reference Document 5.2.1 (“SRD 5.2.1”) by Wizards of the Coast LLC, available at https://www.dndbeyond.com/srd. The SRD 5.2.1 is licensed under the Creative Commons Attribution 4.0 International License, available at https://creativecommons.org/licenses/by/4.0/legalcode.",
+  "entries": [
+    {
+      "key": "srd52.race.dwarf",
+      "kind": "race",
+      "name": "Dwarf",
+      "summary": "As a Dwarf, you have these special traits.",
+      "attributes": {
+        "core.raceSize": "Medium",
+        "dnd5e.speed": "30 feet",
+        "dnd5e.darkvision": "120 feet"
+      },
+      "entries": [
+        { "name": "Darkvision", "text": "You have Darkvision with a range of 120 feet." },
+        { "name": "Dwarven Resilience", "text": "You have Resistance to Poison damage. You also have Advantage on saving throws you make to avoid or end the Poisoned condition." },
+        { "name": "Dwarven Toughness", "text": "Your Hit Point maximum increases by 1, and it increases by 1 again whenever you gain a level." },
+        { "name": "Stonecunning", "text": "As a Bonus Action, you gain Tremorsense with a range of 60 feet for 10 minutes. You must be on a stone surface or touching a stone surface to use this Tremorsense. The stone can be natural or worked.\n\nYou can use this Bonus Action a number of times equal to your Proficiency Bonus, and you regain all expended uses when you finish a Long Rest." }
+      ]
+    },
+    {
+      "key": "srd52.class.fighter",
+      "kind": "class",
+      "name": "Fighter",
+      "summary": "As a Fighter, you gain the following class features when you reach the specified Fighter levels.",
+      "attributes": {
+        "dnd5e.hitDie": "d10",
+        "dnd5e.primaryAbility": "Strength or Dexterity",
+        "dnd5e.savingThrows": "Strength and Constitution",
+        "dnd5e.weaponProficiencies": "Simple and Martial weapons",
+        "dnd5e.armorProficiencies": "Light, Medium, and Heavy armor and Shields",
+        "dnd5e.skillChoices": "Choose 2: Acrobatics, Animal Handling, Athletics, History, Insight, Intimidation, Persuasion, Perception, or Survival"
+      },
+      "entries": [
+        { "name": "Fighting Style", "level": 1, "text": "You have honed your martial prowess and gain a Fighting Style feat of your choice (see “Feats”). Defense is recommended.\n\nWhenever you gain a Fighter level, you can replace the feat you chose with a different Fighting Style feat." },
+        { "name": "Second Wind", "level": 1, "text": "You have a limited well of physical and mental stamina that you can draw on. As a Bonus Action, you can use it to regain Hit Points equal to 1d10 plus your Fighter level.\n\nYou can use this feature twice. You regain one expended use when you finish a Short Rest, and you regain all expended uses when you finish a Long Rest.\n\nWhen you reach certain Fighter levels, you gain more uses of this feature, as shown in the Second Wind column of the Fighter Features table." }
+      ]
+    }
+  ]
+}

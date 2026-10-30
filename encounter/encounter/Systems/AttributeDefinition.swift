@@ -13,9 +13,12 @@ enum AttributeType: Hashable {
     case abilityScore
     /// A fixed set of options. The chosen option is stored as `AttributeValue.text`.
     case choice([String])
-    /// A reference to another page of the given kind in the same world. Stored as a `PageLink` with
-    /// the given role (not in `Page.attributes`) so it appears in backlinks.
-    case pageReference(PageKind, role: String)
+    /// A reference to a page of the given kind in the same world, or, where the world's rule system has a
+    /// content library, to a library entry of the matching kind. A page is stored as a `PageLink` with the given
+    /// role, so it appears in backlinks. A library entry is stored by key, in `Page.setLibraryKey(_:role:)`.
+    case contentReference(PageKind, role: String)
+    /// A list of named entries, such as a race's traits or a class's features. `showsLevel` adds a level to each.
+    case entries(showsLevel: Bool)
 }
 
 /// Describes one attribute: how it is labelled, edited and stored.
@@ -34,9 +37,12 @@ struct AttributeDefinition: Identifiable {
 
 /// Attributes that apply regardless of rule system.
 enum CoreAttributes {
+    static let traitsKey = "core.traits"
+    static let featuresKey = "core.features"
+
     static let all: [AttributeDefinition] = [
         // Characters
-        .init(key: "core.race", label: "Race", type: .pageReference(.race, role: "race"), appliesTo: [.character], group: "Details"),
+        .init(key: "core.race", label: "Race", type: .contentReference(.race, role: LinkRole.race), appliesTo: [.character], group: "Details"),
         .init(key: "core.creatureType", label: "Creature Type", type: .text, appliesTo: [.character], group: "Details"),
         .init(key: "core.age", label: "Age", type: .text, appliesTo: [.character], group: "Details"),
         .init(key: "core.occupation", label: "Occupation", type: .text, appliesTo: [.character], group: "Details"),
@@ -62,6 +68,10 @@ enum CoreAttributes {
         // Races
         .init(key: "core.lifespan", label: "Lifespan", type: .text, appliesTo: [.race], group: "Details"),
         .init(key: "core.raceSize", label: "Size", type: .text, appliesTo: [.race], group: "Details"),
+        .init(key: traitsKey, label: "Traits", type: .entries(showsLevel: false), appliesTo: [.race], group: "Traits"),
+
+        // Classes
+        .init(key: featuresKey, label: "Features", type: .entries(showsLevel: true), appliesTo: [.characterClass], group: "Features"),
     ]
 
     static func definitions(for kind: PageKind) -> [AttributeDefinition] {

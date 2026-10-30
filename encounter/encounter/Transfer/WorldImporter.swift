@@ -36,6 +36,7 @@ enum WorldImporter {
         let existingNames = Set(((try? context.fetch(FetchDescriptor<World>())) ?? []).map(\.name))
         let world = World(name: uniqueName(archive.world.name, avoiding: existingNames), summary: archive.world.summary)
         world.systemRaw = archive.world.system
+        world.editionRaw = archive.world.edition ?? LibraryEdition.default.rawValue
         context.insert(world)
         summary.worldName = world.name
 
@@ -72,6 +73,7 @@ enum WorldImporter {
             page.eventOriginRaw = record.eventOrigin
             page.startDate = record.startDate
             page.endDate = record.endDate
+            page.basedOnKey = record.basedOnKey
             context.insert(page)
             page.world = world
             pages[record.id] = page

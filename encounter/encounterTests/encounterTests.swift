@@ -238,7 +238,7 @@ struct PageEditingTests {
 
     @Test func characterDefinesARaceReferenceToRaces() {
         let race = CoreAttributes.definitions(for: .character).first { $0.key == "core.race" }
-        guard case .pageReference(let kind, let role)? = race?.type else {
+        guard case .contentReference(let kind, let role)? = race?.type else {
             Issue.record("Character is missing a race reference attribute")
             return
         }
