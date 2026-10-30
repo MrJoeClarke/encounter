@@ -8,6 +8,9 @@ import Foundation
 enum AttributeType: Hashable {
     case text
     case number
+    case bool
+    /// A D&D-style ability score (1 to 30), shown with its modifier. Stored as `AttributeValue.number`.
+    case abilityScore
     /// A fixed set of options. The chosen option is stored as `AttributeValue.text`.
     case choice([String])
     /// A reference to another page of the given kind in the same world. Stored as a `PageLink` with

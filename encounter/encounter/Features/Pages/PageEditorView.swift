@@ -89,10 +89,11 @@ struct PageEditorView: View {
         let definitions: [AttributeDefinition]
     }
 
-    /// Attributes for this page's kind, sectioned by their group heading in definition order.
+    /// Attributes for this page's kind under its world's rule system, sectioned by group heading in definition order.
     private var groupedDefinitions: [DefinitionGroup] {
         var groups: [DefinitionGroup] = []
-        for definition in CoreAttributes.definitions(for: page.kind) {
+        let system = page.world?.system ?? .none
+        for definition in RuleSystems.definitions(for: page.kind, system: system) {
             let title = String(localized: definition.group)
             if let index = groups.firstIndex(where: { $0.title == title }) {
                 groups[index] = DefinitionGroup(
@@ -117,6 +118,6 @@ struct PageEditorView: View {
             PageEditorView(page: page)
         }
     }
-    .frame(width: 600, height: 1000)
+    .frame(width: 600, height: 1500)
     .modelContainer(container)
 }

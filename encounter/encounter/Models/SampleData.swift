@@ -47,6 +47,17 @@ enum SampleData {
         hero.setLinkedPage(elf, role: "race", in: context)
         guide.setLinkedPage(human, role: "race", in: context)
 
+        hero.setAttributeText("core.creatureType", "Humanoid")
+        hero.setAttributeText("dnd5e.size", "Medium")
+        hero.setAttributeText("dnd5e.alignment", "Neutral Good")
+        hero.setAttributeNumber("dnd5e.armorClass", 15)
+        hero.setAttributeNumber("dnd5e.hitPoints", 38)
+        for (key, score) in [("strength", 10), ("dexterity", 17), ("constitution", 13), ("intelligence", 9), ("wisdom", 14), ("charisma", 12)] {
+            hero.setAttributeNumber("dnd5e.\(key)", Double(score))
+        }
+        wolf.setAttributeText("core.creatureType", "Beast")
+        wolf.setAttributeText("dnd5e.challengeRating", "1")
+
         let portraits: [(red: Double, green: Double, blue: Double)] = [(0.25, 0.45, 0.8), (0.8, 0.45, 0.25), (0.3, 0.7, 0.4)]
         for color in portraits {
             let data = solidImage(width: 600, height: 400, red: color.red, green: color.green, blue: color.blue)

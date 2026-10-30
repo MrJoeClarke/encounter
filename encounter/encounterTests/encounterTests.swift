@@ -482,6 +482,141 @@ struct PageImageRulesTests {
 }
 
 @MainActor
+struct RuleSystemTests {
+    private func keys(_ kind: PageKind, _ system: RuleSystemID) -> [String] {
+        RuleSystems.definitions(for: kind, system: system).map(\.key)
+    }
+
+    @Test func noSystemGivesExactlyTheCoreAttributes() {
+        for kind in PageKind.allCases {
+            #expect(keys(kind, .none) == CoreAttributes.definitions(for: kind).map(\.key))
+        }
+    }
+
+    @Test func mergedDefinitionsNeverRepeatAKey() {
+        for system in RuleSystemID.allCases {
+            for kind in PageKind.allCases {
+                let merged = keys(kind, system)
+                #expect(Set(merged).count == merged.count, "\(system) / \(kind) has duplicate keys")
+            }
+        }
+    }
+
+    @Test func dndAddsStatBlockAttributesToCharacters() {
+        let characterKeys = keys(.character, .dnd5e)
+        for key in [
+            "dnd5e.size", "dnd5e.alignment", "dnd5e.challengeRating", "dnd5e.speed",
+            "dnd5e.armorClass", "dnd5e.hitPoints", "dnd5e.hitDice",
+            "dnd5e.strength", "dnd5e.dexterity", "dnd5e.constitution",
+            "dnd5e.intelligence", "dnd5e.wisdom", "dnd5e.charisma",
+        ] {
+            #expect(characterKeys.contains(key), "missing \(key)")
+        }
+        #expect(!keys(.character, .none).contains("dnd5e.armorClass"))
+    }
+
+    @Test func dndAddsAttributesToOtherKinds() {
+        #expect(keys(.race, .dnd5e).contains("dnd5e.darkvision"))
+        #expect(keys(.race, .dnd5e).contains("dnd5e.languages"))
+        #expect(keys(.race, .dnd5e).contains("dnd5e.speed"))
+        #expect(keys(.item, .dnd5e).contains("dnd5e.rarity"))
+        #expect(keys(.item, .dnd5e).contains("dnd5e.requiresAttunement"))
+        #expect(keys(.organisation, .dnd5e).contains("dnd5e.alignment"))
+        #expect(keys(.place, .dnd5e) == keys(.place, .none))
+        #expect(keys(.event, .dnd5e).isEmpty)
+    }
+
+    @Test func dndOverridesCoreAttributesInPlaceKeepingTheirPosition() throws {
+        let plain = RuleSystems.definitions(for: .character, system: .none)
+        let dnd = RuleSystems.definitions(for: .character, system: .dnd5e)
+
+        let plainIndex = try #require(plain.firstIndex { $0.key == "core.creatureType" })
+        let dndIndex = try #require(dnd.firstIndex { $0.key == "core.creatureType" })
+        #expect(plainIndex == dndIndex)
+
+        guard case .text = plain[plainIndex].type else {
+            Issue.record("Core creature type should be free text")
+            return
+        }
+        guard case .choice(let options) = dnd[dndIndex].type else {
+            Issue.record("D&D creature type should be a picker")
+            return
+        }
+        #expect(options.contains("Beast"))
+        #expect(options.contains("Humanoid"))
+    }
+
+    @Test func dndChoiceListsAreNonEmptyAndHaveNoDuplicates() {
+        for definition in DnD5eSystem().attributes {
+            if case .choice(let options) = definition.type {
+                #expect(!options.isEmpty, "\(definition.key) has no options")
+                #expect(Set(options).count == options.count, "\(definition.key) has duplicate options")
+            }
+        }
+    }
+
+    @Test func everyDefinitionAppliesToAtLeastOneKind() {
+        for system in RuleSystemID.allCases {
+            for definition in RuleSystems.system(for: system).attributes {
+                #expect(!definition.appliesTo.isEmpty, "\(definition.key) applies to nothing")
+            }
+        }
+    }
+
+    @Test func challengeRatingsRunFromZeroThroughThirty() {
+        let ratings = DnD5eSystem.challengeRatings
+        #expect(Array(ratings.prefix(5)) == ["0", "1/8", "1/4", "1/2", "1"])
+        #expect(ratings.last == "30")
+        #expect(ratings.count == 34)
+    }
+
+    @Test func abilityModifiersRoundDownFromTen() {
+        let expected: [Int: Int] = [
+            1: -5, 2: -4, 3: -4, 8: -1, 9: -1, 10: 0, 11: 0, 12: 1, 13: 1, 14: 2,
+            15: 2, 16: 3, 18: 4, 20: 5, 30: 10,
+        ]
+        for (score, modifier) in expected {
+            #expect(DnD5eSystem.abilityModifier(for: score) == modifier, "score \(score)")
+        }
+    }
+
+    @Test func abilityModifierTextShowsSignAndUsesATrueMinus() {
+        #expect(DnD5eSystem.abilityModifierText(for: 16) == "+3")
+        #expect(DnD5eSystem.abilityModifierText(for: 10) == "+0")
+        #expect(DnD5eSystem.abilityModifierText(for: 11) == "+0")
+        #expect(DnD5eSystem.abilityModifierText(for: 8) == "\u{2212}1")
+        #expect(DnD5eSystem.abilityModifierText(for: 1) == "\u{2212}5")
+    }
+
+    @Test func switchingSystemsKeepsStoredValues() throws {
+        let context = ModelContext(try AppSchema.makeContainer(inMemory: true))
+        let world = World(name: "W", system: .dnd5e)
+        context.insert(world)
+        let hero = world.addPage(kind: .character, in: context)
+        hero.setAttributeNumber("dnd5e.armorClass", 17)
+        hero.setAttributeText("core.creatureType", "Humanoid")
+
+        world.system = .none
+        #expect(!RuleSystems.definitions(for: .character, system: world.system).contains { $0.key == "dnd5e.armorClass" })
+        #expect(hero.attributeNumber("dnd5e.armorClass") == 17)
+
+        world.system = .dnd5e
+        #expect(RuleSystems.definitions(for: .character, system: world.system).contains { $0.key == "dnd5e.armorClass" })
+        #expect(hero.attributeNumber("dnd5e.armorClass") == 17)
+        #expect(hero.attributeText("core.creatureType") == "Humanoid")
+    }
+
+    @Test func boolAttributesStoreTrueAndRemoveFalse() {
+        let item = Page(title: "Ring", kind: .item)
+        #expect(!item.attributeBool("dnd5e.requiresAttunement"))
+        item.setAttributeBool("dnd5e.requiresAttunement", true)
+        #expect(item.attributeBool("dnd5e.requiresAttunement"))
+        item.setAttributeBool("dnd5e.requiresAttunement", false)
+        #expect(item.attributes["dnd5e.requiresAttunement"] == nil)
+    }
+}
+
+@MainActor
 struct CalendarTests {
     private func calendar() -> CalendarDefinition {
         CalendarDefinition(

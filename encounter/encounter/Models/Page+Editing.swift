@@ -35,6 +35,15 @@ extension Page {
         attributes[key] = value.map { .number($0) }
     }
 
+    func attributeBool(_ key: String) -> Bool {
+        if case .bool(let value) = attributes[key] { value } else { false }
+    }
+
+    /// False removes the attribute rather than storing it.
+    func setAttributeBool(_ key: String, _ value: Bool) {
+        attributes[key] = value ? .bool(true) : nil
+    }
+
     /// The page this page links to with the given role, if any.
     func linkedPage(role: String) -> Page? {
         outgoingLinks?.first { $0.role == role && !$0.isDeleted }?.target
