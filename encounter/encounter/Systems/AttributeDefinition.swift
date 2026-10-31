@@ -17,6 +17,9 @@ enum AttributeType: Hashable {
     /// content library, to a library entry of the matching kind. A page is stored as a `PageLink` with the given
     /// role, so it appears in backlinks. A library entry is stored by key, in `Page.setLibraryKey(_:role:)`.
     case contentReference(PageKind, role: String)
+    /// A subclass chosen from the library, offered once the page's library class (stored with `classRole`) has
+    /// subclasses. Stored by key, in `Page.setLibraryKey(_:role:)`.
+    case subclassReference(role: String, classRole: String)
     /// A list of named entries, such as a race's traits or a class's features. `showsLevel` adds a level to each.
     case entries(showsLevel: Bool)
 }

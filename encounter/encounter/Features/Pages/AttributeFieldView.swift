@@ -51,6 +51,8 @@ struct AttributeFieldView: View {
             }
         case .contentReference(let kind, let role):
             ContentReferenceField(label: definition.label, kind: kind, role: role, page: page)
+        case .subclassReference(let role, let classRole):
+            SubclassField(label: definition.label, role: role, classRole: classRole, page: page)
         case .entries(let showsLevel):
             EntriesField(definition: definition, page: page, showsLevel: showsLevel)
         case .choice(let options):

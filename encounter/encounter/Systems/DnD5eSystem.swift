@@ -60,6 +60,7 @@ struct DnD5eSystem: RuleSystem {
 
         // A character's class and level. The class can be a page in the world or a library entry.
         .init(key: "core.class", label: "Class", type: .contentReference(.characterClass, role: LinkRole.characterClass), appliesTo: [.character], group: "D&D 5e"),
+        .init(key: "dnd5e.subclass", label: "Subclass", type: .subclassReference(role: "subclass", classRole: LinkRole.characterClass), appliesTo: [.character], group: "D&D 5e"),
         .init(key: "dnd5e.classLevel", label: "Class Level", type: .number, appliesTo: [.character], group: "D&D 5e"),
 
         // Classes

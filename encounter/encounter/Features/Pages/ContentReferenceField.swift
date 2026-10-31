@@ -86,7 +86,8 @@ struct ContentReferenceField: View {
         guard let libraryKind, let world = page.world, RuleSystems.system(for: world.system).hasContentLibrary else {
             return []
         }
-        return Library.shared.entries(libraryKind, in: world.edition)
+        // Races and classes only: a subclass is picked in a field of its own, once the class is chosen.
+        return Library.shared.topLevelEntries(libraryKind, in: world.edition)
     }
 
     private func strayLabel(for key: String) -> String {

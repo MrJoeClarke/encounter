@@ -6,14 +6,6 @@
 import SwiftUI
 import SwiftData
 
-/// An entry in the library list, with the subraces or subclasses that belong to it nested beneath.
-private struct LibraryNode: Identifiable, Hashable {
-    let entry: LibraryEntry
-    let children: [LibraryNode]?
-
-    var id: String { entry.key }
-}
-
 /// The library's races or classes for the world's edition: the list beside the selected entry.
 struct LibraryBrowser: View {
     let world: World
@@ -45,43 +37,36 @@ struct LibraryBrowser: View {
         kind == .race ? world.edition.raceTermPlural : "Classes"
     }
 
-    private var nodes: [LibraryNode] {
-        let library = Library.shared
-        return library.topLevelEntries(kind, in: world.edition).map { entry in
-            let children = library.children(of: entry, in: world.edition)
-            return LibraryNode(
-                entry: entry,
-                children: children.isEmpty ? nil : children.map { LibraryNode(entry: $0, children: nil) }
-            )
-        }
+    private var entries: [LibraryEntry] {
+        Library.shared.topLevelEntries(kind, in: world.edition)
     }
 
+    /// A subrace or subclass is opened from its parent's page, so the list highlights the parent.
     private var selection: Binding<String?> {
         Binding(
-            get: { navigation.selectedLibraryKey },
+            get: {
+                guard let key = navigation.selectedLibraryKey else { return nil }
+                return Library.shared.entry(forKey: key)?.parent ?? key
+            },
             set: { navigation.selectedLibraryKey = $0 }
         )
     }
 
     @ViewBuilder
     private var list: some View {
-        let nodes = nodes
+        let entries = entries
         Group {
-            if nodes.isEmpty {
+            if entries.isEmpty {
                 ContentUnavailableView(
                     "Library Unavailable",
                     systemImage: "books.vertical",
                     description: Text("The \(String(localized: world.edition.title)) library has no entries of this kind.")
                 )
             } else {
-                List(nodes, children: \.children, selection: selection) { node in
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text(node.entry.name)
-                        if node.entry.parent != nil {
-                            Text(node.entry.kind == .subclass ? "Subclass" : "Subrace")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
+                List(selection: selection) {
+                    ForEach(entries) { entry in
+                        LibraryRow(entry: entry)
+                            .tag(entry.key)
                     }
                 }
             }
@@ -97,5 +82,45 @@ struct LibraryBrowser: View {
         } else {
             ContentUnavailableView("No Entry Selected", systemImage: "books.vertical")
         }
+    }
+}
+
+/// A row in the library list, in the same style as the world's page lists: an icon and the name, with a line
+/// of detail beneath.
+private struct LibraryRow: View {
+    let entry: LibraryEntry
+
+    private let iconSize: CGFloat = 40
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: (entry.kind.pageKind ?? .characterClass).systemImage)
+                .foregroundStyle(.secondary)
+                .frame(width: iconSize, height: iconSize)
+                .background(.quaternary, in: RoundedRectangle(cornerRadius: 6))
+            VStack(alignment: .leading, spacing: 2) {
+                Text(entry.name)
+                if let detail {
+                    Text(detail)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+            }
+        }
+    }
+
+    /// For a class, its hit die and primary ability; for a race or species, its size and speed.
+    private var detail: String? {
+        func text(_ key: String) -> String? {
+            if case .text(let value)? = entry.attributes[key], !value.isEmpty { value } else { nil }
+        }
+        let parts: [String?]
+        switch entry.kind {
+        case .class: parts = [text("dnd5e.hitDie").map { String(localized: "Hit die \($0)") }, text("dnd5e.primaryAbility")]
+        case .race, .subclass: parts = [text("core.raceSize"), text("dnd5e.speed")]
+        }
+        let joined = parts.compactMap { $0 }.joined(separator: " · ")
+        return joined.isEmpty ? nil : joined
     }
 }

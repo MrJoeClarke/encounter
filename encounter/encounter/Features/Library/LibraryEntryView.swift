@@ -26,7 +26,7 @@ struct LibraryEntryView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(entry.name)
                         .font(.title2.weight(.semibold))
-                    Text(kindTitle)
+                    Text(entry.kindTitle)
                         .foregroundStyle(.secondary)
                     if !entry.summary.isEmpty {
                         Text(entry.summary)
@@ -97,15 +97,6 @@ struct LibraryEntryView: View {
         }
         .formStyle(.grouped)
         .navigationTitle(entry.name)
-    }
-
-    private var kindTitle: LocalizedStringResource {
-        let edition = LibraryEdition(key: entry.key) ?? world.edition
-        switch entry.kind {
-        case .race: return entry.parent == nil ? edition.raceTermSingular : "Subrace"
-        case .class: return "Class"
-        case .subclass: return "Subclass"
-        }
     }
 
     private var attribution: String? {

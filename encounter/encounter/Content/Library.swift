@@ -75,6 +75,16 @@ final class Library {
         return nil
     }
 
+    /// Entries of any kind whose name matches the search, for mentioning from notes. An empty search matches all.
+    func mentionableEntries(matching search: String, in edition: LibraryEdition, limit: Int) -> [LibraryEntry] {
+        let matches = (pack(for: edition)?.entries ?? []).filter { search.isEmpty || $0.name.localizedStandardContains(search) }
+        return Array(
+            matches
+                .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+                .prefix(limit)
+        )
+    }
+
     func attribution(for edition: LibraryEdition) -> String? {
         pack(for: edition)?.attribution
     }
@@ -134,5 +144,18 @@ extension Library {
     /// The attribute that holds a kind's traits or features.
     private func entriesKey(for kind: PageKind) -> String {
         kind == .characterClass ? CoreAttributes.featuresKey : CoreAttributes.traitsKey
+    }
+}
+
+
+extension LibraryEntry {
+    /// What to call this entry: a class, subclass, subrace, or the edition's word for a race or species.
+    var kindTitle: LocalizedStringResource {
+        let edition = LibraryEdition(key: key) ?? .default
+        switch kind {
+        case .race: return parent == nil ? edition.raceTermSingular : "Subrace"
+        case .class: return "Class"
+        case .subclass: return "Subclass"
+        }
     }
 }

@@ -6,6 +6,7 @@
 import Testing
 import Foundation
 import SwiftData
+import SwiftUI
 @testable import encounter
 
 @MainActor
@@ -671,5 +672,122 @@ struct LibraryTests {
         let (imported, _) = await WorldImporter.importWorld(reread, into: try makeContext())
 
         #expect(imported.edition == .default)
+    }
+
+    // MARK: Mentioning library entries
+
+    private func plainText(_ body: AttributedString) -> String { String(body.characters) }
+
+    @Test func aLibraryMentionURLRoundTripsAndIsNotAPageMention() throws {
+        let url = Mention.url(forLibraryKey: "srd51.race.half-elf")
+
+        #expect(Mention.libraryKey(from: url) == "srd51.race.half-elf")
+        #expect(Mention.pageID(from: url) == nil)
+        #expect(Mention.target(from: url) == .library("srd51.race.half-elf"))
+
+        let id = UUID()
+        #expect(Mention.libraryKey(from: Mention.url(for: id)) == nil)
+        #expect(Mention.target(from: Mention.url(for: id)) == .page(id))
+        #expect(Mention.libraryKey(from: try #require(URL(string: "https://example.com/srd51.race.elf"))) == nil)
+    }
+
+    @Test func insertingALibraryMentionLinksTheNameAndLeavesTheSpaceUnlinked() {
+        let library = makeLibrary()
+        let fighter = library.entry(forKey: "srd51.class.fighter")!
+        var body = AttributedString("Trained as a @Fi")
+        var selection = AttributedTextSelection()
+
+        Mention.insertMention(ofLibraryEntry: fighter, replacing: 13..<16, in: &body, selection: &selection)
+
+        #expect(plainText(body) == "Trained as a Fighter ")
+        #expect(Mention.mentionedLibraryKeys(in: body) == ["srd51.class.fighter"])
+        #expect(Mention.mentionedIDs(in: body).isEmpty)
+        let linked = body.runs.filter { $0.link != nil }.map { String(body[$0.range].characters) }
+        #expect(linked == ["Fighter"])
+    }
+
+    @Test func aLibraryMentionIsDeletedAsOneBlockAndKeepsItsNameWhenAPageIsRenamed() {
+        let library = makeLibrary()
+        let fighter = library.entry(forKey: "srd51.class.fighter")!
+        var old = AttributedString("See ")
+        old.append(Mention.mention(libraryEntry: fighter))
+        old.append(AttributedString(" today"))
+
+        var damaged = AttributedString("See ")
+        var partial = AttributedString("Fighte")
+        partial.link = Mention.url(forLibraryKey: fighter.key)
+        damaged.append(partial)
+        damaged.append(AttributedString(" today"))
+
+        let result = Mention.normalize(old: old, new: damaged)
+        #expect(plainText(result.body) == "See  today")
+        #expect(Mention.mentionedLibraryKeys(in: result.body).isEmpty)
+
+        var refreshed = old
+        Mention.refreshTitles(in: &refreshed, titles: [UUID(): "Anything"])
+        #expect(refreshed == old)
+    }
+
+    @Test func importingLeavesLibraryMentionsAlone() {
+        let library = makeLibrary()
+        let elf = library.entry(forKey: "srd51.race.elf")!
+        var body = AttributedString("A ")
+        body.append(Mention.mention(libraryEntry: elf))
+
+        Mention.remapMentions(in: &body, using: [:])
+
+        #expect(Mention.mentionedLibraryKeys(in: body) == ["srd51.race.elf"])
+    }
+
+    @Test func libraryEntriesAreFoundByNameForMentioning() {
+        let library = makeLibrary()
+
+        #expect(library.mentionableEntries(matching: "fight", in: .srd51, limit: 8).map(\.name) == ["Fighter"])
+        #expect(library.mentionableEntries(matching: "dwarf", in: .srd51, limit: 8).map(\.name) == ["Dwarf", "Hill Dwarf"])
+        #expect(library.mentionableEntries(matching: "", in: .srd51, limit: 3).count == 3)
+        #expect(library.mentionableEntries(matching: "fight", in: .srd52, limit: 8).isEmpty)
+        // Subclasses can be mentioned too.
+        #expect(library.mentionableEntries(matching: "champ", in: .srd51, limit: 8).map(\.kind) == [.subclass])
+    }
+
+    @Test func entriesAreNamedByTheirKind() {
+        let library = makeLibrary()
+        #expect(String(localized: library.entry(forKey: "srd51.class.fighter")!.kindTitle) == "Class")
+        #expect(String(localized: library.entry(forKey: "srd51.subclass.champion")!.kindTitle) == "Subclass")
+        #expect(String(localized: library.entry(forKey: "srd51.race.elf")!.kindTitle) == "Race")
+        #expect(String(localized: library.entry(forKey: "srd51.race.hill-dwarf")!.kindTitle) == "Subrace")
+    }
+
+    @Test func aLinkToALibraryEntryOpensItsListAndEntry() throws {
+        let context = try makeContext()
+        let world = makeWorld(in: context)
+        let navigation = WorldNavigation()
+        let router = LinkRouter()
+        router.activate(world: world, navigation: navigation)
+
+        #expect(router.open(Mention.url(forLibraryKey: "srd51.class.fighter")))
+        #expect(navigation.selection == .library(.class))
+        #expect(navigation.selectedLibraryKey == "srd51.class.fighter")
+        #expect(!router.open(Mention.url(forLibraryKey: "srd51.class.nobody")))
+    }
+
+    // MARK: Subclass of a character
+
+    @Test func aCharacterHasASubclassFieldOnlyUnderDnD() {
+        func keys(_ system: RuleSystemID) -> [String] {
+            RuleSystems.definitions(for: .character, system: system).map(\.key)
+        }
+        let dnd = keys(.dnd5e)
+        #expect(dnd.contains("dnd5e.subclass"))
+        // The subclass comes straight after the class.
+        let classIndex = dnd.firstIndex(of: "core.class")
+        #expect(classIndex.map { dnd[$0 + 1] } == "dnd5e.subclass")
+        #expect(!keys(.none).contains("dnd5e.subclass"))
+    }
+
+    @Test func theClassPickerOffersClassesNotSubclasses() {
+        let classes = Library.shared.topLevelEntries(.class, in: .srd52)
+        #expect(classes.count == 12)
+        #expect(classes.allSatisfy { $0.kind == .class })
     }
 }

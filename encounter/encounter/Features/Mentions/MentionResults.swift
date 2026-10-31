@@ -6,19 +6,34 @@
 import SwiftUI
 import SwiftData
 
-/// Pages in a world that match a search, to choose one to mention. Used for the suggestions that appear
-/// while typing `@` and for the Mention Page picker.
+/// What can be mentioned: a page in the world, or an entry in the content library.
+enum MentionChoice: Identifiable {
+    case page(Page)
+    case library(LibraryEntry)
+
+    var id: String {
+        switch self {
+        case .page(let page): "page/\(page.id.uuidString)"
+        case .library(let entry): "library/\(entry.key)"
+        }
+    }
+}
+
+/// Pages in a world, and library entries where its rule system has a library, that match a search, to choose
+/// one to mention. Used for the suggestions that appear while typing `@` and for the Mention picker.
 struct MentionResults: View {
     let showsWhenEmpty: Bool
-    let onSelect: (Page) -> Void
+    let libraryEntries: [LibraryEntry]
+    let onSelect: (MentionChoice) -> Void
 
     @Query private var pages: [Page]
 
     /// - Parameters:
     ///   - excluding: The page being edited, which can't mention itself.
-    ///   - search: Matched against titles. Empty matches every page.
+    ///   - search: Matched against titles and library names. Empty matches every page, and every library
+    ///     entry too if `showsWhenEmpty` (the picker), so typing a bare `@` suggests pages only.
     ///   - showsWhenEmpty: Whether to say so when nothing matches, or show nothing at all.
-    init(world: World, excluding pageID: UUID, search: String, limit: Int = 8, showsWhenEmpty: Bool, onSelect: @escaping (Page) -> Void) {
+    init(world: World, excluding pageID: UUID, search: String, limit: Int = 8, showsWhenEmpty: Bool, onSelect: @escaping (MentionChoice) -> Void) {
         self.showsWhenEmpty = showsWhenEmpty
         self.onSelect = onSelect
 
@@ -32,10 +47,21 @@ struct MentionResults: View {
         var descriptor = FetchDescriptor<Page>(predicate: predicate, sortBy: [SortDescriptor(\.title)])
         descriptor.fetchLimit = limit
         _pages = Query(descriptor)
+
+        if RuleSystems.system(for: world.system).hasContentLibrary, !search.isEmpty || showsWhenEmpty {
+            libraryEntries = Library.shared.mentionableEntries(matching: search, in: world.edition, limit: limit)
+        } else {
+            libraryEntries = []
+        }
+    }
+
+    private var choices: [MentionChoice] {
+        pages.map(MentionChoice.page) + libraryEntries.map(MentionChoice.library)
     }
 
     var body: some View {
-        if pages.isEmpty {
+        let choices = choices
+        if choices.isEmpty {
             if showsWhenEmpty {
                 Text("No matching pages.")
                     .foregroundStyle(.secondary)
@@ -43,15 +69,15 @@ struct MentionResults: View {
             }
         } else {
             VStack(alignment: .leading, spacing: 0) {
-                ForEach(pages) { page in
+                ForEach(choices) { choice in
                     Button {
-                        onSelect(page)
+                        onSelect(choice)
                     } label: {
-                        MentionResultRow(page: page)
+                        MentionResultRow(choice: choice)
                             .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
-                    if page.id != pages.last?.id {
+                    if choice.id != choices.last?.id {
                         Divider()
                     }
                 }
@@ -61,14 +87,14 @@ struct MentionResults: View {
 }
 
 private struct MentionResultRow: View {
-    let page: Page
+    let choice: MentionChoice
 
     var body: some View {
         HStack(spacing: 10) {
             thumbnail
             VStack(alignment: .leading, spacing: 1) {
-                Text(Mention.displayTitle(of: page.title))
-                Text(page.kind.singularTitle)
+                Text(title)
+                Text(subtitle)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -77,18 +103,41 @@ private struct MentionResultRow: View {
         .padding(.vertical, 6)
     }
 
+    private var title: String {
+        switch choice {
+        case .page(let page): Mention.displayTitle(of: page.title)
+        case .library(let entry): entry.name
+        }
+    }
+
+    private var subtitle: LocalizedStringResource {
+        switch choice {
+        case .page(let page): page.kind.singularTitle
+        case .library(let entry): "Library · \(String(localized: entry.kindTitle))"
+        }
+    }
+
     @ViewBuilder
     private var thumbnail: some View {
-        if let data = page.defaultImage?.thumbnailData {
-            DataImage(data: data)
-                .frame(width: 28, height: 28)
-                .clipShape(RoundedRectangle(cornerRadius: 5))
-        } else {
-            Image(systemName: page.kind.systemImage)
-                .foregroundStyle(.secondary)
-                .frame(width: 28, height: 28)
-                .background(.quaternary, in: RoundedRectangle(cornerRadius: 5))
+        switch choice {
+        case .page(let page):
+            if let data = page.defaultImage?.thumbnailData {
+                DataImage(data: data)
+                    .frame(width: 28, height: 28)
+                    .clipShape(RoundedRectangle(cornerRadius: 5))
+            } else {
+                icon(page.kind.systemImage)
+            }
+        case .library(let entry):
+            icon((entry.kind.pageKind ?? .characterClass).systemImage)
         }
+    }
+
+    private func icon(_ name: String) -> some View {
+        Image(systemName: name)
+            .foregroundStyle(.secondary)
+            .frame(width: 28, height: 28)
+            .background(.quaternary, in: RoundedRectangle(cornerRadius: 5))
     }
 }
 
@@ -96,7 +145,7 @@ private struct MentionResultRow: View {
 struct MentionPickerSheet: View {
     let world: World
     let pageID: UUID
-    let onSelect: (Page) -> Void
+    let onSelect: (MentionChoice) -> Void
 
     @Environment(\.dismiss) private var dismiss
     @State private var search = ""
@@ -104,11 +153,11 @@ struct MentionPickerSheet: View {
     var body: some View {
         NavigationStack {
             VStack(alignment: .leading, spacing: 12) {
-                TextField("Search pages", text: $search)
+                TextField("Search pages and library", text: $search)
                     .textFieldStyle(.roundedBorder)
                 ScrollView {
-                    MentionResults(world: world, excluding: pageID, search: search, limit: 30, showsWhenEmpty: true) { page in
-                        onSelect(page)
+                    MentionResults(world: world, excluding: pageID, search: search, limit: 30, showsWhenEmpty: true) { choice in
+                        onSelect(choice)
                         dismiss()
                     }
                 }
