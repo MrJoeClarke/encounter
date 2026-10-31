@@ -198,13 +198,60 @@ struct LibraryTests {
 
     @Test func theBundledFighterHasItsFeaturesAtTheRightLevels() throws {
         let fighter51 = try #require(Library.shared.entry(forKey: "srd51.class.fighter"))
-        #expect(fighter51.entries.map(\.name) == ["Second Wind", "Action Surge", "Martial Archetype", "Ability Score Improvement", "Extra Attack"])
-        #expect(fighter51.entries.map(\.level) == [1, 2, 3, 4, 5])
+        #expect(fighter51.entries.map(\.name) == ["Fighting Style", "Second Wind", "Action Surge", "Martial Archetype", "Ability Score Improvement", "Extra Attack", "Indomitable"])
+        #expect(fighter51.entries.map(\.level) == [1, 1, 2, 3, 4, 5, 9])
         #expect(fighter51.attributes["dnd5e.hitDie"] == .text("d10"))
 
         let fighter52 = try #require(Library.shared.entry(forKey: "srd52.class.fighter"))
-        #expect(fighter52.entries.map(\.name) == ["Fighting Style", "Second Wind"])
+        #expect(fighter52.entries.prefix(3).map(\.name) == ["Fighting Style", "Second Wind", "Weapon Mastery"])
+        #expect(fighter52.entries.map(\.level).first == 1)
+        #expect(fighter52.entries.contains { $0.name == "Fighter Subclass" && $0.level == 3 })
+        #expect(fighter52.entries.contains { $0.name == "Three Extra Attacks" && $0.level == 20 })
         #expect(fighter52.attributes["dnd5e.primaryAbility"] == .text("Strength or Dexterity"))
+    }
+
+    @Test func srd51HasAllTheRacesAndClassesWithOneSubclassEach() throws {
+        let library = Library.shared
+        let races = library.topLevelEntries(.race, in: .srd51).map(\.name)
+        #expect(Set(races) == ["Dwarf", "Elf", "Halfling", "Human", "Dragonborn", "Gnome", "Half-Elf", "Half-Orc", "Tiefling"])
+        let subraces = library.entries(.race, in: .srd51).filter { $0.parent != nil }.map(\.name)
+        #expect(Set(subraces) == ["Hill Dwarf", "High Elf", "Lightfoot", "Rock Gnome"])
+
+        let classes = library.topLevelEntries(.class, in: .srd51)
+        #expect(Set(classes.map(\.name)) == ["Barbarian", "Bard", "Cleric", "Druid", "Fighter", "Monk", "Paladin", "Ranger", "Rogue", "Sorcerer", "Warlock", "Wizard"])
+        for entry in classes {
+            #expect(library.children(of: entry, in: .srd51).count == 1, "\(entry.name) should have one subclass")
+            #expect(["d6", "d8", "d10", "d12"].map { AttributeValue.text($0) }.contains { $0 == entry.attributes["dnd5e.hitDie"] }, "\(entry.name) hit die")
+            for key in ["dnd5e.armorProficiencies", "dnd5e.weaponProficiencies", "dnd5e.toolProficiencies", "dnd5e.savingThrows", "dnd5e.skillChoices"] {
+                #expect(entry.attributes[key] != nil, "\(entry.name) is missing \(key)")
+            }
+            #expect(entry.entries.contains { $0.name == "Ability Score Improvement" && $0.level == 4 })
+            #expect(entry.entries.allSatisfy { !$0.text.isEmpty })
+        }
+    }
+
+    @Test func srd52HasAllTheSpeciesAndClassesWithOneSubclassEach() throws {
+        let library = Library.shared
+        let species = library.topLevelEntries(.race, in: .srd52).map(\.name)
+        #expect(Set(species) == ["Dragonborn", "Dwarf", "Elf", "Gnome", "Goliath", "Halfling", "Human", "Orc", "Tiefling"])
+        #expect(library.entries(.race, in: .srd52).count == 9)
+
+        let classes = library.topLevelEntries(.class, in: .srd52)
+        #expect(Set(classes.map(\.name)) == ["Barbarian", "Bard", "Cleric", "Druid", "Fighter", "Monk", "Paladin", "Ranger", "Rogue", "Sorcerer", "Warlock", "Wizard"])
+        for entry in classes {
+            #expect(library.children(of: entry, in: .srd52).count == 1, "\(entry.name) should have one subclass")
+            #expect(["d6", "d8", "d10", "d12"].map { AttributeValue.text($0) }.contains { $0 == entry.attributes["dnd5e.hitDie"] }, "\(entry.name) hit die")
+            for key in ["dnd5e.primaryAbility", "dnd5e.savingThrows", "dnd5e.skillChoices", "dnd5e.weaponProficiencies", "dnd5e.armorProficiencies"] {
+                #expect(entry.attributes[key] != nil, "\(entry.name) is missing \(key)")
+            }
+            // Every class gets a subclass at 3, an Ability Score Improvement at 4 and an Epic Boon at 19, except the one that
+            // gains Epic Boon as part of a different feature.
+            #expect(entry.entries.contains { $0.name.hasSuffix("Subclass") && $0.level == 3 }, "\(entry.name) subclass choice")
+            #expect(entry.entries.contains { $0.name == "Ability Score Improvement" && $0.level == 4 })
+            #expect(entry.entries.contains { $0.name == "Epic Boon" && $0.level == 19 })
+            #expect(entry.entries.allSatisfy { !$0.text.isEmpty })
+            #expect(entry.entries.map { $0.level ?? 0 } == entry.entries.map { $0.level ?? 0 }.sorted(), "\(entry.name) features are in level order")
+        }
     }
 
     @Test func theBundledDwarfAndHillDwarfAreLinked() throws {

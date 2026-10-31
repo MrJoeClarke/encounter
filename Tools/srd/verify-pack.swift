@@ -66,21 +66,58 @@ guard let document = PDFDocument(url: URL(fileURLWithPath: arguments[2])) else {
     exit(2)
 }
 
+// Read in reading order, as the converter does, since the PDF's own order of the text isn't the order it's read in.
 var pdfText = ""
 for index in 0..<document.pageCount {
-    pdfText += (document.page(at: index)?.string ?? "") + "\n"
+    guard let page = document.page(at: index) else { continue }
+    pdfText += readingOrder(of: page, profile: pack.id == "srd52" ? srd52Profile : srd51Profile).map(\.text).joined(separator: "\n") + "\n"
 }
 let source = normalise(pdfText, joiningSplitWords: true)
 
 var checked = 0
 var failures: [String] = []
 
+/// Notes about passages that matched with gaps, for a person to look at.
+var notes: [String] = []
+
+/// A passage is found if it appears in the PDF's text in order. The PDF can put other things in the middle of a
+/// passage, such as a table or a sidebar between two pages, so it may be found in several runs with gaps between.
+/// Each run must be at least four words long, and what the gaps skip over is reported.
 func check(_ text: String, describing label: String) {
     checked += 1
-    // Paragraph breaks in the pack are blank lines. The PDF has no marker for them, so they are just whitespace.
-    if !source.contains(normalise(text, joiningSplitWords: false)) {
-        failures.append("\(label): \(text.prefix(80))…")
+    let wanted = normalise(text, joiningSplitWords: false)
+    if source.contains(wanted) { return }
+
+    let words = wanted.split(separator: " ").map(String.init)
+    var index = 0
+    var position = source.startIndex
+    var skipped: [String] = []
+    let maxGap = 6000
+    while index < words.count {
+        // The longest run of the next words that appears soon after the last one.
+        var low = 0, high = words.count - index
+        let searchEnd = index == 0 ? source.endIndex : source.index(position, offsetBy: min(maxGap, source.distance(from: position, to: source.endIndex)))
+        while low < high {
+            let middle = (low + high + 1) / 2
+            let run = words[index..<(index + middle)].joined(separator: " ")
+            if source.range(of: run, range: position..<searchEnd) != nil { low = middle } else { high = middle - 1 }
+        }
+        let remaining = words.count - index
+        guard low >= min(4, remaining) else {
+            let matched = words[..<index].suffix(6).joined(separator: " ")
+            let differs = words[index...].prefix(8).joined(separator: " ")
+            failures.append("\(label): matches the PDF up to “…\(matched)”, then the pack has “\(differs)…”")
+            return
+        }
+        let run = words[index..<(index + low)].joined(separator: " ")
+        let found = source.range(of: run, range: position..<searchEnd)!
+        if found.lowerBound > position, index > 0 {
+            skipped.append(String(source[position..<found.lowerBound]).prefix(70) + "…")
+        }
+        position = found.upperBound
+        index += low
     }
+    notes.append("\(label): found with \(skipped.count) gap(s): " + skipped.map { "“\($0)”" }.joined(separator: ", "))
 }
 
 check(pack.attribution, describing: "attribution")
@@ -94,6 +131,10 @@ for entry in pack.entries {
 }
 
 print("\(pack.id): checked \(checked) passages against \(arguments[2])")
+if !notes.isEmpty {
+    print("\(notes.count) passage(s) are in the PDF with other text in the middle. Check that what was skipped isn't part of them:")
+    for note in notes { print("  - \(note)") }
+}
 if failures.isEmpty {
     print("All passages appear word for word in the PDF.")
 } else {
