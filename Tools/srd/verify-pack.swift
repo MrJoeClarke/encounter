@@ -45,6 +45,7 @@ struct Feature: Decodable {
 func normalise(_ text: String, joiningSplitWords: Bool) -> String {
     var result = text
         .replacingOccurrences(of: "Dexterit y", with: "Dexterity")   // a gap in the PDF's own text
+        .replacingOccurrences(of: "SplASh", with: "Splash")
         .replacingOccurrences(of: "\u{00AD}", with: "")    // soft hyphens
         .replacingOccurrences(of: "\u{2010}", with: "-")   // hyphen
         .replacingOccurrences(of: "\u{2011}", with: "-")   // non-breaking hyphen
@@ -135,7 +136,9 @@ func check(_ text: String, describing label: String) {
 }
 
 /// Attributes that are made from several parts of the text rather than copied, such as a feat's category without its prerequisite.
-func isWorkedOut(_ name: String) -> Bool { name == "dnd5e.featCategory" || name == "dnd5e.featPrerequisite" }
+func isWorkedOut(_ name: String) -> Bool {
+    ["dnd5e.featCategory", "dnd5e.featPrerequisite", "dnd5e.spellClasses", "dnd5e.spellSchool"].contains(name)
+}
 
 check(pack.attribution, describing: "attribution")
 for entry in pack.entries {

@@ -123,7 +123,7 @@ private struct LibraryRow: View {
         case .background: parts = [text("dnd5e.backgroundSkills")]
         case .feat: parts = [text("dnd5e.featCategory"), text("dnd5e.featPrerequisite")]
         case .equipment: parts = [text("dnd5e.equipmentCategory"), text("dnd5e.cost")]
-        case .spell: parts = []
+        case .spell: parts = [entry.spellHeadline, text("dnd5e.spellClasses")]
         }
         let joined = parts.compactMap { $0 }.joined(separator: " · ")
         return joined.isEmpty ? nil : joined

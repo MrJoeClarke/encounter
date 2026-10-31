@@ -9,7 +9,7 @@ import Foundation
 struct DnD5eSystem: RuleSystem {
     let id = RuleSystemID.dnd5e
 
-    var additionalPageKinds: Set<PageKind> { [.characterClass, .background, .feat] }
+    var additionalPageKinds: Set<PageKind> { [.characterClass, .background, .feat, .spell] }
     var hasContentLibrary: Bool { true }
 
     static let hitDice = ["d6", "d8", "d10", "d12"]
@@ -92,6 +92,16 @@ struct DnD5eSystem: RuleSystem {
         .init(key: "dnd5e.strengthRequirement", label: "Strength Needed", type: .text, appliesTo: [.item], group: "D&D 5e"),
         .init(key: "dnd5e.stealth", label: "Stealth", type: .text, appliesTo: [.item], group: "D&D 5e"),
         .init(key: "dnd5e.toolAbility", label: "Tool Ability", type: .text, appliesTo: [.item], group: "D&D 5e"),
+
+        // Spells
+        .init(key: "dnd5e.spellLevel", label: "Level", type: .number, appliesTo: [.spell], group: "D&D 5e"),
+        .init(key: "dnd5e.spellSchool", label: "School", type: .text, appliesTo: [.spell], group: "D&D 5e"),
+        .init(key: "dnd5e.spellClasses", label: "Classes", type: .text, appliesTo: [.spell], group: "D&D 5e"),
+        .init(key: "dnd5e.castingTime", label: "Casting Time", type: .text, appliesTo: [.spell], group: "D&D 5e"),
+        .init(key: "dnd5e.spellRange", label: "Range", type: .text, appliesTo: [.spell], group: "D&D 5e"),
+        .init(key: "dnd5e.components", label: "Components", type: .text, appliesTo: [.spell], group: "D&D 5e"),
+        .init(key: "dnd5e.duration", label: "Duration", type: .text, appliesTo: [.spell], group: "D&D 5e"),
+        .init(key: "dnd5e.ritual", label: "Ritual", type: .bool, appliesTo: [.spell], group: "D&D 5e"),
 
         // Feats
         .init(key: "dnd5e.featCategory", label: "Category", type: .text, appliesTo: [.feat], group: "D&D 5e"),

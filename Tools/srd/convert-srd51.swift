@@ -905,6 +905,141 @@ func finishEquipment(_ rows: [PackEntry], packs: [String]) {
 
 readEquipment()
 
+// MARK: Spells
+
+/// Every spell, from the Spell Descriptions, with the classes that have it from the Spell Lists.
+func readSpells() {
+    var classesOfSpell: [String: [String]] = [:]
+    var descriptionLines: [Line] = []
+    var section = ""
+    var listClass: String?
+    var listLevel = 0
+    var done = false
+
+    for index in 0..<document.pageCount where !done {
+        guard let page = document.page(at: index) else { continue }
+        for line in readingOrder(of: page, profile: srd51Profile) {
+            let text = cleanLine(line.text)
+            if case .heading(let level) = line.kind {
+                if level <= 2, !section.isEmpty, section == "Spell Descriptions" { done = true; break }
+                if level == 2 { section = text; listClass = nil }
+                else if section == "Spell Lists", level == 3, text.hasSuffix(" Spells") { listClass = String(text.dropLast(" Spells".count)) }
+                else if section == "Spell Lists", level == 4 {
+                    listLevel = text.hasPrefix("Cantrips") ? 0 : Int(text.prefix { $0.isNumber }) ?? 0
+                }
+            }
+            if section == "Spell Lists", let listClass, case .body = line.kind, !text.isEmpty {
+                classesOfSpell[text.replacingOccurrences(of: "'", with: "’"), default: []].append(listClass)
+            }
+            if section == "Spell Descriptions" { descriptionLines.append(line) }
+        }
+    }
+    _ = listLevel
+
+    // The type line: "2nd-level evocation", "Conjuration cantrip", "1st-level divination (ritual)".
+    let typeLine = try! NSRegularExpression(pattern: "^(?:(\\d)(?:st|nd|rd|th)-level ([a-z]+)|([A-Z][a-z]+) cantrip)( \\(ritual\\))?$")
+    let labels = ["Casting Time:", "Range:", "Components:", "Duration:"]
+    let keys = ["dnd5e.castingTime", "dnd5e.spellRange", "dnd5e.components", "dnd5e.duration"]
+
+    struct Draft { var name: String; var level = 0; var school = ""; var ritual = false; var facts: [String: String] = [:]; var lastLabel: String?; var paragraphs: [String] = []; var tableRows: [String] = []; var current = ""; var base = 0.0 }
+    var drafts: [Draft] = []
+    var draft: Draft?
+
+    func flushParagraph() {
+        guard var d = draft else { return }
+        if !d.current.isEmpty { d.paragraphs.append(d.current); d.current = "" }
+        if !d.tableRows.isEmpty { d.paragraphs.append(d.tableRows.joined(separator: "\n")); d.tableRows = [] }
+        draft = d
+    }
+    func finishDraft() {
+        flushParagraph()
+        if let d = draft { drafts.append(d) }
+        draft = nil
+    }
+
+    for line in descriptionLines {
+        let text = cleanLine(line.text)
+        switch line.kind {
+        case .heading(4):
+            finishDraft()
+            draft = Draft(name: text)
+        case .body, .table:
+            guard var d = draft else { continue }
+            if d.school.isEmpty {
+                let range = NSRange(text.startIndex..., in: text)
+                if let match = typeLine.firstMatch(in: text, range: range) {
+                    func group(_ n: Int) -> String? { match.range(at: n).location == NSNotFound ? nil : (text as NSString).substring(with: match.range(at: n)) }
+                    if let level = group(1) { d.level = Int(level) ?? 0; d.school = group(2) ?? "" } else { d.level = 0; d.school = (group(3) ?? "").lowercased() }
+                    d.ritual = group(4) != nil
+                    draft = d
+                } else { review.append("\(d.name): type line not understood: \(text)") }
+                continue
+            }
+            // The SRD has "Component:" once, for "Components:".
+            let text = text.hasPrefix("Component: ") ? "Components: " + text.dropFirst("Component: ".count) : text
+            if let label = labels.first(where: { text.hasPrefix($0) }) {
+                d.facts[label] = String(text.dropFirst(label.count)).trimmingCharacters(in: .whitespaces)
+                d.lastLabel = label
+                draft = d
+                continue
+            }
+            // A fact can wrap onto the next line, such as a long list of components.
+            if let label = d.lastLabel, d.paragraphs.isEmpty, d.current.isEmpty, d.tableRows.isEmpty, line.minX - (line.minX < 300 ? 57.6 : 328.6) > 5, case .body = line.kind {
+                appendWrapped51(&d.facts[label]!, text)
+                draft = d
+                continue
+            }
+            d.lastLabel = nil
+            draft = d
+            if case .table = line.kind {
+                if !d.current.isEmpty { d.paragraphs.append(d.current); draft?.current = ""; draft?.paragraphs = d.paragraphs }
+                draft?.tableRows.append(text)
+                continue
+            }
+            flushTableRows(&draft)
+            // The first line of a paragraph is indented, and a bullet starts one of its own.
+            let indented = line.minX - (line.minX < 300 ? 57.6 : 328.6) > 5
+            let previousEndedSentence = draft?.current.last.map { ".!?:”\")".contains($0) } ?? true
+            if (draft?.current.isEmpty ?? true) || text.hasPrefix("•") || (indented && previousEndedSentence) {
+                if let current = draft?.current, !current.isEmpty { draft?.paragraphs.append(current) }
+                draft?.current = text
+            } else {
+                appendWrapped51(&draft!.current, text)
+            }
+        default:
+            break
+        }
+    }
+    finishDraft()
+
+    func flushTableRows(_ draft: inout Draft?) {
+        if let rows = draft?.tableRows, !rows.isEmpty {
+            draft?.paragraphs.append(rows.joined(separator: "\n"))
+            draft?.tableRows = []
+        }
+    }
+
+    var unlisted: [String] = []
+    for d in drafts {
+        var attributes: [(String, String)] = [("dnd5e.spellLevel", String(d.level)), ("dnd5e.spellSchool", d.school.prefix(1).uppercased() + d.school.dropFirst())]
+        let classes = classesOfSpell[d.name] ?? []
+        if classes.isEmpty { unlisted.append(d.name) } else { attributes.append(("dnd5e.spellClasses", classes.sorted().joined(separator: ", "))) }
+        for (label, key) in zip(labels, keys) {
+            if let value = d.facts[label] { attributes.append((key, value)) } else { review.append("\(d.name): no \(label)") }
+        }
+        if d.ritual { attributes.append(("dnd5e.ritual", "true")) }
+        entries.append(PackEntry(key: "srd51.spell.\(slug(d.name))", kind: "spell", name: d.name, parent: nil,
+                                 summary: d.paragraphs.joined(separator: "\n\n"), attributes: attributes, features: []))
+    }
+    let names = Set(drafts.map(\.name))
+    let missing = classesOfSpell.keys.filter { !names.contains($0) }.sorted()
+    report.append("Spells (\(drafts.count)): \(Dictionary(grouping: drafts, by: \.level).sorted { $0.key < $1.key }.map { "L\($0.key) \($0.value.count)" }.joined(separator: ", "))")
+    if !unlisted.isEmpty { review.append("Spells on no class list: \(unlisted.joined(separator: ", "))") }
+    if !missing.isEmpty { review.append("On a class list but not described: \(missing.joined(separator: ", "))") }
+}
+
+readSpells()
+
 // MARK: Writing the pack
 
 let attribution = "This work includes material taken from the System Reference Document 5.1 (“SRD 5.1”) by Wizards of the Coast LLC and available at https://dnd.wizards.com/resources/systems-reference-document. The SRD 5.1 is licensed under the Creative Commons Attribution 4.0 International License available at https://creativecommons.org/licenses/by/4.0/legalcode."
@@ -917,7 +1052,7 @@ for entry in entries {
     if !entry.summary.isEmpty { lines.append("      \"summary\": \(jsonString(entry.summary)),") }
     if !entry.attributes.isEmpty {
         lines.append("      \"attributes\": {")
-        lines.append(entry.attributes.map { "        \(jsonString($0.0)): \(jsonString($0.1))" }.joined(separator: ",\n"))
+        lines.append(entry.attributes.map { "        \(jsonString($0.0)): \(jsonValue(key: $0.0, value: $0.1))" }.joined(separator: ",\n"))
         lines.append("      },")
     }
     lines.append("      \"entries\": [")

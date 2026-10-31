@@ -26,6 +26,9 @@ struct Line {
     var minX: Double
     var maxX: Double
     var y: Double
+    /// The first font in the line that carries meaning, such as "GillSans-SemiBold", and its size.
+    var fontName = ""
+    var fontSize = 0.0
 }
 
 /// How to read the lines of one edition's PDF: what each font means, and whether the page's numbers can be dropped.
@@ -111,8 +114,17 @@ func readingOrder(of page: PDFPage, profile: PageProfile) -> [Line] {
         guard let attributed = part.attributedString, let string = part.string,
               !string.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { continue }
         let bounds = part.bounds(for: page)
-        lines.append(Line(kind: profile.classify(attributed), text: string.trimmingCharacters(in: .newlines),
-                          minX: bounds.minX, maxX: bounds.maxX, y: bounds.maxY))
+        var line = Line(kind: profile.classify(attributed), text: string.trimmingCharacters(in: .newlines),
+                        minX: bounds.minX, maxX: bounds.maxX, y: bounds.maxY)
+        attributed.enumerateAttribute(.font, in: NSRange(location: 0, length: attributed.length)) { value, _, stop in
+            let (name, size) = fontDetails(value)
+            if name.hasPrefix("Gill") || name.hasPrefix("Helvetica") {
+                line.fontName = name
+                line.fontSize = size
+                stop.pointee = true
+            }
+        }
+        lines.append(line)
     }
     lines.removeAll { if case .ignored = $0.kind { return true } else { return false } }
     if profile.readsInStreamOrder { return lines }
@@ -154,6 +166,7 @@ func cleanLine(_ raw: String) -> String {
         .replacingOccurrences(of: "-?\u{00AD}?[\u{2010}\u{2011}]+", with: "-", options: .regularExpression)
         .replacingOccurrences(of: "\u{00AD}", with: "")
         .replacingOccurrences(of: "Dexterit y", with: "Dexterity")   // a gap in the PDF's own text
+        .replacingOccurrences(of: "SplASh", with: "Splash")   // another, in a spell's name
     line = line.replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
     return line.trimmingCharacters(in: .whitespaces)
 }
@@ -169,4 +182,13 @@ func jsonString(_ value: String) -> String {
     guard let data = try? JSONSerialization.data(withJSONObject: [value], options: [.withoutEscapingSlashes]),
           let text = String(data: data, encoding: .utf8) else { return "\"\"" }
     return String(text.dropFirst().dropLast())
+}
+
+/// Attributes whose values are numbers or flags in a pack, not text.
+let numberAttributeKeys: Set<String> = ["dnd5e.spellLevel"]
+let flagAttributeKeys: Set<String> = ["dnd5e.ritual"]
+
+/// A value as it's written in a pack's JSON.
+func jsonValue(key: String, value: String) -> String {
+    numberAttributeKeys.contains(key) || flagAttributeKeys.contains(key) ? value : jsonString(value)
 }

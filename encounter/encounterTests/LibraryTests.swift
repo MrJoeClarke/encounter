@@ -557,7 +557,7 @@ struct LibraryTests {
     @Test func onlyDnDHasALibraryAndClasses() {
         #expect(RuleSystems.system(for: .dnd5e).hasContentLibrary)
         #expect(!RuleSystems.system(for: .none).hasContentLibrary)
-        #expect(RuleSystems.system(for: .dnd5e).additionalPageKinds == [.characterClass, .background, .feat])
+        #expect(RuleSystems.system(for: .dnd5e).additionalPageKinds == [.characterClass, .background, .feat, .spell])
         #expect(RuleSystems.system(for: .none).additionalPageKinds.isEmpty)
     }
 
@@ -1068,5 +1068,93 @@ struct LibraryTests {
         for edition in LibraryEdition.allCases {
             #expect(Library.shared.listKinds(in: edition).contains(.equipment))
         }
+    }
+
+    // MARK: Spells
+
+    private func number(_ entry: LibraryEntry, _ key: String) -> Double? {
+        if case .number(let value)? = entry.attributes[key] { value } else { nil }
+    }
+
+    @Test func bothEditionsHaveEverySpellWithItsFacts() {
+        let counts: [LibraryEdition: Int] = [.srd51: 319, .srd52: 339]
+        for edition in LibraryEdition.allCases {
+            let spells = Library.shared.entries(.spell, in: edition)
+            #expect(spells.count == counts[edition], "\(edition)")
+            for spell in spells {
+                #expect(spell.parent == nil && !spell.summary.isEmpty, "\(spell.name) has no text")
+                let level = number(spell, "dnd5e.spellLevel")
+                #expect(level.map { (0...9).contains($0) } == true, "\(spell.name) level")
+                for key in ["dnd5e.spellSchool", "dnd5e.spellClasses", "dnd5e.castingTime", "dnd5e.spellRange", "dnd5e.duration"] {
+                    #expect(text(spell, key)?.isEmpty == false, "\(spell.name) is missing \(key) in \(edition)")
+                }
+                // A spell of a level needs a slot, and every spell is on at least one class's list.
+                #expect(text(spell, "dnd5e.components")?.isEmpty == false, "\(spell.name) components")
+            }
+            let schools = Set(spells.compactMap { text($0, "dnd5e.spellSchool") })
+            #expect(schools == ["Abjuration", "Conjuration", "Divination", "Enchantment", "Evocation", "Illusion", "Necromancy", "Transmutation"], "\(edition)")
+        }
+    }
+
+    @Test func spellsHaveTheirLevelSchoolClassesAndText() throws {
+        let fireball = try equipment("srd51.spell.fireball")
+        #expect(number(fireball, "dnd5e.spellLevel") == 3)
+        #expect(text(fireball, "dnd5e.spellSchool") == "Evocation")
+        #expect(text(fireball, "dnd5e.spellClasses") == "Sorcerer, Wizard")
+        #expect(text(fireball, "dnd5e.spellRange") == "150 feet")
+        #expect(text(fireball, "dnd5e.components") == "V, S, M (a tiny ball of bat guano and sulfur)")
+        #expect(fireball.summary.contains("At Higher Levels."))
+
+        let fireball52 = try equipment("srd52.spell.fireball")
+        #expect(text(fireball52, "dnd5e.castingTime") == "Action")
+        #expect(text(fireball52, "dnd5e.spellClasses") == "Sorcerer, Wizard")
+        #expect(fireball52.summary.contains("Using a Higher-Level Spell Slot."))
+
+        let cureWounds = try equipment("srd51.spell.cure-wounds")
+        #expect(text(cureWounds, "dnd5e.spellClasses") == "Bard, Cleric, Druid, Paladin, Ranger")
+
+        let acidSplash = try equipment("srd52.spell.acid-splash")
+        #expect(acidSplash.name == "Acid Splash")
+        #expect(number(acidSplash, "dnd5e.spellLevel") == 0)
+        #expect(text(acidSplash, "dnd5e.spellSchool") == "Evocation")
+    }
+
+    @Test func ritualsAreFlaggedAndLongFactsKeepAllTheirLines() throws {
+        let detectMagic51 = try equipment("srd51.spell.detect-magic")
+        #expect(detectMagic51.attributes["dnd5e.ritual"] == .bool(true))
+        #expect(text(detectMagic51, "dnd5e.duration")?.hasPrefix("Concentration") == true)
+        #expect(try equipment("srd52.spell.detect-magic").attributes["dnd5e.ritual"] == .bool(true))
+        #expect(try equipment("srd51.spell.fireball").attributes["dnd5e.ritual"] == nil)
+
+        // Components that wrap onto a second line, and a casting time that does.
+        #expect(text(try equipment("srd52.spell.animate-dead"), "dnd5e.components")?.hasSuffix("and a pinch of bone dust)") == true)
+        #expect(text(try equipment("srd52.spell.counterspell"), "dnd5e.castingTime")?.contains("which you take") == true)
+        // The one place the PDF says "Component:".
+        #expect(text(try equipment("srd51.spell.contagion"), "dnd5e.components") == "V, S")
+    }
+
+    @Test func aSpellBecomesASpellPage() throws {
+        let context = try makeContext()
+        let world = makeWorld(in: context, edition: .srd51)
+        let fireball = try equipment("srd51.spell.fireball")
+
+        let page = try #require(Library.shared.makeCustomVersion(of: fireball, in: world, context: context))
+
+        #expect(page.kind == .spell)
+        #expect(page.title == "Fireball")
+        #expect(page.summary == "Level 3 Evocation")
+        #expect(String(page.body.characters).contains("A bright streak flashes"))
+        #expect(page.attributes["dnd5e.spellLevel"] == .number(3))
+        #expect(page.basedOnKey == "srd51.spell.fireball")
+        #expect(RuleSystems.definitions(for: .spell, system: .dnd5e).map(\.key).contains("dnd5e.castingTime"))
+        #expect(PageKind.spell.isConditional && !RuleSystems.definitions(for: .spell, system: .none).map(\.key).contains("dnd5e.castingTime"))
+        #expect(try equipment("srd52.spell.acid-splash").spellHeadline == "Evocation cantrip")
+    }
+
+    @Test func theLibraryListsSpellsAndTheyCanBeMentioned() {
+        for edition in LibraryEdition.allCases {
+            #expect(Library.shared.listKinds(in: edition).contains(.spell))
+        }
+        #expect(Library.shared.mentionableEntries(matching: "fireball", in: .srd51, limit: 8).map(\.name).contains("Fireball"))
     }
 }

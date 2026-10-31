@@ -131,15 +131,18 @@ extension Library {
                     EntryValue(name: "\(subclass.name): \(feature.name)", level: feature.level, text: feature.text)
                 }
             }
-        case .background, .feat, .equipment:
+        case .background, .feat, .equipment, .spell:
             attributes = entry.attributes
             entries = entry.entries
-        case .subclass, .skill, .spell:
+        case .subclass, .skill:
             return nil
         }
 
-        let page = Page(title: entry.name, kind: pageKind, summary: entry.summary)
+        // A spell's description is long, so it goes in the notes, with a line of what kind of spell it is as the summary.
+        let isSpell = entry.kind == .spell
+        let page = Page(title: entry.name, kind: pageKind, summary: isSpell ? entry.spellHeadline : entry.summary)
         context.insert(page)
+        if isSpell { page.body = AttributedString(entry.summary) }
         page.world = world
         page.basedOnKey = entry.key
         if !entries.isEmpty {
@@ -174,5 +177,15 @@ extension LibraryEntry {
         case .equipment: return "Equipment"
         case .spell: return "Spell"
         }
+    }
+}
+
+
+extension LibraryEntry {
+    /// "Level 3 Evocation" or "Evocation cantrip", for a spell.
+    var spellHeadline: String {
+        let school: String = { if case .text(let text)? = attributes["dnd5e.spellSchool"] { text } else { "" } }()
+        guard case .number(let level)? = attributes["dnd5e.spellLevel"] else { return school }
+        return level == 0 ? "\(school) cantrip" : "Level \(Int(level)) \(school)"
     }
 }

@@ -845,6 +845,137 @@ func readEquipment() {
 
 readEquipment()
 
+// MARK: Spells
+
+/// Every spell in the Spell Descriptions. A spell is recognised by its type line, such as "Level 2 Evocation (Wizard)"
+/// or "Evocation Cantrip (Sorcerer, Wizard)", with the spell's name on the line before. The classes are in brackets.
+func readSpells() {
+    var spellLines: [Line] = []
+    var started = false
+    pages: for index in 0..<document.pageCount {
+        guard let page = document.page(at: index) else { continue }
+        for line in readingOrder(of: page, profile: srd52Profile) {
+            if case .heading(2) = line.kind, line.text == "Spell Descriptions" { started = true }
+            if started, case .heading(1) = line.kind { break pages }
+            if started { spellLines.append(line) }
+        }
+    }
+
+    let leveled = try! NSRegularExpression(pattern: "^Level (\\d) ([A-Z][a-z]+)(?: \\((.*)\\))?$")
+    let cantrip = try! NSRegularExpression(pattern: "^([A-Z][a-z]+) Cantrip(?: \\((.*)\\))?$")
+    func match(_ expression: NSRegularExpression, _ text: String) -> [String]? {
+        guard let m = expression.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)) else { return nil }
+        return (1..<m.numberOfRanges).map { m.range(at: $0).location == NSNotFound ? "" : (text as NSString).substring(with: m.range(at: $0)) }
+    }
+    /// The type line starting at an index, which can wrap onto a second line, and how many lines it takes.
+    func typeLine(at index: Int) -> (level: Int, school: String, classes: String, lines: Int)? {
+        guard index < spellLines.count, case .body = spellLines[index].kind else { return nil }
+        var text = cleanLine(spellLines[index].text)
+        var count = 1
+        if text.contains("("), !text.contains(")"), index + 1 < spellLines.count {
+            text += " " + cleanLine(spellLines[index + 1].text)
+            count = 2
+        }
+        if let g = match(leveled, text) { return (Int(g[0]) ?? 0, g[1], g[2], count) }
+        if let g = match(cantrip, text) { return (0, g[0], g[1], count) }
+        return nil
+    }
+
+    struct Draft {
+        var name: String
+        var level: Int
+        var school: String
+        var classes: String
+        var facts: [String: String] = [:]
+        var lastLabel: String?
+        var bodyStarted = false
+        let builder = TextBuilder()
+    }
+    let labels = ["Casting Time:", "Range:", "Components:", "Duration:"]
+    let keys = ["dnd5e.castingTime", "dnd5e.spellRange", "dnd5e.components", "dnd5e.duration"]
+    var drafts: [Draft] = []
+    var draft: Draft?
+
+    var i = 0
+    while i < spellLines.count {
+        let line = spellLines[i]
+        let text = cleanLine(line.text)
+        // The line before a type line is a spell's name.
+        if let type = typeLine(at: i + 1), line.kind.isTextual {
+            if let d = draft { drafts.append(d) }
+            draft = Draft(name: text, level: type.level, school: type.school, classes: type.classes)
+            i += 1 + type.lines
+            continue
+        }
+        i += 1
+        guard let d = draft else { continue }
+        // The facts are in bold type, which can be set in one of two weights, so their lines come as body or table
+        // lines. The PDF also says "Component:" in places, for "Components:".
+        let factText = text.hasPrefix("Component: ") ? "Components: " + text.dropFirst("Component: ".count) : text
+        if !d.bodyStarted, line.kind.isTextOrTable, let label = labels.first(where: { factText.hasPrefix($0) }) {
+            draft?.facts[label] = String(factText.dropFirst(label.count)).trimmingCharacters(in: .whitespaces)
+            draft?.lastLabel = label
+            continue
+        }
+        switch line.kind {
+        case .body:
+            if !d.bodyStarted, let label = d.lastLabel, line.fontName == "GillSans-SemiBold" {
+                appendWrapped(&draft!.facts[label]!, text)
+            } else {
+                draft?.bodyStarted = true
+                d.builder.addBody(line)
+            }
+        case .caption:
+            draft?.bodyStarted = true
+            d.builder.addCaption(text)
+        case .table:
+            // A wrapped line of a fact, such as a long list of materials, is in the small type of a table.
+            if !d.bodyStarted, let label = d.lastLabel {
+                appendWrapped(&draft!.facts[label]!, text)
+            } else {
+                draft?.bodyStarted = true
+                d.builder.addTableLine(line.text)
+            }
+        default:
+            break
+        }
+    }
+    if let d = draft { drafts.append(d) }
+
+    for d in drafts {
+        var attributes: [(String, String)] = [("dnd5e.spellLevel", String(d.level)), ("dnd5e.spellSchool", d.school)]
+        if !d.classes.isEmpty { attributes.append(("dnd5e.spellClasses", d.classes)) }
+        for (label, key) in zip(labels, keys) {
+            if let value = d.facts[label] { attributes.append((key, value)) } else { review.append("\(d.name): no \(label)") }
+        }
+        if (d.facts["Casting Time:"] ?? "").contains("Ritual") { attributes.append(("dnd5e.ritual", "true")) }
+        entries.append(PackEntry(key: "srd52.spell.\(slug(d.name))", kind: "spell", name: d.name, parent: nil,
+                                 summary: d.builder.text, attributes: attributes, features: []))
+    }
+    report.append("Spells (\(drafts.count)): \(Dictionary(grouping: drafts, by: \.level).sorted { $0.key < $1.key }.map { "L\($0.key) \($0.value.count)" }.joined(separator: ", "))")
+    let withoutClasses = drafts.filter { $0.classes.isEmpty }.map(\.name)
+    if !withoutClasses.isEmpty { review.append("Spells with no class in their type line: \(withoutClasses.joined(separator: ", "))") }
+}
+
+extension LineKind {
+    var isTextOrTable: Bool {
+        switch self {
+        case .body, .table: true
+        default: false
+        }
+    }
+
+    /// Whether this is a line of words, as opposed to an ignored one.
+    var isTextual: Bool {
+        switch self {
+        case .body, .heading: true
+        default: false
+        }
+    }
+}
+
+readSpells()
+
 // MARK: Writing the pack
 
 let attribution = "This work includes material from the System Reference Document 5.2.1 (“SRD 5.2.1”) by Wizards of the Coast LLC, available at https://www.dndbeyond.com/srd. The SRD 5.2.1 is licensed under the Creative Commons Attribution 4.0 International License, available at https://creativecommons.org/licenses/by/4.0/legalcode."
@@ -857,7 +988,7 @@ for entry in entries {
     if !entry.summary.isEmpty { lines.append("      \"summary\": \(jsonString(entry.summary)),") }
     if !entry.attributes.isEmpty {
         lines.append("      \"attributes\": {")
-        lines.append(entry.attributes.map { "        \(jsonString($0.0)): \(jsonString($0.1))" }.joined(separator: ",\n"))
+        lines.append(entry.attributes.map { "        \(jsonString($0.0)): \(jsonValue(key: $0.0, value: $0.1))" }.joined(separator: ",\n"))
         lines.append("      },")
     }
     lines.append("      \"entries\": [")

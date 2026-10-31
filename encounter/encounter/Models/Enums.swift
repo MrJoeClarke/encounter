@@ -16,6 +16,7 @@ enum PageKind: String, Codable, CaseIterable, Identifiable {
     case characterClass = "class"
     case background
     case feat
+    case spell
 
     var id: String { rawValue }
 
@@ -31,6 +32,7 @@ enum PageKind: String, Codable, CaseIterable, Identifiable {
         case .characterClass: "Classes"
         case .background: "Backgrounds"
         case .feat: "Feats"
+        case .spell: "Spells"
         }
     }
 
@@ -46,6 +48,7 @@ enum PageKind: String, Codable, CaseIterable, Identifiable {
         case .characterClass: "Class"
         case .background: "Background"
         case .feat: "Feat"
+        case .spell: "Spell"
         }
     }
 
@@ -60,6 +63,7 @@ enum PageKind: String, Codable, CaseIterable, Identifiable {
         case .characterClass: "shield.lefthalf.filled"
         case .background: "book.closed.fill"
         case .feat: "medal.fill"
+        case .spell: "wand.and.stars"
         }
     }
 
@@ -67,7 +71,7 @@ enum PageKind: String, Codable, CaseIterable, Identifiable {
     /// has pages of that kind, so a world on "None" doesn't show an empty Classes category.
     var isConditional: Bool {
         switch self {
-        case .characterClass, .background, .feat: true
+        case .characterClass, .background, .feat, .spell: true
         default: false
         }
     }
