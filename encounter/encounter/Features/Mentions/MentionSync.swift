@@ -42,6 +42,7 @@ enum MentionSync {
             Mention.refreshTitles(in: &body, titles: [target.id: target.title])
             if body != source.body {
                 source.body = body
+                source.updateSearchText()
             }
         }
     }
@@ -55,6 +56,7 @@ enum MentionSync {
             Mention.stripMentions(of: [page.id], from: &body)
             if body != source.body {
                 source.body = body
+                source.updateSearchText()
             }
         }
         context.delete(page)

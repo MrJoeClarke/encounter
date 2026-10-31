@@ -28,6 +28,8 @@ struct encounterApp: App {
                 .onOpenURL { linkRouter.open($0) }
                 // Without this, each incoming URL would open a new window instead of using this one.
                 .handlesExternalEvents(preferring: ["*"], allowing: ["*"])
+                // Notes written before their plain text was kept need it filled in so they can be searched.
+                .task { Page.backfillSearchText(in: modelContainer.mainContext) }
         }
         .modelContainer(modelContainer)
     }

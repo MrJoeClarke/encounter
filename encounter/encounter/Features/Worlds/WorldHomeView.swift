@@ -17,6 +17,7 @@ struct WorldHomeView: View {
     @State private var isExporting = false
     @State private var exportError: String?
     @State private var isConfirmingDelete = false
+    @State private var isEditingCalendar = false
 
     var body: some View {
         Form {
@@ -40,6 +41,18 @@ struct WorldHomeView: View {
                 Text("The rule system adds attributes to your pages. You can change it at any time without losing data.")
             }
 
+            if let calendar = world.calendar {
+                Section {
+                    LabeledContent("Calendar") {
+                        Text("\(calendar.months.count) months · \(calendar.daysPerYear) days · \(calendar.hoursPerDay) hours a day")
+                            .foregroundStyle(.secondary)
+                    }
+                    Button("Edit Calendar…", systemImage: "calendar") { isEditingCalendar = true }
+                } footer: {
+                    Text("Events and backstory use this calendar for their dates.")
+                }
+            }
+
             ImagesSection(owner: world)
 
             Section {
@@ -54,6 +67,11 @@ struct WorldHomeView: View {
         }
         .formStyle(.grouped)
         .navigationTitle("Home")
+        .sheet(isPresented: $isEditingCalendar) {
+            if let calendar = world.calendar {
+                CalendarEditorView(world: world, calendar: calendar) { isEditingCalendar = false }
+            }
+        }
         .fileExporter(
             isPresented: $isExporting,
             document: exportDocument,

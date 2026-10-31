@@ -66,6 +66,7 @@ struct NotesSection: View {
         }
         .onChange(of: page.body) { old, new in
             tidyMentions(from: old, to: new)
+            page.updateSearchText()
             // Keep the mention links in step with the text.
             MentionSync.sync(page, in: modelContext)
         }
@@ -105,6 +106,7 @@ struct NotesSection: View {
         let caret = result.caret ?? caretOffset(in: new)
         correctedBody = result.body
         page.body = result.body
+        page.updateSearchText()
         selection = caretSelection(at: caret, in: result.body)
     }
 

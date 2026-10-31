@@ -23,6 +23,10 @@ struct WorldShellView: View {
     @State private var navigation = WorldNavigation()
     @Environment(LinkRouter.self) private var linkRouter
 
+    private var isSearching: Bool {
+        !navigation.searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
     private var hasLibrary: Bool {
         RuleSystems.system(for: world.system).hasContentLibrary
     }
@@ -60,17 +64,22 @@ struct WorldShellView: View {
             }
             .navigationTitle(world.name)
         } detail: {
-            switch navigation.selection {
-            case .home:
-                WorldHomeView(world: world, onDelete: onDelete)
-            case .kind(let kind):
-                PagesBrowser(world: world, kind: kind)
-                    .id(kind)
-            case .library(let kind):
-                LibraryBrowser(world: world, kind: kind)
-                    .id(kind)
+            if isSearching {
+                SearchResultsView(world: world)
+            } else {
+                switch navigation.selection {
+                case .home:
+                    WorldHomeView(world: world, onDelete: onDelete)
+                case .kind(let kind):
+                    PagesBrowser(world: world, kind: kind)
+                        .id(kind)
+                case .library(let kind):
+                    LibraryBrowser(world: world, kind: kind)
+                        .id(kind)
+                }
             }
         }
+        .searchable(text: $navigation.searchText, prompt: "Search \(world.name)")
         .environment(navigation)
         // Mention links that arrive from the system are opened in the world that's showing.
         .onAppear { linkRouter.activate(world: world, navigation: navigation) }

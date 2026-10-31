@@ -37,6 +37,10 @@ struct PageEditorView: View {
                 }
             }
 
+            if page.kind == .place {
+                PlaceHierarchySection(page: page)
+            }
+
             ForEach(groupedDefinitions, id: \.title) { group in
                 Section {
                     ForEach(group.definitions) { definition in

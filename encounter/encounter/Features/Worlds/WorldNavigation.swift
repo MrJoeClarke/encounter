@@ -14,12 +14,16 @@ final class WorldNavigation {
     var selectedPage: Page?
     /// The key of the library entry open in the Library, if any.
     var selectedLibraryKey: String?
+    /// What the user has typed in the search field. While it isn't empty, the results are showing.
+    var searchText = ""
+    var searchScope: SearchScope = .all
 
     /// Shows the page: switches the sidebar to its kind and selects it.
     func open(_ page: Page) {
         selection = .kind(page.kind)
         selectedPage = page
         selectedLibraryKey = nil
+        searchText = ""
     }
 
     /// Shows the library entry: switches the sidebar to its list and selects it.
@@ -27,10 +31,13 @@ final class WorldNavigation {
         selection = .library(entry.kind.listKind)
         selectedLibraryKey = entry.key
         selectedPage = nil
+        searchText = ""
     }
 
     /// A sidebar choice made by the user. Clears what was open, since it belongs to the previous choice.
     func choose(_ item: WorldSidebarItem) {
+        // Choosing anything in the sidebar leaves the search, even the item that was already showing.
+        searchText = ""
         guard item != selection else { return }
         selection = item
         selectedPage = nil

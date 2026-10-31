@@ -84,6 +84,11 @@ final class Library {
         return nil
     }
 
+    /// Every entry of the edition, of every kind.
+    func allEntries(in edition: LibraryEdition) -> [LibraryEntry] {
+        pack(for: edition)?.entries ?? []
+    }
+
     /// Entries of any kind whose name matches the search, for mentioning from notes. An empty search matches all.
     func mentionableEntries(matching search: String, in edition: LibraryEdition, limit: Int) -> [LibraryEntry] {
         let matches = (pack(for: edition)?.entries ?? []).filter { search.isEmpty || $0.name.localizedStandardContains(search) }
@@ -159,7 +164,10 @@ extension Library {
         let isSpell = entry.kind == .spell
         let page = Page(title: entry.name, kind: pageKind, summary: isSpell ? entry.spellHeadline : entry.summary)
         context.insert(page)
-        if isSpell { page.body = AttributedString(entry.summary) }
+        if isSpell {
+            page.body = AttributedString(entry.summary)
+            page.updateSearchText()
+        }
         page.world = world
         page.basedOnKey = entry.key
         if !entries.isEmpty {

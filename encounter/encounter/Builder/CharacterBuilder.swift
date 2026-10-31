@@ -161,6 +161,7 @@ enum CharacterBuilder {
         }
         if !plan.notes.isEmpty {
             page.body = AttributedString("Still to fill in:\n" + plan.notes.map { "• \($0)" }.joined(separator: "\n"))
+            page.updateSearchText()
         }
         return page
     }
