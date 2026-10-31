@@ -51,6 +51,7 @@ enum SampleData {
             + AttributedString(", with the blood of the ") + Mention.mention(title: elf.title, pageID: elf.id)
             + AttributedString(". Friends with ") + Mention.mention(title: guide.title, pageID: guide.id)
             + AttributedString(".")
+        hero.updateSearchText()
         for page in [hero, guide, region, settlement, elf] {
             MentionSync.sync(page, in: context)
         }

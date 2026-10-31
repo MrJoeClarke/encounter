@@ -17,6 +17,9 @@ final class Page {
     /// Only meaningful when `kind == .character`.
     var characterRoleRaw: String?
     var body: AttributedString = AttributedString()
+    /// The notes as plain text (mentions as their titles), so they can be searched in the database. Derived
+    /// from `body`: call `updateSearchText()` after changing `body`.
+    var bodyText: String = ""
     /// Values keyed by stable attribute key, e.g. "dnd5e.armorClass".
     var attributes: [String: AttributeValue] = [:]
     var tags: [String] = []

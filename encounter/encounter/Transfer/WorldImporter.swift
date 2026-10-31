@@ -91,6 +91,7 @@ enum WorldImporter {
             var body = page.body
             Mention.remapMentions(in: &body, using: newIDs)
             page.body = body
+            page.updateSearchText()
             if let parentID = record.parentID, let parent = pages[parentID], !wouldCreateCycle(making: parent, parentOf: page) {
                 page.parent = parent
             }

@@ -179,8 +179,12 @@ protocol RuleSystem {
 - Nothing is stored for movement. It is always computed from events, so it can't go stale.
 
 ### 5.5 Search
-- **v1:** a SwiftData predicate search over title, summary, tags and body text, with a kind filter. The same query backs the `@` picker.
-- **Later:** Core Spotlight indexing, and `searchable` scopes by kind.
+- **Plain text of notes:** `Page.bodyText` holds the notes as plain text (mentions as their titles), so notes can be searched in the database. It is derived from `body`, refreshed by `updateSearchText()` wherever the notes change (the editor, mention renames and deletes, import, the builder, Create Custom Version), and filled in at launch for older notes. It isn't exported, and import rebuilds it.
+- **Search field:** the world's `searchable` field. While it has text, the results replace the detail area. Choosing a result opens it and clears the search, as does choosing anything in the sidebar. A picker narrows the search to one kind of page, or the library.
+- **Matching:** a result must contain every word typed, each in the title, tags, summary or notes. Matching ignores case and accents and finds a word anywhere in a word. The database narrows by the longest word, and the rest is checked in memory.
+- **Ranking:** the title being the search, then starting with it, then a word starting with it, then containing it, then the words spread through the title, then tags, summary and notes. Each result shows what kind it is and, if the title didn't match, the matching text.
+- **Library:** entries of the world's edition are searched by name and summary alongside pages, not by their full text.
+- **Not done:** the `@` mention picker still matches titles with its own query and order. Core Spotlight indexing is still later.
 
 ### 5.6 D&D 5e content library
 
@@ -312,7 +316,7 @@ Each milestone ends with a building app and passing tests. I'll stop and show yo
 | 7e | **Character builder (level 1)** | Built, awaiting review | Guided flow (name, race or species, class, background, ability scores, skills, equipment, spells, review) that creates a level 1 playable character page. The 5.1 species bonuses come from the race, and the 5.2.1 ones from the background. |
 | 8a | **Place hierarchy** | Built, awaiting review | Parenting, outline, breadcrumbs, children, safe deletion. |
 | 8b | **Place coordinates** | Built, awaiting review | Metre-based positions and polygons, spatial maths, automatic parents. |
-| 9 | **Search** | Planned | Global search and kind filters, including library entries. |
+| 9 | **Search** | Built, awaiting review | Global search and kind filters, including library entries. |
 | 10 | **Calendars** | Planned | Custom calendar editor per world, `InWorldDate` entry and formatting. |
 | 11 | **Maps** | Planned | Import, view, pins, nested maps. |
 | 12 | **Events and timelines** | Planned | Event fields, campaign vs backstory, timeline view, character journey. |
