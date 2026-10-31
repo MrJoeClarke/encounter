@@ -150,7 +150,7 @@ struct MapDetailView: View {
                     let title = page.title.isEmpty ? String(localized: "Untitled") : page.title
                     if let upMap = page.sortedMaps.first, upMap !== map {
                         Button(title) { navigation.openMap(upMap) }
-                            .buttonStyle(.link)
+                            .buttonStyle(.borderless)
                     } else {
                         Text(title)
                             .foregroundStyle(page === map.place ? .primary : .secondary)

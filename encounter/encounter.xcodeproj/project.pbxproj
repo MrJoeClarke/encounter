@@ -29,9 +29,22 @@
 		D8E7C2B93094CBEC004DA0FD /* encounterUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = encounterUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		D8E7C2D03094CBEC004DA0FD /* Exceptions for "encounter" folder in "encounter" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = D8E7C29F3094CBEA004DA0FD /* encounter */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		D8E7C2A23094CBEA004DA0FD /* encounter */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				D8E7C2D03094CBEC004DA0FD /* Exceptions for "encounter" folder in "encounter" target */,
+			);
 			path = encounter;
 			sourceTree = "<group>";
 		};

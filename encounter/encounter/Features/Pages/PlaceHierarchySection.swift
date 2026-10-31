@@ -86,7 +86,7 @@ struct PlaceHierarchySection: View {
                     Button(ancestor.title.isEmpty ? String(localized: "Untitled") : ancestor.title) {
                         navigation.open(ancestor)
                     }
-                    .buttonStyle(.link)
+                    .buttonStyle(.borderless)
                     Image(systemName: "chevron.right")
                         .font(.caption2)
                         .foregroundStyle(.secondary)
