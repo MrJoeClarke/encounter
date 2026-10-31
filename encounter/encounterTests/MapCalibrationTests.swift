@@ -125,12 +125,6 @@ struct MapCalibrationTests {
         // Other images still are reduced.
         let reduced = try #require(await ImageProcessing.prepare(original))
         #expect(ImageProcessing.pixelSize(of: reduced.imageData)?.width == ImageProcessing.maxOriginalDimension)
-
-        // Showing a very large map decodes a smaller copy and never enlarges a small one.
-        let shown = try #require(await ImageProcessing.downsampled(original, maxPixelSize: 1000))
-        #expect(shown.width == 1000)
-        let small = try #require(await ImageProcessing.downsampled(original, maxPixelSize: 100_000))
-        #expect(small.width == 5000)
     }
 
     @Test func anImageThatCantBeReadMakesNoMap() async throws {

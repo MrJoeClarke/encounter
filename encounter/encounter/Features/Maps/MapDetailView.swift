@@ -21,6 +21,11 @@ struct MapDetailView: View {
     @State private var placement: PlacementSpot?
     @State private var placementProblem: String?
     @State private var isConfirmingDelete = false
+    /// The outline being drawn for a place, if any.
+    @State private var outline: OutlineDraft?
+    @State private var outlineProblem: String?
+    @AppStorage("showsMapGrid") private var showsGrid = true
+    @State private var selectedPlace: Page?
 
     private struct PlacementSpot: Identifiable {
         let id = UUID()
@@ -39,17 +44,29 @@ struct MapDetailView: View {
         VStack(spacing: 0) {
             header
             Divider()
-            MapCanvas(
+            MapKitCanvas(
                 map: map,
                 markers: markers,
                 pins: pins,
-                canPlace: map.isCalibrated && !isCalibrating,
-                onTap: { x, y in markPoint(x: x, y: y) },
+                shapes: shapes,
+                draftCorners: (outline?.corners ?? []).map { CGPoint(x: $0.x, y: $0.y) },
+                isMarking: (isCalibrating && map.kind != .scene) || outline != nil,
+                canPlace: map.isCalibrated && !isCalibrating && outline == nil,
+                showsGrid: showsGrid,
+                onTap: { x, y in
+                    if outline != nil { outline?.add(x: x, y: y) } else { markPoint(x: x, y: y) }
+                },
                 onPlace: { x, y in placement = PlacementSpot(x: x, y: y) },
-                onMove: { page, x, y in put(page, atPixelX: x, y: y) }
+                onMove: { page, x, y in put(page, atPixelX: x, y: y) },
+                onSelect: { selectedPlace = $0 }
             )
+            if let selectedPlace { selectedPlaceBar(selectedPlace) }
             Divider()
-            MapCalibrationPanel(map: map, draft: $draft, grid: $grid, isCalibrating: $isCalibrating, markingPoint: $markingPoint)
+            if outline != nil {
+                outlinePanel
+            } else {
+                MapCalibrationPanel(map: map, draft: $draft, grid: $grid, isCalibrating: $isCalibrating, markingPoint: $markingPoint)
+            }
         }
         .navigationTitle(map.name.isEmpty ? String(localized: "Untitled Map") : map.name)
         .sheet(item: $placement) { spot in
@@ -58,6 +75,14 @@ struct MapDetailView: View {
                     place(title: title, placeType: placeType, existing: existing, at: spot, in: world)
                 }
             }
+        }
+        .alert(
+            "Couldn’t Finish the Outline",
+            isPresented: Binding(get: { outlineProblem != nil }, set: { if !$0 { outlineProblem = nil } })
+        ) {
+            Button("OK") {}
+        } message: {
+            Text(outlineProblem ?? "")
         }
         .alert(
             "Couldn’t Put the Place There",
@@ -80,6 +105,9 @@ struct MapDetailView: View {
                     .font(.title2.weight(.semibold))
                     .textFieldStyle(.plain)
                 Menu("Map Options", systemImage: "ellipsis.circle") {
+                    if map.kind == .scene {
+                        Toggle("Show Grid", isOn: $showsGrid)
+                    }
                     Button("Delete Map…", systemImage: "trash", role: .destructive) { isConfirmingDelete = true }
                 }
                 .labelStyle(.iconOnly)
@@ -149,16 +177,54 @@ struct MapDetailView: View {
 
     // MARK: Pins and marks
 
+    /// Places with an outline, which MapKit draws as shapes.
+    private var shapes: [PlaceShape] {
+        places.compactMap { page in
+            guard page !== map.place, case .polygon(let corners)? = page.geometry else { return nil }
+            return PlaceShape(page: page, corners: corners)
+        }
+    }
+
+    /// What can be done with the place picked on the MapKit map, in place of the popover of the custom canvas.
+    private func selectedPlaceBar(_ page: Page) -> some View {
+        HStack {
+            Image(systemName: page.kind.systemImage)
+            Text(page.title.isEmpty ? String(localized: "Untitled") : page.title)
+                .font(.headline)
+            Spacer()
+            Button("Open Place") { navigation.open(page) }
+            ForEach(page.sortedMaps.filter { $0 !== map }) { other in
+                Button("Open Map") { navigation.openMap(other) }
+            }
+            if map.isCalibrated && outline == nil {
+                Button(page.isPoint ? "Draw Outline" : "Redraw Outline") { outline = OutlineDraft(page: page) }
+            }
+            if !page.isPoint, let centre = page.geometry?.centre {
+                Button("Remove Outline") { page.setGeometry(.point(centre)) }
+            }
+            Button("Remove From Maps", role: .destructive) {
+                selectedPlace = nil
+                page.setGeometry(nil)
+            }
+        }
+        .padding(.horizontal)
+        .padding(.vertical, 8)
+        .background(.bar)
+    }
+
     /// The places that are on this map, wherever it is.
     private var pins: [PlacePin] {
         guard map.isCalibrated else { return [] }
         return places.filter { $0 !== map.place }.compactMap { page in
-            map.pixel(of: page).map { PlacePin(page: page, pixelX: $0.x, pixelY: $0.y) }
+            map.pixel(of: page).map { PlacePin(page: page, pixelX: $0.x, pixelY: $0.y, isMovable: page.isPoint) }
         }
     }
 
     /// The two points being marked for calibration.
     private var markers: [MapMarker] {
+        if let outline {
+            return outline.corners.enumerated().map { MapMarker(id: $0.offset + 1, pixelX: $0.element.x, pixelY: $0.element.y, label: String($0.offset + 1)) }
+        }
         guard isCalibrating, map.kind != .scene else { return [] }
         return [(1, draft.first), (2, draft.second)].compactMap { number, point in
             guard let x = point.pixelX, let y = point.pixelY else { return nil }
@@ -177,6 +243,42 @@ struct MapDetailView: View {
             draft.second.pixelX = x
             draft.second.pixelY = y
         }
+    }
+
+    // MARK: Drawing outlines
+
+    private var outlinePanel: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            if let outline {
+                Text("Drawing the outline of “\(outline.page.title.isEmpty ? String(localized: "Untitled") : outline.page.title)”. Click each corner in turn, going round the edge. Places inside it will be put inside this place.")
+                    .font(.callout)
+                HStack {
+                    if let calibration = map.calibration, let problem = outline.problem(on: calibration) {
+                        Text(problem)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    Button("Undo Corner") { self.outline?.removeLast() }
+                        .disabled(outline.corners.isEmpty)
+                    Button("Cancel", role: .cancel) { self.outline = nil }
+                    Button("Finish", action: finishOutline)
+                        .buttonStyle(.borderedProminent)
+                        .disabled(map.calibration.map { outline.problem(on: $0) != nil } ?? true)
+                }
+            }
+        }
+        .padding()
+        .background(.bar)
+    }
+
+    private func finishOutline() {
+        guard let outline, let calibration = map.calibration else { return }
+        guard let shape = outline.geometry(on: calibration), outline.page.setGeometry(shape) else {
+            outlineProblem = outline.problem(on: calibration) ?? String(localized: "The outline can’t be used.")
+            return
+        }
+        self.outline = nil
     }
 
     // MARK: Putting places on the map
@@ -298,4 +400,11 @@ private func previewMap(kind: MapKind = .world, calibrated: Bool) -> (ModelConta
         .environment(WorldNavigation())
         .frame(width: 800, height: 600)
         .modelContainer(container)
+}
+
+extension Page {
+    /// Whether the place is a single point, rather than an area with an outline.
+    var isPoint: Bool {
+        if case .point? = geometry { true } else { false }
+    }
 }

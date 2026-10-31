@@ -31,16 +31,6 @@ nonisolated enum ImageProcessing {
         prepareSynchronously(data, maxDimension: .max)
     }
 
-    /// An image reduced to fit within `maxPixelSize` on its longest side, for showing a very large image
-    /// without decoding all of it. Never enlarges. Photos taken in portrait come out upright.
-    @concurrent
-    static func downsampled(_ data: Data, maxPixelSize: Int) async -> CGImage? {
-        guard let source = CGImageSourceCreateWithData(data as CFData, nil),
-              let size = pixelSize(of: data)
-        else { return nil }
-        return scaledImage(from: source, maxPixelSize: min(maxPixelSize, max(size.width, size.height)))
-    }
-
     /// Reads a file the user picked, handling the security-scoped access that sandboxed apps need.
     @concurrent
     static func loadData(from url: URL) async -> Data? {
