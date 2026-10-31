@@ -10,6 +10,7 @@ enum LinkRole {
     /// A mention in a page's notes. Derived from the notes text, never edited directly.
     static let mention = "mention"
     static let race = "race"
+    static let characterClass = "class"
     static let participant = "participant"
     static let location = "location"
     static let home = "home"
@@ -20,6 +21,7 @@ enum LinkRole {
         switch role {
         case mention: "Mentions this page"
         case race: "Has this race"
+        case characterClass: "Has this class"
         case participant: "Took part"
         case location: "Happened here"
         case home: "Lives here"

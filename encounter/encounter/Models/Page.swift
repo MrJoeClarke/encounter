@@ -31,6 +31,9 @@ final class Page {
 
     var world: World?
 
+    /// The library entry this page was made from with Create Custom Version, if any.
+    var basedOnKey: String?
+
     /// Hierarchy, used mainly for places (region, settlement, building).
     var parent: Page?
     @Relationship(deleteRule: .nullify, inverse: \Page.parent)

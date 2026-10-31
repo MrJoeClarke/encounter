@@ -13,6 +13,8 @@ final class World {
     var name: String = ""
     var summary: String = ""
     var systemRaw: String = RuleSystemID.none.rawValue
+    /// Which edition of the content library the world uses. Only matters for systems that have a library.
+    var editionRaw: String = LibraryEdition.default.rawValue
     var createdAt: Date = Date()
 
     @Relationship(deleteRule: .cascade, inverse: \CalendarDefinition.world)
@@ -40,5 +42,20 @@ final class World {
     var system: RuleSystemID {
         get { RuleSystemID(rawValue: systemRaw) ?? .none }
         set { systemRaw = newValue.rawValue }
+    }
+
+    var edition: LibraryEdition {
+        get { LibraryEdition(rawValue: editionRaw) ?? .default }
+        set { editionRaw = newValue.rawValue }
+    }
+
+    /// The page kinds shown in the sidebar: every kind, except conditional ones (such as Classes) unless the
+    /// rule system uses them or the world already has pages of that kind. Pages are never hidden.
+    var visibleKinds: [PageKind] {
+        let systemKinds = RuleSystems.system(for: system).additionalPageKinds
+        let usedKinds = Set((pages ?? []).map(\.kind))
+        return PageKind.allCases.filter { kind in
+            !kind.isConditional || systemKinds.contains(kind) || usedKinds.contains(kind)
+        }
     }
 }

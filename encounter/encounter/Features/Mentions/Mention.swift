@@ -6,13 +6,64 @@
 import Foundation
 import SwiftUI
 
-/// Mentions of other pages inside a page's notes.
+/// What a mention points at: a page in the world, or an entry in the content library.
+enum MentionTarget: Hashable {
+    case page(UUID)
+    case library(String)
+}
+
+/// Mentions of other pages, and of library entries such as a class or species, inside a page's notes.
 ///
-/// A mention is a standard link run in the notes pointing at `encounter://page/<page id>`. A standard link
-/// is used because custom text attributes don't survive being saved or exported with the default coders.
+/// A mention is a standard link run in the notes pointing at `encounter://page/<page id>` or
+/// `encounter://library/<entry key>`. A standard link is used because custom text attributes don't survive
+/// being saved or exported with the default coders.
 enum Mention {
     static let scheme = "encounter"
     static let host = "page"
+    static let libraryHost = "library"
+
+    static func url(forLibraryKey key: String) -> URL {
+        var components = URLComponents()
+        components.scheme = scheme
+        components.host = libraryHost
+        components.path = "/" + key
+        guard let url = components.url else {
+            fatalError("A scheme, host and library key always make a valid URL")
+        }
+        return url
+    }
+
+    /// The library entry a mention URL points at, or nil if it isn't a library mention URL.
+    static func libraryKey(from url: URL) -> String? {
+        guard url.scheme == scheme, url.host == libraryHost else { return nil }
+        let key = url.lastPathComponent
+        return key.isEmpty || key == "/" ? nil : key
+    }
+
+    static func target(from url: URL) -> MentionTarget? {
+        if let id = pageID(from: url) { return .page(id) }
+        if let key = libraryKey(from: url) { return .library(key) }
+        return nil
+    }
+
+    /// The library entries mentioned in the notes, in order of first appearance, without repeats.
+    static func mentionedLibraryKeys(in body: AttributedString) -> [String] {
+        var seen = Set<String>()
+        var ordered: [String] = []
+        for run in body.runs {
+            if let url = run.link, let key = libraryKey(from: url), seen.insert(key).inserted {
+                ordered.append(key)
+            }
+        }
+        return ordered
+    }
+
+    /// A mention of a library entry: its name as a link to the entry.
+    static func mention(libraryEntry entry: LibraryEntry) -> AttributedString {
+        var text = AttributedString(entry.name)
+        text.link = url(forLibraryKey: entry.key)
+        return text
+    }
 
     static func url(for pageID: UUID) -> URL {
         var components = URLComponents()
@@ -104,6 +155,25 @@ enum Mention {
         in body: inout AttributedString,
         selection: inout AttributedTextSelection
     ) {
+        insert(mention(title: title, pageID: pageID), replacing: range, in: &body, selection: &selection)
+    }
+
+    /// Inserts a mention of a library entry, the same way as a mention of a page.
+    static func insertMention(
+        ofLibraryEntry entry: LibraryEntry,
+        replacing range: Range<Int>?,
+        in body: inout AttributedString,
+        selection: inout AttributedTextSelection
+    ) {
+        insert(mention(libraryEntry: entry), replacing: range, in: &body, selection: &selection)
+    }
+
+    private static func insert(
+        _ mentionText: AttributedString,
+        replacing range: Range<Int>?,
+        in body: inout AttributedString,
+        selection: inout AttributedTextSelection
+    ) {
         if let range {
             let characters = body.characters
             guard let lower = characters.index(characters.startIndex, offsetBy: range.lowerBound, limitedBy: characters.endIndex),
@@ -113,7 +183,7 @@ enum Mention {
         }
         let start = startOffset(of: selection, in: body)
 
-        var content = mention(title: title, pageID: pageID)
+        var content = mentionText
         // The space has no link, so what's typed next isn't part of the mention.
         content.append(AttributedString(" "))
         body.replaceSelection(&selection, with: content)
@@ -160,16 +230,16 @@ enum Mention {
     ///
     /// A mention that is new in `new`, or unchanged, is left alone.
     static func normalize(old: AttributedString, new: AttributedString) -> Normalization {
-        var expected: [UUID: String] = [:]
-        for group in mentionGroups(in: old) where expected[group.id] == nil {
-            expected[group.id] = group.text
+        var expected: [MentionTarget: String] = [:]
+        for group in mentionGroups(in: old) where expected[group.target] == nil {
+            expected[group.target] = group.text
         }
 
         var body = new
         var caret: Int?
         // Work from the end so the offsets of earlier mentions stay valid as the text changes.
         for group in mentionGroups(in: new).reversed() {
-            let title = expected[group.id] ?? group.text
+            let title = expected[group.target] ?? group.text
             guard group.text != title else { continue }
 
             let characters = body.characters
@@ -193,7 +263,7 @@ enum Mention {
 
     /// One mention in the text. A mention formatted in several runs (part of it bold, say) is one group.
     private struct MentionGroup {
-        var id: UUID
+        var target: MentionTarget
         /// Character offsets.
         var range: Range<Int>
         var text: String
@@ -205,12 +275,12 @@ enum Mention {
         for run in body.runs {
             let text = String(body[run.range].characters)
             let length = text.count
-            if let url = run.link, let id = pageID(from: url) {
-                if let last = groups.last, last.id == id, last.range.upperBound == offset {
+            if let url = run.link, let target = target(from: url) {
+                if let last = groups.last, last.target == target, last.range.upperBound == offset {
                     groups[groups.count - 1].range = last.range.lowerBound..<(offset + length)
                     groups[groups.count - 1].text += text
                 } else {
-                    groups.append(MentionGroup(id: id, range: offset..<(offset + length), text: text))
+                    groups.append(MentionGroup(target: target, range: offset..<(offset + length), text: text))
                 }
             }
             offset += length
@@ -223,12 +293,12 @@ enum Mention {
     /// sit side by side are treated as one.
     static func refreshTitles(in body: inout AttributedString, titles: [UUID: String]) {
         var result = AttributedString()
-        var pending: (id: UUID, attributes: AttributeContainer, text: AttributedString)?
+        var pending: (target: MentionTarget, attributes: AttributeContainer, text: AttributedString)?
 
         func flush() {
             guard let group = pending else { return }
             let current = String(group.text.characters)
-            if let title = titles[group.id], title != current {
+            if case .page(let id) = group.target, let title = titles[id], title != current {
                 result.append(AttributedString(title, attributes: group.attributes))
             } else {
                 result.append(group.text)
@@ -238,12 +308,12 @@ enum Mention {
 
         for run in body.runs {
             let piece = AttributedString(body[run.range])
-            if let url = run.link, let id = pageID(from: url) {
-                if pending?.id == id {
+            if let url = run.link, let target = target(from: url) {
+                if pending?.target == target {
                     pending?.text.append(piece)
                 } else {
                     flush()
-                    pending = (id, run.attributes, piece)
+                    pending = (target, run.attributes, piece)
                 }
             } else {
                 flush()

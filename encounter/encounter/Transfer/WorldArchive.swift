@@ -35,6 +35,8 @@ nonisolated struct WorldRecord: Codable, Sendable {
     var calendar: CalendarRecord?
     /// The world's own images. Optional, because files written before world images existed don't have it.
     var images: [ImageRecord]?
+    /// `LibraryEdition` raw value. Optional, because files written before editions existed don't have it.
+    var edition: String?
 }
 
 nonisolated struct CalendarRecord: Codable, Sendable {
@@ -75,6 +77,8 @@ nonisolated struct PageRecord: Codable, Sendable {
     var campaignID: UUID?
     var parentID: UUID?
     var images: [ImageRecord]
+    /// The library entry this page was made from. Optional, because older files don't have it.
+    var basedOnKey: String?
 }
 
 nonisolated struct ImageRecord: Codable, Sendable {

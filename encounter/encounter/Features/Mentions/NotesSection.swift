@@ -25,21 +25,16 @@ struct NotesSection: View {
                 .frame(minHeight: 200)
 
             if let query = activeQuery, let world = page.world {
-                MentionResults(world: world, excluding: page.id, search: query.text, showsWhenEmpty: false) { target in
-                    Mention.insertMention(
-                        of: target.id,
-                        title: target.title,
-                        replacing: query.range,
-                        in: &page.body,
-                        selection: &selection
-                    )
+                MentionResults(world: world, excluding: page.id, search: query.text, showsWhenEmpty: false) { choice in
+                    insert(choice, replacing: query.range)
                 }
             }
 
-            Button("Mention Page…", systemImage: "at") { isPickingMention = true }
+            Button("Mention…", systemImage: "at") { isPickingMention = true }
 
             let mentioned = page.mentionedPages
-            if !mentioned.isEmpty {
+            let mentionedEntries = Mention.mentionedLibraryKeys(in: page.body).compactMap { Library.shared.entry(forKey: $0) }
+            if !mentioned.isEmpty || !mentionedEntries.isEmpty {
                 Text("Mentions")
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -55,6 +50,18 @@ struct NotesSection: View {
                     }
                     .buttonStyle(.plain)
                 }
+                ForEach(mentionedEntries) { entry in
+                    Button {
+                        navigation.openLibraryEntry(entry)
+                    } label: {
+                        Label {
+                            Text(entry.name)
+                        } icon: {
+                            Image(systemName: (entry.kind.pageKind ?? .characterClass).systemImage)
+                        }
+                    }
+                    .buttonStyle(.plain)
+                }
             }
         }
         .onChange(of: page.body) { old, new in
@@ -65,16 +72,19 @@ struct NotesSection: View {
         .environment(\.openURL, openMention)
         .sheet(isPresented: $isPickingMention) {
             if let world = page.world {
-                MentionPickerSheet(world: world, pageID: page.id) { target in
-                    Mention.insertMention(
-                        of: target.id,
-                        title: target.title,
-                        replacing: nil,
-                        in: &page.body,
-                        selection: &selection
-                    )
+                MentionPickerSheet(world: world, pageID: page.id) { choice in
+                    insert(choice, replacing: nil)
                 }
             }
+        }
+    }
+
+    private func insert(_ choice: MentionChoice, replacing range: Range<Int>?) {
+        switch choice {
+        case .page(let target):
+            Mention.insertMention(of: target.id, title: target.title, replacing: range, in: &page.body, selection: &selection)
+        case .library(let entry):
+            Mention.insertMention(ofLibraryEntry: entry, replacing: range, in: &page.body, selection: &selection)
         }
     }
 
@@ -124,6 +134,11 @@ struct NotesSection: View {
     /// Opens the page a mention points at, instead of handing its URL to the system.
     private var openMention: OpenURLAction {
         OpenURLAction { url in
+            if let key = Mention.libraryKey(from: url) {
+                guard let entry = Library.shared.entry(forKey: key) else { return .discarded }
+                navigation.openLibraryEntry(entry)
+                return .handled
+            }
             guard let id = Mention.pageID(from: url) else { return .systemAction }
             guard let target = page.world?.pages?.first(where: { $0.id == id }) else { return .discarded }
             navigation.open(target)

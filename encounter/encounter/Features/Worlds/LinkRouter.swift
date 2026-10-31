@@ -29,10 +29,15 @@ final class LinkRouter {
         self.navigation = nil
     }
 
-    /// Opens the page the URL points at. Returns whether it did: false for a URL that isn't a mention, when no
-    /// world is open, or when the page isn't in the open world.
+    /// Opens the page or library entry the URL points at. Returns whether it did: false for a URL that isn't a
+    /// mention, when no world is open, or when the page isn't in the open world.
     @discardableResult
     func open(_ url: URL) -> Bool {
+        if let key = Mention.libraryKey(from: url) {
+            guard let navigation, let entry = Library.shared.entry(forKey: key) else { return false }
+            navigation.openLibraryEntry(entry)
+            return true
+        }
         guard let id = Mention.pageID(from: url),
               let navigation,
               let page = world?.pages?.first(where: { $0.id == id })

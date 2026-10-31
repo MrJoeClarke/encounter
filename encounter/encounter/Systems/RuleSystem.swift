@@ -10,6 +10,15 @@ protocol RuleSystem {
     var id: RuleSystemID { get }
     /// Attributes this system adds. A definition whose key matches a core attribute replaces it.
     var attributes: [AttributeDefinition] { get }
+    /// Page kinds that always appear in the sidebar of a world using this system, such as Classes.
+    var additionalPageKinds: Set<PageKind> { get }
+    /// Whether the system comes with a bundled content library (races, classes and so on).
+    var hasContentLibrary: Bool { get }
+}
+
+extension RuleSystem {
+    var additionalPageKinds: Set<PageKind> { [] }
+    var hasContentLibrary: Bool { false }
 }
 
 /// No game system: only the core attributes apply.

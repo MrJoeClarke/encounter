@@ -49,8 +49,12 @@ struct AttributeFieldView: View {
             } label: {
                 Text(definition.label)
             }
-        case .pageReference(let kind, let role):
-            PageReferenceField(label: definition.label, kind: kind, role: role, page: page)
+        case .contentReference(let kind, let role):
+            ContentReferenceField(label: definition.label, kind: kind, role: role, page: page)
+        case .subclassReference(let role, let classRole):
+            SubclassField(label: definition.label, role: role, classRole: classRole, page: page)
+        case .entries(let showsLevel):
+            EntriesField(definition: definition, page: page, showsLevel: showsLevel)
         case .choice(let options):
             let current = page.attributeText(definition.key)
             Picker(selection: textBinding) {

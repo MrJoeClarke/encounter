@@ -36,7 +36,8 @@ enum WorldExporter {
                 endDate: page.endDate,
                 campaignID: page.campaign?.id,
                 parentID: page.parent?.id,
-                images: imageRecords(for: page, files: &files)
+                images: imageRecords(for: page, files: &files),
+                basedOnKey: page.basedOnKey
             ))
 
             for link in page.outgoingLinks ?? [] {
@@ -81,7 +82,8 @@ enum WorldExporter {
                         weekdays: calendar.weekdays
                     )
                 },
-                images: imageRecords(for: world, files: &files)
+                images: imageRecords(for: world, files: &files),
+                edition: world.editionRaw
             ),
             campaigns: campaignRecords,
             pages: pageRecords,

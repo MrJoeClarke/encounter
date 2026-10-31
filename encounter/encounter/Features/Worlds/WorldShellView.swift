@@ -6,14 +6,15 @@
 import SwiftUI
 import SwiftData
 
-/// What's selected in a world's sidebar: its home page, or one kind of page.
+/// What's selected in a world's sidebar: its home page, one kind of page, or a list in the content library.
 enum WorldSidebarItem: Hashable {
     case home
     case kind(PageKind)
+    case library(LibraryKind)
 }
 
-/// The working area for one world: a sidebar (home page and page kinds) and, beside it, the selection
-/// using the rest of the window.
+/// The working area for one world: a sidebar (home page, page kinds and the library) and, beside it, the
+/// selection using the rest of the window.
 struct WorldShellView: View {
     let world: World
     /// Called when the user deletes the world from its home page.
@@ -22,6 +23,10 @@ struct WorldShellView: View {
     @State private var navigation = WorldNavigation()
     @Environment(LinkRouter.self) private var linkRouter
 
+    private var hasLibrary: Bool {
+        RuleSystems.system(for: world.system).hasContentLibrary
+    }
+
     var body: some View {
         NavigationSplitView {
             List(selection: sidebarSelection) {
@@ -29,7 +34,7 @@ struct WorldShellView: View {
                     .tag(WorldSidebarItem.home)
 
                 Section("Pages") {
-                    ForEach(PageKind.allCases) { kind in
+                    ForEach(world.visibleKinds) { kind in
                         Label {
                             Text(kind.title)
                         } icon: {
@@ -37,6 +42,24 @@ struct WorldShellView: View {
                         }
                         .badge(count(of: kind))
                         .tag(WorldSidebarItem.kind(kind))
+                    }
+                }
+
+                if hasLibrary {
+                    Section("Library") {
+                        Label {
+                            Text(world.edition.raceTermPlural)
+                        } icon: {
+                            Image(systemName: "pawprint")
+                        }
+                        .tag(WorldSidebarItem.library(.race))
+
+                        Label {
+                            Text("Classes")
+                        } icon: {
+                            Image(systemName: "shield.lefthalf.filled")
+                        }
+                        .tag(WorldSidebarItem.library(.class))
                     }
                 }
             }
@@ -48,12 +71,21 @@ struct WorldShellView: View {
             case .kind(let kind):
                 PagesBrowser(world: world, kind: kind)
                     .id(kind)
+            case .library(let kind):
+                LibraryBrowser(world: world, kind: kind)
+                    .id(kind)
             }
         }
         .environment(navigation)
         // Mention links that arrive from the system are opened in the world that's showing.
         .onAppear { linkRouter.activate(world: world, navigation: navigation) }
         .onDisappear { linkRouter.deactivate(navigation: navigation) }
+        // If the rule system changes to one without a library while the library is showing, go home.
+        .onChange(of: hasLibrary) {
+            if !hasLibrary, case .library = navigation.selection {
+                navigation.choose(.home)
+            }
+        }
     }
 
     /// The list reports nil selection on some clicks (notably on macOS). Something is always selected, so ignore those.

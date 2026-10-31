@@ -195,6 +195,52 @@ Races or species with their traits, and classes with their features, shipped wit
 - **Characters:** a character has a class reference and a Class Level, next to its race. Playable and non-playable characters still share one form.
 - **Licensing:** only openly licensed SRD content is bundled, with the required attribution shown in the app (an About screen) and stored inside each pack. Anything outside the SRD isn't shipped. Creators can write their own pages and custom versions.
 
+**Licensing, verified against the official PDFs.** Both SRDs are under CC-BY-4.0, and each requires its own attribution statement in the work. These are the exact statements on page 1 of each document. Wizards asks that no other attribution to Wizards be added, and CC-BY-4.0 requires saying if the material was changed.
+
+- SRD 5.1: *This work includes material taken from the System Reference Document 5.1 ("SRD 5.1") by Wizards of the Coast LLC and available at https://dnd.wizards.com/resources/systems-reference-document. The SRD 5.1 is licensed under the Creative Commons Attribution 4.0 International License available at https://creativecommons.org/licenses/by/4.0/legalcode.*
+- SRD 5.2.1: *This work includes material from the System Reference Document 5.2.1 ("SRD 5.2.1") by Wizards of the Coast LLC, available at https://www.dndbeyond.com/srd. The SRD 5.2.1 is licensed under the Creative Commons Attribution 4.0 International License, available at https://creativecommons.org/licenses/by/4.0/legalcode.*
+- 5.2.1 is the current version of the 2024-rules SRD (corrections to 5.2), so that is the one bundled.
+- The app shows the matching statement on every library screen and on an About screen, and each pack carries it. A note says the text was reformatted for display and that its wording is unchanged.
+
+**Sourcing the content.** Rules text is taken from the official PDFs by a converter tool, never typed from memory, so the wording is exact. The tool lives in the repository (like the sample world generator), strips page furniture and whitespace artefacts, and writes the packs. Each pack is checked: every expected race or class is present, class features carry the right levels (cross-checked against each class's progression table), and no text is cut off.
+
+**Content pack format (draft).** One JSON file per edition, bundled in the app:
+
+```json
+{
+  "formatVersion": 1,
+  "id": "srd51",
+  "name": "SRD 5.1",
+  "edition": "5.1 (2014 rules)",
+  "raceTerm": "Race",
+  "attribution": "<the statement above>",
+  "entries": [
+    {
+      "key": "srd51.race.elf",
+      "kind": "race",
+      "name": "Elf",
+      "parent": null,
+      "summary": "Short description.",
+      "attributes": { "core.raceSize": "Medium", "dnd5e.speed": "30 ft.", "dnd5e.darkvision": "60 ft." },
+      "entries": [ { "name": "Keen Senses", "level": null, "text": "You have proficiency in the Perception skill." } ]
+    },
+    {
+      "key": "srd51.class.fighter",
+      "kind": "class",
+      "name": "Fighter",
+      "attributes": { "dnd5e.hitDie": "d10", "dnd5e.savingThrows": ["Strength", "Constitution"] },
+      "entries": [ { "name": "Second Wind", "level": 1, "text": "…" } ]
+    },
+    { "key": "srd51.subclass.champion", "kind": "subclass", "name": "Champion", "parent": "srd51.class.fighter", "entries": [ … ] }
+  ]
+}
+```
+
+- Keys are permanent. They are never reused or renamed, because worlds refer to library entries by key.
+- `kind` is `race` (species in 5.2.1), `class` or `subclass`. A subclass names its class in `parent`, and a subrace names its race.
+- `attributes` use the same keys as page attributes, so a custom version is a plain copy.
+- `entries` are the structured traits and features: a name, an optional level and the text.
+
 ### 5.7 Character builder
 
 A guided flow that produces a playable character page.
@@ -246,7 +292,9 @@ Each milestone ends with a building app and passing tests. I'll stop and show yo
 | 3 | **Rule systems** | Done | The system picker per World. D&D 5e attributes appear for the relevant kinds, including ability score modifiers. |
 | 4 | **JSON import / export** | Done | Versioned `.encounterworld` package for a whole world (including images and maps), Import World and Export in the world list, and a sample world (`Samples/Saltmarch Coast.encounterworld`) for test data. |
 | 5 | **Links and mentions** | Done | `@` mentions in notes, kept in step with `PageLink`s, a Referenced By section, tappable mentions, and navigation between pages of any kind. |
-| 6 | **D&D content library** | Planned | Content pack format and loader, bundled read-only SRD 5.1 and 5.2 races/species and classes with attribution, structured trait and feature entries, per-world edition setting, Library section in the sidebar, Create Custom Version, Class page kind (shown when relevant), race and class references (library or world) and Class Level on characters. |
+| 6a | **D&D library: foundations** | Built, awaiting review | Content pack format and loader, structured trait and feature entries (and their editor), Class page kind (shown when relevant), per-world edition setting, Library section in the sidebar, read-only library browser, Create Custom Version (`basedOnKey`), race and class references that can be library or world entries, Class Level on characters, attribution screen. Proven with a small set of entries taken verbatim from the real SRDs (Dwarf, Hill Dwarf, Fighter in 5.1; Dwarf, Fighter in 5.2.1), checked by `Tools/srd/verify.sh`. 181 tests pass. |
+| 6b | **D&D library: SRD 5.1 content** | Built, awaiting review | A converter tool that reads the official SRD 5.1 PDF and writes the content pack, then all races (with subraces) and all 12 classes (with their subclass and every feature by level). Includes a checks report for you to review. |
+| 6c | **D&D library: SRD 5.2.1 content** | Built, awaiting review | The same for the official SRD 5.2.1: all 9 species and all 12 classes. |
 | 7 | **Character builder (level 1)** | Planned | Guided flow (name, race, class, ability scores, review) that creates a level 1 playable character page. |
 | 8 | **Character levelling** | Planned | Level a character up to 20: hit points, proficiency bonus, class features gained, subclass choice. |
 | 9 | **Place hierarchy** | Planned | Parenting, outline, breadcrumbs. |
