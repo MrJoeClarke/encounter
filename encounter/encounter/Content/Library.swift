@@ -14,6 +14,8 @@ final class Library {
 
     private var packs: [LibraryEdition: LibraryPack] = [:]
     private var attemptedEditions: Set<LibraryEdition> = []
+    /// Packs are loaded the first time they're asked for, which can happen on several threads at once, such as in tests.
+    private let lock = NSLock()
     private let isPreloaded: Bool
 
     /// Loads packs from the app bundle as they're first needed.
@@ -28,6 +30,8 @@ final class Library {
     }
 
     func pack(for edition: LibraryEdition) -> LibraryPack? {
+        lock.lock()
+        defer { lock.unlock() }
         if let pack = packs[edition] { return pack }
         guard !isPreloaded, attemptedEditions.insert(edition).inserted else { return nil }
         guard let url = Bundle(for: LibraryBundleToken.self).url(forResource: edition.resourceName, withExtension: "json"),

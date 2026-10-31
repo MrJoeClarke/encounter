@@ -258,3 +258,66 @@ nonisolated struct SpellLimits: Equatable, Sendable {
         return limits
     }
 }
+
+/// The kinds of tool a class or background lets you choose from.
+nonisolated enum ToolCategory: String, CaseIterable, Sendable {
+    case artisan
+    case musical
+    case gaming
+
+    var title: String {
+        switch self {
+        case .artisan: String(localized: "Artisan’s tools")
+        case .musical: String(localized: "Musical instrument")
+        case .gaming: String(localized: "Gaming set")
+        }
+    }
+
+    /// The category a library equipment entry belongs to, from its category or name.
+    static func of(equipmentCategory: String, name: String) -> ToolCategory? {
+        let text = (equipmentCategory + " " + name).lowercased()
+        if text.contains("artisan") { return .artisan }
+        if text.contains("musical") { return .musical }
+        if text.contains("gaming") { return .gaming }
+        return nil
+    }
+}
+
+/// What a class or background gives for tools: named tools, or a choice from kinds of tool.
+nonisolated struct ToolProficiency: Equatable, Sendable {
+    var fixed: [String] = []
+    var count = 0
+    var categories: [ToolCategory] = []
+
+    var isChoice: Bool { count > 0 }
+
+    /// Reads "None", "Herbalism kit", "Thieves’ Tools", "Choose one kind of Gaming Set (see “Equipment”)",
+    /// "Three musical instruments of your choice", "Choose 3 Musical Instruments" and
+    /// "Choose one type of artisan’s tools or one musical instrument".
+    static func parse(_ text: String) -> ToolProficiency {
+        let cleaned = text.replacingOccurrences(of: "\\s*\\(see [^)]*\\)", with: "", options: .regularExpression).trimmingCharacters(in: .whitespacesAndNewlines)
+        let lowered = cleaned.lowercased()
+        if lowered.isEmpty || lowered == "none" { return ToolProficiency() }
+        let categories = ToolCategory.allCases.filter { lowered.contains($0.rawValue) }
+        if (lowered.contains("choose") || lowered.contains("of your choice")), !categories.isEmpty {
+            let words = lowered.split(whereSeparator: { !$0.isLetter && !$0.isNumber }).map(String.init)
+            let count = words.compactMap { CharacterRules.number(from: $0) }.first ?? 1
+            return ToolProficiency(count: count, categories: categories)
+        }
+        return ToolProficiency(fixed: EquipmentGroup.items(in: cleaned))
+    }
+}
+
+extension EquipmentGroup {
+    /// Puts the tool a character chose where an item says "the same as above", or "chosen for the tool proficiency",
+    /// or "of your choice". Returns the item as it is if it isn't about a tool choice, or nothing is chosen yet.
+    static func resolvingTool(in item: String, with pick: String?) -> String {
+        guard let pick else { return item }
+        let lowered = item.lowercased()
+        if lowered.contains("chosen for the tool proficiency") || lowered.contains("same as above") || lowered.hasSuffix("of your choice"),
+           lowered.contains("tools") || lowered.contains("instrument") || lowered.contains("gaming set") {
+            return pick
+        }
+        return item
+    }
+}

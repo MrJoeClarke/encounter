@@ -422,6 +422,107 @@ struct CharacterBuilderTests {
         #expect(CharacterContent.resolve(.page(racePage.id), in: world)?.name == "Moss Gnome")
     }
 
+    @Test func toolOptionsComeFromTheLibraryInBothEditions() {
+        let context = ModelContext(try! AppSchema.makeContainer(inMemory: true))
+        for edition in LibraryEdition.allCases {
+            let world = makeWorld(edition, in: context)
+            let options = CharacterContent.toolOptions(in: world)
+            #expect(options[.artisan]?.count ?? 0 >= 17, "\(edition)")
+            #expect(options[.musical]?.contains("Lute") == true, "\(edition)")
+            #expect(options[.gaming]?.contains("Dice set") == true || options[.gaming]?.contains("Dice") == true, "\(edition)")
+        }
+        let plain = World(name: "Plain")
+        context.insert(plain)
+        #expect(CharacterContent.toolOptions(in: plain).isEmpty)
+    }
+
+    @Test func aMonkChoosesATool_andTheEquipmentUsesIt_in2024() throws {
+        let context = try makeContext()
+        let world = makeWorld(.srd52, in: context)
+        var draft = CharacterDraft()
+        draft.name = "Kess"
+        let species = try source("srd52.race.human")
+        let monk = try source("srd52.class.monk")
+        let acolyte = try source("srd52.background.acolyte")
+        draft.race = species.choice; draft.characterClass = monk.choice; draft.background = acolyte.choice
+        draft.scores = [.strength: 8, .dexterity: 15, .constitution: 13, .intelligence: 10, .wisdom: 14, .charisma: 12]
+        draft.backgroundBonus = .oneEach
+        draft.skills = ["Acrobatics", "Athletics"]
+        draft.equipmentChoices = [0: 0, 1: 0]
+        let options = CharacterContent.toolOptions(in: world)
+
+        let missing = CharacterPlanner.plan(draft, edition: .srd52, race: species, characterClass: monk, background: acolyte, toolOptions: options)
+        #expect(missing.toolChoices.map(\.id) == ["class"])
+        #expect(missing.problems.contains("Choose 1 tool for the class."))
+        #expect(missing.toolChoices.first?.options.contains("Lute") == true && missing.toolChoices.first?.options.contains("Smith’s Tools") == true)
+
+        draft.toolPicks["class"] = ["Lute"]
+        let plan = CharacterPlanner.plan(draft, edition: .srd52, race: species, characterClass: monk, background: acolyte, toolOptions: options)
+        #expect(plan.problems.isEmpty, "\(plan.problems)")
+        #expect(plan.tools == ["Lute", "Calligrapher’s Supplies"])
+        #expect(plan.equipment.contains("Lute") && !plan.equipment.contains { $0.contains("chosen for the tool proficiency") })
+
+        draft.toolPicks["class"] = ["Lute", "Flute"]
+        #expect(CharacterPlanner.plan(draft, edition: .srd52, race: species, characterClass: monk, background: acolyte, toolOptions: options).problems.contains("Choose 1 tool for the class."))
+    }
+
+    @Test func aSoldierAndABardEachChooseToolsInTheirOwnStep() throws {
+        let context = try makeContext()
+        let world = makeWorld(.srd52, in: context)
+        let options = CharacterContent.toolOptions(in: world)
+        var draft = CharacterDraft()
+        draft.name = "Dag"
+        let species = try source("srd52.race.human")
+        let bard = try source("srd52.class.bard")
+        let soldier = try source("srd52.background.soldier")
+        draft.race = species.choice; draft.characterClass = bard.choice; draft.background = soldier.choice
+        draft.backgroundBonus = .oneEach
+
+        let plan = CharacterPlanner.plan(draft, edition: .srd52, race: species, characterClass: bard, background: soldier, toolOptions: options)
+        #expect(plan.toolChoices.map(\.id) == ["class", "background"])
+        #expect(plan.toolChoices.map(\.count) == [3, 1])
+        #expect(plan.toolChoices[1].options.contains("Dragonchess"))
+
+        draft.toolPicks = ["class": ["Lute", "Lyre", "Flute"], "background": ["Dragonchess"]]
+        draft.equipmentChoices = [0: 0, 1: 0]
+        let done = CharacterPlanner.plan(draft, edition: .srd52, race: species, characterClass: bard, background: soldier, toolOptions: options)
+        #expect(!done.problems.contains { $0.contains("tool") })
+        #expect(done.tools == ["Flute", "Lute", "Lyre", "Dragonchess"])
+        #expect(done.equipment.contains("Flute") && done.equipment.contains("Dragonchess"))
+    }
+
+    @Test func the2014BardAndMonkChooseToolsToo() throws {
+        let context = try makeContext()
+        let world = makeWorld(.srd51, in: context)
+        let options = CharacterContent.toolOptions(in: world)
+        var (draft, race, _, acolyte) = try fighterDraft(world)
+        let bard = try source("srd51.class.bard")
+        draft.characterClass = bard.choice
+        let plan = CharacterPlanner.plan(draft, edition: .srd51, race: race, characterClass: bard, background: acolyte, toolOptions: options)
+        #expect(plan.toolChoices.first?.count == 3)
+        #expect(plan.toolChoices.first?.options.contains("Lute") == true)
+        let monk = try source("srd51.class.monk")
+        let monkPlan = CharacterPlanner.plan(draft, edition: .srd51, race: race, characterClass: monk, background: acolyte, toolOptions: options)
+        #expect(monkPlan.toolChoices.first?.options.contains("Smith’s tools") == true && monkPlan.toolChoices.first?.options.contains("Lute") == true)
+        // A class with named tools has no choice to make but still has the tools.
+        let rogue = try source("srd51.class.rogue")
+        let roguePlan = CharacterPlanner.plan(draft, edition: .srd51, race: race, characterClass: rogue, background: acolyte, toolOptions: options)
+        #expect(roguePlan.toolChoices.isEmpty && roguePlan.tools == ["Thieves’ tools"])
+    }
+
+    @Test func theToolsStepOnlyAppearsWhenThereIsAChoice() throws {
+        let context = try makeContext()
+        let world = World(name: "W", system: .dnd5e)
+        world.edition = .srd52
+        context.insert(world)
+        let model = CharacterBuilderModel(world: world)
+        #expect(!model.steps.contains(.tools))
+        model.chooseClass(try source("srd52.class.monk"))
+        #expect(model.steps.contains(.tools))
+        model.chooseClass(try source("srd52.class.fighter"))
+        #expect(!model.steps.contains(.tools))
+    }
+
     @Test func everyChoiceSaysWhereItComesFrom() throws {
         let context = try makeContext()
         let world = makeWorld(.srd52, in: context)
@@ -474,6 +575,39 @@ struct EquipmentItemsTests {
                 #expect(!items.isEmpty && items.allSatisfy { !$0.hasPrefix("and ") && !$0.hasSuffix(",") }, "\(text)")
             }
         }
+    }
+}
+
+struct ToolProficiencyTests {
+    @Test func toolTextIsReadAsNamedToolsOrAChoice() {
+        #expect(ToolProficiency.parse("None") == ToolProficiency())
+        #expect(ToolProficiency.parse("Herbalism kit").fixed == ["Herbalism kit"])
+        #expect(ToolProficiency.parse("Thieves’ Tools").fixed == ["Thieves’ Tools"])
+        #expect(ToolProficiency.parse("Choose one kind of Gaming Set (see “Equipment”)") == ToolProficiency(count: 1, categories: [.gaming]))
+        #expect(ToolProficiency.parse("Three musical instruments of your choice") == ToolProficiency(count: 3, categories: [.musical]))
+        #expect(ToolProficiency.parse("Choose 3 Musical Instruments (see “Equipment”)") == ToolProficiency(count: 3, categories: [.musical]))
+        #expect(ToolProficiency.parse("Choose one type of artisan’s tools or one musical instrument") == ToolProficiency(count: 1, categories: [.artisan, .musical]))
+        #expect(ToolProficiency.parse("Choose one type of Artisan’s Tools or Musical Instrument (see “Equipment”)") == ToolProficiency(count: 1, categories: [.artisan, .musical]))
+    }
+
+    @Test func everyToolTextInTheLibraryIsUnderstood() {
+        for edition in LibraryEdition.allCases {
+            for entry in Library.shared.topLevelEntries(.class, in: edition) + Library.shared.entries(.background, in: edition) {
+                for key in ["dnd5e.toolProficiencies", "dnd5e.backgroundTools"] {
+                    guard case .text(let text)? = entry.attributes[key] else { continue }
+                    let parsed = ToolProficiency.parse(text)
+                    #expect(parsed.isChoice || !parsed.fixed.isEmpty || text == "None", "\(entry.name): \(text)")
+                }
+            }
+        }
+    }
+
+    @Test func anItemThatNamesAToolChoiceGetsTheTool() {
+        #expect(EquipmentGroup.resolvingTool(in: "Artisan’s Tools or Musical Instrument chosen for the tool proficiency above", with: "Lute") == "Lute")
+        #expect(EquipmentGroup.resolvingTool(in: "Gaming Set (same as above)", with: "Dice") == "Dice")
+        #expect(EquipmentGroup.resolvingTool(in: "Musical Instrument of your choice", with: "Flute") == "Flute")
+        #expect(EquipmentGroup.resolvingTool(in: "Spear", with: "Lute") == "Spear")
+        #expect(EquipmentGroup.resolvingTool(in: "Gaming Set (same as above)", with: nil) == "Gaming Set (same as above)")
     }
 }
 

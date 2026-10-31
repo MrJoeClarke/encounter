@@ -80,6 +80,8 @@ nonisolated struct CharacterDraft: Sendable {
     var backgroundBonus: BackgroundBonus?
 
     var skills: Set<String> = []
+    /// The tools chosen for each choice of tool, keyed "class" or "background".
+    var toolPicks: [String: Set<String>] = [:]
     /// For each group of starting equipment, the option chosen: a class's groups, then the background's.
     var equipmentChoices: [Int: Int] = [:]
     var cantrips: Set<String> = []
@@ -98,6 +100,9 @@ nonisolated struct CharacterPlan: Sendable {
     var backgroundSkills: [String] = []
     var classSkillChoice: SkillChoice?
     var skills: [String] = []
+    /// A class's or background's choice of tools, with what's chosen.
+    var toolChoices: [ToolChoice] = []
+    var tools: [String] = []
     var equipmentGroups: [EquipmentGroup] = []
     var equipment: [String] = []
     var spellLimits = SpellLimits()
@@ -109,6 +114,16 @@ nonisolated struct CharacterPlan: Sendable {
     var notes: [String] = []
 }
 
+/// One choice of tools to make: how many, from which kinds, and what's chosen.
+nonisolated struct ToolChoice: Identifiable, Equatable, Sendable {
+    /// "class" or "background".
+    var id: String
+    var title: String
+    var count: Int
+    var options: [String]
+    var picks: Set<String>
+}
+
 nonisolated enum CharacterPlanner {
     /// Works out a plan for the draft.
     /// - Parameters:
@@ -118,7 +133,8 @@ nonisolated enum CharacterPlanner {
         edition: LibraryEdition,
         race: ContentSource?,
         characterClass: ContentSource?,
-        background: ContentSource?
+        background: ContentSource?,
+        toolOptions: [ToolCategory: [String]] = [:]
     ) -> CharacterPlan {
         var plan = CharacterPlan()
 
@@ -205,14 +221,40 @@ nonisolated enum CharacterPlanner {
         }
         plan.skills = (plan.backgroundSkills + classPicks.sorted()).reduce(into: [String]()) { if !$0.contains($1) { $0.append($1) } }
 
-        // Equipment: fixed groups as they are, choices as picked.
+        // Tools: the named ones, and a choice from kinds of tool.
+        var toolPicksForSlot: [String: String] = [:]
+        let toolSources: [(id: String, title: String, text: String?)] = [
+            ("class", String(localized: "Class"), characterClass?.text("dnd5e.toolProficiencies")),
+            ("background", String(localized: "Background"), background?.text("dnd5e.backgroundTools")),
+        ]
+        for source in toolSources {
+            guard let text = source.text else { continue }
+            let proficiency = ToolProficiency.parse(text)
+            plan.tools += proficiency.fixed
+            guard proficiency.isChoice else { continue }
+            let options = proficiency.categories.flatMap { toolOptions[$0] ?? [] }
+            let picks = (draft.toolPicks[source.id] ?? []).filter { options.isEmpty || options.contains($0) }
+            plan.toolChoices.append(ToolChoice(id: source.id, title: "\(source.title): \(proficiency.categories.map(\.title).joined(separator: " or "))",
+                                               count: proficiency.count, options: options, picks: picks))
+            if picks.count != proficiency.count { plan.problems.append("Choose \(proficiency.count) tool\(proficiency.count == 1 ? "" : "s") for the \(source.title.lowercased()).") }
+            plan.tools += picks.sorted()
+            toolPicksForSlot[source.id] = picks.sorted().first
+        }
+
+        // Equipment: fixed groups as they are, choices as picked. A class's items that name a chosen tool get that tool.
+        let classGroupCount = EquipmentGroup.parse(characterClass?.text("dnd5e.startingEquipment") ?? "").count
         for (index, group) in plan.equipmentGroups.enumerated() {
+            let slot = index < classGroupCount ? "class" : "background"
+            var text: String?
             if group.isChoice {
-                if let pick = draft.equipmentChoices[index], group.options.indices.contains(pick) { plan.equipment += EquipmentGroup.items(in: group.options[pick].text) }
+                if let pick = draft.equipmentChoices[index], group.options.indices.contains(pick) { text = group.options[pick].text }
                 else { plan.problems.append("Choose your starting equipment.") }
-            } else if let only = group.options.first {
-                plan.equipment += EquipmentGroup.items(in: only.text)
+            } else {
+                text = group.options.first?.text
             }
+            guard let text else { continue }
+            // "Same as above" in a background refers to the background's tool, and "chosen for the tool proficiency above" to the class's.
+            plan.equipment += EquipmentGroup.items(in: text).map { EquipmentGroup.resolvingTool(in: $0, with: toolPicksForSlot[slot] ?? toolPicksForSlot["class"]) }
         }
         plan.problems = plan.problems.reduce(into: [String]()) { if !$0.contains($1) { $0.append($1) } }
 

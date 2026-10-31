@@ -73,6 +73,7 @@ struct CharacterBuilderView: View {
         case .background: "Background"
         case .abilities: "Ability Scores"
         case .skills: "Skills"
+        case .tools: "Tools"
         case .equipment: "Equipment"
         case .spells: "Spells"
         case .review: "Review"
@@ -95,6 +96,7 @@ struct CharacterBuilderView: View {
         case .background: BackgroundStep(model: model)
         case .abilities: AbilitiesStep(model: model)
         case .skills: SkillsStep(model: model)
+        case .tools: ToolsStep(model: model)
         case .equipment: EquipmentStep(model: model)
         case .spells: SpellsStep(model: model)
         case .review: ReviewStep(model: model)
@@ -383,6 +385,39 @@ private struct SkillsStep: View {
     }
 }
 
+private struct ToolsStep: View {
+    @Bindable var model: CharacterBuilderModel
+
+    var body: some View {
+        let plan = model.plan
+        ForEach(plan.toolChoices) { choice in
+            Section {
+                ForEach(choice.options, id: \.self) { tool in
+                    Toggle(tool, isOn: Binding(
+                        get: { choice.picks.contains(tool) },
+                        set: { isOn in
+                            var picks = model.draft.toolPicks[choice.id] ?? []
+                            if isOn { picks.insert(tool) } else { picks.remove(tool) }
+                            model.draft.toolPicks[choice.id] = picks
+                        }
+                    ))
+                    .disabled(!choice.picks.contains(tool) && choice.picks.count >= choice.count)
+                }
+            } header: {
+                Text(choice.title)
+            } footer: {
+                Text("Choose \(choice.count). \(choice.picks.count) chosen.")
+            }
+        }
+        let fixed = plan.tools.filter { tool in !plan.toolChoices.contains { $0.picks.contains(tool) } }
+        if !fixed.isEmpty {
+            Section("Also Proficient With") {
+                ForEach(fixed, id: \.self) { Label($0, systemImage: "checkmark.circle.fill") }
+            }
+        }
+    }
+}
+
 private struct EquipmentStep: View {
     @Bindable var model: CharacterBuilderModel
 
@@ -479,6 +514,7 @@ private struct ReviewStep: View {
             LabeledContent("Proficiency Bonus", value: "+\(plan.proficiencyBonus)")
             if !plan.savingThrows.isEmpty { LabeledContent("Saving Throws", value: plan.savingThrows.joined(separator: ", ")) }
             if !plan.skills.isEmpty { LabeledContent("Skills", value: plan.skills.joined(separator: ", ")) }
+            if !plan.tools.isEmpty { LabeledContent("Tools", value: plan.tools.joined(separator: ", ")) }
         }
         if !plan.equipment.isEmpty {
             Section("Equipment") { ForEach(plan.equipment, id: \.self) { Text($0) } }

@@ -12,7 +12,7 @@ import SwiftData
 @Observable
 final class CharacterBuilderModel {
     enum Step: Int, CaseIterable, Identifiable {
-        case concept, race, characterClass, background, abilities, skills, equipment, spells, review
+        case concept, race, characterClass, background, abilities, skills, tools, equipment, spells, review
 
         var id: Int { rawValue }
     }
@@ -54,7 +54,8 @@ final class CharacterBuilderModel {
     var subclass: LibraryEntry? { draft.subclass.flatMap { Library.shared.entry(forKey: $0) } }
 
     var plan: CharacterPlan {
-        var plan = CharacterPlanner.plan(draft, edition: edition, race: race, characterClass: characterClass, background: background)
+        var plan = CharacterPlanner.plan(draft, edition: edition, race: race, characterClass: characterClass, background: background,
+                                         toolOptions: CharacterContent.toolOptions(in: world))
         if !levelOneSubclasses.isEmpty, draft.subclass == nil { plan.problems.append("Choose the class’s subclass.") }
         return plan
     }
@@ -88,6 +89,7 @@ final class CharacterBuilderModel {
         draft.subclass = nil
         draft.skills = draft.skills.intersection(Set(plan.backgroundSkills))
         draft.equipmentChoices = [:]
+        draft.toolPicks["class"] = nil
         draft.cantrips = []
         draft.spells = []
     }
@@ -96,6 +98,7 @@ final class CharacterBuilderModel {
         draft.background = source.choice
         draft.backgroundBonus = nil
         draft.skills = []
+        draft.toolPicks["background"] = nil
         draft.equipmentChoices = [:]
     }
 
@@ -125,7 +128,8 @@ final class CharacterBuilderModel {
 
     /// The steps in order, leaving out the spells for a class that doesn't cast.
     var steps: [Step] {
-        Step.allCases.filter { $0 != .spells || plan.spellLimits.isCaster }
+        let plan = plan
+        return Step.allCases.filter { ($0 != .spells || plan.spellLimits.isCaster) && ($0 != .tools || !plan.toolChoices.isEmpty) }
     }
 
     var canGoBack: Bool { steps.first != step }

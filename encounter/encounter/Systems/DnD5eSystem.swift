@@ -98,6 +98,7 @@ struct DnD5eSystem: RuleSystem {
         .init(key: "dnd5e.proficiencyBonus", label: "Proficiency Bonus", type: .number, appliesTo: [.character], group: "Combat"),
         .init(key: "dnd5e.savingThrowProficiencies", label: "Saving Throw Proficiencies", type: .text, appliesTo: [.character], group: "Proficiencies"),
         .init(key: "dnd5e.skillProficiencies", label: "Skill Proficiencies", type: .text, appliesTo: [.character], group: "Proficiencies"),
+        .init(key: "dnd5e.characterToolProficiencies", label: "Tool Proficiencies", type: .text, appliesTo: [.character], group: "Proficiencies"),
         .init(key: "dnd5e.racialTraits", label: "Racial Traits", type: .entries(showsLevel: false), appliesTo: [.character], group: "Traits"),
         .init(key: "dnd5e.classFeatures", label: "Class Features", type: .entries(showsLevel: true), appliesTo: [.character], group: "Features"),
         .init(key: "dnd5e.equipment", label: "Equipment", type: .entries(showsLevel: false), appliesTo: [.character], group: "Equipment"),

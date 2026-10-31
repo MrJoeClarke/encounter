@@ -73,6 +73,26 @@ enum CharacterContent {
             .filter { $0.entries.contains { $0.level == 1 } }
     }
 
+    /// The tools of each kind a character can choose from. In the 2014 rules each is an entry of the library, and in the
+    /// 2024 rules musical instruments and gaming sets are variants listed in one entry.
+    static func toolOptions(in world: World) -> [ToolCategory: [String]] {
+        guard RuleSystems.system(for: world.system).hasContentLibrary else { return [:] }
+        var options: [ToolCategory: [String]] = [:]
+        for entry in Library.shared.entries(.equipment, in: world.edition) {
+            guard case .text(let category)? = entry.attributes["dnd5e.equipmentCategory"],
+                  let kind = ToolCategory.of(equipmentCategory: category, name: entry.name)
+            else { continue }
+            if let variants = entry.entries.first(where: { $0.name == "Variants" })?.text {
+                // "Dice (1 SP), dragonchess (1 GP), playing cards (5 SP)": the names before the brackets.
+                let names = EquipmentGroup.items(in: variants).map { $0.components(separatedBy: " (").first ?? $0 }
+                options[kind, default: []] += names.map { $0.prefix(1).uppercased() + $0.dropFirst() }
+            } else if category.lowercased().contains(kind.rawValue) && entry.name.lowercased() != ToolCategory.gaming.title.lowercased() {
+                options[kind, default: []].append(entry.name)
+            }
+        }
+        return options.mapValues { $0.sorted() }
+    }
+
     /// The spells of a level on a class's list. A class made in the world from a library class has its list.
     static func spells(level: Int, for characterClass: ContentSource, in world: World) -> [LibraryEntry] {
         guard let classKey = characterClass.libraryKey, let libraryClass = Library.shared.entry(forKey: classKey) else { return [] }
@@ -124,6 +144,7 @@ enum CharacterBuilder {
         page.setAttributeText("dnd5e.size", race.text("core.raceSize") ?? "")
         page.setAttributeText("dnd5e.savingThrowProficiencies", plan.savingThrows.joined(separator: ", "))
         page.setAttributeText("dnd5e.skillProficiencies", plan.skills.joined(separator: ", "))
+        page.setAttributeText("dnd5e.characterToolProficiencies", plan.tools.joined(separator: ", "))
 
         // Traits and features.
         let traits = race.entries
