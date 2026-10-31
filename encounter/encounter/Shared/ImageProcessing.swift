@@ -25,6 +25,22 @@ nonisolated enum ImageProcessing {
         prepareSynchronously(data)
     }
 
+    /// Like `prepare`, but keeps the original at full size. For maps, which can need more detail than other images.
+    @concurrent
+    static func prepareKeepingFullSize(_ data: Data) async -> PreparedImage? {
+        prepareSynchronously(data, maxDimension: .max)
+    }
+
+    /// An image reduced to fit within `maxPixelSize` on its longest side, for showing a very large image
+    /// without decoding all of it. Never enlarges. Photos taken in portrait come out upright.
+    @concurrent
+    static func downsampled(_ data: Data, maxPixelSize: Int) async -> CGImage? {
+        guard let source = CGImageSourceCreateWithData(data as CFData, nil),
+              let size = pixelSize(of: data)
+        else { return nil }
+        return scaledImage(from: source, maxPixelSize: min(maxPixelSize, max(size.width, size.height)))
+    }
+
     /// Reads a file the user picked, handling the security-scoped access that sandboxed apps need.
     @concurrent
     static func loadData(from url: URL) async -> Data? {
@@ -77,14 +93,17 @@ nonisolated enum ImageProcessing {
         return fileExtension
     }
 
-    /// The pixel size of encoded image data, or nil if it can't be read.
+    /// The pixel size of encoded image data as it is shown (turned upright if its orientation says so), or nil
+    /// if it can't be read. Reads only the file's header, not the whole image.
     static func pixelSize(of data: Data) -> (width: Int, height: Int)? {
         guard let source = CGImageSourceCreateWithData(data as CFData, nil),
               let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
               let width = properties[kCGImagePropertyPixelWidth] as? Int,
               let height = properties[kCGImagePropertyPixelHeight] as? Int
         else { return nil }
-        return (width, height)
+        // Orientations 5 to 8 turn the image a quarter, so its width and height swap.
+        let orientation = properties[kCGImagePropertyOrientation] as? Int ?? 1
+        return (5...8).contains(orientation) ? (height, width) : (width, height)
     }
 
     // The transform option applies EXIF orientation, so photos taken in portrait come out upright.

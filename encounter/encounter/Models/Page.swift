@@ -59,9 +59,6 @@ final class Page {
     @Relationship(deleteRule: .nullify, inverse: \WorldMap.place)
     var maps: [WorldMap]?
 
-    @Relationship(deleteRule: .cascade, inverse: \MapPin.target)
-    var pins: [MapPin]?
-
     init(title: String, kind: PageKind, summary: String = "") {
         self.title = title
         self.kindRaw = kind.rawValue

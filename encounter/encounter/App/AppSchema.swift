@@ -18,7 +18,6 @@ enum AppSchema {
         PageImage.self,
         PageLink.self,
         WorldMap.self,
-        MapPin.self,
     ]
 
     static func makeContainer(inMemory: Bool = false) throws -> ModelContainer {

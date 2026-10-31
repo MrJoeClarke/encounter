@@ -93,7 +93,7 @@ Event (data on Page.kind == .event)
 WorldMap
  ├─ image (externalStorage), name
  ├─ place: Page?     (the place this map depicts, enabling nested maps)
- └─ MapPin[]         (normalised x/y in 0...1, target Page, optional icon)
+ └─ (places appear on a map from their own positions)
 ```
 
 **Why one `Page` model rather than six.** Linking, search, `@` mentions, hierarchy and CloudKit all work against a single type. Per-kind behaviour comes from `PageKind` plus the attribute schema. A view for a particular kind can still use typed accessors.
@@ -165,10 +165,15 @@ protocol RuleSystem {
 - Render in a zoomable, pannable view. Use `ScrollView` with magnification on iOS and a native-feeling gesture setup on macOS.
 - Tap to add a pin, then pick or create a Place. Pins are stored in normalised coordinates, so image resolution doesn't matter.
 - A place can have its own map, so a pin can drill down (region map to town map).
-- Very large images are downsampled for display with ImageIO, and the original is kept.
+- Maps are kept at full size, with no limit on their pixel size, so calibration and detail aren't lost. Only the copy shown on screen is decoded at up to 8192 pixels on its longest side, so a huge map doesn't fill memory. Positions on a map always count pixels of the full image. Other images are still reduced to 4096.
 
-- **Calibrated maps (milestone 11):** a map gets a calibration from pixels to metres (an origin, a scale and a rotation, set by marking two known points). Drawing a polygon or dropping a pin then writes `Page.geometry`, and automatic parents follow. A place appears on every map that covers it, and nesting between maps comes from their areas, so nothing is pinned twice.
-- **Pins are derived:** with a calibrated map, a pin just points at a place and is drawn from `place.geometry`. Pins on an uncalibrated map keep their own normalised image position. `MapPin` isn't used by any screen yet, so changing it is cheap.
+- **Map types (milestone 11):** a **world map**, **settlement maps** and **scene maps** (a building or battle scene on a grid of 5 ft squares). All are calibrated into the same flat plane of metres, so a position on any map means the same place in the world. A settlement is just a point on the world map. Its own map is a much smaller map in the same plane, anchored at that point.
+- **Calibration:** every map stores one calibration: where the image's top left corner is in the plane, metres per pixel, and a turn. How you give it depends on the type. A **world map**: mark two points and type the distance between them. The app works out the scale and puts the map north up with its bottom left corner at the plane's origin (0, 0), so every position on it is non-negative. No coordinates are typed. A **settlement map** (11b): mark two points and type the distance, and the map is centred on its settlement. A **scene map** (11b): enter the size in squares (columns by rows) and the square size (5 ft, 1.524 m), centred on its place. Two-point marking is the first method, and a more interactive one can replace it later without changing what is stored.
+- **Distances:** shown and typed in miles (`DistanceUnit.preferred`, where a setting would go later) and always stored in metres. Kilometres, feet and metres are already supported by `DistanceUnit`.
+- **One world map:** a second world map would also sit at the origin, so only one can line up. Placing further maps on a place (as settlement maps do) is the way to cover other areas for now.
+- **A map must be calibrated first:** nothing goes on an uncalibrated map. Places are meant to be added by right-clicking or long-pressing on the map, so they always have a position. A settlement or scene map needs its place to have a position already.
+- **Pins are derived:** a pin points at a place and is drawn from `place.geometry` through the map's calibration. A place appears on every map that covers it, and nesting between maps comes from their areas. The old `MapPin` model is removed. Older files that list pins still import, and the pins are ignored.
+- **Steps:** 11a: import, view, zoom, and world map calibration. 11b: adding places on the map, drill-down, and settlement and scene calibration. 11c: drawing outlines and nesting.
 - **Limit:** a world has one plane. Building floors, dungeon levels and other planes would overlap on it, and will need their own plane (a "space" a place belongs to) or a height value later. The geometry maths wouldn't change.
 
 ### 5.3a Calendars (milestone 10)
@@ -283,14 +288,14 @@ A guided flow that produces a playable character page.
 ```
 encounter/
   App/            encounterApp, root navigation, ModelContainer setup
-  Models/         World, Campaign, Page, PageLink, WorldMap, MapPin, InWorldDate
+  Models/         World, Campaign, Page, PageLink, WorldMap, InWorldDate
   Systems/        RuleSystem, AttributeDefinition, Core, DnD5e
   Content/        bundled read-only content packs (SRD 5.1 and 5.2 races, classes), loader, attribution
   Features/
     Pages/        list, detail, editor, attribute form
     Mentions/     AttributedString scope, @ picker, link syncing
     Places/       hierarchy tree, breadcrumbs
-    Maps/         importer, viewer, pins
+    Maps/         importer, viewer, calibration
     Timeline/     event timeline, character journey
     Library/      read-only library browser, Create Custom Version
     CharacterBuilder/  guided flow, draft, calculators, levelling up
@@ -325,7 +330,9 @@ Each milestone ends with a building app and passing tests. I'll stop and show yo
 | 8b | **Place coordinates** | Built, awaiting review | Metre-based positions and polygons, spatial maths, automatic parents. |
 | 9 | **Search** | Built, awaiting review | Global search and kind filters, including library entries. |
 | 10 | **Calendars** | Built, awaiting review | Custom calendar editor per world, `InWorldDate` entry and formatting. |
-| 11 | **Maps** | Planned | Import, view, pins, nested maps. |
+| 11a | **Maps: import, view, calibrate** | Built, awaiting review | A Maps list in the sidebar, import from files, drop or Photos, zoom and scroll, and two-point calibration of a world map into the world's metre plane. |
+| 11b | **Maps: places and map types** | Planned | Add places by right-click or long-press, drill-down to a place's own map, settlement and scene (grid) maps. |
+| 11c | **Maps: outlines and nesting** | Planned | Draw outlines for places and nest maps from their areas. |
 | 12 | **Events and timelines** | Planned | Event fields, campaign vs backstory, timeline view, character journey. |
 | 13 | **Character levelling** | Planned (deferred until after events and timelines) | Level a character up to 20: hit points, proficiency bonus, class features gained, subclass choice, and new spells. |
 | 14 | **Polish** | Planned | Keyboard shortcuts and menus on Mac, iPad multitasking, accessibility audit (Dynamic Type, VoiceOver, contrast), empty states. |
@@ -335,7 +342,7 @@ Search comes before maps because the `@` picker needs it. Import/export comes ea
 
 ### JSON format notes
 - Top-level `formatVersion`, so older files can still be read.
-- Records reference each other by stable UUIDs, so links, hierarchy and pins survive a round trip.
+- Records reference each other by stable UUIDs, so links, hierarchy and positions survive a round trip.
 - Worlds are exported as a package (`.encounterworld`, a directory with `world.json` and `images/`) so files stay small and readable. It will be declared as a document package type.
 - Import creates a new world by default and never overwrites an existing one silently.
 - Round-trip tests (export, import, compare) are required for every model added.

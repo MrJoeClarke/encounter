@@ -62,10 +62,9 @@ enum WorldExporter {
                     id: map.id,
                     name: map.name,
                     imageFile: map.imageData.map { store($0, id: map.id, in: &files) },
-                    placeID: map.place?.id,
-                    pins: (map.pins ?? [])
-                        .sorted { $0.id.uuidString < $1.id.uuidString }
-                        .map { PinRecord(id: $0.id, x: $0.x, y: $0.y, targetID: $0.target?.id) }
+                    kind: map.kindRaw,
+                    calibration: map.calibration,
+                    placeID: map.place?.id
                 )
             }
 

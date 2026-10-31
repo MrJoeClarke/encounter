@@ -14,6 +14,8 @@ final class WorldNavigation {
     var selectedPage: Page?
     /// The key of the library entry open in the Library, if any.
     var selectedLibraryKey: String?
+    /// The map open in Maps, if any.
+    var selectedMap: WorldMap?
     /// What the user has typed in the search field. While it isn't empty, the results are showing.
     var searchText = ""
     var searchScope: SearchScope = .all
@@ -42,5 +44,6 @@ final class WorldNavigation {
         selection = item
         selectedPage = nil
         selectedLibraryKey = nil
+        selectedMap = nil
     }
 }

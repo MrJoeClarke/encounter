@@ -10,6 +10,7 @@ import SwiftData
 enum WorldSidebarItem: Hashable {
     case home
     case kind(PageKind)
+    case maps
     case library(LibraryKind)
 }
 
@@ -47,6 +48,9 @@ struct WorldShellView: View {
                         .badge(count(of: kind))
                         .tag(WorldSidebarItem.kind(kind))
                     }
+                    Label("Maps", systemImage: "map")
+                        .badge((world.maps ?? []).count)
+                        .tag(WorldSidebarItem.maps)
                 }
 
                 if hasLibrary {
@@ -73,6 +77,8 @@ struct WorldShellView: View {
                 case .kind(let kind):
                     PagesBrowser(world: world, kind: kind)
                         .id(kind)
+                case .maps:
+                    MapsBrowser(world: world)
                 case .library(let kind):
                     LibraryBrowser(world: world, kind: kind)
                         .id(kind)

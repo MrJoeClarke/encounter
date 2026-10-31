@@ -87,10 +87,6 @@ struct WorldTransferTests {
         context.insert(map)
         map.world = world
         map.place = region
-        let pin = MapPin(x: 0.25, y: 0.75)
-        context.insert(pin)
-        pin.map = map
-        pin.target = town
 
         try context.save()
         return world
@@ -168,10 +164,6 @@ struct WorldTransferTests {
         #expect(map.name == "Sword Coast Map")
         #expect(map.imageData == original.maps?.first?.imageData)
         #expect(map.place === pages["Sword Coast"])
-        let pin = try #require(map.pins?.first)
-        #expect(pin.x == 0.25)
-        #expect(pin.y == 0.75)
-        #expect(pin.target === pages["Neverwinter"])
 
         // Summary
         #expect(summary.pages == 5)
@@ -546,7 +538,8 @@ struct WorldTransferTests {
         #expect(pages["Arrival at Brackwater"]?.eventOrigin == .campaign)
         #expect(pages["Arrival at Brackwater"]?.campaign?.name == "Tides of Brackwater")
         #expect(pages["The Great Drowning"]?.eventOrigin == .backstory)
-        #expect(world.maps?.first?.pins?.count == 3)
+        // The sample file was written when maps had pins of their own. They are ignored, and the map still imports.
+        #expect(world.maps?.first?.imageData != nil)
 
         // Mentions in the notes point at the imported pages, and their links are rebuilt from the text.
         #expect(pages["Brackwater"]?.mentionedPages.map(\.title) == ["Captain Odric Vane", "Harbor Guild", "The Gilded Gull"])
