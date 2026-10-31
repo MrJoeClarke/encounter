@@ -42,6 +42,8 @@ struct AttributeDefinition: Identifiable {
 enum CoreAttributes {
     static let traitsKey = "core.traits"
     static let featuresKey = "core.features"
+    /// The named parts of a background or feat, such as a feat's benefits.
+    static let detailsKey = "core.details"
 
     static let all: [AttributeDefinition] = [
         // Characters
@@ -75,6 +77,7 @@ enum CoreAttributes {
 
         // Classes
         .init(key: featuresKey, label: "Features", type: .entries(showsLevel: true), appliesTo: [.characterClass], group: "Features"),
+        .init(key: detailsKey, label: "Details", type: .entries(showsLevel: false), appliesTo: [.background, .feat], group: "Details"),
     ]
 
     static func definitions(for kind: PageKind) -> [AttributeDefinition] {

@@ -153,6 +153,7 @@ func cleanLine(_ raw: String) -> String {
         .replacingOccurrences(of: "\u{00A0}", with: " ")
         .replacingOccurrences(of: "-?\u{00AD}?[\u{2010}\u{2011}]+", with: "-", options: .regularExpression)
         .replacingOccurrences(of: "\u{00AD}", with: "")
+        .replacingOccurrences(of: "Dexterit y", with: "Dexterity")   // a gap in the PDF's own text
     line = line.replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
     return line.trimmingCharacters(in: .whitespaces)
 }

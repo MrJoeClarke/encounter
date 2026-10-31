@@ -9,7 +9,7 @@ import Foundation
 struct DnD5eSystem: RuleSystem {
     let id = RuleSystemID.dnd5e
 
-    var additionalPageKinds: Set<PageKind> { [.characterClass] }
+    var additionalPageKinds: Set<PageKind> { [.characterClass, .background, .feat] }
     var hasContentLibrary: Bool { true }
 
     static let hitDice = ["d6", "d8", "d10", "d12"]
@@ -71,6 +71,18 @@ struct DnD5eSystem: RuleSystem {
         .init(key: "dnd5e.weaponProficiencies", label: "Weapon Proficiencies", type: .text, appliesTo: [.characterClass], group: "D&D 5e"),
         .init(key: "dnd5e.toolProficiencies", label: "Tool Proficiencies", type: .text, appliesTo: [.characterClass], group: "D&D 5e"),
         .init(key: "dnd5e.skillChoices", label: "Skill Choices", type: .text, appliesTo: [.characterClass], group: "D&D 5e"),
+
+        // Backgrounds. What a background gives is kept as text, as the rules word it, until the character builder reads it.
+        .init(key: "dnd5e.backgroundAbilityScores", label: "Ability Scores", type: .text, appliesTo: [.background], group: "D&D 5e"),
+        .init(key: "dnd5e.backgroundFeat", label: "Feat", type: .text, appliesTo: [.background], group: "D&D 5e"),
+        .init(key: "dnd5e.backgroundSkills", label: "Skill Proficiencies", type: .text, appliesTo: [.background], group: "D&D 5e"),
+        .init(key: "dnd5e.backgroundTools", label: "Tool Proficiency", type: .text, appliesTo: [.background], group: "D&D 5e"),
+        .init(key: "dnd5e.backgroundLanguages", label: "Languages", type: .text, appliesTo: [.background], group: "D&D 5e"),
+        .init(key: "dnd5e.backgroundEquipment", label: "Starting Equipment", type: .text, appliesTo: [.background], group: "D&D 5e"),
+
+        // Feats
+        .init(key: "dnd5e.featCategory", label: "Category", type: .text, appliesTo: [.feat], group: "D&D 5e"),
+        .init(key: "dnd5e.featPrerequisite", label: "Prerequisite", type: .text, appliesTo: [.feat], group: "D&D 5e"),
 
         // Characters and monsters
         .init(key: "dnd5e.size", label: "Size", type: .choice(sizes), appliesTo: [.character], group: "D&D 5e"),

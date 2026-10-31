@@ -534,7 +534,8 @@ struct LibraryTests {
         let plain = World(name: "Plain")
         context.insert(plain)
         #expect(!plain.visibleKinds.contains(.characterClass))
-        #expect(plain.visibleKinds.count == PageKind.allCases.count - 1)
+        #expect(plain.visibleKinds.count == PageKind.allCases.filter { !$0.isConditional }.count)
+        #expect(!plain.visibleKinds.contains(.background) && !plain.visibleKinds.contains(.feat))
 
         let dnd = World(name: "D&D", system: .dnd5e)
         context.insert(dnd)
@@ -556,7 +557,7 @@ struct LibraryTests {
     @Test func onlyDnDHasALibraryAndClasses() {
         #expect(RuleSystems.system(for: .dnd5e).hasContentLibrary)
         #expect(!RuleSystems.system(for: .none).hasContentLibrary)
-        #expect(RuleSystems.system(for: .dnd5e).additionalPageKinds == [.characterClass])
+        #expect(RuleSystems.system(for: .dnd5e).additionalPageKinds == [.characterClass, .background, .feat])
         #expect(RuleSystems.system(for: .none).additionalPageKinds.isEmpty)
     }
 
@@ -873,5 +874,90 @@ struct LibraryTests {
           ] }
         """)
         #expect(pack.entries.map(\.key) == ["p.skill.a"])
+    }
+
+    // MARK: Backgrounds and feats
+
+    private func text(_ entry: LibraryEntry, _ key: String) -> String? {
+        if case .text(let value)? = entry.attributes[key] { value } else { nil }
+    }
+
+    @Test func theBundledBackgroundsAreComplete() throws {
+        let acolyte51 = try #require(Library.shared.entry(forKey: "srd51.background.acolyte"))
+        #expect(Library.shared.entries(.background, in: .srd51).map(\.name) == ["Acolyte"])
+        #expect(text(acolyte51, "dnd5e.backgroundSkills") == "Insight, Religion")
+        #expect(text(acolyte51, "dnd5e.backgroundLanguages") == "Two of your choice")
+        #expect(acolyte51.entries.map(\.name).first == "Shelter of the Faithful")
+        #expect(["Personality Trait", "Ideal", "Bond", "Flaw"].allSatisfy { name in acolyte51.entries.contains { $0.name == name } })
+
+        let backgrounds = Library.shared.entries(.background, in: .srd52)
+        #expect(backgrounds.map(\.name) == ["Acolyte", "Criminal", "Sage", "Soldier"])
+        for background in backgrounds {
+            for key in ["dnd5e.backgroundAbilityScores", "dnd5e.backgroundFeat", "dnd5e.backgroundSkills", "dnd5e.backgroundTools", "dnd5e.backgroundEquipment"] {
+                #expect(text(background, key)?.isEmpty == false, "\(background.name) is missing \(key)")
+            }
+            #expect(text(background, "dnd5e.backgroundEquipment")?.hasPrefix("Choose A or B:") == true)
+        }
+        let soldier = try #require(Library.shared.entry(forKey: "srd52.background.soldier"))
+        #expect(text(soldier, "dnd5e.backgroundSkills") == "Athletics and Intimidation")
+        #expect(text(soldier, "dnd5e.backgroundFeat") == "Savage Attacker (see “Feats”)")
+    }
+
+    @Test func theBundledFeatsAreComplete() throws {
+        let grappler = try #require(Library.shared.entry(forKey: "srd51.feat.grappler"))
+        #expect(Library.shared.entries(.feat, in: .srd51).count == 1)
+        #expect(text(grappler, "dnd5e.featPrerequisite") == "Strength 13 or higher")
+
+        let feats = Library.shared.entries(.feat, in: .srd52)
+        #expect(feats.count == 17)
+        func count(_ category: String) -> Int { feats.filter { text($0, "dnd5e.featCategory") == category }.count }
+        #expect(count("Origin Feat") == 4)
+        #expect(count("General Feat") == 2)
+        #expect(count("Fighting Style Feat") == 4)
+        #expect(count("Epic Boon Feat") == 7)
+        #expect(feats.filter { text($0, "dnd5e.featCategory") == "Epic Boon Feat" }.allSatisfy { text($0, "dnd5e.featPrerequisite")?.hasPrefix("Level 19+") == true })
+        let grappler52 = try #require(Library.shared.entry(forKey: "srd52.feat.grappler"))
+        #expect(text(grappler52, "dnd5e.featPrerequisite") == "Level 4+, Strength or Dexterity 13+")
+        #expect(grappler52.entries.map(\.name) == ["Ability Score Increase", "Punch and Grab", "Attack Advantage", "Fast Wrestler"])
+    }
+
+    @Test func aBackgroundOrFeatCanBeCopiedIntoTheWorld() throws {
+        let context = try makeContext()
+        let world = makeWorld(in: context, edition: .srd52)
+
+        let sage = try #require(Library.shared.entry(forKey: "srd52.background.sage"))
+        let background = try #require(Library.shared.makeCustomVersion(of: sage, in: world, context: context))
+        #expect(background.kind == .background)
+        #expect(background.title == "Sage")
+        #expect(background.basedOnKey == "srd52.background.sage")
+        #expect(background.attributeText("dnd5e.backgroundSkills") == "Arcana and History")
+
+        let alert = try #require(Library.shared.entry(forKey: "srd52.feat.alert"))
+        let feat = try #require(Library.shared.makeCustomVersion(of: alert, in: world, context: context))
+        #expect(feat.kind == .feat)
+        #expect(feat.attributeText("dnd5e.featCategory") == "Origin Feat")
+        guard case .entries(let benefits)? = feat.attributes[CoreAttributes.detailsKey] else {
+            Issue.record("Expected the feat's benefits")
+            return
+        }
+        #expect(benefits.map(\.name) == ["Initiative Proficiency", "Initiative Swap"])
+    }
+
+    @Test func backgroundAndFeatPagesOnlyBelongToDnD() {
+        func keys(_ kind: PageKind, _ system: RuleSystemID) -> [String] {
+            RuleSystems.definitions(for: kind, system: system).map(\.key)
+        }
+        #expect(keys(.background, .dnd5e).contains("dnd5e.backgroundSkills"))
+        #expect(keys(.background, .dnd5e).contains(CoreAttributes.detailsKey))
+        #expect(keys(.feat, .dnd5e).contains("dnd5e.featCategory"))
+        #expect(!keys(.background, .none).contains("dnd5e.backgroundSkills"))
+        #expect(PageKind.background.isConditional && PageKind.feat.isConditional)
+    }
+
+    @Test func theLibraryNowListsBackgroundsAndFeatsToo() {
+        for edition in LibraryEdition.allCases {
+            let kinds = Library.shared.listKinds(in: edition)
+            #expect(kinds.contains(.background) && kinds.contains(.feat) && kinds.contains(.skill))
+        }
     }
 }

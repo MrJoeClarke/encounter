@@ -61,13 +61,15 @@ nonisolated enum LibraryKind: String, Codable, Sendable, CaseIterable {
     case spell
 
     /// The kind of page a custom version becomes. Subclasses don't have a page kind of their own: they're
-    /// copied as part of their class. Skills are fixed rules data, with no custom version. Backgrounds, feats,
-    /// equipment and spells gain theirs as their content arrives.
+    /// copied as part of their class. Skills are fixed rules data, with no custom version. Equipment and spells
+    /// gain theirs as their content arrives.
     var pageKind: PageKind? {
         switch self {
         case .race: .race
         case .class: .characterClass
-        case .subclass, .skill, .background, .feat, .equipment, .spell: nil
+        case .background: .background
+        case .feat: .feat
+        case .subclass, .skill, .equipment, .spell: nil
         }
     }
 

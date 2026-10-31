@@ -14,6 +14,8 @@ enum PageKind: String, Codable, CaseIterable, Identifiable {
     case organisation
     case race
     case characterClass = "class"
+    case background
+    case feat
 
     var id: String { rawValue }
 
@@ -27,6 +29,8 @@ enum PageKind: String, Codable, CaseIterable, Identifiable {
         case .organisation: "Organisations"
         case .race: "Races & Species"
         case .characterClass: "Classes"
+        case .background: "Backgrounds"
+        case .feat: "Feats"
         }
     }
 
@@ -40,6 +44,8 @@ enum PageKind: String, Codable, CaseIterable, Identifiable {
         case .organisation: "Organisation"
         case .race: "Race or Species"
         case .characterClass: "Class"
+        case .background: "Background"
+        case .feat: "Feat"
         }
     }
 
@@ -52,13 +58,18 @@ enum PageKind: String, Codable, CaseIterable, Identifiable {
         case .organisation: "building.columns.fill"
         case .race: "pawprint.fill"
         case .characterClass: "shield.lefthalf.filled"
+        case .background: "book.closed.fill"
+        case .feat: "medal.fill"
         }
     }
 
     /// Kinds that only appear in a world's sidebar when its rule system uses them, or when the world already
     /// has pages of that kind, so a world on "None" doesn't show an empty Classes category.
     var isConditional: Bool {
-        self == .characterClass
+        switch self {
+        case .characterClass, .background, .feat: true
+        default: false
+        }
     }
 }
 

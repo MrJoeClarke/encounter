@@ -639,6 +639,138 @@ func readSkills() {
 
 readSkills()
 
+// MARK: Backgrounds and feats
+
+/// All the lines of the pages from the one with this heading to the heading that ends the section, in reading order.
+func lines(from startHeading: (level: Int, text: String), until endHeading: (level: Int, text: String)) -> [Line] {
+    var result: [Line] = []
+    var started = false
+    for index in 0..<document.pageCount {
+        guard let page = document.page(at: index) else { continue }
+        for line in readingOrder(of: page, profile: srd51Profile) {
+            if case .heading(let level) = line.kind {
+                if !started, level == startHeading.level, line.text == startHeading.text { started = true }
+                else if started, level == endHeading.level, line.text == endHeading.text { return result }
+            }
+            if started { result.append(line) }
+        }
+    }
+    return result
+}
+
+/// The SRD's one background: its proficiencies, languages and equipment, its feature, and its suggested characteristics.
+func readBackgrounds() {
+    let section = lines(from: (3, "Acolyte"), until: (1, "Equipment"))
+    guard !section.isEmpty else { review.append("Couldn't find the Acolyte background"); return }
+
+    let labels = ["Skill Proficiencies", "Tool Proficiencies", "Languages", "Equipment"]
+    let attributeKeys = ["Skill Proficiencies": "dnd5e.backgroundSkills", "Tool Proficiencies": "dnd5e.backgroundTools",
+                         "Languages": "dnd5e.backgroundLanguages", "Equipment": "dnd5e.backgroundEquipment"]
+    var intro: [String] = []
+    var facts: [(label: String, lines: [String])] = []
+    var features: [Feature] = []
+    var current: (name: String, lines: [String])?
+    var tableName: String?
+    var tables: [(name: String, rows: [String])] = []
+    var characteristicsIntro: [String] = []
+    var inCharacteristics = false
+
+    func closeFeature() {
+        if let current { features.append(Feature(name: current.name, level: nil, text: paragraphs(from: current.lines, lineWidth: lineWidth).joined(separator: "\n\n"))) }
+        current = nil
+    }
+
+    for line in section.dropFirst() {
+        let text = cleanLine(line.text)
+        switch line.kind {
+        case .heading(4):
+            closeFeature()
+            tableName = nil
+            if text.hasPrefix("Feature: ") {
+                current = (String(text.dropFirst("Feature: ".count)), [])
+                inCharacteristics = false
+            } else if text == "Suggested Characteristics" {
+                inCharacteristics = true
+            }
+        case .table:
+            if let range = text.range(of: "^d\\d+ ", options: .regularExpression) {
+                tableName = String(text[range.upperBound...])
+                tables.append((tableName ?? "", []))
+            } else if !tables.isEmpty {
+                // A row starts with its number. A line without one carries on the row before it.
+                if text.range(of: "^\\d+ ", options: .regularExpression) != nil || tables[tables.count - 1].rows.isEmpty {
+                    tables[tables.count - 1].rows.append(text)
+                } else {
+                    tables[tables.count - 1].rows[tables[tables.count - 1].rows.count - 1] += " " + text
+                }
+            }
+        case .body:
+            if inCharacteristics { characteristicsIntro.append(line.text) }
+            else if current != nil { current?.lines.append(line.text) }
+            else if let label = labels.first(where: { text.hasPrefix($0 + ":") }) {
+                facts.append((label, [String(text.dropFirst(label.count + 1)).trimmingCharacters(in: .whitespaces)]))
+            } else if !facts.isEmpty {
+                facts[facts.count - 1].lines.append(line.text)
+            } else {
+                intro.append(line.text)
+            }
+        default:
+            break
+        }
+    }
+    closeFeature()
+
+    func joined(_ lines: [String]) -> String {
+        var text = ""
+        for raw in lines { appendWrapped51(&text, cleanLine(raw)) }
+        return text
+    }
+    var attributes: [(String, String)] = []
+    for fact in facts { if let key = attributeKeys[fact.label] { attributes.append((key, joined(fact.lines))) } }
+    var details = features
+    let suggested = paragraphs(from: characteristicsIntro, lineWidth: lineWidth).joined(separator: "\n\n")
+    if !suggested.isEmpty { details.append(Feature(name: "Suggested Characteristics", level: nil, text: suggested)) }
+    for table in tables { details.append(Feature(name: table.name, level: nil, text: table.rows.joined(separator: "\n"))) }
+
+    entries.append(PackEntry(key: "srd51.background.acolyte", kind: "background", name: "Acolyte", parent: nil,
+                             summary: paragraphs(from: intro, lineWidth: lineWidth).joined(separator: "\n\n"),
+                             attributes: attributes, features: details))
+    report.append("Background Acolyte: " + attributes.map { "\($0.0.replacingOccurrences(of: "dnd5e.background", with: "")) = \($0.1)" }.joined(separator: "; ")
+                  + " | " + details.map(\.name).joined(separator: ", "))
+    if tables.count != 4 { review.append("Acolyte: found \(tables.count) suggested characteristics tables, expected 4") }
+}
+
+/// The SRD's one feat, Grappler.
+func readFeats() {
+    let section = lines(from: (3, "Grappler"), until: (1, "Using Ability Scores"))
+    // The next chapter's heading is on the following page, so stop at the first heading of its own.
+    var body: [String] = []
+    for line in section.dropFirst() {
+        if case .heading = line.kind { break }   // the next chapter's
+        if case .body = line.kind { body.append(line.text) }
+    }
+    guard let first = body.first else { review.append("Couldn't find the Grappler feat"); return }
+    var attributes: [(String, String)] = []
+    var rest = body
+    let firstText = cleanLine(first)
+    if firstText.hasPrefix("Prerequisite:") {
+        attributes.append(("dnd5e.featPrerequisite", String(firstText.dropFirst("Prerequisite:".count)).trimmingCharacters(in: .whitespaces)))
+        rest.removeFirst()
+    }
+    entries.append(PackEntry(key: "srd51.feat.grappler", kind: "feat", name: "Grappler", parent: nil,
+                             summary: paragraphs(from: rest, lineWidth: lineWidth).joined(separator: "\n\n"),
+                             attributes: attributes, features: []))
+    report.append("Feat Grappler: " + attributes.map { "\($0.0) = \($0.1)" }.joined())
+}
+
+/// Adds a line to text that wraps, rejoining a word split by a hyphen.
+func appendWrapped51(_ text: inout String, _ line: String) {
+    if text.isEmpty { text = line } else { text += " " + line }
+}
+
+readBackgrounds()
+readFeats()
+
 // MARK: Writing the pack
 
 let attribution = "This work includes material taken from the System Reference Document 5.1 (“SRD 5.1”) by Wizards of the Coast LLC and available at https://dnd.wizards.com/resources/systems-reference-document. The SRD 5.1 is licensed under the Creative Commons Attribution 4.0 International License available at https://creativecommons.org/licenses/by/4.0/legalcode."

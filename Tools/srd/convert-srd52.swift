@@ -45,7 +45,7 @@ pages: for index in 0..<document.pageCount {
     for line in readingOrder(of: page, profile: srd52Profile) {
         if case .heading(1) = line.kind {
             if line.text == "Classes" { started = true }
-            if started && line.text == "Feats" { break pages }
+            if started && line.text == "Equipment" { break pages }
         }
         guard started else { continue }
         // A subclass heading can wrap over several lines: "Sorcerer Subclass:", "Draconic", "Sorcery".
@@ -60,6 +60,28 @@ pages: for index in 0..<document.pageCount {
 }
 
 // MARK: Building text
+
+/// Fragments before a hyphen that make real compound words, so the hyphen stays when a line ends there.
+let keptHyphenPrefixes: Set<String> = ["non", "self", "two", "one", "three", "four", "half", "well", "multi"]
+
+/// Adds a line to text that wraps. A hyphen at the end of a line either splits a word or is part of one, such as
+/// "15-foot", so it's dropped only when the word before it isn't one that keeps its hyphen.
+func appendWrapped(_ current: inout String, _ text: String) {
+    guard current.hasSuffix("-"), let first = text.first, first.isLowercase else {
+        current += current.isEmpty ? text : " " + text
+        return
+    }
+    let before = current.dropLast()
+    let fragment = String(before.split(separator: " ").last ?? "").lowercased()
+    let afterDigit = before.last?.isNumber ?? false
+    if afterDigit || keptHyphenPrefixes.contains(fragment) {
+        current += text
+    } else {
+        current.removeLast()
+        current += text
+        hyphenJoins.append(fragment + "|" + String(text.prefix { $0.isLetter }))
+    }
+}
 
 /// Pieces of a section's text, in order: paragraphs, and tables with their captions.
 struct Piece {
@@ -154,21 +176,7 @@ final class TextBuilder {
     }
 
     private func join(_ text: String) {
-        guard current.hasSuffix("-"), let first = text.first, first.isLowercase else {
-            current += " " + text
-            return
-        }
-        // A hyphen at the end of a line either splits a word or is part of one, such as "15-foot".
-        let before = current.dropLast()
-        let fragment = String(before.split(separator: " ").last ?? "").lowercased()
-        let afterDigit = before.last?.isNumber ?? false
-        if afterDigit || Self.keptPrefixes.contains(fragment) {
-            current += text
-        } else {
-            current.removeLast()
-            current += text
-            hyphenJoins.append(fragment + "|" + String(text.prefix { $0.isLetter }))
-        }
+        appendWrapped(&current, text)
     }
 
     var text: String {
@@ -368,12 +376,77 @@ func finish(_ draft: ClassDraft) {
     }
 }
 
+// MARK: Backgrounds and feats
+
+struct BackgroundDraft {
+    var name: String
+    var facts: [(label: String, text: String)] = []
+}
+
+let backgroundLabels: [(label: String, attribute: String)] = [
+    ("Ability Scores", "dnd5e.backgroundAbilityScores"), ("Feat", "dnd5e.backgroundFeat"),
+    ("Skill Proficiencies", "dnd5e.backgroundSkills"), ("Tool Proficiency", "dnd5e.backgroundTools"),
+    ("Equipment", "dnd5e.backgroundEquipment"),
+]
+
+func finish(_ draft: BackgroundDraft) {
+    var attributes: [(String, String)] = []
+    for fact in draft.facts {
+        if let match = backgroundLabels.first(where: { $0.label == fact.label }) { attributes.append((match.attribute, fact.text)) }
+    }
+    for expected in backgroundLabels where !draft.facts.contains(where: { $0.label == expected.label }) {
+        review.append("\(draft.name): no “\(expected.label)” line")
+    }
+    entries.append(PackEntry(key: "srd52.background.\(slug(draft.name))", kind: "background", name: draft.name, parent: nil,
+                             summary: "", attributes: attributes, features: []))
+    report.append("Background \(draft.name): " + attributes.map { "\($0.0.replacingOccurrences(of: "dnd5e.background", with: "")) = \($0.1)" }.joined(separator: "; "))
+}
+
+struct FeatDraft {
+    var name: String
+    var category = ""
+    let builder = TextBuilder()
+}
+
+func finish(_ draft: FeatDraft) {
+    draft.builder.flush()
+    var summary = ""
+    var benefits: [Feature] = []
+    for piece in draft.builder.pieces {
+        if piece.isTable {
+            benefits.append(Feature(name: piece.caption ?? "Table", level: nil, text: piece.text))
+        } else if let start = traitStart(in: piece.text) {
+            benefits.append(Feature(name: start.name, level: nil, text: start.rest))
+        } else if benefits.isEmpty {
+            summary += (summary.isEmpty ? "" : "\n\n") + piece.text
+        } else {
+            benefits[benefits.count - 1].text += "\n\n" + piece.text
+        }
+    }
+    var attributes: [(String, String)] = []
+    if let open = draft.category.firstIndex(of: "(") {
+        attributes.append(("dnd5e.featCategory", draft.category[..<open].trimmingCharacters(in: .whitespaces)))
+        let inside = draft.category[draft.category.index(after: open)...].trimmingCharacters(in: CharacterSet(charactersIn: ") "))
+        attributes.append(("dnd5e.featPrerequisite", inside.replacingOccurrences(of: "Prerequisite: ", with: "")))
+    } else if !draft.category.isEmpty {
+        attributes.append(("dnd5e.featCategory", draft.category))
+    } else {
+        review.append("\(draft.name): no category line")
+    }
+    entries.append(PackEntry(key: "srd52.feat.\(slug(draft.name))", kind: "feat", name: draft.name, parent: nil,
+                             summary: summary, attributes: attributes, features: benefits))
+    report.append("Feat \(draft.name) [\(draft.category)]: " + benefits.map(\.name).joined(separator: ", "))
+}
+
 // MARK: Walking the lines
 
-enum Mode { case skipping, classCore, classFeatures, subclass, speciesIntro, species }
+enum Mode { case skipping, classCore, classFeatures, subclass, speciesIntro, species, backgroundsIntro, backgrounds, feats }
 var mode = Mode.skipping
 var inSpeciesChapter = false
 var species: SpeciesDraft?
+var background: BackgroundDraft?
+var feat: FeatDraft?
+var inFeatsChapter = false
 var unrecognised: [String] = []
 
 /// The text builder that body lines currently go to, if any.
@@ -389,8 +462,13 @@ for line in lines {
     switch line.kind {
     case .heading(1):
         if let draft = currentClass { finish(draft); currentClass = nil }
+        if let draft = species { finish(draft); species = nil }
+        if let draft = background { finish(draft); background = nil }
+        if let draft = feat { finish(draft); feat = nil }
         mode = .skipping
+        featureBuilder = nil
         inSpeciesChapter = line.text == "Character Origins"
+        inFeatsChapter = line.text == "Feats"
     case .heading(2):
         if classNames.contains(line.text) {
             if let draft = currentClass { finish(draft) }
@@ -400,8 +478,11 @@ for line in lines {
             featureBuilder = nil
         } else if inSpeciesChapter {
             if let draft = species { finish(draft); species = nil }
-            mode = .skipping
+            if let draft = background { finish(draft); background = nil }
+            mode = line.text == "Character Backgrounds" ? .backgroundsIntro : .skipping
             featureBuilder = nil
+        } else if inFeatsChapter {
+            // "Feat Descriptions", which holds all the feats.
         } else {
             unrecognised.append("H2 \(line.text)")
         }
@@ -425,7 +506,17 @@ for line in lines {
             }
         } else if inSpeciesChapter {
             if let draft = species { finish(draft); species = nil }
-            mode = line.text == "Species Descriptions" ? .speciesIntro : .skipping
+            if let draft = background { finish(draft); background = nil }
+            switch line.text {
+            case "Species Descriptions": mode = .speciesIntro
+            case "Background Descriptions": mode = .backgrounds
+            default: mode = .skipping
+            }
+            featureBuilder = nil
+        } else if inFeatsChapter {
+            // A category of feat: its name is "Origin Feats", and each feat below says which it is.
+            if let draft = feat { finish(draft); feat = nil }
+            mode = line.text == "Parts of a Feat" ? .skipping : .feats
             featureBuilder = nil
         }
     case .heading(4):
@@ -449,6 +540,13 @@ for line in lines {
             } else {
                 unrecognised.append("H4 skipped: \(line.text)")
             }
+        } else if mode == .backgrounds {
+            if let draft = background { finish(draft) }
+            background = BackgroundDraft(name: line.text)
+        } else if mode == .feats {
+            if let draft = feat { finish(draft) }
+            feat = FeatDraft(name: line.text)
+            featureBuilder = feat?.builder
         } else if mode == .speciesIntro || mode == .species {
             if let draft = species { finish(draft) }
             species = SpeciesDraft(name: line.text)
@@ -499,6 +597,25 @@ for line in lines {
             if let x = skippedBulletX, abs(line.minX - x) < 3 { continue }   // still in the bullet's column
             skippingBullets = false
         }
+        if mode == .backgrounds, background != nil {
+            // Each fact is a line starting with its label, which can wrap onto the next lines.
+            if let label = backgroundLabels.map(\.label).first(where: { text.hasPrefix($0 + ": ") }) {
+                background?.facts.append((label, String(text.dropFirst(label.count + 2))))
+            } else if let last = background?.facts.indices.last {
+                appendWrapped(&background!.facts[last].text, text)
+            }
+            continue
+        }
+        if mode == .feats, let current = feat, current.category.isEmpty, current.builder.pieces.isEmpty,
+           text.range(of: "^(Origin|General|Fighting Style|Epic Boon) Feat", options: .regularExpression) != nil {
+            feat?.category = text
+            continue
+        }
+        // A category line with a prerequisite can wrap onto the next line, until its bracket closes.
+        if mode == .feats, let current = feat, current.category.contains("("), !current.category.contains(")") {
+            appendWrapped(&feat!.category, text)
+            continue
+        }
         if mode == .species, text.hasPrefix("Creature Type:") {
             inSpeciesFacts = true
         }
@@ -521,6 +638,8 @@ for line in lines {
 }
 if let draft = currentClass { finish(draft) }
 if let draft = species { finish(draft) }
+if let draft = background { finish(draft) }
+if let draft = feat { finish(draft) }
 
 // MARK: Skills
 

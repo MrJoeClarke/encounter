@@ -542,6 +542,66 @@
       ]
     },
     {
+      "key": "srd52.background.acolyte",
+      "kind": "background",
+      "name": "Acolyte",
+      "attributes": {
+        "dnd5e.backgroundAbilityScores": "Intelligence, Wisdom, Charisma",
+        "dnd5e.backgroundFeat": "Magic Initiate (Cleric) (see “Feats”)",
+        "dnd5e.backgroundSkills": "Insight and Religion",
+        "dnd5e.backgroundTools": "Calligrapher’s Supplies",
+        "dnd5e.backgroundEquipment": "Choose A or B: (A) Calligrapher’s Supplies, Book (prayers), Holy Symbol, Parchment (10 sheets), Robe, 8 GP; or (B) 50 GP"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.background.criminal",
+      "kind": "background",
+      "name": "Criminal",
+      "attributes": {
+        "dnd5e.backgroundAbilityScores": "Dexterity, Constitution, Intelligence",
+        "dnd5e.backgroundFeat": "Alert (see “Feats”)",
+        "dnd5e.backgroundSkills": "Sleight of Hand and Stealth",
+        "dnd5e.backgroundTools": "Thieves’ Tools",
+        "dnd5e.backgroundEquipment": "Choose A or B: (A) 2 Daggers, Thieves’ Tools, Crowbar, 2 Pouches, Traveler’s Clothes, 16 GP; or (B) 50 GP"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.background.sage",
+      "kind": "background",
+      "name": "Sage",
+      "attributes": {
+        "dnd5e.backgroundAbilityScores": "Constitution, Intelligence, Wisdom",
+        "dnd5e.backgroundFeat": "Magic Initiate (Wizard) (see “Feats”)",
+        "dnd5e.backgroundSkills": "Arcana and History",
+        "dnd5e.backgroundTools": "Calligrapher’s Supplies",
+        "dnd5e.backgroundEquipment": "Choose A or B: (A) Quarterstaff, Calligrapher’s Supplies, Book (history), Parchment (8 sheets), Robe, 8 GP; or (B) 50 GP"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.background.soldier",
+      "kind": "background",
+      "name": "Soldier",
+      "attributes": {
+        "dnd5e.backgroundAbilityScores": "Strength, Dexterity, Constitution",
+        "dnd5e.backgroundFeat": "Savage Attacker (see “Feats”)",
+        "dnd5e.backgroundSkills": "Athletics and Intimidation",
+        "dnd5e.backgroundTools": "Choose one kind of Gaming Set (see “Equipment”)",
+        "dnd5e.backgroundEquipment": "Choose A or B: (A) Spear, Shortbow, 20 Arrows, Gaming Set (same as above), Healer’s Kit, Quiver, Traveler’s Clothes, 14 GP; or (B) 50 GP"
+      },
+      "entries": [
+
+      ]
+    },
+    {
       "key": "srd52.race.dragonborn",
       "kind": "race",
       "name": "Dragonborn",
@@ -689,6 +749,237 @@
         { "name": "Fiendish Legacy", "text": "You are the recipient of a legacy that grants you supernatural abilities. Choose a legacy from the Fiendish Legacies table. You gain the level 1 benefit of the chosen legacy.\n\nWhen you reach character levels 3 and 5, you learn a higher-level spell, as shown on the table. You always have that spell prepared. You can cast it once without a spell slot, and you regain the ability to cast it in that way when you finish a Long Rest. You can also cast the spell using any spell slots you have of the appropriate level.\n\nIntelligence, Wisdom, or Charisma is your spellcasting ability for the spells you cast with this trait (choose the ability when you select the legacy)." },
         { "name": "Otherworldly Presence", "text": "You know the Thaumaturgy cantrip. When you cast it with this trait, the spell uses the same spellcasting ability you use for your Fiendish Legacy trait." },
         { "name": "Fiendish Legacies", "text": "Legacy Level 1 Level 3 Level 5\nAbyssal\nYou have Resistance to Poison damage.\nRay of Sickness Hold Person\nYou also know the Poison Spray cantrip.\nChthonic\nYou have Resistance to Necrotic damage.\nFalse Life Ray of Enfeeblement\nYou also know the Chill Touch cantrip.\nInfernal\nYou have Resistance to Fire damage.\nHellish Rebuke Darkness\nYou also know the Fire Bolt cantrip." }
+      ]
+    },
+    {
+      "key": "srd52.feat.alert",
+      "kind": "feat",
+      "name": "Alert",
+      "summary": "You gain the following benefits.",
+      "attributes": {
+        "dnd5e.featCategory": "Origin Feat"
+      },
+      "entries": [
+        { "name": "Initiative Proficiency", "text": "When you roll Initiative, you can add your Proficiency Bonus to the roll." },
+        { "name": "Initiative Swap", "text": "Immediately after you roll Initiative, you can swap your Initiative with the Initiative of one willing ally in the same combat. You can’t make this swap if you or the ally has the Incapacitated condition." }
+      ]
+    },
+    {
+      "key": "srd52.feat.magic-initiate",
+      "kind": "feat",
+      "name": "Magic Initiate",
+      "summary": "You gain the following benefits.",
+      "attributes": {
+        "dnd5e.featCategory": "Origin Feat"
+      },
+      "entries": [
+        { "name": "Two Cantrips", "text": "You learn two cantrips of your choice from the Cleric, Druid, or Wizard spell list. Intelligence, Wisdom, or Charisma is your spellcasting ability for this feat’s spells (choose when you select this feat).\n\nLevel 1 Spell. Choose a level 1 spell from the same list you selected for this feat’s cantrips. You always have that spell prepared. You can cast it once without a spell slot, and you regain the ability to cast it in that way when you finish a Long Rest. You can also cast the spell using any spell slots you have." },
+        { "name": "Spell Change", "text": "Whenever you gain a new level, you can replace one of the spells you chose for this feat with a different spell of the same level from the chosen spell list." },
+        { "name": "Repeatable", "text": "You can take this feat more than once, but you must choose a different spell list each time." }
+      ]
+    },
+    {
+      "key": "srd52.feat.savage-attacker",
+      "kind": "feat",
+      "name": "Savage Attacker",
+      "summary": "You’ve trained to deal particularly damaging strikes. Once per turn when you hit a target with a weapon, you can roll the weapon’s damage dice twice and use either roll against the target.",
+      "attributes": {
+        "dnd5e.featCategory": "Origin Feat"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.feat.skilled",
+      "kind": "feat",
+      "name": "Skilled",
+      "summary": "You gain proficiency in any combination of three skills or tools of your choice.",
+      "attributes": {
+        "dnd5e.featCategory": "Origin Feat"
+      },
+      "entries": [
+        { "name": "Repeatable", "text": "You can take this feat more than once." }
+      ]
+    },
+    {
+      "key": "srd52.feat.ability-score-improvement",
+      "kind": "feat",
+      "name": "Ability Score Improvement",
+      "summary": "Increase one ability score of your choice by 2, or increase two ability scores of your choice by 1. This feat can’t increase an ability score above 20.",
+      "attributes": {
+        "dnd5e.featCategory": "General Feat",
+        "dnd5e.featPrerequisite": "Level 4+"
+      },
+      "entries": [
+        { "name": "Repeatable", "text": "You can take this feat more than once." }
+      ]
+    },
+    {
+      "key": "srd52.feat.grappler",
+      "kind": "feat",
+      "name": "Grappler",
+      "summary": "You gain the following benefits.",
+      "attributes": {
+        "dnd5e.featCategory": "General Feat",
+        "dnd5e.featPrerequisite": "Level 4+, Strength or Dexterity 13+"
+      },
+      "entries": [
+        { "name": "Ability Score Increase", "text": "Increase your Strength or Dexterity score by 1, to a maximum of 20." },
+        { "name": "Punch and Grab", "text": "When you hit a creature with an Unarmed Strike as part of the Attack action on your turn, you can use both the Damage and the Grapple option. You can use this benefit only once per turn." },
+        { "name": "Attack Advantage", "text": "You have Advantage on attack rolls against a creature Grappled by you." },
+        { "name": "Fast Wrestler", "text": "You don’t have to spend extra movement to move a creature Grappled by you if the creature is your size or smaller." }
+      ]
+    },
+    {
+      "key": "srd52.feat.archery",
+      "kind": "feat",
+      "name": "Archery",
+      "summary": "You gain a +2 bonus to attack rolls you make with Ranged weapons.",
+      "attributes": {
+        "dnd5e.featCategory": "Fighting Style Feat",
+        "dnd5e.featPrerequisite": "Fighting Style Feature"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.feat.defense",
+      "kind": "feat",
+      "name": "Defense",
+      "summary": "While you’re wearing Light, Medium, or Heavy armor, you gain a +1 bonus to Armor Class.",
+      "attributes": {
+        "dnd5e.featCategory": "Fighting Style Feat",
+        "dnd5e.featPrerequisite": "Fighting Style Feature"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.feat.great-weapon-fighting",
+      "kind": "feat",
+      "name": "Great Weapon Fighting",
+      "summary": "When you roll damage for an attack you make with a Melee weapon that you are holding with two hands, you can treat any 1 or 2 on a damage die as a 3. The weapon must have the Two-Handed or Versatile property to gain this benefit.",
+      "attributes": {
+        "dnd5e.featCategory": "Fighting Style Feat",
+        "dnd5e.featPrerequisite": "Fighting Style Feature"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.feat.two-weapon-fighting",
+      "kind": "feat",
+      "name": "Two-Weapon Fighting",
+      "summary": "When you make an extra attack as a result of using a weapon that has the Light property, you can add your ability modifier to the damage of that attack if you aren’t already adding it to the damage.",
+      "attributes": {
+        "dnd5e.featCategory": "Fighting Style Feat",
+        "dnd5e.featPrerequisite": "Fighting Style Feature"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.feat.boon-of-combat-prowess",
+      "kind": "feat",
+      "name": "Boon of Combat Prowess",
+      "summary": "You gain the following benefits.",
+      "attributes": {
+        "dnd5e.featCategory": "Epic Boon Feat",
+        "dnd5e.featPrerequisite": "Level 19+"
+      },
+      "entries": [
+        { "name": "Ability Score Increase", "text": "Increase one ability score of your choice by 1, to a maximum of 30." },
+        { "name": "Peerless Aim", "text": "When you miss with an attack roll, you can hit instead. Once you use this benefit, you can’t use it again until the start of your next turn." }
+      ]
+    },
+    {
+      "key": "srd52.feat.boon-of-dimensional-travel",
+      "kind": "feat",
+      "name": "Boon of Dimensional Travel",
+      "summary": "You gain the following benefits.",
+      "attributes": {
+        "dnd5e.featCategory": "Epic Boon Feat",
+        "dnd5e.featPrerequisite": "Level 19+"
+      },
+      "entries": [
+        { "name": "Ability Score Increase", "text": "Increase one ability score of your choice by 1, to a maximum of 30." },
+        { "name": "Blink Steps", "text": "Immediately after you take the Attack action or the Magic action, you can teleport up to 30 feet to an unoccupied space you can see." }
+      ]
+    },
+    {
+      "key": "srd52.feat.boon-of-fate",
+      "kind": "feat",
+      "name": "Boon of Fate",
+      "summary": "You gain the following benefits.",
+      "attributes": {
+        "dnd5e.featCategory": "Epic Boon Feat",
+        "dnd5e.featPrerequisite": "Level 19+"
+      },
+      "entries": [
+        { "name": "Ability Score Increase", "text": "Increase one ability score of your choice by 1, to a maximum of 30." },
+        { "name": "Improve Fate", "text": "When you or another creature within 60 feet of you succeeds on or fails a D20 Test, you can roll 2d4 and apply the total rolled as a bonus or penalty to the d20 roll. Once you use this benefit, you can’t use it again until you roll Initiative or finish a Short or Long Rest." }
+      ]
+    },
+    {
+      "key": "srd52.feat.boon-of-irresistible-offense",
+      "kind": "feat",
+      "name": "Boon of Irresistible Offense",
+      "summary": "You gain the following benefits.",
+      "attributes": {
+        "dnd5e.featCategory": "Epic Boon Feat",
+        "dnd5e.featPrerequisite": "Level 19+"
+      },
+      "entries": [
+        { "name": "Ability Score Increase", "text": "Increase your Strength or Dexterity score by 1, to a maximum of 30." },
+        { "name": "Overcome Defenses", "text": "The Bludgeoning, Piercing, and Slashing damage you deal always ignores Resistance." },
+        { "name": "Overwhelming Strike", "text": "When you roll a 20 on the d20 for an attack roll, you can deal extra damage to the target equal to the ability score increased by this feat. The extra damage’s type is the same as the attack’s type." }
+      ]
+    },
+    {
+      "key": "srd52.feat.boon-of-spell-recall",
+      "kind": "feat",
+      "name": "Boon of Spell Recall",
+      "summary": "You gain the following benefits.",
+      "attributes": {
+        "dnd5e.featCategory": "Epic Boon Feat",
+        "dnd5e.featPrerequisite": "Level 19+, Spellcasting Feature"
+      },
+      "entries": [
+        { "name": "Ability Score Increase", "text": "Increase your Intelligence, Wisdom, or Charisma score by 1, to a maximum of 30." },
+        { "name": "Free Casting", "text": "Whenever you cast a spell with a level 1–4 spell slot, roll 1d4. If the number you roll is the same as the slot’s level, the slot isn’t expended." }
+      ]
+    },
+    {
+      "key": "srd52.feat.boon-of-the-night-spirit",
+      "kind": "feat",
+      "name": "Boon of the Night Spirit",
+      "summary": "You gain the following benefits.",
+      "attributes": {
+        "dnd5e.featCategory": "Epic Boon Feat",
+        "dnd5e.featPrerequisite": "Level 19+"
+      },
+      "entries": [
+        { "name": "Ability Score Increase", "text": "Increase one ability score of your choice by 1, to a maximum of 30.\n\nMerge with Shadows. While within Dim Light or Darkness, you can give yourself the Invisible condition as a Bonus Action. The condition ends on you immediately after you take an action, a Bonus Action, or a Reaction." },
+        { "name": "Shadowy Form", "text": "While within Dim Light or Darkness, you have Resistance to all damage except Psychic and Radiant." }
+      ]
+    },
+    {
+      "key": "srd52.feat.boon-of-truesight",
+      "kind": "feat",
+      "name": "Boon of Truesight",
+      "summary": "You gain the following benefits.",
+      "attributes": {
+        "dnd5e.featCategory": "Epic Boon Feat",
+        "dnd5e.featPrerequisite": "Level 19+"
+      },
+      "entries": [
+        { "name": "Ability Score Increase", "text": "Increase one ability score of your choice by 1, to a maximum of 30." },
+        { "name": "Truesight", "text": "You have Truesight with a range of 60 feet." }
       ]
     },
     {

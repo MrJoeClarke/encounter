@@ -21,9 +21,19 @@ struct Pack: Decodable {
 
 struct Entry: Decodable {
     var key: String
+    var kind: String
     var name: String
     var summary: String?
+    var attributes: [String: Attribute]?
     var entries: [Feature]?
+}
+
+/// An attribute value, of which only text is checked.
+struct Attribute: Decodable {
+    var text: String?
+    init(from decoder: any Decoder) throws {
+        text = try? decoder.singleValueContainer().decode(String.self)
+    }
 }
 
 struct Feature: Decodable {
@@ -34,6 +44,7 @@ struct Feature: Decodable {
 /// Reduces text to a form where layout differences disappear.
 func normalise(_ text: String, joiningSplitWords: Bool) -> String {
     var result = text
+        .replacingOccurrences(of: "Dexterit y", with: "Dexterity")   // a gap in the PDF's own text
         .replacingOccurrences(of: "\u{00AD}", with: "")    // soft hyphens
         .replacingOccurrences(of: "\u{2010}", with: "-")   // hyphen
         .replacingOccurrences(of: "\u{2011}", with: "-")   // non-breaking hyphen
@@ -120,6 +131,9 @@ func check(_ text: String, describing label: String) {
     notes.append("\(label): found with \(skipped.count) gap(s): " + skipped.map { "“\($0)”" }.joined(separator: ", "))
 }
 
+/// Attributes that are made from several parts of the text rather than copied, such as a feat's category without its prerequisite.
+func isWorkedOut(_ name: String) -> Bool { name == "dnd5e.featCategory" || name == "dnd5e.featPrerequisite" }
+
 check(pack.attribution, describing: "attribution")
 for entry in pack.entries {
     if let summary = entry.summary, !summary.isEmpty {
@@ -127,6 +141,13 @@ for entry in pack.entries {
     }
     for feature in entry.entries ?? [] {
         check(feature.text, describing: "\(entry.key) / \(feature.name)")
+    }
+    // The values of the kinds that are copied whole, such as a background's proficiencies, are the PDF's own words.
+    // A race's or class's are worked out from the text, such as a hit die, so aren't checked.
+    if !["race", "class", "subclass"].contains(entry.kind) {
+        for (name, attribute) in (entry.attributes ?? [:]).sorted(by: { $0.key < $1.key }) {
+            if let text = attribute.text, !text.isEmpty, !isWorkedOut(name) { check(text, describing: "\(entry.key) / \(name)") }
+        }
     }
 }
 

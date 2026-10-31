@@ -131,7 +131,10 @@ extension Library {
                     EntryValue(name: "\(subclass.name): \(feature.name)", level: feature.level, text: feature.text)
                 }
             }
-        case .subclass, .skill, .background, .feat, .equipment, .spell:
+        case .background, .feat:
+            attributes = entry.attributes
+            entries = entry.entries
+        case .subclass, .skill, .equipment, .spell:
             return nil
         }
 
@@ -148,7 +151,11 @@ extension Library {
 
     /// The attribute that holds a kind's traits or features.
     private func entriesKey(for kind: PageKind) -> String {
-        kind == .characterClass ? CoreAttributes.featuresKey : CoreAttributes.traitsKey
+        switch kind {
+        case .characterClass: CoreAttributes.featuresKey
+        case .background, .feat: CoreAttributes.detailsKey
+        default: CoreAttributes.traitsKey
+        }
     }
 }
 
