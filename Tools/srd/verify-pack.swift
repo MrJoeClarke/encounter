@@ -58,6 +58,9 @@ func normalise(_ text: String, joiningSplitWords: Bool) -> String {
     result = result
         .replacingOccurrences(of: "-{2,}", with: "-", options: .regularExpression)
         .replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
+    // A hyphen at the end of a line can be one that's part of the word, such as "15-foot", which can't be told from
+    // one that splits a word, so hyphens are left out of the comparison on both sides.
+    result = result.replacingOccurrences(of: "-", with: "")
     return result.trimmingCharacters(in: .whitespaces)
 }
 

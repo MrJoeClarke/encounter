@@ -960,4 +960,113 @@ struct LibraryTests {
             #expect(kinds.contains(.background) && kinds.contains(.feat) && kinds.contains(.skill))
         }
     }
+
+    // MARK: Equipment
+
+    private func equipment(_ key: String) throws -> LibraryEntry {
+        try #require(Library.shared.entry(forKey: key), "\(key) isn't in the library")
+    }
+
+    private func equipmentCount(_ category: String, in edition: LibraryEdition) -> Int {
+        Library.shared.entries(.equipment, in: edition).filter { text($0, "dnd5e.equipmentCategory") == category }.count
+    }
+
+    @Test func srd51WeaponsAndArmorHaveTheirStats() throws {
+        let longsword = try equipment("srd51.equipment.longsword")
+        #expect(text(longsword, "dnd5e.damage") == "1d8 slashing")
+        #expect(text(longsword, "dnd5e.weaponProperties") == "Versatile (1d10)")
+        #expect(text(longsword, "dnd5e.cost") == "15 gp")
+        #expect(text(longsword, "dnd5e.weight") == "3 lb.")
+        #expect(text(longsword, "dnd5e.equipmentCategory") == "Martial Melee Weapons")
+
+        // A weapon whose properties wrap onto a second line of the table keeps all of them.
+        let heavyCrossbow = try equipment("srd51.equipment.crossbow-heavy")
+        #expect(text(heavyCrossbow, "dnd5e.weaponProperties") == "Ammunition (range 100/400), heavy, loading, two-handed")
+
+        let chainMail = try equipment("srd51.equipment.chain-mail")
+        #expect(text(chainMail, "dnd5e.armorFormula") == "16")
+        #expect(text(chainMail, "dnd5e.strengthRequirement") == "Str 13")
+        #expect(text(chainMail, "dnd5e.stealth") == "Disadvantage")
+        #expect(text(try equipment("srd51.equipment.chain-shirt"), "dnd5e.armorFormula") == "13 + Dex modifier (max 2)")
+        #expect(text(try equipment("srd51.equipment.shield"), "dnd5e.armorFormula") == "+2")
+
+        #expect(equipmentCount("Simple Melee Weapons", in: .srd51) == 10)
+        #expect(equipmentCount("Martial Melee Weapons", in: .srd51) == 18)
+        #expect(equipmentCount("Heavy Armor", in: .srd51) == 4)
+    }
+
+    @Test func srd52WeaponsAndArmorHaveTheirStatsIncludingMastery() throws {
+        let longsword = try equipment("srd52.equipment.longsword")
+        #expect(text(longsword, "dnd5e.damage") == "1d8 Slashing")
+        #expect(text(longsword, "dnd5e.weaponMastery") == "Sap")
+        #expect(text(longsword, "dnd5e.cost") == "15 GP")
+
+        // A property that wraps onto a second line, in the middle of the row, stays in place.
+        let lightCrossbow = try equipment("srd52.equipment.light-crossbow")
+        #expect(text(lightCrossbow, "dnd5e.weaponProperties") == "Ammunition (Range 80/320; Bolt), Loading, Two-Handed")
+        #expect(text(lightCrossbow, "dnd5e.weaponMastery") == "Slow")
+
+        let chainMail = try equipment("srd52.equipment.chain-mail")
+        #expect(text(chainMail, "dnd5e.armorFormula") == "16")
+        #expect(text(chainMail, "dnd5e.strengthRequirement") == "Str 13")
+        #expect(text(try equipment("srd52.equipment.hide-armor"), "dnd5e.armorFormula") == "12 + Dex modifier (max 2)")
+        #expect(equipmentCount("Heavy Armor", in: .srd52) == 4)
+        #expect(Library.shared.entries(.equipment, in: .srd52).filter { text($0, "dnd5e.damage") != nil }.count == 38)
+    }
+
+    @Test func toolsGearAndPacksAreInBothEditions() throws {
+        let tools51 = try equipment("srd51.equipment.thieves-tools")
+        #expect(text(tools51, "dnd5e.cost") == "25 gp")
+        #expect(text(tools51, "dnd5e.weight") == "1 lb.")
+        #expect(equipmentCount("Artisan’s tools", in: .srd51) == 19)
+
+        let supplies = try equipment("srd52.equipment.alchemists-supplies")
+        #expect(text(supplies, "dnd5e.toolAbility") == "Intelligence")
+        #expect(text(supplies, "dnd5e.weight") == "8 lb.")
+        #expect(supplies.entries.map(\.name) == ["Utilize", "Craft"])
+        #expect(equipmentCount("Artisan’s Tools", in: .srd52) == 17)
+
+        for edition in LibraryEdition.allCases {
+            let packs = Library.shared.entries(.equipment, in: edition).filter { $0.name.hasSuffix("Pack") }
+            #expect(Set(packs.map(\.name)) == ["Burglar’s Pack", "Diplomat’s Pack", "Dungeoneer’s Pack", "Entertainer’s Pack", "Explorer’s Pack", "Priest’s Pack", "Scholar’s Pack"], "\(edition)")
+            #expect(packs.allSatisfy { !$0.summary.isEmpty && text($0, "dnd5e.cost") != nil })
+        }
+        #expect(try equipment("srd51.equipment.explorers-pack").summary.hasPrefix("Includes a backpack, a bedroll"))
+    }
+
+    @Test func everyClassHasItsStartingEquipment() {
+        for edition in LibraryEdition.allCases {
+            for entry in Library.shared.topLevelEntries(.class, in: edition) {
+                #expect(text(entry, "dnd5e.startingEquipment")?.isEmpty == false, "\(entry.name) in \(edition)")
+            }
+        }
+        #expect(text(Library.shared.entry(forKey: "srd52.class.fighter")!, "dnd5e.startingEquipment")?.hasPrefix("Choose A, B, or C:") == true)
+        #expect(text(Library.shared.entry(forKey: "srd51.class.fighter")!, "dnd5e.startingEquipment")?.contains("(a) chain mail or (b) leather armor") == true)
+    }
+
+    @Test func anEquipmentEntryBecomesAnItem() throws {
+        let context = try makeContext()
+        let world = makeWorld(in: context, edition: .srd52)
+        let supplies = try equipment("srd52.equipment.alchemists-supplies")
+
+        let item = try #require(Library.shared.makeCustomVersion(of: supplies, in: world, context: context))
+
+        #expect(item.kind == .item)
+        #expect(item.title == "Alchemist’s Supplies")
+        #expect(item.basedOnKey == "srd52.equipment.alchemists-supplies")
+        #expect(item.attributeText("dnd5e.cost") == "50 GP")
+        guard case .entries(let details)? = item.attributes[CoreAttributes.detailsKey] else {
+            Issue.record("Expected the tool's details")
+            return
+        }
+        #expect(details.map(\.name) == ["Utilize", "Craft"])
+        #expect(RuleSystems.definitions(for: .item, system: .dnd5e).map(\.key).contains("dnd5e.cost"))
+        #expect(!RuleSystems.definitions(for: .item, system: .none).map(\.key).contains("dnd5e.cost"))
+    }
+
+    @Test func theLibraryListsEquipmentToo() {
+        for edition in LibraryEdition.allCases {
+            #expect(Library.shared.listKinds(in: edition).contains(.equipment))
+        }
+    }
 }

@@ -270,7 +270,8 @@
         "dnd5e.weaponProficiencies": "Simple weapons, martial weapons",
         "dnd5e.toolProficiencies": "None",
         "dnd5e.savingThrows": "Strength, Constitution",
-        "dnd5e.skillChoices": "Choose two from Animal Handling, Athletics, Intimidation, Nature, Perception, and Survival"
+        "dnd5e.skillChoices": "Choose two from Animal Handling, Athletics, Intimidation, Nature, Perception, and Survival",
+        "dnd5e.startingEquipment": "You start with the following equipment, in addition to the equipment granted by your background:\n• (a) a greataxe or (b) any martial melee weapon\n• (a) two handaxes or (b) any simple weapon\n• An explorer’s pack and four javelins"
       },
       "entries": [
         { "name": "Rage", "level": 1, "text": "In battle, you fight with primal ferocity. On your turn, you can enter a rage as a bonus action.\n\nWhile raging, you gain the following benefits if you aren’t wearing heavy armor:\n\n• You have advantage on Strength checks and Strength saving throws.\n\n• When you make a melee weapon attack using Strength, you gain a bonus to the damage roll that increases as you gain levels as a barbarian, as shown in the Rage Damage column of the Barbarian table.\n\n• You have resistance to bludgeoning, piercing, and slashing damage.\n\nIf you are able to cast spells, you can’t cast them or concentrate on them while raging.\n\nYour rage lasts for 1 minute. It ends early if you are knocked unconscious or if your turn ends and you haven’t attacked a hostile creature since your last turn or taken damage since then. You can also end your rage on your turn as a bonus action. Once you have raged the number of times shown for your barbarian level in the Rages column of the Barbarian table, you must finish a long rest before you can rage again." },
@@ -313,7 +314,8 @@
         "dnd5e.weaponProficiencies": "Simple weapons, hand crossbows, longswords, rapiers, shortswords",
         "dnd5e.toolProficiencies": "Three musical instruments of your choice",
         "dnd5e.savingThrows": "Dexterity, Charisma",
-        "dnd5e.skillChoices": "Choose any three"
+        "dnd5e.skillChoices": "Choose any three",
+        "dnd5e.startingEquipment": "You start with the following equipment, in addition to the equipment granted by your background:\n• (a) a rapier, (b) a longsword, or (c) any simple weapon\n• (a) a diplomat’s pack or (b) an entertainer’s pack\n• (a) a lute or (b) any other musical instrument\n• Leather armor and a dagger"
       },
       "entries": [
         { "name": "Spellcasting", "level": 1, "text": "You have learned to untangle and reshape the fabric of reality in harmony with your wishes and music. Your spells are part of your vast repertoire, magic that you can tune to different situations.\n\nCantrips\n\nYou know two cantrips of your choice from the bard spell list. You learn additional bard cantrips of your choice at higher levels, as shown in the Cantrips Known column of the Bard table.\n\nSpell Slots\n\nThe Bard table shows how many spell slots you have to cast your spells of 1st level and higher. To cast one of these spells, you must expend a slot of the spell’s level or higher. You regain all expended spell slots when you finish a long rest.\n\nFor example, if you know the 1st-level spell cure wounds and have a 1st-level and a 2nd-level spell slot available, you can cast cure wounds using either slot.\n\nSpells Known of 1st Level and Higher\n\nYou know four 1st-level spells of your choice from the bard spell list.\n\nThe Spells Known column of the Bard table shows when you learn more bard spells of your choice. Each of these spells must be of a level for which you have spell slots, as shown on the table. For instance, when you reach 3rd level in this class, you can learn one new spell of 1st or 2nd level.\n\nAdditionally, when you gain a level in this class, you can choose one of the bard spells you know and replace it with another spell from the bard spell list, which also must be of a level for which you have spell slots.\n\nSpellcasting Ability\n\nCharisma is your spellcasting ability for your bard spells. Your magic comes from the heart and soul you pour into the performance of your music or oration. You use your Charisma whenever a spell refers to your spellcasting ability. In addition, you use your Charisma modifier when setting the saving throw DC for a bard spell you cast and when making an attack roll with one.\n\nSpell save DC = 8 + your proficiency bonus + your Charisma modifier Spell attack modifier = your proficiency bonus + your Charisma modifier\n\nRitual Casting\n\nYou can cast any bard spell you know as a ritual if that spell has the ritual tag.\n\nSpellcasting Focus\n\nYou can use a musical instrument (see “Equipment”) as a spellcasting focus for your bard spells." },
@@ -353,7 +355,8 @@
         "dnd5e.weaponProficiencies": "Simple weapons",
         "dnd5e.toolProficiencies": "None",
         "dnd5e.savingThrows": "Wisdom, Charisma",
-        "dnd5e.skillChoices": "Choose two from History, Insight, Medicine, Persuasion, and Religion"
+        "dnd5e.skillChoices": "Choose two from History, Insight, Medicine, Persuasion, and Religion",
+        "dnd5e.startingEquipment": "You start with the following equipment, in addition to the equipment granted by your background:\n• (a) a mace or (b) a warhammer (if proficient)\n• (a) scale mail, (b) leather armor, or (c) chain mail (if proficient)\n• (a) a light crossbow and 20 bolts or (b) any simple weapon\n• (a) a priest’s pack or (b) an explorer’s pack\n• A shield and a holy symbol"
       },
       "entries": [
         { "name": "Spellcasting", "level": 1, "text": "As a conduit for divine power, you can cast cleric spells.\n\nCantrips\n\nAt 1st level, you know three cantrips of your choice from the cleric spell list. You learn additional cleric cantrips of your choice at higher levels, as shown in the Cantrips Known column of the Cleric table.\n\nPreparing and Casting Spells\n\nThe Cleric table shows how many spell slots you have to cast your spells of 1st level and higher. To cast one of these spells, you must expend a slot of the spell’s level or higher. You regain all expended spell slots when you finish a long rest.\n\nYou prepare the list of cleric spells that are available for you to cast, choosing from the cleric spell list. When you do so, choose a number of cleric spells equal to your Wisdom modifier + your cleric level (minimum of one spell). The spells must be of a level for which you have spell slots.\n\nFor example, if you are a 3rd-level cleric, you have four 1st-level and two 2nd-level spell slots. With a Wisdom of 16, your list of prepared spells can include six spells of 1st or 2nd level, in any combination. If you prepare the 1st-level spell cure wounds, you can cast it using a 1st-level or 2nd-level slot. Casting the spell doesn’t remove it from your list of prepared spells.\n\nYou can change your list of prepared spells when you finish a long rest. Preparing a new list of cleric spells requires time spent in prayer and meditation: at least 1 minute per spell level for each spell on your list.\n\nSpellcasting Ability\n\nWisdom is your spellcasting ability for your cleric spells. The power of your spells comes from your devotion to your deity. You use your Wisdom whenever a cleric spell refers to your spellcasting ability. In addition, you use your Wisdom modifier when setting the saving throw DC for a cleric spell you cast and when making an attack roll with one. Spell save DC = 8 + your proficiency bonus + your Wisdom modifier Spell attack modifier = your proficiency bonus + your Wisdom modifier\n\nRitual Casting\n\nYou can cast a cleric spell as a ritual if that spell has the ritual tag and you have the spell prepared.\n\nSpellcasting Focus\n\nYou can use a holy symbol (see “Equipment”) as a spellcasting focus for your cleric spells." },
@@ -391,7 +394,8 @@
         "dnd5e.weaponProficiencies": "Clubs, daggers, darts, javelins, maces, quarterstaffs, scimitars, sickles, slings, spears",
         "dnd5e.toolProficiencies": "Herbalism kit",
         "dnd5e.savingThrows": "Intelligence, Wisdom",
-        "dnd5e.skillChoices": "Choose two from Arcana, Animal Handling, Insight, Medicine, Nature, Perception, Religion, and Survival"
+        "dnd5e.skillChoices": "Choose two from Arcana, Animal Handling, Insight, Medicine, Nature, Perception, Religion, and Survival",
+        "dnd5e.startingEquipment": "You start with the following equipment, in addition to the equipment granted by your background:\n• (a) a wooden shield or (b) any simple weapon\n• (a) a scimitar or (b) any simple melee weapon\n• Leather armor, an explorer’s pack, and a druidic focus"
       },
       "entries": [
         { "name": "Druidic", "level": 1, "text": "You know Druidic, the secret language of druids. You can speak the language and use it to leave hidden messages. You and others who know this language automatically spot such a message. Others spot the message’s presence with a successful DC 15 Wisdom\n\nKnown 1st 2nd 3rd 4th 5th 6th 7th 8th 9th\n\n(Perception) check but can’t decipher it without magic." },
@@ -430,7 +434,8 @@
         "dnd5e.weaponProficiencies": "Simple weapons, martial weapons",
         "dnd5e.toolProficiencies": "None",
         "dnd5e.savingThrows": "Strength, Constitution",
-        "dnd5e.skillChoices": "Choose two skills from Acrobatics, Animal Handling, Athletics, History, Insight, Intimidation, Perception, and Survival"
+        "dnd5e.skillChoices": "Choose two skills from Acrobatics, Animal Handling, Athletics, History, Insight, Intimidation, Perception, and Survival",
+        "dnd5e.startingEquipment": "You start with the following equipment, in addition to the equipment granted by your background:\n• (a) chain mail or (b) leather armor, longbow, and 20 arrows\n• (a) a martial weapon and a shield or (b) two martial weapons\n• (a) a light crossbow and 20 bolts or (b) two handaxes\n• (a) a dungeoneer’s pack or (b) an explorer’s pack"
       },
       "entries": [
         { "name": "Fighting Style", "level": 1, "text": "You adopt a particular style of fighting as your specialty. Choose one of the following options. You can’t take a Fighting Style option more than once, even if you later get to choose again.\n\nArchery\n\nYou gain a +2 bonus to attack rolls you make with ranged weapons.\n\nDefense\n\nWhile you are wearing armor, you gain a +1 bonus to AC.\n\nDueling\n\nWhen you are wielding a melee weapon in one hand and no other weapons, you gain a +2 bonus to damage rolls with that weapon.\n\nGreat Weapon Fighting\n\nWhen you roll a 1 or 2 on a damage die for an attack you make with a melee weapon that you are wielding with two hands, you can reroll the die and must use the new roll, even if the new roll is a 1 or a 2. The weapon must have the two-handed or versatile property for you to gain this benefit.\n\nProtection\n\nWhen a creature you can see attacks a target other than you that is within 5 feet of you, you can use your reaction to impose disadvantage on the attack roll. You must be wielding a shield.\n\nTwo-Weapon Fighting\n\nWhen you engage in two-weapon fighting, you can add your ability modifier to the damage of the second attack." },
@@ -467,7 +472,8 @@
         "dnd5e.weaponProficiencies": "Simple weapons, shortswords",
         "dnd5e.toolProficiencies": "Choose one type of artisan’s tools or one musical instrument",
         "dnd5e.savingThrows": "Strength, Dexterity",
-        "dnd5e.skillChoices": "Choose two from Acrobatics, Athletics, History, Insight, Religion, and Stealth"
+        "dnd5e.skillChoices": "Choose two from Acrobatics, Athletics, History, Insight, Religion, and Stealth",
+        "dnd5e.startingEquipment": "You start with the following equipment, in addition to the equipment granted by your background:\n• (a) a shortsword or (b) any simple weapon\n• (a) a dungeoneer’s pack or (b) an explorer’s pack\n• 10 darts"
       },
       "entries": [
         { "name": "Unarmored Defense", "level": 1, "text": "Beginning at 1st level, while you are wearing no armor and not wielding a shield, your AC equals 10 + your Dexterity modifier + your Wisdom modifier." },
@@ -515,7 +521,8 @@
         "dnd5e.weaponProficiencies": "Simple weapons, martial weapons",
         "dnd5e.toolProficiencies": "None",
         "dnd5e.savingThrows": "Wisdom, Charisma",
-        "dnd5e.skillChoices": "Choose two from Athletics, Insight, Intimidation, Medicine, Persuasion, and Religion"
+        "dnd5e.skillChoices": "Choose two from Athletics, Insight, Intimidation, Medicine, Persuasion, and Religion",
+        "dnd5e.startingEquipment": "You start with the following equipment, in addition to the equipment granted by your background:\n• (a) a martial weapon and a shield or (b) two martial weapons\n• (a) five javelins or (b) any simple melee weapon\n• (a) a priest’s pack or (b) an explorer’s pack\n• Chain mail and a holy symbol"
       },
       "entries": [
         { "name": "Divine Sense", "level": 1, "text": "The presence of strong evil registers on your senses like a noxious odor, and powerful good rings like heavenly music in your ears. As an action, you can open your awareness to detect such forces. Until the end of your next turn, you know the location of any celestial, fiend, or undead within 60 feet of you that is not behind total cover. You know the type (celestial, fiend, or undead) of any being whose presence you sense, but not its identity (the vampire Count Strahd von Zarovich, for instance). Within the same radius, you also detect the presence of any place or object that has been consecrated or desecrated, as with the hallow spell.\n\nYou can use this feature a number of times equal to 1 + your Charisma modifier. When you finish a long rest, you regain all expended uses." },
@@ -559,7 +566,8 @@
         "dnd5e.weaponProficiencies": "Simple weapons, martial weapons",
         "dnd5e.toolProficiencies": "None",
         "dnd5e.savingThrows": "Strength, Dexterity",
-        "dnd5e.skillChoices": "Choose three from Animal Handling, Athletics, Insight, Investigation, Nature, Perception, Stealth, and Survival"
+        "dnd5e.skillChoices": "Choose three from Animal Handling, Athletics, Insight, Investigation, Nature, Perception, Stealth, and Survival",
+        "dnd5e.startingEquipment": "You start with the following equipment, in addition to the equipment granted by your background:\n• (a) scale mail or (b) leather armor\n• (a) two shortswords or (b) two simple melee weapons\n• (a) a dungeoneer’s pack or (b) an explorer’s pack\n• A longbow and a quiver of 20 arrows"
       },
       "entries": [
         { "name": "Favored Enemy", "level": 1, "text": "Beginning at 1st level, you have significant experience studying, tracking, hunting, and even talking to a certain type of enemy.\n\nChoose a type of favored enemy: aberrations, beasts, celestials, constructs, dragons, elementals, fey, fiends, giants, monstrosities, oozes, plants, or undead. Alternatively, you can select two races of humanoid (such as gnolls and orcs) as favored enemies.\n\nYou have advantage on Wisdom (Survival) checks to track your favored enemies, as well as on Intelligence checks to recall information about them. When you gain this feature, you also learn one language of your choice that is spoken by your favored enemies, if they speak one at all. You choose one additional favored enemy, as well as an associated language, at 6th and 14th level. As you gain levels, your choices should reflect the types of monsters you have encountered on your adventures." },
@@ -601,7 +609,8 @@
         "dnd5e.weaponProficiencies": "Simple weapons, hand crossbows, longswords, rapiers, shortswords",
         "dnd5e.toolProficiencies": "Thieves’ tools",
         "dnd5e.savingThrows": "Dexterity, Intelligence",
-        "dnd5e.skillChoices": "Choose four from Acrobatics, Athletics, Deception, Insight, Intimidation, Investigation, Perception, Performance, Persuasion, Sleight of Hand, and Stealth"
+        "dnd5e.skillChoices": "Choose four from Acrobatics, Athletics, Deception, Insight, Intimidation, Investigation, Perception, Performance, Persuasion, Sleight of Hand, and Stealth",
+        "dnd5e.startingEquipment": "You start with the following equipment, in addition to the equipment granted by your background:\n• (a) a rapier or (b) a shortsword\n• (a) a shortbow and quiver of 20 arrows or (b) a shortsword\n• (a) a burglar’s pack, (b) a dungeoneer’s pack, or (c) an explorer’s pack\n• (a) Leather armor, two daggers, and thieves’ tools"
       },
       "entries": [
         { "name": "Expertise", "level": 1, "text": "At 1st level, choose two of your skill proficiencies, or one of your skill proficiencies and your proficiency with thieves’ tools. Your proficiency bonus is doubled for any ability check you make that uses either of the chosen proficiencies.\n\nAt 6th level, you can choose two more of your proficiencies (in skills or with thieves’ tools) to gain this benefit." },
@@ -644,7 +653,8 @@
         "dnd5e.weaponProficiencies": "Daggers, darts, slings, quarterstaffs, light crossbows",
         "dnd5e.toolProficiencies": "None",
         "dnd5e.savingThrows": "Constitution, Charisma",
-        "dnd5e.skillChoices": "Choose two from Arcana, Deception, Insight, Intimidation, Persuasion, and Religion"
+        "dnd5e.skillChoices": "Choose two from Arcana, Deception, Insight, Intimidation, Persuasion, and Religion",
+        "dnd5e.startingEquipment": "You start with the following equipment, in addition to the equipment granted by your background:\n• (a) a light crossbow and 20 bolts or (b) any simple weapon\n• (a) a component pouch or (b) an arcane focus\n• (a) a dungeoneer’s pack or (b) an explorer’s pack\n• Two daggers"
       },
       "entries": [
         { "name": "Spellcasting", "level": 1, "text": "An event in your past, or in the life of a parent or ancestor, left an indelible mark on you, infusing you with arcane magic. This font of magic, whatever its origin, fuels your spells.\n\nCantrips\n\nAt 1st level, you know four cantrips of your choice from the sorcerer spell list. You learn additional sorcerer cantrips of your choice at higher levels, as shown in the Cantrips Known column of the Sorcerer table.\n\nSpell Slots\n\nThe Sorcerer table shows how many spell slots you have to cast your spells of 1st level and higher. To cast one of these sorcerer spells, you must expend a slot of the spell’s level or higher. You regain all expended spell slots when you finish a long rest. For example, if you know the 1st-level spell burning hands and have a 1st-level and a 2nd-level spell slot available, you can cast burning hands using either slot.\n\nSpells Known of 1st Level and Higher\n\nYou know two 1st-level spells of your choice from the sorcerer spell list.\n\nThe Spells Known column of the Sorcerer table shows when you learn more sorcerer spells of your choice. Each of these spells must be of a level for which you have spell slots. For instance, when you reach 3rd level in this class, you can learn one new spell of 1st or 2nd level.\n\nAdditionally, when you gain a level in this class, you can choose one of the sorcerer spells you know and replace it with another spell from the sorcerer spell list, which also must be of a level for which you have spell slots.\n\nSpellcasting Ability\n\nCharisma is your spellcasting ability for your sorcerer spells, since the power of your magic relies on your ability to project your will into the world. You use your Charisma whenever a spell refers to your spellcasting ability. In addition, you use your Charisma modifier when setting the saving throw DC for a sorcerer spell you cast and when making an attack roll with one.\n\nSpell save DC = 8 + your proficiency bonus + your Charisma modifier Spell attack modifier = your proficiency bonus + your Charisma modifier\n\nSpellcasting Focus\n\nYou can use an arcane focus as a spellcasting focus for your sorcerer spells." },
@@ -680,7 +690,8 @@
         "dnd5e.weaponProficiencies": "Simple weapons",
         "dnd5e.toolProficiencies": "None",
         "dnd5e.savingThrows": "Wisdom, Charisma",
-        "dnd5e.skillChoices": "Choose two skills from Arcana, Deception, History, Intimidation, Investigation, Nature, and Religion"
+        "dnd5e.skillChoices": "Choose two skills from Arcana, Deception, History, Intimidation, Investigation, Nature, and Religion",
+        "dnd5e.startingEquipment": "You start with the following equipment, in addition to the equipment granted by your background:\n• (a) a light crossbow and 20 bolts or (b) any simple weapon\n• (a) a component pouch or (b) an arcane focus\n• (a) a scholar’s pack or (b) a dungeoneer’s pack\n• Leather armor, any simple weapon, and two daggers"
       },
       "entries": [
         { "name": "Otherworldly Patron", "level": 1, "text": "At 1st level, you have struck a bargain with an otherworldly being of your choice: the Archfey, the Fiend, or the Great Old One, each of which is detailed at the end of the class description. Your choice grants you features at 1st level and again at 6th, 10th, and 14th level." },
@@ -717,7 +728,8 @@
         "dnd5e.weaponProficiencies": "Daggers, darts, slings, quarterstaffs, light crossbows",
         "dnd5e.toolProficiencies": "None",
         "dnd5e.savingThrows": "Intelligence, Wisdom",
-        "dnd5e.skillChoices": "Choose two from Arcana, History, Insight, Investigation, Medicine, and Religion"
+        "dnd5e.skillChoices": "Choose two from Arcana, History, Insight, Investigation, Medicine, and Religion",
+        "dnd5e.startingEquipment": "You start with the following equipment, in addition to the equipment granted by your background:\n• (a) a quarterstaff or (b) a dagger\n• (a) a component pouch or (b) an arcane focus\n• (a) a scholar’s pack or (b) an explorer’s pack\n• A spellbook"
       },
       "entries": [
         { "name": "Spellcasting", "level": 1, "text": "As a student of arcane magic, you have a spellbook containing spells that show the first glimmerings of your true power.\n\nCantrips\n\nAt 1st level, you know three cantrips of your choice from the wizard spell list. You learn additional wizard cantrips of your choice at higher levels, as shown in the Cantrips Known column of the Wizard table.\n\nSpellbook\n\nAt 1st level, you have a spellbook containing six 1st-level wizard spells of your choice. Your spellbook is the repository of the wizard spells you know, except your cantrips, which are fixed in your mind.\n\nPreparing and Casting Spells\n\nThe Wizard table shows how many spell slots you have to cast your spells of 1st level and higher. To cast one of these spells, you must expend a slot of the spell’s level or higher. You regain all expended spell slots when you finish a long rest.\n\nYou prepare the list of wizard spells that are available for you to cast. To do so, choose a number of wizard spells from your spellbook equal to your Intelligence modifier + your wizard level (minimum of one spell). The spells must be of a level for which you have spell slots.\n\nFor example, if you’re a 3rd-level wizard, you have four 1st-level and two 2nd-level spell slots. With an Intelligence of 16, your list of prepared spells can include six spells of 1st or 2nd level, in any combination, chosen from your spellbook. If you prepare the 1st-level spell magic missile, you can cast it using a 1st-level or a 2nd-level slot. Casting the spell doesn’t remove it from your list of prepared spells.\n\nYou can change your list of prepared spells when you finish a long rest. Preparing a new list of wizard spells requires time spent studying your spellbook and memorizing the incantations and gestures you must make to cast the spell: at least 1 minute per spell level for each spell on your list.\n\nSpellcasting Ability\n\nIntelligence is your spellcasting ability for your wizard spells, since you learn your spells through dedicated study and memorization. You use your Intelligence whenever a spell refers to your spellcasting ability. In addition, you use your Intelligence modifier when setting the saving throw DC for a wizard spell you cast and when making an attack roll with one.\n\nSpell save DC = 8 + your proficiency bonus + your Intelligence modifier Spell attack modifier = your proficiency bonus + your Intelligence modifier\n\nRitual Casting\n\nYou can cast a wizard spell as a ritual if that spell has the ritual tag and you have the spell in your spellbook. You don’t need to have the spell prepared.\n\nSpellcasting Focus\n\nYou can use an arcane focus as a spellcasting focus for your wizard spells.\n\nLearning Spells of 1st Level and Higher\n\nEach time you gain a wizard level, you can add two wizard spells of your choice to your spellbook for free. Each of these spells must be of a level for which you have spell slots, as shown on the Wizard table. On your adventures, you might find other spells that you can add to your spellbook (see the “Your Spellbook” sidebar)." },
@@ -984,6 +996,2546 @@
       "summary": "You’ve developed the skills necessary to hold your own in close-quarters grappling. You gain the following benefits:\n\n• You have advantage on attack rolls against a creature you are grappling.\n\n• You can use your action to try to pin a creature grappled by you. To do so, make another grapple check. If you succeed, you and the creature are both restrained until the grapple ends.",
       "attributes": {
         "dnd5e.featPrerequisite": "Strength 13 or higher"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.padded",
+      "kind": "equipment",
+      "name": "Padded",
+      "attributes": {
+        "dnd5e.armorFormula": "11 + Dex modifier",
+        "dnd5e.cost": "5 gp",
+        "dnd5e.equipmentCategory": "Light Armor",
+        "dnd5e.stealth": "Disadvantage",
+        "dnd5e.weight": "8 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.leather",
+      "kind": "equipment",
+      "name": "Leather",
+      "attributes": {
+        "dnd5e.armorFormula": "11 + Dex modifier",
+        "dnd5e.cost": "10 gp",
+        "dnd5e.equipmentCategory": "Light Armor",
+        "dnd5e.weight": "10 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.studded-leather",
+      "kind": "equipment",
+      "name": "Studded leather",
+      "attributes": {
+        "dnd5e.armorFormula": "12 + Dex modifier",
+        "dnd5e.cost": "45 gp",
+        "dnd5e.equipmentCategory": "Light Armor",
+        "dnd5e.weight": "13 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.hide",
+      "kind": "equipment",
+      "name": "Hide",
+      "attributes": {
+        "dnd5e.armorFormula": "12 + Dex modifier (max 2)",
+        "dnd5e.cost": "10 gp",
+        "dnd5e.equipmentCategory": "Medium Armor",
+        "dnd5e.weight": "12 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.chain-shirt",
+      "kind": "equipment",
+      "name": "Chain shirt",
+      "attributes": {
+        "dnd5e.armorFormula": "13 + Dex modifier (max 2)",
+        "dnd5e.cost": "50 gp",
+        "dnd5e.equipmentCategory": "Medium Armor",
+        "dnd5e.weight": "20 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.scale-mail",
+      "kind": "equipment",
+      "name": "Scale mail",
+      "attributes": {
+        "dnd5e.armorFormula": "14 + Dex modifier (max 2)",
+        "dnd5e.cost": "50 gp",
+        "dnd5e.equipmentCategory": "Medium Armor",
+        "dnd5e.stealth": "Disadvantage",
+        "dnd5e.weight": "45 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.breastplate",
+      "kind": "equipment",
+      "name": "Breastplate",
+      "attributes": {
+        "dnd5e.armorFormula": "14 + Dex modifier (max 2)",
+        "dnd5e.cost": "400 gp",
+        "dnd5e.equipmentCategory": "Medium Armor",
+        "dnd5e.weight": "20 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.half-plate",
+      "kind": "equipment",
+      "name": "Half plate",
+      "attributes": {
+        "dnd5e.armorFormula": "15 + Dex modifier (max 2)",
+        "dnd5e.cost": "750 gp",
+        "dnd5e.equipmentCategory": "Medium Armor",
+        "dnd5e.stealth": "Disadvantage",
+        "dnd5e.weight": "40 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.ring-mail",
+      "kind": "equipment",
+      "name": "Ring mail",
+      "attributes": {
+        "dnd5e.armorFormula": "14",
+        "dnd5e.cost": "30 gp",
+        "dnd5e.equipmentCategory": "Heavy Armor",
+        "dnd5e.stealth": "Disadvantage",
+        "dnd5e.weight": "40 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.chain-mail",
+      "kind": "equipment",
+      "name": "Chain mail",
+      "attributes": {
+        "dnd5e.armorFormula": "16",
+        "dnd5e.cost": "75 gp",
+        "dnd5e.equipmentCategory": "Heavy Armor",
+        "dnd5e.stealth": "Disadvantage",
+        "dnd5e.strengthRequirement": "Str 13",
+        "dnd5e.weight": "55 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.splint",
+      "kind": "equipment",
+      "name": "Splint",
+      "attributes": {
+        "dnd5e.armorFormula": "17",
+        "dnd5e.cost": "200 gp",
+        "dnd5e.equipmentCategory": "Heavy Armor",
+        "dnd5e.stealth": "Disadvantage",
+        "dnd5e.strengthRequirement": "Str 15",
+        "dnd5e.weight": "60 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.plate",
+      "kind": "equipment",
+      "name": "Plate",
+      "attributes": {
+        "dnd5e.armorFormula": "18",
+        "dnd5e.cost": "1,500 gp",
+        "dnd5e.equipmentCategory": "Heavy Armor",
+        "dnd5e.stealth": "Disadvantage",
+        "dnd5e.strengthRequirement": "Str 15",
+        "dnd5e.weight": "65 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.shield",
+      "kind": "equipment",
+      "name": "Shield",
+      "attributes": {
+        "dnd5e.armorFormula": "+2",
+        "dnd5e.cost": "10 gp",
+        "dnd5e.equipmentCategory": "Shield",
+        "dnd5e.weight": "6 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.club",
+      "kind": "equipment",
+      "name": "Club",
+      "attributes": {
+        "dnd5e.cost": "1 sp",
+        "dnd5e.damage": "1d4 bludgeoning",
+        "dnd5e.equipmentCategory": "Simple Melee Weapons",
+        "dnd5e.weaponProperties": "Light",
+        "dnd5e.weight": "2 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.dagger",
+      "kind": "equipment",
+      "name": "Dagger",
+      "attributes": {
+        "dnd5e.cost": "2 gp",
+        "dnd5e.damage": "1d4 piercing",
+        "dnd5e.equipmentCategory": "Simple Melee Weapons",
+        "dnd5e.weaponProperties": "Finesse, light, thrown (range 20/60)",
+        "dnd5e.weight": "1 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.greatclub",
+      "kind": "equipment",
+      "name": "Greatclub",
+      "attributes": {
+        "dnd5e.cost": "2 sp",
+        "dnd5e.damage": "1d8 bludgeoning",
+        "dnd5e.equipmentCategory": "Simple Melee Weapons",
+        "dnd5e.weaponProperties": "Two-handed",
+        "dnd5e.weight": "10 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.handaxe",
+      "kind": "equipment",
+      "name": "Handaxe",
+      "attributes": {
+        "dnd5e.cost": "5 gp",
+        "dnd5e.damage": "1d6 slashing",
+        "dnd5e.equipmentCategory": "Simple Melee Weapons",
+        "dnd5e.weaponProperties": "Light, thrown (range 20/60)",
+        "dnd5e.weight": "2 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.javelin",
+      "kind": "equipment",
+      "name": "Javelin",
+      "attributes": {
+        "dnd5e.cost": "5 sp",
+        "dnd5e.damage": "1d6 piercing",
+        "dnd5e.equipmentCategory": "Simple Melee Weapons",
+        "dnd5e.weaponProperties": "Thrown (range 30/120)",
+        "dnd5e.weight": "2 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.light-hammer",
+      "kind": "equipment",
+      "name": "Light hammer",
+      "attributes": {
+        "dnd5e.cost": "2 gp",
+        "dnd5e.damage": "1d4 bludgeoning",
+        "dnd5e.equipmentCategory": "Simple Melee Weapons",
+        "dnd5e.weaponProperties": "Light, thrown (range 20/60)",
+        "dnd5e.weight": "2 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.mace",
+      "kind": "equipment",
+      "name": "Mace",
+      "attributes": {
+        "dnd5e.cost": "5 gp",
+        "dnd5e.damage": "1d6 bludgeoning",
+        "dnd5e.equipmentCategory": "Simple Melee Weapons",
+        "dnd5e.weight": "4 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.quarterstaff",
+      "kind": "equipment",
+      "name": "Quarterstaff",
+      "attributes": {
+        "dnd5e.cost": "2 sp",
+        "dnd5e.damage": "1d6 bludgeoning",
+        "dnd5e.equipmentCategory": "Simple Melee Weapons",
+        "dnd5e.weaponProperties": "Versatile (1d8)",
+        "dnd5e.weight": "4 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.sickle",
+      "kind": "equipment",
+      "name": "Sickle",
+      "attributes": {
+        "dnd5e.cost": "1 gp",
+        "dnd5e.damage": "1d4 slashing",
+        "dnd5e.equipmentCategory": "Simple Melee Weapons",
+        "dnd5e.weaponProperties": "Light",
+        "dnd5e.weight": "2 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.spear",
+      "kind": "equipment",
+      "name": "Spear",
+      "attributes": {
+        "dnd5e.cost": "1 gp",
+        "dnd5e.damage": "1d6 piercing",
+        "dnd5e.equipmentCategory": "Simple Melee Weapons",
+        "dnd5e.weaponProperties": "Thrown (range 20/60), versatile (1d8)",
+        "dnd5e.weight": "3 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.crossbow-light",
+      "kind": "equipment",
+      "name": "Crossbow, light",
+      "attributes": {
+        "dnd5e.cost": "25 gp",
+        "dnd5e.damage": "1d8 piercing",
+        "dnd5e.equipmentCategory": "Simple Ranged Weapons",
+        "dnd5e.weaponProperties": "Ammunition (range 80/320), loading, two-handed",
+        "dnd5e.weight": "5 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.dart",
+      "kind": "equipment",
+      "name": "Dart",
+      "attributes": {
+        "dnd5e.cost": "5 cp",
+        "dnd5e.damage": "1d4 piercing",
+        "dnd5e.equipmentCategory": "Simple Ranged Weapons",
+        "dnd5e.weaponProperties": "Finesse, thrown (range 20/60)",
+        "dnd5e.weight": "1/4 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.shortbow",
+      "kind": "equipment",
+      "name": "Shortbow",
+      "attributes": {
+        "dnd5e.cost": "25 gp",
+        "dnd5e.damage": "1d6 piercing",
+        "dnd5e.equipmentCategory": "Simple Ranged Weapons",
+        "dnd5e.weaponProperties": "Ammunition (range 80/320), two-handed",
+        "dnd5e.weight": "2 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.sling",
+      "kind": "equipment",
+      "name": "Sling",
+      "attributes": {
+        "dnd5e.cost": "1 sp",
+        "dnd5e.damage": "1d4 bludgeoning",
+        "dnd5e.equipmentCategory": "Simple Ranged Weapons",
+        "dnd5e.weaponProperties": "Ammunition (range 30/120)"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.battleaxe",
+      "kind": "equipment",
+      "name": "Battleaxe",
+      "attributes": {
+        "dnd5e.cost": "10 gp",
+        "dnd5e.damage": "1d8 slashing",
+        "dnd5e.equipmentCategory": "Martial Melee Weapons",
+        "dnd5e.weaponProperties": "Versatile (1d10)",
+        "dnd5e.weight": "4 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.flail",
+      "kind": "equipment",
+      "name": "Flail",
+      "attributes": {
+        "dnd5e.cost": "10 gp",
+        "dnd5e.damage": "1d8 bludgeoning",
+        "dnd5e.equipmentCategory": "Martial Melee Weapons",
+        "dnd5e.weight": "2 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.glaive",
+      "kind": "equipment",
+      "name": "Glaive",
+      "attributes": {
+        "dnd5e.cost": "20 gp",
+        "dnd5e.damage": "1d10 slashing",
+        "dnd5e.equipmentCategory": "Martial Melee Weapons",
+        "dnd5e.weaponProperties": "Heavy, reach, two-handed",
+        "dnd5e.weight": "6 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.greataxe",
+      "kind": "equipment",
+      "name": "Greataxe",
+      "attributes": {
+        "dnd5e.cost": "30 gp",
+        "dnd5e.damage": "1d12 slashing",
+        "dnd5e.equipmentCategory": "Martial Melee Weapons",
+        "dnd5e.weaponProperties": "Heavy, two-handed",
+        "dnd5e.weight": "7 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.greatsword",
+      "kind": "equipment",
+      "name": "Greatsword",
+      "attributes": {
+        "dnd5e.cost": "50 gp",
+        "dnd5e.damage": "2d6 slashing",
+        "dnd5e.equipmentCategory": "Martial Melee Weapons",
+        "dnd5e.weaponProperties": "Heavy, two-handed",
+        "dnd5e.weight": "6 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.halberd",
+      "kind": "equipment",
+      "name": "Halberd",
+      "attributes": {
+        "dnd5e.cost": "20 gp",
+        "dnd5e.damage": "1d10 slashing",
+        "dnd5e.equipmentCategory": "Martial Melee Weapons",
+        "dnd5e.weaponProperties": "Heavy, reach, two-handed",
+        "dnd5e.weight": "6 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.lance",
+      "kind": "equipment",
+      "name": "Lance",
+      "attributes": {
+        "dnd5e.cost": "10 gp",
+        "dnd5e.damage": "1d12 piercing",
+        "dnd5e.equipmentCategory": "Martial Melee Weapons",
+        "dnd5e.weaponProperties": "Reach, special",
+        "dnd5e.weight": "6 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.longsword",
+      "kind": "equipment",
+      "name": "Longsword",
+      "attributes": {
+        "dnd5e.cost": "15 gp",
+        "dnd5e.damage": "1d8 slashing",
+        "dnd5e.equipmentCategory": "Martial Melee Weapons",
+        "dnd5e.weaponProperties": "Versatile (1d10)",
+        "dnd5e.weight": "3 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.maul",
+      "kind": "equipment",
+      "name": "Maul",
+      "attributes": {
+        "dnd5e.cost": "10 gp",
+        "dnd5e.damage": "2d6 bludgeoning",
+        "dnd5e.equipmentCategory": "Martial Melee Weapons",
+        "dnd5e.weaponProperties": "Heavy, two-handed",
+        "dnd5e.weight": "10 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.morningstar",
+      "kind": "equipment",
+      "name": "Morningstar",
+      "attributes": {
+        "dnd5e.cost": "15 gp",
+        "dnd5e.damage": "1d8 piercing",
+        "dnd5e.equipmentCategory": "Martial Melee Weapons",
+        "dnd5e.weight": "4 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.pike",
+      "kind": "equipment",
+      "name": "Pike",
+      "attributes": {
+        "dnd5e.cost": "5 gp",
+        "dnd5e.damage": "1d10 piercing",
+        "dnd5e.equipmentCategory": "Martial Melee Weapons",
+        "dnd5e.weaponProperties": "Heavy, reach, two-handed",
+        "dnd5e.weight": "18 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.rapier",
+      "kind": "equipment",
+      "name": "Rapier",
+      "attributes": {
+        "dnd5e.cost": "25 gp",
+        "dnd5e.damage": "1d8 piercing",
+        "dnd5e.equipmentCategory": "Martial Melee Weapons",
+        "dnd5e.weaponProperties": "Finesse",
+        "dnd5e.weight": "2 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.scimitar",
+      "kind": "equipment",
+      "name": "Scimitar",
+      "attributes": {
+        "dnd5e.cost": "25 gp",
+        "dnd5e.damage": "1d6 slashing",
+        "dnd5e.equipmentCategory": "Martial Melee Weapons",
+        "dnd5e.weaponProperties": "Finesse, light",
+        "dnd5e.weight": "3 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.shortsword",
+      "kind": "equipment",
+      "name": "Shortsword",
+      "attributes": {
+        "dnd5e.cost": "10 gp",
+        "dnd5e.damage": "1d6 piercing",
+        "dnd5e.equipmentCategory": "Martial Melee Weapons",
+        "dnd5e.weaponProperties": "Finesse, light",
+        "dnd5e.weight": "2 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.trident",
+      "kind": "equipment",
+      "name": "Trident",
+      "attributes": {
+        "dnd5e.cost": "5 gp",
+        "dnd5e.damage": "1d6 piercing",
+        "dnd5e.equipmentCategory": "Martial Melee Weapons",
+        "dnd5e.weaponProperties": "Thrown (range 20/60), versatile (1d8)",
+        "dnd5e.weight": "4 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.war-pick",
+      "kind": "equipment",
+      "name": "War pick",
+      "attributes": {
+        "dnd5e.cost": "5 gp",
+        "dnd5e.damage": "1d8 piercing",
+        "dnd5e.equipmentCategory": "Martial Melee Weapons",
+        "dnd5e.weight": "2 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.warhammer",
+      "kind": "equipment",
+      "name": "Warhammer",
+      "attributes": {
+        "dnd5e.cost": "15 gp",
+        "dnd5e.damage": "1d8 bludgeoning",
+        "dnd5e.equipmentCategory": "Martial Melee Weapons",
+        "dnd5e.weaponProperties": "Versatile (1d10)",
+        "dnd5e.weight": "2 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.whip",
+      "kind": "equipment",
+      "name": "Whip",
+      "attributes": {
+        "dnd5e.cost": "2 gp",
+        "dnd5e.damage": "1d4 slashing",
+        "dnd5e.equipmentCategory": "Martial Melee Weapons",
+        "dnd5e.weaponProperties": "Finesse, reach",
+        "dnd5e.weight": "3 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.blowgun",
+      "kind": "equipment",
+      "name": "Blowgun",
+      "attributes": {
+        "dnd5e.cost": "10 gp",
+        "dnd5e.damage": "1 piercing",
+        "dnd5e.equipmentCategory": "Martial Ranged Weapons",
+        "dnd5e.weaponProperties": "Ammunition (range 25/100), loading",
+        "dnd5e.weight": "1 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.crossbow-hand",
+      "kind": "equipment",
+      "name": "Crossbow, hand",
+      "attributes": {
+        "dnd5e.cost": "75 gp",
+        "dnd5e.damage": "1d6 piercing",
+        "dnd5e.equipmentCategory": "Martial Ranged Weapons",
+        "dnd5e.weaponProperties": "Ammunition (range 30/120), light, loading",
+        "dnd5e.weight": "3 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.crossbow-heavy",
+      "kind": "equipment",
+      "name": "Crossbow, heavy",
+      "attributes": {
+        "dnd5e.cost": "50 gp",
+        "dnd5e.damage": "1d10 piercing",
+        "dnd5e.equipmentCategory": "Martial Ranged Weapons",
+        "dnd5e.weaponProperties": "Ammunition (range 100/400), heavy, loading, two-handed",
+        "dnd5e.weight": "18 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.longbow",
+      "kind": "equipment",
+      "name": "Longbow",
+      "attributes": {
+        "dnd5e.cost": "50 gp",
+        "dnd5e.damage": "1d8 piercing",
+        "dnd5e.equipmentCategory": "Martial Ranged Weapons",
+        "dnd5e.weaponProperties": "Ammunition (range 150/600), heavy, two-handed",
+        "dnd5e.weight": "2 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.net",
+      "kind": "equipment",
+      "name": "Net",
+      "attributes": {
+        "dnd5e.cost": "1 gp",
+        "dnd5e.equipmentCategory": "Martial Ranged Weapons",
+        "dnd5e.weaponProperties": "Special, thrown (range 5/15)",
+        "dnd5e.weight": "3 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.abacus",
+      "kind": "equipment",
+      "name": "Abacus",
+      "attributes": {
+        "dnd5e.cost": "2 gp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "2 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.acid-vial",
+      "kind": "equipment",
+      "name": "Acid (vial)",
+      "attributes": {
+        "dnd5e.cost": "25 gp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "1 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.alchemists-fire-flask",
+      "kind": "equipment",
+      "name": "Alchemist’s fire (flask)",
+      "attributes": {
+        "dnd5e.cost": "50 gp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "1 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.arrows-20",
+      "kind": "equipment",
+      "name": "Arrows (20)",
+      "attributes": {
+        "dnd5e.cost": "1 gp",
+        "dnd5e.equipmentCategory": "Ammunition",
+        "dnd5e.weight": "1 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.blowgun-needles-50",
+      "kind": "equipment",
+      "name": "Blowgun needles (50)",
+      "attributes": {
+        "dnd5e.cost": "1 gp",
+        "dnd5e.equipmentCategory": "Ammunition",
+        "dnd5e.weight": "1 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.crossbow-bolts-20",
+      "kind": "equipment",
+      "name": "Crossbow bolts (20)",
+      "attributes": {
+        "dnd5e.cost": "1 gp",
+        "dnd5e.equipmentCategory": "Ammunition",
+        "dnd5e.weight": "1½ lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.sling-bullets-20",
+      "kind": "equipment",
+      "name": "Sling bullets (20)",
+      "attributes": {
+        "dnd5e.cost": "4 cp",
+        "dnd5e.equipmentCategory": "Ammunition",
+        "dnd5e.weight": "1½ lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.antitoxin-vial",
+      "kind": "equipment",
+      "name": "Antitoxin (vial)",
+      "attributes": {
+        "dnd5e.cost": "50 gp",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.crystal-arcane-focus",
+      "kind": "equipment",
+      "name": "Crystal (arcane focus)",
+      "attributes": {
+        "dnd5e.cost": "10 gp",
+        "dnd5e.equipmentCategory": "Arcane focus",
+        "dnd5e.weight": "1 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.orb-arcane-focus",
+      "kind": "equipment",
+      "name": "Orb (arcane focus)",
+      "attributes": {
+        "dnd5e.cost": "20 gp",
+        "dnd5e.equipmentCategory": "Arcane focus",
+        "dnd5e.weight": "3 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.rod-arcane-focus",
+      "kind": "equipment",
+      "name": "Rod (arcane focus)",
+      "attributes": {
+        "dnd5e.cost": "10 gp",
+        "dnd5e.equipmentCategory": "Arcane focus",
+        "dnd5e.weight": "2 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.staff-arcane-focus",
+      "kind": "equipment",
+      "name": "Staff (arcane focus)",
+      "attributes": {
+        "dnd5e.cost": "5 gp",
+        "dnd5e.equipmentCategory": "Arcane focus",
+        "dnd5e.weight": "4 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.wand-arcane-focus",
+      "kind": "equipment",
+      "name": "Wand (arcane focus)",
+      "attributes": {
+        "dnd5e.cost": "10 gp",
+        "dnd5e.equipmentCategory": "Arcane focus",
+        "dnd5e.weight": "1 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.backpack",
+      "kind": "equipment",
+      "name": "Backpack",
+      "attributes": {
+        "dnd5e.cost": "2 gp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "5 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.ball-bearings-bag-of-1-000",
+      "kind": "equipment",
+      "name": "Ball bearings (bag of 1,000)",
+      "attributes": {
+        "dnd5e.cost": "1 gp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "2 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.barrel",
+      "kind": "equipment",
+      "name": "Barrel",
+      "attributes": {
+        "dnd5e.cost": "2 gp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "70 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.basket",
+      "kind": "equipment",
+      "name": "Basket",
+      "attributes": {
+        "dnd5e.cost": "4 sp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "2 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.bedroll",
+      "kind": "equipment",
+      "name": "Bedroll",
+      "attributes": {
+        "dnd5e.cost": "1 gp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "7 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.bell",
+      "kind": "equipment",
+      "name": "Bell",
+      "attributes": {
+        "dnd5e.cost": "1 gp",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.blanket",
+      "kind": "equipment",
+      "name": "Blanket",
+      "attributes": {
+        "dnd5e.cost": "5 sp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "3 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.block-and-tackle",
+      "kind": "equipment",
+      "name": "Block and tackle",
+      "attributes": {
+        "dnd5e.cost": "1 gp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "5 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.book",
+      "kind": "equipment",
+      "name": "Book",
+      "attributes": {
+        "dnd5e.cost": "25 gp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "5 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.bottle-glass",
+      "kind": "equipment",
+      "name": "Bottle, glass",
+      "attributes": {
+        "dnd5e.cost": "2 gp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "2 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.bucket",
+      "kind": "equipment",
+      "name": "Bucket",
+      "attributes": {
+        "dnd5e.cost": "5 cp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "2 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.caltrops-bag-of-20",
+      "kind": "equipment",
+      "name": "Caltrops (bag of 20)",
+      "attributes": {
+        "dnd5e.cost": "1 gp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "2 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.candle",
+      "kind": "equipment",
+      "name": "Candle",
+      "attributes": {
+        "dnd5e.cost": "1 cp",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.case-crossbow-bolt",
+      "kind": "equipment",
+      "name": "Case, crossbow bolt",
+      "attributes": {
+        "dnd5e.cost": "1 gp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "1 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.case-map-or-scroll",
+      "kind": "equipment",
+      "name": "Case, map or scroll",
+      "attributes": {
+        "dnd5e.cost": "1 gp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "1 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.chain-10-feet",
+      "kind": "equipment",
+      "name": "Chain (10 feet)",
+      "attributes": {
+        "dnd5e.cost": "5 gp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "10 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.chalk-1-piece",
+      "kind": "equipment",
+      "name": "Chalk (1 piece)",
+      "attributes": {
+        "dnd5e.cost": "1 cp",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.chest",
+      "kind": "equipment",
+      "name": "Chest",
+      "attributes": {
+        "dnd5e.cost": "5 gp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "25 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.climbers-kit",
+      "kind": "equipment",
+      "name": "Climber’s kit",
+      "attributes": {
+        "dnd5e.cost": "25 gp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "12 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.clothes-common",
+      "kind": "equipment",
+      "name": "Clothes, common",
+      "attributes": {
+        "dnd5e.cost": "5 sp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "3 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.clothes-costume",
+      "kind": "equipment",
+      "name": "Clothes, costume",
+      "attributes": {
+        "dnd5e.cost": "5 gp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "4 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.clothes-fine",
+      "kind": "equipment",
+      "name": "Clothes, fine",
+      "attributes": {
+        "dnd5e.cost": "15 gp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "6 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.clothes-travelers",
+      "kind": "equipment",
+      "name": "Clothes, traveler’s",
+      "attributes": {
+        "dnd5e.cost": "2 gp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "4 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.component-pouch",
+      "kind": "equipment",
+      "name": "Component pouch",
+      "attributes": {
+        "dnd5e.cost": "25 gp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "2 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.crowbar",
+      "kind": "equipment",
+      "name": "Crowbar",
+      "attributes": {
+        "dnd5e.cost": "2 gp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "5 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.sprig-of-mistletoe-druidic-focus",
+      "kind": "equipment",
+      "name": "Sprig of mistletoe (druidic focus)",
+      "attributes": {
+        "dnd5e.cost": "1 gp",
+        "dnd5e.equipmentCategory": "Druidic focus"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.totem-druidic-focus",
+      "kind": "equipment",
+      "name": "Totem (druidic focus)",
+      "attributes": {
+        "dnd5e.cost": "1 gp",
+        "dnd5e.equipmentCategory": "Druidic focus"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.wooden-staff-druidic-focus",
+      "kind": "equipment",
+      "name": "Wooden staff (druidic focus)",
+      "attributes": {
+        "dnd5e.cost": "5 gp",
+        "dnd5e.equipmentCategory": "Druidic focus",
+        "dnd5e.weight": "4 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.yew-wand-druidic-focus",
+      "kind": "equipment",
+      "name": "Yew wand (druidic focus)",
+      "attributes": {
+        "dnd5e.cost": "10 gp",
+        "dnd5e.equipmentCategory": "Druidic focus",
+        "dnd5e.weight": "1 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.fishing-tackle",
+      "kind": "equipment",
+      "name": "Fishing tackle",
+      "attributes": {
+        "dnd5e.cost": "1 gp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "4 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.flask-or-tankard",
+      "kind": "equipment",
+      "name": "Flask or tankard",
+      "attributes": {
+        "dnd5e.cost": "2 cp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "1 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.grappling-hook",
+      "kind": "equipment",
+      "name": "Grappling hook",
+      "attributes": {
+        "dnd5e.cost": "2 gp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "4 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.hammer",
+      "kind": "equipment",
+      "name": "Hammer",
+      "attributes": {
+        "dnd5e.cost": "1 gp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "3 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.hammer-sledge",
+      "kind": "equipment",
+      "name": "Hammer, sledge",
+      "attributes": {
+        "dnd5e.cost": "2 gp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "10 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.healers-kit",
+      "kind": "equipment",
+      "name": "Healer’s kit",
+      "attributes": {
+        "dnd5e.cost": "5 gp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "3 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.amulet-holy-symbol",
+      "kind": "equipment",
+      "name": "Amulet (holy symbol)",
+      "attributes": {
+        "dnd5e.cost": "5 gp",
+        "dnd5e.equipmentCategory": "Holy symbol",
+        "dnd5e.weight": "1 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.emblem-holy-symbol",
+      "kind": "equipment",
+      "name": "Emblem (holy symbol)",
+      "attributes": {
+        "dnd5e.cost": "5 gp",
+        "dnd5e.equipmentCategory": "Holy symbol"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.reliquary-holy-symbol",
+      "kind": "equipment",
+      "name": "Reliquary (holy symbol)",
+      "attributes": {
+        "dnd5e.cost": "5 gp",
+        "dnd5e.equipmentCategory": "Holy symbol",
+        "dnd5e.weight": "2 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.holy-water-flask",
+      "kind": "equipment",
+      "name": "Holy water (flask)",
+      "attributes": {
+        "dnd5e.cost": "25 gp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "1 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.hourglass",
+      "kind": "equipment",
+      "name": "Hourglass",
+      "attributes": {
+        "dnd5e.cost": "25 gp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "1 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.hunting-trap",
+      "kind": "equipment",
+      "name": "Hunting trap",
+      "attributes": {
+        "dnd5e.cost": "5 gp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "25 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.ink-1-ounce-bottle",
+      "kind": "equipment",
+      "name": "Ink (1 ounce bottle)",
+      "attributes": {
+        "dnd5e.cost": "10 gp",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.ink-pen",
+      "kind": "equipment",
+      "name": "Ink pen",
+      "attributes": {
+        "dnd5e.cost": "2 cp",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.jug-or-pitcher",
+      "kind": "equipment",
+      "name": "Jug or pitcher",
+      "attributes": {
+        "dnd5e.cost": "2 cp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "4 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.ladder-10-foot",
+      "kind": "equipment",
+      "name": "Ladder (10-foot)",
+      "attributes": {
+        "dnd5e.cost": "1 sp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "25 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.lamp",
+      "kind": "equipment",
+      "name": "Lamp",
+      "attributes": {
+        "dnd5e.cost": "5 sp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "1 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.lantern-bullseye",
+      "kind": "equipment",
+      "name": "Lantern, bullseye",
+      "attributes": {
+        "dnd5e.cost": "10 gp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "2 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.lantern-hooded",
+      "kind": "equipment",
+      "name": "Lantern, hooded",
+      "attributes": {
+        "dnd5e.cost": "5 gp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "2 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.lock",
+      "kind": "equipment",
+      "name": "Lock",
+      "attributes": {
+        "dnd5e.cost": "10 gp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "1 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.magnifying-glass",
+      "kind": "equipment",
+      "name": "Magnifying glass",
+      "attributes": {
+        "dnd5e.cost": "100 gp",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.manacles",
+      "kind": "equipment",
+      "name": "Manacles",
+      "attributes": {
+        "dnd5e.cost": "2 gp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "6 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.mess-kit",
+      "kind": "equipment",
+      "name": "Mess kit",
+      "attributes": {
+        "dnd5e.cost": "2 sp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "1 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.mirror-steel",
+      "kind": "equipment",
+      "name": "Mirror, steel",
+      "attributes": {
+        "dnd5e.cost": "5 gp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "1/2 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.oil-flask",
+      "kind": "equipment",
+      "name": "Oil (flask)",
+      "attributes": {
+        "dnd5e.cost": "1 sp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "1 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.paper-one-sheet",
+      "kind": "equipment",
+      "name": "Paper (one sheet)",
+      "attributes": {
+        "dnd5e.cost": "2 sp",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.parchment-one-sheet",
+      "kind": "equipment",
+      "name": "Parchment (one sheet)",
+      "attributes": {
+        "dnd5e.cost": "1 sp",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.perfume-vial",
+      "kind": "equipment",
+      "name": "Perfume (vial)",
+      "attributes": {
+        "dnd5e.cost": "5 gp",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.pick-miners",
+      "kind": "equipment",
+      "name": "Pick, miner’s",
+      "attributes": {
+        "dnd5e.cost": "2 gp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "10 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.piton",
+      "kind": "equipment",
+      "name": "Piton",
+      "attributes": {
+        "dnd5e.cost": "5 cp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "1/4 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.poison-basic-vial",
+      "kind": "equipment",
+      "name": "Poison, basic (vial)",
+      "attributes": {
+        "dnd5e.cost": "100 gp",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.pole-10-foot",
+      "kind": "equipment",
+      "name": "Pole (10-foot)",
+      "attributes": {
+        "dnd5e.cost": "5 cp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "7 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.pot-iron",
+      "kind": "equipment",
+      "name": "Pot, iron",
+      "attributes": {
+        "dnd5e.cost": "2 gp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "10 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.potion-of-healing",
+      "kind": "equipment",
+      "name": "Potion of healing",
+      "attributes": {
+        "dnd5e.cost": "50 gp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "1/2 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.pouch",
+      "kind": "equipment",
+      "name": "Pouch",
+      "attributes": {
+        "dnd5e.cost": "5 sp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "1 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.quiver",
+      "kind": "equipment",
+      "name": "Quiver",
+      "attributes": {
+        "dnd5e.cost": "1 gp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "1 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.ram-portable",
+      "kind": "equipment",
+      "name": "Ram, portable",
+      "attributes": {
+        "dnd5e.cost": "4 gp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "35 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.rations-1-day",
+      "kind": "equipment",
+      "name": "Rations (1 day)",
+      "attributes": {
+        "dnd5e.cost": "5 sp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "2 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.robes",
+      "kind": "equipment",
+      "name": "Robes",
+      "attributes": {
+        "dnd5e.cost": "1 gp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "4 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.rope-hempen-50-feet",
+      "kind": "equipment",
+      "name": "Rope, hempen (50 feet)",
+      "attributes": {
+        "dnd5e.cost": "1 gp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "10 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.rope-silk-50-feet",
+      "kind": "equipment",
+      "name": "Rope, silk (50 feet)",
+      "attributes": {
+        "dnd5e.cost": "10 gp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "5 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.sack",
+      "kind": "equipment",
+      "name": "Sack",
+      "attributes": {
+        "dnd5e.cost": "1 cp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "1/2 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.scale-merchants",
+      "kind": "equipment",
+      "name": "Scale, merchant’s",
+      "attributes": {
+        "dnd5e.cost": "5 gp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "3 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.sealing-wax",
+      "kind": "equipment",
+      "name": "Sealing wax",
+      "attributes": {
+        "dnd5e.cost": "5 sp",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.shovel",
+      "kind": "equipment",
+      "name": "Shovel",
+      "attributes": {
+        "dnd5e.cost": "2 gp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "5 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.signal-whistle",
+      "kind": "equipment",
+      "name": "Signal whistle",
+      "attributes": {
+        "dnd5e.cost": "5 cp",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.signet-ring",
+      "kind": "equipment",
+      "name": "Signet ring",
+      "attributes": {
+        "dnd5e.cost": "5 gp",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.soap",
+      "kind": "equipment",
+      "name": "Soap",
+      "attributes": {
+        "dnd5e.cost": "2 cp",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.spellbook",
+      "kind": "equipment",
+      "name": "Spellbook",
+      "attributes": {
+        "dnd5e.cost": "50 gp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "3 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.spikes-iron-10",
+      "kind": "equipment",
+      "name": "Spikes, iron (10)",
+      "attributes": {
+        "dnd5e.cost": "1 gp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "5 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.spyglass",
+      "kind": "equipment",
+      "name": "Spyglass",
+      "attributes": {
+        "dnd5e.cost": "1,000 gp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "1 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.tent-two-person",
+      "kind": "equipment",
+      "name": "Tent, two-person",
+      "attributes": {
+        "dnd5e.cost": "2 gp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "20 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.tinderbox",
+      "kind": "equipment",
+      "name": "Tinderbox",
+      "attributes": {
+        "dnd5e.cost": "5 sp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "1 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.torch",
+      "kind": "equipment",
+      "name": "Torch",
+      "attributes": {
+        "dnd5e.cost": "1 cp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "1 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.vial",
+      "kind": "equipment",
+      "name": "Vial",
+      "attributes": {
+        "dnd5e.cost": "1 gp",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.whetstone",
+      "kind": "equipment",
+      "name": "Whetstone",
+      "attributes": {
+        "dnd5e.cost": "1 cp",
+        "dnd5e.equipmentCategory": "Adventuring Gear",
+        "dnd5e.weight": "1 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.alchemists-supplies",
+      "kind": "equipment",
+      "name": "Alchemist’s supplies",
+      "attributes": {
+        "dnd5e.cost": "50 gp",
+        "dnd5e.equipmentCategory": "Artisan’s tools",
+        "dnd5e.weight": "8 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.brewers-supplies",
+      "kind": "equipment",
+      "name": "Brewer’s supplies",
+      "attributes": {
+        "dnd5e.cost": "20 gp",
+        "dnd5e.equipmentCategory": "Artisan’s tools",
+        "dnd5e.weight": "9 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.calligraphers-supplies",
+      "kind": "equipment",
+      "name": "Calligrapher's supplies",
+      "attributes": {
+        "dnd5e.cost": "10 gp",
+        "dnd5e.equipmentCategory": "Artisan’s tools",
+        "dnd5e.weight": "5 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.carpenters-tools",
+      "kind": "equipment",
+      "name": "Carpenter’s tools",
+      "attributes": {
+        "dnd5e.cost": "8 gp",
+        "dnd5e.equipmentCategory": "Artisan’s tools",
+        "dnd5e.weight": "6 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.cartographers-tools",
+      "kind": "equipment",
+      "name": "Cartographer’s tools",
+      "attributes": {
+        "dnd5e.cost": "15 gp",
+        "dnd5e.equipmentCategory": "Artisan’s tools",
+        "dnd5e.weight": "6 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.cobblers-tools",
+      "kind": "equipment",
+      "name": "Cobbler’s tools",
+      "attributes": {
+        "dnd5e.cost": "5 gp",
+        "dnd5e.equipmentCategory": "Artisan’s tools",
+        "dnd5e.weight": "5 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.cooks-utensils",
+      "kind": "equipment",
+      "name": "Cook’s utensils",
+      "attributes": {
+        "dnd5e.cost": "1 gp",
+        "dnd5e.equipmentCategory": "Artisan’s tools",
+        "dnd5e.weight": "8 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.glassblowers-tools",
+      "kind": "equipment",
+      "name": "Glassblower’s tools",
+      "attributes": {
+        "dnd5e.cost": "30 gp",
+        "dnd5e.equipmentCategory": "Artisan’s tools",
+        "dnd5e.weight": "5 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.jewelers-tools",
+      "kind": "equipment",
+      "name": "Jeweler’s tools",
+      "attributes": {
+        "dnd5e.cost": "25 gp",
+        "dnd5e.equipmentCategory": "Artisan’s tools",
+        "dnd5e.weight": "2 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.leatherworkers-tools",
+      "kind": "equipment",
+      "name": "Leatherworker’s tools",
+      "attributes": {
+        "dnd5e.cost": "5 gp",
+        "dnd5e.equipmentCategory": "Artisan’s tools",
+        "dnd5e.weight": "5 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.masons-tools",
+      "kind": "equipment",
+      "name": "Mason’s tools",
+      "attributes": {
+        "dnd5e.cost": "10 gp",
+        "dnd5e.equipmentCategory": "Artisan’s tools",
+        "dnd5e.weight": "8 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.painters-supplies",
+      "kind": "equipment",
+      "name": "Painter’s supplies",
+      "attributes": {
+        "dnd5e.cost": "10 gp",
+        "dnd5e.equipmentCategory": "Artisan’s tools",
+        "dnd5e.weight": "5 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.potters-tools",
+      "kind": "equipment",
+      "name": "Potter’s tools",
+      "attributes": {
+        "dnd5e.cost": "10 gp",
+        "dnd5e.equipmentCategory": "Artisan’s tools",
+        "dnd5e.weight": "3 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.smiths-tools",
+      "kind": "equipment",
+      "name": "Smith’s tools",
+      "attributes": {
+        "dnd5e.cost": "20 gp",
+        "dnd5e.equipmentCategory": "Artisan’s tools",
+        "dnd5e.weight": "8 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.tinkers-tools",
+      "kind": "equipment",
+      "name": "Tinker’s tools",
+      "attributes": {
+        "dnd5e.cost": "50 gp",
+        "dnd5e.equipmentCategory": "Artisan’s tools",
+        "dnd5e.weight": "10 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.weavers-tools",
+      "kind": "equipment",
+      "name": "Weaver’s tools",
+      "attributes": {
+        "dnd5e.cost": "1 gp",
+        "dnd5e.equipmentCategory": "Artisan’s tools",
+        "dnd5e.weight": "5 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.woodcarvers-tools",
+      "kind": "equipment",
+      "name": "Woodcarver’s tools",
+      "attributes": {
+        "dnd5e.cost": "1 gp",
+        "dnd5e.equipmentCategory": "Artisan’s tools",
+        "dnd5e.weight": "5 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.disguise-kit",
+      "kind": "equipment",
+      "name": "Disguise kit",
+      "attributes": {
+        "dnd5e.cost": "25 gp",
+        "dnd5e.equipmentCategory": "Artisan’s tools",
+        "dnd5e.weight": "3 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.forgery-kit",
+      "kind": "equipment",
+      "name": "Forgery kit",
+      "attributes": {
+        "dnd5e.cost": "15 gp",
+        "dnd5e.equipmentCategory": "Artisan’s tools",
+        "dnd5e.weight": "5 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.dice-set",
+      "kind": "equipment",
+      "name": "Dice set",
+      "attributes": {
+        "dnd5e.cost": "1 sp",
+        "dnd5e.equipmentCategory": "Gaming set"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.playing-card-set",
+      "kind": "equipment",
+      "name": "Playing card set",
+      "attributes": {
+        "dnd5e.cost": "5 sp",
+        "dnd5e.equipmentCategory": "Gaming set"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.herbalism-kit",
+      "kind": "equipment",
+      "name": "Herbalism kit",
+      "attributes": {
+        "dnd5e.cost": "5 gp",
+        "dnd5e.equipmentCategory": "Tools",
+        "dnd5e.weight": "3 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.bagpipes",
+      "kind": "equipment",
+      "name": "Bagpipes",
+      "attributes": {
+        "dnd5e.cost": "30 gp",
+        "dnd5e.equipmentCategory": "Musical instrument",
+        "dnd5e.weight": "6 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.drum",
+      "kind": "equipment",
+      "name": "Drum",
+      "attributes": {
+        "dnd5e.cost": "6 gp",
+        "dnd5e.equipmentCategory": "Musical instrument",
+        "dnd5e.weight": "3 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.dulcimer",
+      "kind": "equipment",
+      "name": "Dulcimer",
+      "attributes": {
+        "dnd5e.cost": "25 gp",
+        "dnd5e.equipmentCategory": "Musical instrument",
+        "dnd5e.weight": "10 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.flute",
+      "kind": "equipment",
+      "name": "Flute",
+      "attributes": {
+        "dnd5e.cost": "2 gp",
+        "dnd5e.equipmentCategory": "Musical instrument",
+        "dnd5e.weight": "1 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.lute",
+      "kind": "equipment",
+      "name": "Lute",
+      "attributes": {
+        "dnd5e.cost": "35 gp",
+        "dnd5e.equipmentCategory": "Musical instrument",
+        "dnd5e.weight": "2 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.lyre",
+      "kind": "equipment",
+      "name": "Lyre",
+      "attributes": {
+        "dnd5e.cost": "30 gp",
+        "dnd5e.equipmentCategory": "Musical instrument",
+        "dnd5e.weight": "2 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.horn",
+      "kind": "equipment",
+      "name": "Horn",
+      "attributes": {
+        "dnd5e.cost": "3 gp",
+        "dnd5e.equipmentCategory": "Musical instrument",
+        "dnd5e.weight": "2 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.pan-flute",
+      "kind": "equipment",
+      "name": "Pan flute",
+      "attributes": {
+        "dnd5e.cost": "12 gp",
+        "dnd5e.equipmentCategory": "Musical instrument",
+        "dnd5e.weight": "2 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.shawm",
+      "kind": "equipment",
+      "name": "Shawm",
+      "attributes": {
+        "dnd5e.cost": "2 gp",
+        "dnd5e.equipmentCategory": "Musical instrument",
+        "dnd5e.weight": "1 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.viol",
+      "kind": "equipment",
+      "name": "Viol",
+      "attributes": {
+        "dnd5e.cost": "30 gp",
+        "dnd5e.equipmentCategory": "Musical instrument",
+        "dnd5e.weight": "1 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.navigators-tools",
+      "kind": "equipment",
+      "name": "Navigator’s tools",
+      "attributes": {
+        "dnd5e.cost": "25 gp",
+        "dnd5e.equipmentCategory": "Tools",
+        "dnd5e.weight": "2 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.poisoners-kit",
+      "kind": "equipment",
+      "name": "Poisoner’s kit",
+      "attributes": {
+        "dnd5e.cost": "50 gp",
+        "dnd5e.equipmentCategory": "Tools",
+        "dnd5e.weight": "2 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.thieves-tools",
+      "kind": "equipment",
+      "name": "Thieves’ tools",
+      "attributes": {
+        "dnd5e.cost": "25 gp",
+        "dnd5e.equipmentCategory": "Tools",
+        "dnd5e.weight": "1 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.burglars-pack",
+      "kind": "equipment",
+      "name": "Burglar’s Pack",
+      "summary": "Includes a backpack, a bag of 1,000 ball bearings, 10 feet of string, a bell, 5 candles, a crowbar, a hammer, 10 pitons, a hooded lantern, 2 flasks of oil, 5 days rations, a tinderbox, and a waterskin. The pack also has 50 feet of hempen rope strapped to the side of it.",
+      "attributes": {
+        "dnd5e.cost": "16 gp",
+        "dnd5e.equipmentCategory": "Equipment Pack"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.diplomats-pack",
+      "kind": "equipment",
+      "name": "Diplomat’s Pack",
+      "summary": "Includes a chest, 2 cases for maps and scrolls, a set of fine clothes, a bottle of ink, an ink pen, a lamp, 2 flasks of oil, 5 sheets of paper, a vial of perfume, sealing wax, and soap.",
+      "attributes": {
+        "dnd5e.cost": "39 gp",
+        "dnd5e.equipmentCategory": "Equipment Pack"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.dungeoneers-pack",
+      "kind": "equipment",
+      "name": "Dungeoneer’s Pack",
+      "summary": "Includes a backpack, a crowbar, a hammer, 10 pitons, 10 torches, a tinderbox, 10 days of rations, and a waterskin. The pack also has 50 feet of hempen rope strapped to the side of it.",
+      "attributes": {
+        "dnd5e.cost": "12 gp",
+        "dnd5e.equipmentCategory": "Equipment Pack"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.entertainers-pack",
+      "kind": "equipment",
+      "name": "Entertainer’s Pack",
+      "summary": "Includes a backpack, a bedroll, 2 costumes, 5 candles, 5 days of rations, a waterskin, and a disguise kit.",
+      "attributes": {
+        "dnd5e.cost": "40 gp",
+        "dnd5e.equipmentCategory": "Equipment Pack"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.explorers-pack",
+      "kind": "equipment",
+      "name": "Explorer’s Pack",
+      "summary": "Includes a backpack, a bedroll, a mess kit, a tinderbox, 10 torches, 10 days of rations, and a waterskin. The pack also has 50 feet of hempen rope strapped to the side of it.",
+      "attributes": {
+        "dnd5e.cost": "10 gp",
+        "dnd5e.equipmentCategory": "Equipment Pack"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.priests-pack",
+      "kind": "equipment",
+      "name": "Priest’s Pack",
+      "summary": "Includes a backpack, a blanket, 10 candles, a tinderbox, an alms box, 2 blocks of incense, a censer, vestments, 2 days of rations, and a waterskin.",
+      "attributes": {
+        "dnd5e.cost": "19 gp",
+        "dnd5e.equipmentCategory": "Equipment Pack"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd51.equipment.scholars-pack",
+      "kind": "equipment",
+      "name": "Scholar’s Pack",
+      "summary": "Includes a backpack, a book of lore, a bottle of ink, an ink pen, 10 sheets of parchment, a little bag of sand, and a small knife.",
+      "attributes": {
+        "dnd5e.cost": "40 gp",
+        "dnd5e.equipmentCategory": "Equipment Pack"
       },
       "entries": [
 

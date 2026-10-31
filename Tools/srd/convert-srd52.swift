@@ -331,7 +331,8 @@ func finish(_ draft: ClassDraft) {
     var attributes: [(String, String)] = []
     let mapping: [(String, String)] = [("Primary Ability", "dnd5e.primaryAbility"), ("Saving Throw", "dnd5e.savingThrows"),
                                        ("Skill Proficiencies", "dnd5e.skillChoices"), ("Weapon Proficiencies", "dnd5e.weaponProficiencies"),
-                                       ("Armor Training", "dnd5e.armorProficiencies"), ("Tool Proficiencies", "dnd5e.toolProficiencies")]
+                                       ("Armor Training", "dnd5e.armorProficiencies"), ("Tool Proficiencies", "dnd5e.toolProficiencies"),
+                                       ("Starting Equipment", "dnd5e.startingEquipment")]
     if let die = traits["Hit Point Die"], let size = firstMatch("(?<=D)\\d+", in: die) { attributes.append(("dnd5e.hitDie", "d" + size)) }
     else { review.append("\(draft.name): no hit point die found") }
     for (label, attribute) in mapping {
@@ -681,6 +682,168 @@ func readSkills() {
 }
 
 readSkills()
+
+// MARK: Equipment
+
+/// The weapons and armor tables, and the tools and adventuring gear, from the Equipment chapter.
+func readEquipment() {
+    var equipmentLines: [Line] = []
+    var started = false
+    pages: for index in 0..<document.pageCount {
+        guard let page = document.page(at: index) else { continue }
+        for line in readingOrder(of: page, profile: srd52Profile) {
+            if case .heading(1) = line.kind {
+                if line.text == "Equipment" { started = true } else if started { break pages }
+            }
+            if started { equipmentLines.append(line) }
+        }
+    }
+
+    // Rows of a table are one or more lines on the same baseline, with wrapped text on lines of their own beneath.
+    struct Row { var left = ""; var right = ""; var middle: [String] = []; var minX = 0.0; var italic = false }
+    var tables: [String: [Row]] = [:]
+    var tableName: String?
+    var lastY: Double?
+
+    var section = ""
+    var subsection = ""
+    var itemName: String?
+    var itemCost = ""
+    var itemFacts: [String] = []
+    var itemBuilder = TextBuilder()
+    var found: [PackEntry] = []
+
+    func closeItem() {
+        guard let name = itemName else { return }
+        itemBuilder.flush()
+        var attributes: [(String, String)] = [("dnd5e.equipmentCategory", subsection.isEmpty ? section : subsection), ("dnd5e.cost", itemCost)]
+        var details: [Feature] = []
+        var summaryPieces: [String] = []
+        for piece in itemBuilder.pieces where !piece.isTable { summaryPieces.append(piece.text) }
+        // A tool's lines: "Ability: Intelligence Weight: 8 lb.", "Utilize: ..." and "Craft: ..."
+        var factText = ""
+        for fact in itemFacts {
+            if fact.hasPrefix("Ability: ") {
+                let rest = String(fact.dropFirst("Ability: ".count))
+                if let weight = rest.range(of: " Weight: ") {
+                    attributes.append(("dnd5e.toolAbility", String(rest[..<weight.lowerBound])))
+                    attributes.append(("dnd5e.weight", String(rest[weight.upperBound...])))
+                } else { attributes.append(("dnd5e.toolAbility", rest)) }
+            } else if fact.hasPrefix("Utilize: ") || fact.hasPrefix("Craft: ") || fact.hasPrefix("Variants: ") || fact.hasPrefix("Weight: ") {
+                factText = fact
+                let label = String(fact.prefix { $0 != ":" })
+                details.append(Feature(name: label, level: nil, text: String(fact.dropFirst(label.count + 2))))
+            }
+        }
+        _ = factText
+        found.append(PackEntry(key: "srd52.equipment.\(slug(name))", kind: "equipment", name: name, parent: nil,
+                               summary: summaryPieces.joined(separator: "\n\n"), attributes: attributes, features: details))
+        itemName = nil
+        itemFacts = []
+        itemBuilder = TextBuilder()
+    }
+
+    for line in equipmentLines {
+        let text = cleanLine(line.text)
+        switch line.kind {
+        case .heading(2):
+            closeItem(); section = text; subsection = ""; tableName = nil
+        case .heading(3):
+            closeItem(); subsection = text; tableName = nil
+        case .heading(4):
+            // An item's heading carries its cost: "Alchemist’s Supplies (50 GP)".
+            closeItem()
+            guard ["Artisan’s Tools", "Other Tools", "Adventuring Gear"].contains(subsection.isEmpty ? section : subsection) || section == "Adventuring Gear" else { continue }
+            if section == "Adventuring Gear" || section == "Tools", let open = text.range(of: " (", options: .backwards), text.hasSuffix(")") {
+                itemName = String(text[..<open.lowerBound])
+                itemCost = String(text[open.upperBound...].dropLast())
+            }
+        case .caption:
+            closeItem()
+            tableName = ["Weapons", "Armor"].contains(text) ? text : nil
+            if let tableName { tables[tableName] = [] }
+            lastY = nil
+        case .table where tableName != nil:
+            guard let name = tableName else { break }
+            var rows = tables[name] ?? []
+            let italic = false
+            if let y = lastY, abs(y - line.y) < 2, !rows.isEmpty {
+                // The other part of the row above: its right-hand cells.
+                if line.minX >= 420 { rows[rows.count - 1].right = text } else { rows[rows.count - 1].left += " " + text }
+            } else if line.minX > 100 {
+                // A wrapped cell, which belongs between the two parts of the row above.
+                if !rows.isEmpty { rows[rows.count - 1].middle.append(text) }
+            } else if text.hasPrefix("Name ") || text.hasPrefix("Armor Armor Class") {
+                lastY = nil
+                tables[name] = rows
+                continue
+            } else {
+                rows.append(Row(left: text, minX: line.minX, italic: italic))
+            }
+            lastY = line.y
+            tables[name] = rows
+        case .body:
+            if itemName != nil {
+                if ["Ability: ", "Utilize: ", "Craft: ", "Variants: ", "Weight: "].contains(where: { text.hasPrefix($0) }) {
+                    itemFacts.append(text)
+                } else if let last = itemFacts.indices.last, line.minX > 70, itemBuilder.pieces.isEmpty, !itemFacts.isEmpty, line.minX < 330 || line.minX > 330 {
+                    appendWrapped(&itemFacts[last], text)
+                } else {
+                    itemBuilder.addBody(line)
+                }
+            }
+        case .table:
+            // A wrapped line of a tool's facts is set in the table's small type.
+            if itemName != nil, let last = itemFacts.indices.last { appendWrapped(&itemFacts[last], text) }
+        default:
+            break
+        }
+    }
+    closeItem()
+
+    // Weapons: "Name Damage Properties Mastery Weight Cost"
+    let weaponRow = try! NSRegularExpression(pattern: "^(.+?) (\\d+(?:d\\d+)?) (Bludgeoning|Piercing|Slashing) (.+) (Cleave|Graze|Nick|Push|Sap|Slow|Topple|Vex) (\\d+(?:/\\d+)? lb\\.|—) ([\\d,]+ (?:GP|SP|CP))$")
+    let armorRow = try! NSRegularExpression(pattern: "^(.+?) (\\+?\\d+(?: \\+ Dex modifier(?: \\(max 2\\))?)?)(?: ?—| (Str \\d+)) (Disadvantage|—) (\\d+ lb\\.) ([\\d,]+ (?:GP|SP|CP))$")
+    func groups(_ expression: NSRegularExpression, in text: String) -> [String]? {
+        guard let match = expression.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)) else { return nil }
+        return (1..<match.numberOfRanges).map { index in
+            match.range(at: index).location == NSNotFound ? "" : (text as NSString).substring(with: match.range(at: index))
+        }
+    }
+
+    var category = ""
+    for row in tables["Weapons"] ?? [] {
+        let full = ([row.left] + row.middle + [row.right]).filter { !$0.isEmpty }.joined(separator: " ")
+        if row.minX < 58 { category = full; continue }
+        guard let g = groups(weaponRow, in: full) else { review.append("Weapon row not understood: \(full)"); continue }
+        found.append(PackEntry(key: "srd52.equipment.\(slug(g[0]))", kind: "equipment", name: g[0], parent: nil, summary: "",
+            attributes: [("dnd5e.equipmentCategory", category), ("dnd5e.damage", "\(g[1]) \(g[2])"), ("dnd5e.weaponProperties", g[3]),
+                         ("dnd5e.weaponMastery", g[4])] + (g[5] == "—" ? [] : [("dnd5e.weight", g[5])]) + [("dnd5e.cost", g[6])], features: []))
+    }
+    category = ""
+    for row in tables["Armor"] ?? [] {
+        let full = ([row.left] + row.middle + [row.right]).filter { !$0.isEmpty }.joined(separator: " ")
+        if row.minX < 70 {
+            category = full.range(of: " (").map { String(full[..<$0.lowerBound]) } ?? full
+            continue
+        }
+        guard let g = groups(armorRow, in: full) else { review.append("Armor row not understood: \(full)"); continue }
+        found.append(PackEntry(key: "srd52.equipment.\(slug(g[0]))", kind: "equipment", name: g[0], parent: nil, summary: "",
+            attributes: [("dnd5e.equipmentCategory", category), ("dnd5e.armorFormula", g[1])] + (g[2].isEmpty ? [] : [("dnd5e.strengthRequirement", g[2])])
+                + (g[3] == "—" ? [] : [("dnd5e.stealth", g[3])]) + [("dnd5e.weight", g[4]), ("dnd5e.cost", g[5])], features: []))
+    }
+
+    var seen = Set<String>()
+    for var entry in found {
+        if !seen.insert(entry.key).inserted { review.append("Equipment “\(entry.name)” appears twice; the second was left out"); continue }
+        entry.attributes.sort { $0.0 < $1.0 }
+        entries.append(entry)
+    }
+    let byCategory = Dictionary(grouping: found) { $0.attributes.first { $0.0 == "dnd5e.equipmentCategory" }?.1 ?? "?" }
+    report.append("Equipment (\(found.count)): " + byCategory.sorted { $0.key < $1.key }.map { "\($0.key) \($0.value.count)" }.joined(separator: ", "))
+}
+
+readEquipment()
 
 // MARK: Writing the pack
 

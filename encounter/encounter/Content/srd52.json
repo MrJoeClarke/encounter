@@ -16,7 +16,8 @@
         "dnd5e.savingThrows": "Strength and Constitution",
         "dnd5e.skillChoices": "Choose 2: Animal Handling, Athletics, Intimidation, Nature, Perception, or Survival",
         "dnd5e.weaponProficiencies": "Simple and Martial weapons",
-        "dnd5e.armorProficiencies": "Light and Medium armor and Shields"
+        "dnd5e.armorProficiencies": "Light and Medium armor and Shields",
+        "dnd5e.startingEquipment": "Choose A or B: (A) Greataxe, 4 Handaxes, Explorer’s Pack, and 15 GP; or (B) 75 GP"
       },
       "entries": [
         { "name": "Rage", "level": 1, "text": "You can imbue yourself with a primal power called Rage, a force that grants you extraordinary might and resilience. You can enter it as a Bonus Action if you aren’t wearing Heavy armor.\n\nYou can enter your Rage the number of times shown for your Barbarian level in the Rages column of the Barbarian Features table. You regain one expended use when you finish a Short Rest, and you regain all expended uses when you finish a Long Rest.\n\nWhile active, your Rage follows the rules below.\n\nDamage Resistance. You have Resistance to Bludgeoning, Piercing, and Slashing damage.\n\nRage Damage. When you make an attack using Strength—with either a weapon or an Unarmed Strike—and deal damage to the target, you gain a bonus to the damage that increases as you gain levels as a Barbarian, as shown in the Rage Damage column of the Barbarian Features table.\n\nStrength Advantage. You have Advantage on Strength checks and Strength saving throws.\n\nNo Concentration or Spells. You can’t maintain Concentration, and you can’t cast spells.\n\nDuration. The Rage lasts until the end of your next turn, and it ends early if you don Heavy armor or have the Incapacitated condition. If your Rage is still active on your next turn, you can extend the Rage for another round by doing one of the following:\n\n• Make an attack roll against an enemy.\n\n• Force an enemy to make a saving throw.\n\n• Take a Bonus Action to extend your Rage.\n\nEach time the Rage is extended, it lasts until the end of your next turn. You can maintain a Rage for up to 10 minutes." },
@@ -66,7 +67,8 @@
         "dnd5e.skillChoices": "Choose any 3 skills (see “Playing the Game”)",
         "dnd5e.weaponProficiencies": "Simple weapons",
         "dnd5e.armorProficiencies": "Light armor",
-        "dnd5e.toolProficiencies": "Choose 3 Musical Instruments (see “Equipment”)"
+        "dnd5e.toolProficiencies": "Choose 3 Musical Instruments (see “Equipment”)",
+        "dnd5e.startingEquipment": "Choose A or B: (A) Leather Armor, 2 Daggers, Musical Instrument of your choice, Entertainer’s Pack, and 19 GP; or (B) 90 GP"
       },
       "entries": [
         { "name": "Bardic Inspiration", "level": 1, "text": "You can supernaturally inspire others through words, music, or dance. This inspiration is represented by your Bardic Inspiration die, which is a d6.\n\nUsing Bardic Inspiration. As a Bonus Action, you can inspire another creature within 60 feet of yourself who can see or hear you. That creature gains one of your Bardic Inspiration dice. A creature can have only one Bardic Inspiration die at a time.\n\nOnce within the next hour when the creature fails a D20 Test, the creature can roll the Bardic Inspiration die and add the number rolled to the d20, potentially turning the failure into a success. A Bardic Inspiration die is expended when it’s rolled.\n\nNumber of Uses. You can confer a Bardic Inspiration die a number of times equal to your Charisma modifier (minimum of once), and you regain all expended uses when you finish a Long Rest.\n\nAt Higher Levels. Your Bardic Inspiration die changes when you reach certain Bard levels, as shown in the Bardic Die column of the Bard Features table. The die becomes a d8 at level 5, a d10 at level 10, and a d12 at level 15." },
@@ -107,7 +109,8 @@
         "dnd5e.savingThrows": "Wisdom and Charisma",
         "dnd5e.skillChoices": "Choose 2: History, Insight, Medicine, Persuasion, or Religion",
         "dnd5e.weaponProficiencies": "Simple weapons",
-        "dnd5e.armorProficiencies": "Light and Medium armor and Shields"
+        "dnd5e.armorProficiencies": "Light and Medium armor and Shields",
+        "dnd5e.startingEquipment": "Choose A or B: (A) Chain Shirt, Shield, Mace, Holy Symbol, Priest’s Pack, and 7 GP; or (B) 110 GP"
       },
       "entries": [
         { "name": "Spellcasting", "level": 1, "text": "You have learned to cast spells through prayer and meditation. See “Spells” for the rules on spellcasting. The information below details how you use those rules with Cleric spells, which appear on the Cleric spell list later in the class’s description.\n\nCantrips. You know three cantrips of your choice from the Cleric spell list. Guidance, Sacred Flame, and Thaumaturgy are recommended.\n\nWhenever you gain a Cleric level, you can replace one of your cantrips with another cantrip of your choice from the Cleric spell list.\n\nWhen you reach Cleric levels 4 and 10, you learn another cantrip of your choice from the Cleric spell list, as shown in the Cantrips column of the Cleric Features table.\n\nSpell Slots. The Cleric Features table shows how many spell slots you have to cast your level 1+ spells. You regain all expended slots when you finish a Long Rest.\n\nPrepared Spells of Level 1+. You prepare the list of level 1+ spells that are available for you to cast with this feature. To start, choose four level 1 spells from the Cleric spell list. Bless, Cure Wounds, Guiding Bolt, and Shield of Faith are recommended.\n\nThe number of spells on your list increases as you gain Cleric levels, as shown in the Prepared Spells column of the Cleric Features table. Whenever that number increases, choose additional spells from the Cleric spell list until the number of spells on your list matches the number on the table. The chosen spells must be of a level for which you have spell slots. For example, if you’re a level 3 Cleric, your list of prepared spells can include six spells of levels 1 and 2 in any combination.\n\nIf another Cleric feature gives you spells that you always have prepared, those spells don’t count against the number of spells you can prepare with this feature, but those spells otherwise count as Cleric spells for you.\n\nChanging Your Prepared Spells. Whenever you finish a Long Rest, you can change your list of prepared spells, replacing any of the spells there with other Cleric spells for which you have spell slots.\n\nSpellcasting Ability. Wisdom is your spellcasting ability for your Cleric spells.\n\nSpellcasting Focus. You can use a Holy Symbol as a Spellcasting Focus for your Cleric spells." },
@@ -149,7 +152,8 @@
         "dnd5e.skillChoices": "Choose 2: Animal Handling, Arcana, Insight, Medicine, Nature, Perception, Religion, or Survival",
         "dnd5e.weaponProficiencies": "Simple weapons",
         "dnd5e.armorProficiencies": "Light armor and Shields",
-        "dnd5e.toolProficiencies": "Herbalism Kit"
+        "dnd5e.toolProficiencies": "Herbalism Kit",
+        "dnd5e.startingEquipment": "Choose A or B: (A) Leather Armor, Shield, Sickle, Druidic Focus (Quarterstaff), Explorer’s Pack, Herbalism Kit, and 9 GP; or (B) 50 GP"
       },
       "entries": [
         { "name": "Spellcasting", "level": 1, "text": "You have learned to cast spells through studying the mystical forces of nature. See “Spells” for the rules on spellcasting. The information below details how you use those rules with Druid spells, which appear on the Druid spell list later in the class’s description.\n\nCantrips. You know two cantrips of your choice from the Druid spell list. Druidcraft and Produce Flame are recommended.\n\nWhenever you gain a Druid level, you can replace one of your cantrips with another cantrip of your choice from the Druid spell list.\n\nWhen you reach Druid levels 4 and 10, you learn another cantrip of your choice from the Druid spell list, as shown in the Cantrips column of the Druid Features table.\n\nSpell Slots. The Druid Features table shows how many spell slots you have to cast your level 1+ spells. You regain all expended slots when you finish a Long Rest.\n\nPrepared Spells of Level 1+. You prepare the list of level 1+ spells that are available for you to cast with this feature. To start, choose four level 1 spells from the Druid spell list. Animal Friendship, Cure Wounds, Faerie Fire, and Thunderwave are recommended.\n\nThe number of spells on your list increases as you gain Druid levels, as shown in the Prepared Spells column of the Druid Features table. Whenever that number increases, choose additional spells from the Druid spell list until the number of spells on your list matches the number on the table. The chosen spells must be of a level for which you have spell slots. For example, if you’re a level 3 Druid, your list of prepared spells can include six spells of levels 1 and 2 in any combination.\n\nIf another Druid feature gives you spells that you always have prepared, those spells don’t count against the number of spells you can prepare with this feature, but those spells otherwise count as Druid spells for you.\n\nChanging Your Prepared Spells. Whenever you finish a Long Rest, you can change your list of prepared spells, replacing any of the spells with other Druid spells for which you have spell slots.\n\nSpellcasting Ability. Wisdom is your spellcasting ability for your Druid spells.\n\nSpellcasting Focus. You can use a Druidic Focus as a Spellcasting Focus for your Druid spells." },
@@ -192,7 +196,8 @@
         "dnd5e.savingThrows": "Strength and Constitution",
         "dnd5e.skillChoices": "Choose 2: Acrobatics, Animal Handling, Athletics, History, Insight, Intimidation, Persuasion, Perception, or Survival",
         "dnd5e.weaponProficiencies": "Simple and Martial weapons",
-        "dnd5e.armorProficiencies": "Light, Medium, and Heavy armor and Shields"
+        "dnd5e.armorProficiencies": "Light, Medium, and Heavy armor and Shields",
+        "dnd5e.startingEquipment": "Choose A, B, or C: (A) Chain Mail, Greatsword, Flail, 8 Javelins, Dungeoneer’s Pack, and 4 GP; (B) Studded Leather Armor, Scimitar, Shortsword, Longbow, 20 Arrows, Quiver, Dungeoneer’s Pack, and 11 GP; or (C) 155 GP"
       },
       "entries": [
         { "name": "Fighting Style", "level": 1, "text": "You have honed your martial prowess and gain a Fighting Style feat of your choice (see “Feats”). Defense is recommended.\n\nWhenever you gain a Fighter level, you can replace the feat you chose with a different Fighting Style feat." },
@@ -239,7 +244,8 @@
         "dnd5e.skillChoices": "Choose 2: Acrobatics, Athletics, History, Insight, Religion, or Stealth",
         "dnd5e.weaponProficiencies": "Simple weapons and Martial weapons that have the Light property",
         "dnd5e.armorProficiencies": "None",
-        "dnd5e.toolProficiencies": "Choose one type of Artisan’s Tools or Musical Instrument (see “Equipment”)"
+        "dnd5e.toolProficiencies": "Choose one type of Artisan’s Tools or Musical Instrument (see “Equipment”)",
+        "dnd5e.startingEquipment": "Choose A or B: (A) Spear, 5 Daggers, Artisan’s Tools or Musical Instrument chosen for the tool proficiency above, Explorer’s Pack, and 11 GP; or (B) 50 GP"
       },
       "entries": [
         { "name": "Martial Arts", "level": 1, "text": "Your practice of martial arts gives you mastery of combat styles that use your Unarmed Strike and Monk weapons, which are the following:\n\n• Simple Melee weapons\n\n• Martial Melee weapons that have the Light property\n\nYou gain the following benefits while you are unarmed or wielding only Monk weapons and you aren’t wearing armor or wielding a Shield.\n\nBonus Unarmed Strike. You can make an Unarmed Strike as a Bonus Action.\n\nMartial Arts Die. You can roll 1d6 in place of the normal damage of your Unarmed Strike or Monk weapons. This die changes as you gain Monk levels, as shown in the Martial Arts column of the Monk Features table.\n\nDexterous Attacks. You can use your Dexterity modifier instead of your Strength modifier for the attack and damage rolls of your Unarmed Strikes and Monk weapons. In addition, when you use the Grapple or Shove option of your Unarmed Strike, you can use your Dexterity modifier instead of your Strength modifier to determine the save DC." },
@@ -290,7 +296,8 @@
         "dnd5e.savingThrows": "Wisdom and Charisma",
         "dnd5e.skillChoices": "Choose 2: Athletics, Insight, Intimidation, Medicine, Persuasion, or Religion",
         "dnd5e.weaponProficiencies": "Simple and Martial weapons",
-        "dnd5e.armorProficiencies": "Light, Medium, and Heavy armor and Shields"
+        "dnd5e.armorProficiencies": "Light, Medium, and Heavy armor and Shields",
+        "dnd5e.startingEquipment": "Choose A or B: (A) Chain Mail, Shield, Longsword, 6 Javelins, Holy Symbol, Priest’s Pack, and 9 GP; or (B) 150 GP"
       },
       "entries": [
         { "name": "Lay On Hands", "level": 1, "text": "Your blessed touch can heal wounds. You have a pool of healing power that replenishes when you finish a Long Rest. With that pool, you can restore a total number of Hit Points equal to five times your Paladin level.\n\nAs a Bonus Action, you can touch a creature (which could be yourself) and draw power from the pool of healing to restore a number of Hit Points to that creature, up to the maximum amount remaining in the pool.\n\nYou can also expend 5 Hit Points from the pool of healing power to remove the Poisoned condition from the creature; those points don’t also restore Hit Points to the creature." },
@@ -337,7 +344,8 @@
         "dnd5e.savingThrows": "Strength and Dexterity",
         "dnd5e.skillChoices": "Choose 3: Animal Handling, Athletics, Insight, Investigation, Nature, Perception, Stealth, or Survival",
         "dnd5e.weaponProficiencies": "Simple and Martial weapons",
-        "dnd5e.armorProficiencies": "Light and Medium armor and Shields"
+        "dnd5e.armorProficiencies": "Light and Medium armor and Shields",
+        "dnd5e.startingEquipment": "Choose A or B: (A) Studded Leather Armor, Scimitar, Shortsword, Longbow, 20 Arrows, Quiver, Druidic Focus (sprig of mistletoe), Explorer’s Pack, and 7 GP; or (B) 150 GP"
       },
       "entries": [
         { "name": "Spellcasting", "level": 1, "text": "You have learned to channel the magical essence of nature to cast spells. See “Spells” for the rules on spellcasting. The information below details how you use those rules with Ranger spells, which appear in the Ranger spell list later in the class’s description.\n\nSpell Slots. The Ranger Features table shows how many spell slots you have to cast your level 1+ spells. You regain all expended slots when you finish a Long Rest.\n\nPrepared Spells of Level 1+. You prepare the list of level 1+ spells that are available for you to cast with this feature. To start, choose two level 1 Ranger spells. Cure Wounds and Ensnaring Strike are recommended.\n\nThe number of spells on your list increases as you gain Ranger levels, as shown in the Prepared Spells column of the Ranger Features table. Whenever that number increases, choose additional Ranger spells until the number of spells on your list matches the number in the Ranger Features table. The chosen spells must be of a level for which you have spell slots. For example, if you’re a level 5 Ranger, your list of prepared spells can include six Ranger spells of level 1 or 2 in any combination.\n\nIf another Ranger feature gives you spells that you always have prepared, those spells don’t count against the number of spells you can prepare with this feature, but those spells otherwise count as Ranger spells for you.\n\nChanging Your Prepared Spells. Whenever you finish a Long Rest, you can replace one spell on your list with another Ranger spell for which you have spell slots.\n\nSpellcasting Ability. Wisdom is your spellcasting ability for your Ranger spells.\n\nSpellcasting Focus. You can use a Druidic Focus as a Spellcasting Focus for your Ranger spells." },
@@ -385,7 +393,8 @@
         "dnd5e.skillChoices": "Choose 4: Acrobatics, Athletics, Deception, Insight, Intimidation, Investigation, Perception, Persuasion, Sleight of Hand, or Stealth",
         "dnd5e.weaponProficiencies": "Simple weapons and Martial weapons that have the Finesse or Light property",
         "dnd5e.armorProficiencies": "Light armor",
-        "dnd5e.toolProficiencies": "Thieves’ Tools"
+        "dnd5e.toolProficiencies": "Thieves’ Tools",
+        "dnd5e.startingEquipment": "Choose A or B: (A) Leather Armor, 2 Daggers, Shortsword, Shortbow, 20 Arrows, Quiver, Thieves’ Tools, Burglar’s Pack, and 8 GP; or (B) 100 GP"
       },
       "entries": [
         { "name": "Expertise", "level": 1, "text": "You gain Expertise in two of your skill proficiencies of your choice. Sleight of Hand and Stealth are recommended if you have proficiency in them.\n\nAt Rogue level 6, you gain Expertise in two more of your skill proficiencies of your choice." },
@@ -433,7 +442,8 @@
         "dnd5e.savingThrows": "Constitution and Charisma",
         "dnd5e.skillChoices": "Choose 2: Arcana, Deception, Insight, Intimidation, Persuasion, or Religion",
         "dnd5e.weaponProficiencies": "Simple weapons",
-        "dnd5e.armorProficiencies": "None"
+        "dnd5e.armorProficiencies": "None",
+        "dnd5e.startingEquipment": "Choose A or B: (A) Spear, 2 Daggers, Arcane Focus (crystal), Dungeoneer’s Pack, and 28 GP; or (B) 50 GP"
       },
       "entries": [
         { "name": "Spellcasting", "level": 1, "text": "Drawing from your innate magic, you can cast spells. See “Spells” for the rules on spellcasting. The information below details how you use those rules with Sorcerer spells, which appear in the Sorcerer spell list later in the class’s description.\n\nCantrips. You know four Sorcerer cantrips of your choice. Light, Prestidigitation, Shocking Grasp, and Sorcerous Burst are recommended. Whenever you gain a Sorcerer level, you can replace one of your cantrips from this feature with another Sorcerer cantrip of your choice.\n\nWhen you reach Sorcerer levels 4 and 10, you learn another Sorcerer cantrip of your choice, as shown in the Cantrips column of the Sorcerer Features table.\n\nSpell Slots. The Sorcerer Features table shows how many spell slots you have to cast your level 1+ spells. You regain all expended slots when you finish a Long Rest.\n\nPrepared Spells of Level 1+. You prepare the list of level 1+ spells that are available for you to cast with this feature. To start, choose two level 1 Sorcerer spells. Burning Hands and Detect Magic are recommended.\n\nThe number of spells on your list increases as you gain Sorcerer levels, as shown in the Prepared Spells column of the Sorcerer Features table. Whenever that number increases, choose additional Sorcerer spells until the number of spells on your list matches the number in the Sorcerer Features table. The chosen spells must be of a level for which you have spell slots. For example, if you’re a level 3 Sorcerer, your list of prepared spells can include six Sorcerer spells of level 1 or 2 in any combination.\n\nIf another Sorcerer feature gives you spells that you always have prepared, those spells don’t count against the number of spells you can prepare with this feature, but those spells otherwise count as Sorcerer spells for you.\n\nChanging Your Prepared Spells. Whenever you gain a Sorcerer level, you can replace one spell on your list with another Sorcerer spell for which you have spell slots.\n\nSpellcasting Ability. Charisma is your spellcasting ability for your Sorcerer spells.\n\nSpellcasting Focus. You can use an Arcane Focus as a Spellcasting Focus for your Sorcerer spells." },
@@ -473,7 +483,8 @@
         "dnd5e.savingThrows": "Wisdom and Charisma",
         "dnd5e.skillChoices": "Choose 2: Arcana, Deception, History, Intimidation, Investigation, Nature, or Religion",
         "dnd5e.weaponProficiencies": "Simple weapons",
-        "dnd5e.armorProficiencies": "Light armor"
+        "dnd5e.armorProficiencies": "Light armor",
+        "dnd5e.startingEquipment": "Choose A or B: (A) Leather Armor, Sickle, 2 Daggers, Arcane Focus (orb), Book (occult lore), Scholar’s Pack, and 15 GP; or (B) 100 GP"
       },
       "entries": [
         { "name": "Eldritch Invocations", "level": 1, "text": "You have unearthed Eldritch Invocations, pieces of forbidden knowledge that imbue you with an abiding magical ability or other lessons. You gain one invocation of your choice, such as Pact of the Tome. Invocations are described in the “Eldritch Invocation Options” section later in this class’s description.\n\nPrerequisites. If an invocation has a prerequisite, you must meet it to learn that invocation. For example, if an invocation requires you to be a level 5+ Warlock, you can select the invocation once you reach Warlock level 5.\n\nReplacing and Gaining Invocations. Whenever you gain a Warlock level, you can replace one of your invocations with another one for which you qualify. You can’t replace an invocation if it’s a prerequisite for another invocation that you have.\n\nWhen you gain certain Warlock levels, you gain more invocations of your choice, as shown in the Invocations column of the Warlock Features table.\n\nYou can’t pick the same invocation more than once unless its description says otherwise." },
@@ -512,7 +523,8 @@
         "dnd5e.savingThrows": "Intelligence and Wisdom",
         "dnd5e.skillChoices": "Choose 2: Arcana, History, Insight, Investigation, Medicine, Nature, or Religion",
         "dnd5e.weaponProficiencies": "Simple weapons",
-        "dnd5e.armorProficiencies": "None"
+        "dnd5e.armorProficiencies": "None",
+        "dnd5e.startingEquipment": "Choose A or B: (A) 2 Daggers, Arcane Focus (Quarterstaff), Robe, Spellbook, Scholar’s Pack, and 5 GP; or (B) 55 GP"
       },
       "entries": [
         { "name": "Spellcasting", "level": 1, "text": "As a student of arcane magic, you have learned to cast spells. See “Spells” for the rules on spellcasting. The information below details how you use those rules with Wizard spells, which appear in the Wizard spell list later in the class’s description.\n\nCantrips. You know three Wizard cantrips of your choice. Light, Mage Hand, and Ray of Frost are recommended. Whenever you finish a Long Rest, you can replace one of your cantrips from this feature with another Wizard cantrip of your choice.\n\nWhen you reach Wizard levels 4 and 10, you learn another Wizard cantrip of your choice, as shown in the Cantrips column of the Wizard Features table.\n\nSpellbook. Your wizardly apprenticeship culminated in the creation of a unique book: your spellbook. It is a Tiny object that weighs 3 pounds, contains 100 pages, and can be read only by you or someone casting Identify. You determine the book’s appearance and materials, such as a gilt-edged tome or a collection of vellum bound with twine.\n\nThe book contains the level 1+ spells you know. It starts with six level 1 Wizard spells of your choice. Detect Magic, Feather Fall, Mage Armor, Magic Missile, Sleep, and Thunderwave are recommended.\n\nWhenever you gain a Wizard level after 1, add two Wizard spells of your choice to your spellbook. Each of these spells must be of a level for which you have spell slots, as shown in the Wizard Features table. The spells are the culmination of arcane research you do regularly.\n\nSpell Slots. The Wizard Features table shows how many spell slots you have to cast your level 1+ spells. You regain all expended slots when you finish a Long Rest.\n\nPrepared Spells of Level 1+. You prepare the list of level 1+ spells that are available for you to cast with this feature. To do so, choose four spells from your spellbook. The chosen spells must be of a level for which you have spell slots.\n\nThe number of spells on your list increases as you gain Wizard levels, as shown in the Prepared Spells column of the Wizard Features table. Whenever that number increases, choose additional Wizard spells until the number of spells on your list matches the number in the table. The chosen spells must be of a level for which you have spell slots. For example, if you’re a level 3 Wizard, your list of prepared spells can include six spells of levels 1 and 2 in any combination, chosen from your spellbook.\n\nIf another Wizard feature gives you spells that you always have prepared, those spells don’t count against the number of spells you can prepare with this feature, but those spells otherwise count as Wizard spells for you.\n\nChanging Your Prepared Spells. Whenever you finish a Long Rest, you can change your list of prepared spells, replacing any of the spells there with spells from your spellbook.\n\nSpellcasting Ability. Intelligence is your spellcasting ability for your Wizard spells.\n\nSpellcasting Focus. You can use an Arcane Focus or your spellbook as a Spellcasting Focus for your Wizard spells." },
@@ -1193,6 +1205,2230 @@
       "summary": "Follow tracks, forage, find a trail, or avoid natural hazards.",
       "attributes": {
         "dnd5e.ability": "Wisdom"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.alchemists-supplies",
+      "kind": "equipment",
+      "name": "Alchemist’s Supplies",
+      "attributes": {
+        "dnd5e.cost": "50 GP",
+        "dnd5e.equipmentCategory": "Artisan’s Tools",
+        "dnd5e.toolAbility": "Intelligence",
+        "dnd5e.weight": "8 lb."
+      },
+      "entries": [
+        { "name": "Utilize", "text": "Identify a substance (DC 15), or start a fire (DC 15)" },
+        { "name": "Craft", "text": "Acid, Alchemist’s Fire, Component Pouch, Oil, Paper, Perfume" }
+      ]
+    },
+    {
+      "key": "srd52.equipment.brewers-supplies",
+      "kind": "equipment",
+      "name": "Brewer’s Supplies",
+      "attributes": {
+        "dnd5e.cost": "20 GP",
+        "dnd5e.equipmentCategory": "Artisan’s Tools",
+        "dnd5e.toolAbility": "Intelligence",
+        "dnd5e.weight": "9 lb."
+      },
+      "entries": [
+        { "name": "Utilize", "text": "Detect poisoned drink (DC 15), or identify alcohol (DC 10)" },
+        { "name": "Craft", "text": "Antitoxin" }
+      ]
+    },
+    {
+      "key": "srd52.equipment.calligraphers-supplies",
+      "kind": "equipment",
+      "name": "Calligrapher’s Supplies",
+      "attributes": {
+        "dnd5e.cost": "10 GP",
+        "dnd5e.equipmentCategory": "Artisan’s Tools",
+        "dnd5e.toolAbility": "Dexterity",
+        "dnd5e.weight": "5 lb."
+      },
+      "entries": [
+        { "name": "Utilize", "text": "Write text with impressive flourishes that guard against forgery (DC 15)" },
+        { "name": "Craft", "text": "Ink, Spell Scroll" }
+      ]
+    },
+    {
+      "key": "srd52.equipment.carpenters-tools",
+      "kind": "equipment",
+      "name": "Carpenter’s Tools",
+      "attributes": {
+        "dnd5e.cost": "8 GP",
+        "dnd5e.equipmentCategory": "Artisan’s Tools",
+        "dnd5e.toolAbility": "Strength",
+        "dnd5e.weight": "6 lb."
+      },
+      "entries": [
+        { "name": "Utilize", "text": "Seal or pry open a door or container (DC 20)" },
+        { "name": "Craft", "text": "Club, Greatclub, Quarterstaff, Barrel, Chest, Ladder, Pole, Portable Ram, Torch" }
+      ]
+    },
+    {
+      "key": "srd52.equipment.cartographers-tools",
+      "kind": "equipment",
+      "name": "Cartographer’s Tools",
+      "attributes": {
+        "dnd5e.cost": "15 GP",
+        "dnd5e.equipmentCategory": "Artisan’s Tools",
+        "dnd5e.toolAbility": "Wisdom",
+        "dnd5e.weight": "6 lb."
+      },
+      "entries": [
+        { "name": "Utilize", "text": "Draft a map of a small area (DC 15)" },
+        { "name": "Craft", "text": "Map" }
+      ]
+    },
+    {
+      "key": "srd52.equipment.cobblers-tools",
+      "kind": "equipment",
+      "name": "Cobbler’s Tools",
+      "attributes": {
+        "dnd5e.cost": "5 GP",
+        "dnd5e.equipmentCategory": "Artisan’s Tools",
+        "dnd5e.toolAbility": "Dexterity",
+        "dnd5e.weight": "5 lb."
+      },
+      "entries": [
+        { "name": "Utilize", "text": "Modify footwear to give Advantage on the wearer’s next Dexterity (Acrobatics) check (DC 10)" },
+        { "name": "Craft", "text": "Climber’s Kit" }
+      ]
+    },
+    {
+      "key": "srd52.equipment.cooks-utensils",
+      "kind": "equipment",
+      "name": "Cook’s Utensils",
+      "attributes": {
+        "dnd5e.cost": "1 GP",
+        "dnd5e.equipmentCategory": "Artisan’s Tools",
+        "dnd5e.toolAbility": "Wisdom",
+        "dnd5e.weight": "8 lb."
+      },
+      "entries": [
+        { "name": "Utilize", "text": "Improve food’s flavor (DC 10), or detect spoiled or poisoned food (DC 15)" },
+        { "name": "Craft", "text": "Rations" }
+      ]
+    },
+    {
+      "key": "srd52.equipment.glassblowers-tools",
+      "kind": "equipment",
+      "name": "Glassblower’s Tools",
+      "attributes": {
+        "dnd5e.cost": "30 GP",
+        "dnd5e.equipmentCategory": "Artisan’s Tools",
+        "dnd5e.toolAbility": "Intelligence",
+        "dnd5e.weight": "5 lb."
+      },
+      "entries": [
+        { "name": "Utilize", "text": "Discern what a glass object held in the past 24 hours (DC 15)" },
+        { "name": "Craft", "text": "Glass Bottle, Magnifying Glass, Spyglass, Vial" }
+      ]
+    },
+    {
+      "key": "srd52.equipment.jewelers-tools",
+      "kind": "equipment",
+      "name": "Jeweler’s Tools",
+      "attributes": {
+        "dnd5e.cost": "25 GP",
+        "dnd5e.equipmentCategory": "Artisan’s Tools",
+        "dnd5e.toolAbility": "Intelligence",
+        "dnd5e.weight": "2 lb."
+      },
+      "entries": [
+        { "name": "Utilize", "text": "Discern a gem’s value (DC 15)" },
+        { "name": "Craft", "text": "Arcane Focus, Holy Symbol" }
+      ]
+    },
+    {
+      "key": "srd52.equipment.leatherworkers-tools",
+      "kind": "equipment",
+      "name": "Leatherworker’s Tools",
+      "attributes": {
+        "dnd5e.cost": "5 GP",
+        "dnd5e.equipmentCategory": "Artisan’s Tools",
+        "dnd5e.toolAbility": "Dexterity",
+        "dnd5e.weight": "5 lb."
+      },
+      "entries": [
+        { "name": "Utilize", "text": "Add a design to a leather item (DC 10)" },
+        { "name": "Craft", "text": "Sling, Whip, Hide Armor, Leather Armor, Studded Leather Armor, Backpack, Crossbow Bolt Case, Map or Scroll Case, Parchment, Pouch, Quiver, Waterskin" }
+      ]
+    },
+    {
+      "key": "srd52.equipment.masons-tools",
+      "kind": "equipment",
+      "name": "Mason’s Tools",
+      "attributes": {
+        "dnd5e.cost": "10 GP",
+        "dnd5e.equipmentCategory": "Artisan’s Tools",
+        "dnd5e.toolAbility": "Strength",
+        "dnd5e.weight": "8 lb."
+      },
+      "entries": [
+        { "name": "Utilize", "text": "Chisel a symbol or hole in stone (DC 10)" },
+        { "name": "Craft", "text": "Block and Tackle" }
+      ]
+    },
+    {
+      "key": "srd52.equipment.painters-supplies",
+      "kind": "equipment",
+      "name": "Painter’s Supplies",
+      "attributes": {
+        "dnd5e.cost": "10 GP",
+        "dnd5e.equipmentCategory": "Artisan’s Tools",
+        "dnd5e.toolAbility": "Wisdom",
+        "dnd5e.weight": "5 lb."
+      },
+      "entries": [
+        { "name": "Utilize", "text": "Paint a recognizable image of something you’ve seen (DC 10)" },
+        { "name": "Craft", "text": "Druidic Focus, Holy Symbol" }
+      ]
+    },
+    {
+      "key": "srd52.equipment.potters-tools",
+      "kind": "equipment",
+      "name": "Potter’s Tools",
+      "attributes": {
+        "dnd5e.cost": "10 GP",
+        "dnd5e.equipmentCategory": "Artisan’s Tools",
+        "dnd5e.toolAbility": "Intelligence",
+        "dnd5e.weight": "3 lb."
+      },
+      "entries": [
+        { "name": "Utilize", "text": "Discern what a ceramic object held in the past 24 hours (DC 15)" },
+        { "name": "Craft", "text": "Jug, Lamp" }
+      ]
+    },
+    {
+      "key": "srd52.equipment.smiths-tools",
+      "kind": "equipment",
+      "name": "Smith’s Tools",
+      "attributes": {
+        "dnd5e.cost": "20 GP",
+        "dnd5e.equipmentCategory": "Artisan’s Tools",
+        "dnd5e.toolAbility": "Strength",
+        "dnd5e.weight": "8 lb."
+      },
+      "entries": [
+        { "name": "Utilize", "text": "Pry open a door or container (DC 20)" },
+        { "name": "Craft", "text": "Any Melee weapon (except Club, Greatclub, Quarterstaff, and Whip), Medium armor (except Hide), Heavy armor, Ball Bearings, Bucket, Caltrops, Chain, Crowbar, Firearm Bullets, Grappling Hook, Iron Pot, Iron Spikes, Sling Bullets" }
+      ]
+    },
+    {
+      "key": "srd52.equipment.tinkers-tools",
+      "kind": "equipment",
+      "name": "Tinker’s Tools",
+      "attributes": {
+        "dnd5e.cost": "50 GP",
+        "dnd5e.equipmentCategory": "Artisan’s Tools",
+        "dnd5e.toolAbility": "Dexterity",
+        "dnd5e.weight": "10 lb."
+      },
+      "entries": [
+        { "name": "Utilize", "text": "Assemble a Tiny item composed of scrap, which falls apart in 1 minute (DC 20)" },
+        { "name": "Craft", "text": "Musket, Pistol, Bell, Bullseye Lantern, Flask, Hooded Lantern, Hunting Trap, Lock, Manacles, Mirror, Shovel, Signal Whistle, Tinderbox" }
+      ]
+    },
+    {
+      "key": "srd52.equipment.weavers-tools",
+      "kind": "equipment",
+      "name": "Weaver’s Tools",
+      "attributes": {
+        "dnd5e.cost": "1 GP",
+        "dnd5e.equipmentCategory": "Artisan’s Tools",
+        "dnd5e.toolAbility": "Dexterity",
+        "dnd5e.weight": "5 lb."
+      },
+      "entries": [
+        { "name": "Utilize", "text": "Mend a tear in clothing (DC 10), or sew a Tiny design (DC 10)" },
+        { "name": "Craft", "text": "Padded Armor, Basket, Bedroll, Blanket, Fine Clothes, Net, Robe, Rope, Sack, String, Tent, Traveler’s Clothes" }
+      ]
+    },
+    {
+      "key": "srd52.equipment.woodcarvers-tools",
+      "kind": "equipment",
+      "name": "Woodcarver’s Tools",
+      "attributes": {
+        "dnd5e.cost": "1 GP",
+        "dnd5e.equipmentCategory": "Artisan’s Tools",
+        "dnd5e.toolAbility": "Dexterity",
+        "dnd5e.weight": "5 lb."
+      },
+      "entries": [
+        { "name": "Utilize", "text": "Carve a pattern in wood (DC 10)" },
+        { "name": "Craft", "text": "Club, Greatclub, Quarterstaff, Ranged weapons (except Pistol, Musket, and Sling), Arcane Focus, Arrows, Bolts, Druidic Focus, Ink Pen, Needles" }
+      ]
+    },
+    {
+      "key": "srd52.equipment.disguise-kit",
+      "kind": "equipment",
+      "name": "Disguise Kit",
+      "attributes": {
+        "dnd5e.cost": "25 GP",
+        "dnd5e.equipmentCategory": "Other Tools",
+        "dnd5e.toolAbility": "Charisma",
+        "dnd5e.weight": "3 lb."
+      },
+      "entries": [
+        { "name": "Utilize", "text": "Apply makeup (DC 10)" },
+        { "name": "Craft", "text": "Costume" }
+      ]
+    },
+    {
+      "key": "srd52.equipment.forgery-kit",
+      "kind": "equipment",
+      "name": "Forgery Kit",
+      "attributes": {
+        "dnd5e.cost": "15 GP",
+        "dnd5e.equipmentCategory": "Other Tools",
+        "dnd5e.toolAbility": "Dexterity",
+        "dnd5e.weight": "5 lb."
+      },
+      "entries": [
+        { "name": "Utilize", "text": "Mimic 10 or fewer words of someone else’s handwriting (DC 15), or duplicate a wax seal (DC 20)" }
+      ]
+    },
+    {
+      "key": "srd52.equipment.gaming-set",
+      "kind": "equipment",
+      "name": "Gaming Set",
+      "attributes": {
+        "dnd5e.cost": "Varies",
+        "dnd5e.equipmentCategory": "Other Tools",
+        "dnd5e.toolAbility": "Wisdom",
+        "dnd5e.weight": "—"
+      },
+      "entries": [
+        { "name": "Utilize", "text": "Discern whether someone is cheating (DC 10), or win the game (DC 20)" },
+        { "name": "Variants", "text": "Dice (1 SP), dragonchess (1 GP), playing cards (5 SP), three-dragon ante (1 GP)" }
+      ]
+    },
+    {
+      "key": "srd52.equipment.herbalism-kit",
+      "kind": "equipment",
+      "name": "Herbalism Kit",
+      "attributes": {
+        "dnd5e.cost": "5 GP",
+        "dnd5e.equipmentCategory": "Other Tools",
+        "dnd5e.toolAbility": "Intelligence",
+        "dnd5e.weight": "3 lb."
+      },
+      "entries": [
+        { "name": "Utilize", "text": "Identify a plant (DC 10)" },
+        { "name": "Craft", "text": "Antitoxin, Candle, Healer’s Kit, Potion of Healing" }
+      ]
+    },
+    {
+      "key": "srd52.equipment.musical-instrument",
+      "kind": "equipment",
+      "name": "Musical Instrument",
+      "attributes": {
+        "dnd5e.cost": "Varies",
+        "dnd5e.equipmentCategory": "Other Tools",
+        "dnd5e.toolAbility": "Charisma",
+        "dnd5e.weight": "Varies"
+      },
+      "entries": [
+        { "name": "Utilize", "text": "Play a known tune (DC 10), or improvise a song (DC 15)" },
+        { "name": "Variants", "text": "Bagpipes (30 GP, 6 lb.), drum (6 GP, 3 lb.), dulcimer (25 GP, 10 lb.), flute (2 GP, 1 lb.), horn (3 GP, 2 lb.), lute (35 GP, 2 lb.), lyre (30 GP, 2 lb.), pan flute (12 GP, 2 lb.), shawm (2 GP, 1 lb.), viol (30 GP, 1 lb.)" }
+      ]
+    },
+    {
+      "key": "srd52.equipment.navigators-tools",
+      "kind": "equipment",
+      "name": "Navigator’s Tools",
+      "attributes": {
+        "dnd5e.cost": "25 GP",
+        "dnd5e.equipmentCategory": "Other Tools",
+        "dnd5e.toolAbility": "Wisdom",
+        "dnd5e.weight": "2 lb."
+      },
+      "entries": [
+        { "name": "Utilize", "text": "Plot a course (DC 10), or determine position by stargazing (DC 15)" }
+      ]
+    },
+    {
+      "key": "srd52.equipment.poisoners-kit",
+      "kind": "equipment",
+      "name": "Poisoner’s Kit",
+      "attributes": {
+        "dnd5e.cost": "50 GP",
+        "dnd5e.equipmentCategory": "Other Tools",
+        "dnd5e.toolAbility": "Intelligence",
+        "dnd5e.weight": "2 lb."
+      },
+      "entries": [
+        { "name": "Utilize", "text": "Detect a poisoned object (DC 10)" },
+        { "name": "Craft", "text": "Basic Poison" }
+      ]
+    },
+    {
+      "key": "srd52.equipment.thieves-tools",
+      "kind": "equipment",
+      "name": "Thieves’ Tools",
+      "attributes": {
+        "dnd5e.cost": "25 GP",
+        "dnd5e.equipmentCategory": "Other Tools",
+        "dnd5e.toolAbility": "Dexterity",
+        "dnd5e.weight": "1 lb."
+      },
+      "entries": [
+        { "name": "Utilize", "text": "Pick a lock (DC 15), or disarm a trap (DC 15)" }
+      ]
+    },
+    {
+      "key": "srd52.equipment.acid",
+      "kind": "equipment",
+      "name": "Acid",
+      "summary": "When you take the Attack action, you can replace one of your attacks with throwing a vial of Acid. Target one creature or object you can see within 20 feet of yourself. The target must succeed on a Dexterity saving throw (DC 8 plus your Dexterity modifier and Proficiency Bonus) or take 2d6 Acid damage.",
+      "attributes": {
+        "dnd5e.cost": "25 GP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.alchemists-fire",
+      "kind": "equipment",
+      "name": "Alchemist’s Fire",
+      "summary": "When you take the Attack action, you can replace one of your attacks with throwing a flask of Alchemist’s Fire. Target one creature or object you can see within 20 feet of yourself. The target must succeed on a Dexterity saving throw (DC 8 plus your Dexterity modifier and Proficiency Bonus) or take 1d4 Fire damage and start burning (see “Rules Glossary”).",
+      "attributes": {
+        "dnd5e.cost": "50 GP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.ammunition",
+      "kind": "equipment",
+      "name": "Ammunition",
+      "summary": "Ammunition is required by a weapon that has the Ammunition property. A weapon’s description specifies the type of ammunition used by the weapon. The Ammunition table lists the different types and the amount you get when you buy them. The table also lists the item that is typically used to store each type; storage must be bought separately.",
+      "attributes": {
+        "dnd5e.cost": "Varies",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.antitoxin",
+      "kind": "equipment",
+      "name": "Antitoxin",
+      "summary": "As a Bonus Action, you can drink a vial of Antitoxin to gain Advantage on saving throws to avoid or end the Poisoned condition for 1 hour.",
+      "attributes": {
+        "dnd5e.cost": "50 GP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.arcane-focus",
+      "kind": "equipment",
+      "name": "Arcane Focus",
+      "summary": "An Arcane Focus takes one of the forms in the Arcane Focuses table and is bejeweled or carved to channel arcane magic. A Sorcerer, Warlock, or Wizard can use such an item as a Spellcasting Focus.",
+      "attributes": {
+        "dnd5e.cost": "Varies",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.backpack",
+      "kind": "equipment",
+      "name": "Backpack",
+      "summary": "A Backpack holds up to 30 pounds within 1 cubic foot. It can also serve as a saddlebag.",
+      "attributes": {
+        "dnd5e.cost": "2 GP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.ball-bearings",
+      "kind": "equipment",
+      "name": "Ball Bearings",
+      "summary": "As a Utilize action, you can spill Ball Bearings from their pouch. They spread to cover a level, 10-footsquare area within 10 feet of yourself. A creature that enters this area for the first time on a turn must succeed on a DC 10 Dexterity saving throw or have the Prone condition. It takes 10 minutes to recover the Ball Bearings.",
+      "attributes": {
+        "dnd5e.cost": "1 GP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.barrel",
+      "kind": "equipment",
+      "name": "Barrel",
+      "summary": "A Barrel holds up to 40 gallons of liquid or up to 4 cubic feet of dry goods.",
+      "attributes": {
+        "dnd5e.cost": "2 GP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.basket",
+      "kind": "equipment",
+      "name": "Basket",
+      "summary": "A Basket holds up to 40 pounds within 2 cubic feet.",
+      "attributes": {
+        "dnd5e.cost": "4 SP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.bedroll",
+      "kind": "equipment",
+      "name": "Bedroll",
+      "summary": "A Bedroll sleeps one Small or Medium creature. While in a Bedroll, you automatically succeed on saving throws against extreme cold (see “Gameplay Toolbox”).",
+      "attributes": {
+        "dnd5e.cost": "1 GP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.bell",
+      "kind": "equipment",
+      "name": "Bell",
+      "summary": "When rung as a Utilize action, a Bell produces a sound that can be heard up to 60 feet away.",
+      "attributes": {
+        "dnd5e.cost": "1 GP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.blanket",
+      "kind": "equipment",
+      "name": "Blanket",
+      "summary": "While wrapped in a blanket, you have Advantage on saving throws against extreme cold (see “Gameplay Toolbox”).",
+      "attributes": {
+        "dnd5e.cost": "5 SP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.block-and-tackle",
+      "kind": "equipment",
+      "name": "Block and Tackle",
+      "summary": "A Block and Tackle allows you to hoist up to four times the weight you can normally lift.",
+      "attributes": {
+        "dnd5e.cost": "1 GP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.book",
+      "kind": "equipment",
+      "name": "Book",
+      "summary": "A Book contains fiction or nonfiction. If you consult an accurate nonfiction Book about its topic, you gain a +5 bonus to Intelligence (Arcana, History, Nature, or Religion) checks you make about that topic.",
+      "attributes": {
+        "dnd5e.cost": "25 GP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.bottle-glass",
+      "kind": "equipment",
+      "name": "Bottle, Glass",
+      "summary": "A Glass Bottle holds up to 11/2 pints.",
+      "attributes": {
+        "dnd5e.cost": "2 GP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.bucket",
+      "kind": "equipment",
+      "name": "Bucket",
+      "summary": "A Bucket holds up to half a cubic foot of contents.",
+      "attributes": {
+        "dnd5e.cost": "5 CP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.burglars-pack",
+      "kind": "equipment",
+      "name": "Burglar’s Pack",
+      "summary": "A Burglar’s Pack contains the following items: Backpack, Ball Bearings, Bell, 10 Candles, Crowbar, Hooded Lantern, 7 flasks of Oil, 5 days of Rations, Rope, Tinderbox, and Waterskin.",
+      "attributes": {
+        "dnd5e.cost": "16 GP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.caltrops",
+      "kind": "equipment",
+      "name": "Caltrops",
+      "summary": "As a Utilize action, you can spread Caltrops from their bag to cover a 5-foot-square area within 5 feet of yourself. A creature that enters this area for the first time on a turn must succeed on a DC 15 Dexterity saving throw or take 1 Piercing damage and have its Speed reduced to 0 until the start of its next turn. It takes 10 minutes to recover the Caltrops.",
+      "attributes": {
+        "dnd5e.cost": "1 GP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.candle",
+      "kind": "equipment",
+      "name": "Candle",
+      "summary": "For 1 hour, a lit Candle sheds Bright Light in a 5-foot radius and Dim Light for an additional 5 feet.",
+      "attributes": {
+        "dnd5e.cost": "1 CP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.case-crossbow-bolt",
+      "kind": "equipment",
+      "name": "Case, Crossbow Bolt",
+      "summary": "A Crossbow Bolt Case holds up to 20 Bolts.",
+      "attributes": {
+        "dnd5e.cost": "1 GP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.case-map-or-scroll",
+      "kind": "equipment",
+      "name": "Case, Map or Scroll",
+      "summary": "A Map or Scroll Case holds up to 10 sheets of paper or 5 sheets of parchment.",
+      "attributes": {
+        "dnd5e.cost": "1 GP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.chain",
+      "kind": "equipment",
+      "name": "Chain",
+      "summary": "As a Utilize action, you can wrap a Chain around an unwilling creature within 5 feet of yourself that has the Grappled, Incapacitated, or Restrained condition if you succeed on a DC 13 Strength (Athletics) check. If the creature’s legs are bound, the creature has the Restrained condition until it escapes. Escaping the Chain requires the creature to make a successful DC 18 Dexterity (Acrobatics) check as an action. Bursting the Chain requires a successful DC 20 Strength (Athletics) check as an action.",
+      "attributes": {
+        "dnd5e.cost": "5 GP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.chest",
+      "kind": "equipment",
+      "name": "Chest",
+      "summary": "A Chest holds up to 12 cubic feet of contents.",
+      "attributes": {
+        "dnd5e.cost": "5 GP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.climbers-kit",
+      "kind": "equipment",
+      "name": "Climber’s Kit",
+      "summary": "A Climber’s Kit includes boot tips, gloves, pitons, and a harness. As a Utilize action, you can use the Climber’s Kit to anchor yourself; when you do, you can’t fall more than 25 feet from the anchor point, and you can’t move more than 25 feet from there without undoing the anchor as a Bonus Action.",
+      "attributes": {
+        "dnd5e.cost": "25 GP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.clothes-fine",
+      "kind": "equipment",
+      "name": "Clothes, Fine",
+      "summary": "Fine Clothes are made of expensive fabrics and adorned with expertly crafted details. Some events and locations admit only people wearing these clothes.",
+      "attributes": {
+        "dnd5e.cost": "15 GP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.clothes-travelers",
+      "kind": "equipment",
+      "name": "Clothes, Traveler’s",
+      "summary": "Traveler’s Clothes are resilient garments designed for travel in various environments.",
+      "attributes": {
+        "dnd5e.cost": "2 GP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.component-pouch",
+      "kind": "equipment",
+      "name": "Component Pouch",
+      "summary": "A Component Pouch is watertight and filled with compartments that hold all the free Material components of your spells.",
+      "attributes": {
+        "dnd5e.cost": "25 GP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.costume",
+      "kind": "equipment",
+      "name": "Costume",
+      "summary": "While wearing a Costume, you have Advantage on any ability check you make to impersonate the person or type of person it represents.",
+      "attributes": {
+        "dnd5e.cost": "5 GP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.crowbar",
+      "kind": "equipment",
+      "name": "Crowbar",
+      "summary": "Using a Crowbar gives you Advantage on Strength checks where the Crowbar’s leverage can be applied.",
+      "attributes": {
+        "dnd5e.cost": "2 GP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.diplomats-pack",
+      "kind": "equipment",
+      "name": "Diplomat’s Pack",
+      "summary": "A Diplomat’s Pack contains the following items: Chest, Fine Clothes, Ink, 5 Ink Pens, Lamp, 2 Map or Scroll Cases, 4 flasks of Oil, 5 sheets of Paper, 5 sheets of Parchment, Perfume, and Tinderbox.",
+      "attributes": {
+        "dnd5e.cost": "39 GP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.druidic-focus",
+      "kind": "equipment",
+      "name": "Druidic Focus",
+      "summary": "A Druidic Focus takes one of the forms in the Druidic Focuses table and is carved, tied with ribbon, or painted to channel primal magic. A Druid or Ranger can use such an object as a Spellcasting Focus.",
+      "attributes": {
+        "dnd5e.cost": "Varies",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.dungeoneers-pack",
+      "kind": "equipment",
+      "name": "Dungeoneer’s Pack",
+      "summary": "A Dungeoneer’s Pack contains the following items: Backpack, Caltrops, Crowbar, 2 flasks of Oil, 10 days of Rations, Rope, Tinderbox, 10 Torches, and Waterskin.",
+      "attributes": {
+        "dnd5e.cost": "12 GP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.entertainers-pack",
+      "kind": "equipment",
+      "name": "Entertainer’s Pack",
+      "summary": "An Entertainer’s Pack contains the following items: Backpack, Bedroll, Bell, Bullseye Lantern, 3 Costumes, Mirror, 8 flasks of Oil, 9 days of Rations, Tinderbox, and Waterskin.",
+      "attributes": {
+        "dnd5e.cost": "40 GP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.explorers-pack",
+      "kind": "equipment",
+      "name": "Explorer’s Pack",
+      "summary": "An Explorer’s Pack contains the following items: Backpack, Bedroll, 2 flasks of Oil, 10 days of Rations, Rope, Tinderbox, 10 Torches, and Waterskin.",
+      "attributes": {
+        "dnd5e.cost": "10 GP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.flask",
+      "kind": "equipment",
+      "name": "Flask",
+      "summary": "A Flask holds up to 1 pint.",
+      "attributes": {
+        "dnd5e.cost": "2 CP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.grappling-hook",
+      "kind": "equipment",
+      "name": "Grappling Hook",
+      "summary": "As a Utilize action, you can throw the Grappling Hook at a railing, a ledge, or another catch within 50 feet of yourself, and the hook catches on if you succeed on a DC 13 Dexterity (Acrobatics) check. If you tied a Rope to the hook, you can then climb it.",
+      "attributes": {
+        "dnd5e.cost": "2 GP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.healers-kit",
+      "kind": "equipment",
+      "name": "Healer’s Kit",
+      "summary": "A Healer’s Kit has ten uses. As a Utilize action, you can expend one of its uses to stabilize an Unconscious creature that has 0 Hit Points without needing to make a Wisdom (Medicine) check.",
+      "attributes": {
+        "dnd5e.cost": "5 GP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.holy-symbol",
+      "kind": "equipment",
+      "name": "Holy Symbol",
+      "summary": "A Holy Symbol takes one of the forms in the Holy Symbol table and is bejeweled or painted to channel divine magic. A Cleric or Paladin can use a Holy Symbol as a Spellcasting Focus.\n\nThe table indicates whether a Holy Symbol needs to be held, worn, or borne on fabric (such as a tabard or banner) or a Shield.",
+      "attributes": {
+        "dnd5e.cost": "Varies",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.holy-water",
+      "kind": "equipment",
+      "name": "Holy Water",
+      "summary": "When you take the Attack action, you can replace one of your attacks with throwing a flask of Holy Water. Target one creature you can see within 20 feet of yourself. The target must succeed on a Dexterity saving throw (DC 8 plus your Dexterity modifier and Proficiency Bonus) or take 2d8 Radiant damage if it is a Fiend or an Undead.",
+      "attributes": {
+        "dnd5e.cost": "25 GP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.hunting-trap",
+      "kind": "equipment",
+      "name": "Hunting Trap",
+      "summary": "As a Utilize action, you can set a Hunting Trap, which is a sawtooth steel ring that snaps shut when a creature steps on a pressure plate in the center. The trap is affixed by a heavy chain to an immobile object, such as a tree or a spike driven into the ground. A creature that steps on the plate must succeed on a DC 13 Dexterity saving throw or take 1d4 Piercing damage and have its Speed reduced to 0 until the start of its next turn. Thereafter, until the creature breaks free of the trap, its movement is limited by the length of the chain (typically 3 feet). A creature can use its action to make a DC 13 Strength (Athletics) check, freeing itself or another creature within its reach on a success. Each failed check deals 1 Piercing damage to the trapped creature.",
+      "attributes": {
+        "dnd5e.cost": "5 GP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.ink",
+      "kind": "equipment",
+      "name": "Ink",
+      "summary": "Ink comes in a 1-ounce bottle, which provides enough ink to write about 500 pages.",
+      "attributes": {
+        "dnd5e.cost": "10 GP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.ink-pen",
+      "kind": "equipment",
+      "name": "Ink Pen",
+      "summary": "Using Ink, an Ink Pen is used to write or draw.",
+      "attributes": {
+        "dnd5e.cost": "2 CP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.jug",
+      "kind": "equipment",
+      "name": "Jug",
+      "summary": "A Jug holds up to 1 gallon.",
+      "attributes": {
+        "dnd5e.cost": "2 CP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.ladder",
+      "kind": "equipment",
+      "name": "Ladder",
+      "summary": "A Ladder is 10 feet tall. You must climb to move up or down it.",
+      "attributes": {
+        "dnd5e.cost": "1 SP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.lamp",
+      "kind": "equipment",
+      "name": "Lamp",
+      "summary": "A Lamp burns Oil as fuel to cast Bright Light in a 15-foot radius and Dim Light for an additional 30 feet.",
+      "attributes": {
+        "dnd5e.cost": "5 SP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.lantern-bullseye",
+      "kind": "equipment",
+      "name": "Lantern, Bullseye",
+      "summary": "A Bullseye Lantern burns Oil as fuel to cast Bright Light in a 60-foot Cone and Dim Light for an additional 60 feet.",
+      "attributes": {
+        "dnd5e.cost": "10 GP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.lantern-hooded",
+      "kind": "equipment",
+      "name": "Lantern, Hooded",
+      "summary": "A Hooded Lantern burns Oil as fuel to cast Bright Light in a 30-foot radius and Dim Light for an additional 30 feet. As a Bonus Action, you can lower the hood, reducing the light to Dim Light in a 5-foot radius, or raise it again.",
+      "attributes": {
+        "dnd5e.cost": "5 GP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.lock",
+      "kind": "equipment",
+      "name": "Lock",
+      "summary": "A Lock comes with a key. Without the key, a creature can use Thieves’ Tools to pick this Lock with a successful DC 15 Dexterity (Sleight of Hand) check.",
+      "attributes": {
+        "dnd5e.cost": "10 GP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.magnifying-glass",
+      "kind": "equipment",
+      "name": "Magnifying Glass",
+      "summary": "A Magnifying Glass grants Advantage on any ability check made to appraise or inspect a highly detailed item. Lighting a fire with a Magnifying Glass requires light as bright as sunlight to focus, tinder to ignite, and about 5 minutes for the fire to ignite.",
+      "attributes": {
+        "dnd5e.cost": "100 GP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.manacles",
+      "kind": "equipment",
+      "name": "Manacles",
+      "summary": "As a Utilize action, you can use Manacles to bind an unwilling Small or Medium creature within 5 feet of yourself that has the Grappled, Incapacitated, or Restrained condition if you succeed on a DC 13 Dexterity (Sleight of Hand) check. While bound, a creature has Disadvantage on attack rolls, and the creature is Restrained if the Manacles are attached to a chain or hook that is fixed in place. Escaping the Manacles requires a successful DC 20 Dexterity (Sleight of Hand) check as an action. Bursting them requires a successful DC 25 Strength (Athletics) check as an action.\n\nEach set of Manacles comes with a key. Without the key, a creature can use Thieves’ Tools to pick the Manacles’ lock with a successful DC 15 Dexterity (Sleight of Hand) check.",
+      "attributes": {
+        "dnd5e.cost": "2 GP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.map",
+      "kind": "equipment",
+      "name": "Map",
+      "summary": "If you consult an accurate Map, you gain a +5 bonus to Wisdom (Survival) checks you make to find your way in the place represented on it.",
+      "attributes": {
+        "dnd5e.cost": "1 GP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.mirror",
+      "kind": "equipment",
+      "name": "Mirror",
+      "summary": "A handheld steel Mirror is useful for personal cosmetics but also for peeking around corners and reflecting light as a signal.",
+      "attributes": {
+        "dnd5e.cost": "5 GP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.net",
+      "kind": "equipment",
+      "name": "Net",
+      "summary": "When you take the Attack action, you can replace one of your attacks with throwing a Net. Target a creature you can see within 15 feet of yourself. The target must succeed on a Dexterity saving throw (DC 8 plus your Dexterity modifier and Proficiency Bonus) or have the Restrained condition until it escapes. The target succeeds automatically if it is Huge or larger.\n\nTo escape, the target or a creature within 5 feet of it must take an action to make a DC 10 Strength (Athletics) check, freeing the Restrained creature on a success. Destroying the Net (AC 10; 5 HP; Immunity to Bludgeoning, Poison, and Psychic damage) also frees the target, ending the effect.",
+      "attributes": {
+        "dnd5e.cost": "1 GP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.oil",
+      "kind": "equipment",
+      "name": "Oil",
+      "summary": "You can douse a creature, object, or space with Oil or use it as fuel, as detailed below.\n\nDousing a Creature or an Object. When you take the Attack action, you can replace one of your attacks with throwing an Oil flask. Target one creature or object within 20 feet of yourself. The target must succeed on a Dexterity saving throw (DC 8 plus your Dexterity modifier and Proficiency Bonus) or be covered in oil. If the target takes Fire damage before the oil dries (after 1 minute), the target takes an extra 5 Fire damage from burning oil.\n\nDousing a Space. You can take the Utilize action to pour an Oil flask on level ground to cover a 5-foot-square area within 5 feet of yourself. If lit, the oil burns until the end of the turn 2 rounds from when the oil was lit (or 12 seconds) and deals 5 Fire damage to any creature that enters the area or ends its turn there. A creature can take this damage only once per turn.\n\nFuel. Oil serves as fuel for Lamps and Lanterns. Once lit, a flask of Oil burns for 6 hours in a Lamp or Lantern. That duration doesn’t need to be consecutive; you can extinguish the burning Oil (as a Utilize action) and rekindle it again until it has burned for a total of 6 hours.",
+      "attributes": {
+        "dnd5e.cost": "1 SP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.paper",
+      "kind": "equipment",
+      "name": "Paper",
+      "summary": "One sheet of Paper can hold about 250 handwritten words.",
+      "attributes": {
+        "dnd5e.cost": "2 SP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.parchment",
+      "kind": "equipment",
+      "name": "Parchment",
+      "summary": "One sheet of Parchment can hold about 250 handwritten words.",
+      "attributes": {
+        "dnd5e.cost": "1 SP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.perfume",
+      "kind": "equipment",
+      "name": "Perfume",
+      "summary": "Perfume comes in a 4-ounce vial. For 1 hour after applying Perfume to yourself, you have Advantage on Charisma (Persuasion) checks made to influence an Indifferent Humanoid within 5 feet of yourself.",
+      "attributes": {
+        "dnd5e.cost": "5 GP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.poison-basic",
+      "kind": "equipment",
+      "name": "Poison, Basic",
+      "summary": "As a Bonus Action, you can use a vial of Basic Poison to coat one weapon or up to three pieces of ammunition. A creature that takes Piercing or Slashing damage from the poisoned weapon or ammunition takes an extra 1d4 Poison damage. Once applied, the poison retains potency for 1 minute or until its damage is dealt, whichever comes first.",
+      "attributes": {
+        "dnd5e.cost": "100 GP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.pole",
+      "kind": "equipment",
+      "name": "Pole",
+      "summary": "A Pole is 10 feet long. You can use it to touch something up to 10 feet away. If you must make a Strength (Athletics) check as part of a High or Long Jump, you can use the Pole to vault, giving yourself Advantage on the check.",
+      "attributes": {
+        "dnd5e.cost": "5 CP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.pot-iron",
+      "kind": "equipment",
+      "name": "Pot, Iron",
+      "summary": "An Iron Pot holds up to 1 gallon.",
+      "attributes": {
+        "dnd5e.cost": "2 GP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.potion-of-healing",
+      "kind": "equipment",
+      "name": "Potion of Healing",
+      "summary": "This potion is a magic item. As a Bonus Action, you can drink it or administer it to another creature within 5 feet of yourself. The creature that drinks the magical red fluid in this vial regains 2d4 + 2 Hit Points.",
+      "attributes": {
+        "dnd5e.cost": "50 GP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.ram-portable",
+      "kind": "equipment",
+      "name": "Ram, Portable",
+      "summary": "You can use a Portable Ram to break down doors. When doing so, you gain a +4 bonus to the Strength check. One other character can help you use the ram, giving you Advantage on this check.",
+      "attributes": {
+        "dnd5e.cost": "4 GP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.rations",
+      "kind": "equipment",
+      "name": "Rations",
+      "summary": "Rations consist of travel-ready food, including jerky, dried fruit, hardtack, and nuts. See “Malnutrition” in “Rules Glossary” for the risks of not eating.",
+      "attributes": {
+        "dnd5e.cost": "5 SP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.robe",
+      "kind": "equipment",
+      "name": "Robe",
+      "summary": "A Robe has vocational or ceremonial significance. Some events and locations admit only people wearing a Robe bearing certain colors or symbols.",
+      "attributes": {
+        "dnd5e.cost": "1 GP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.rope",
+      "kind": "equipment",
+      "name": "Rope",
+      "summary": "As a Utilize action, you can tie a knot with Rope if you succeed on a DC 10 Dexterity (Sleight of Hand) check. The Rope can be burst with a successful DC 20 Strength (Athletics) check.\n\nYou can bind an unwilling creature with the Rope only if the creature has the Grappled, Incapacitated, or Restrained condition. If the creature’s legs are bound, the creature has the Restrained condition until it escapes. Escaping the Rope requires the creature to make a successful DC 15 Dexterity (Acrobatics) check as an action.",
+      "attributes": {
+        "dnd5e.cost": "1 GP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.sack",
+      "kind": "equipment",
+      "name": "Sack",
+      "summary": "A Sack holds up to 30 pounds within 1 cubic foot.",
+      "attributes": {
+        "dnd5e.cost": "1 CP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.scholars-pack",
+      "kind": "equipment",
+      "name": "Scholar’s Pack",
+      "summary": "A Scholar’s Pack contains the following items: Backpack, Book, Ink, Ink Pen, Lamp, 10 flasks of Oil, 10 sheets of Parchment, and Tinderbox.",
+      "attributes": {
+        "dnd5e.cost": "40 GP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.shovel",
+      "kind": "equipment",
+      "name": "Shovel",
+      "summary": "Working for 1 hour, you can use a Shovel to dig a hole that is 5 feet on each side in soil or similar material.",
+      "attributes": {
+        "dnd5e.cost": "2 GP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.signal-whistle",
+      "kind": "equipment",
+      "name": "Signal Whistle",
+      "summary": "When blown as a Utilize action, a Signal Whistle produces a sound that can be heard up to 600 feet away.",
+      "attributes": {
+        "dnd5e.cost": "5 CP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.pouch",
+      "kind": "equipment",
+      "name": "Pouch",
+      "summary": "A Pouch holds up to 6 pounds within one-fifth of a",
+      "attributes": {
+        "dnd5e.cost": "5 SP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.spell-scroll",
+      "kind": "equipment",
+      "name": "Spell Scroll",
+      "summary": "cubic foot. A Spell Scroll (Cantrip) or Spell Scroll (Level 1) is a magic item that bears the words of a cantrip or level",
+      "attributes": {
+        "dnd5e.cost": "Cantrip, 30 GP; Level 1, 50 GP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.priests-pack",
+      "kind": "equipment",
+      "name": "Priest’s Pack",
+      "summary": "A Priest’s Pack contains the following items: Backpack, Blanket, Holy Water, Lamp, 7 days of Rations, Robe, and Tinderbox. 1 spell, respectively, determined by the scroll’s creator. If the spell is on your class’s spell list, you can read the scroll and cast the spell using its normal casting time and without providing any Material",
+      "attributes": {
+        "dnd5e.cost": "33 GP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.quiver",
+      "kind": "equipment",
+      "name": "Quiver",
+      "summary": "A Quiver holds up to 20 Arrows. components.\n\nIf the spell requires a saving throw or an attack roll, the spell save DC is 13, and the attack bonus is +5. The scroll disintegrates when the casting is completed.",
+      "attributes": {
+        "dnd5e.cost": "1 GP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.spikes-iron",
+      "kind": "equipment",
+      "name": "Spikes, Iron",
+      "summary": "Iron Spikes come in bundles of ten. As a Utilize action, you can use a blunt object, such as a Light Hammer, to hammer a spike into wood, earth, or a similar material. You can do so to jam a door shut or to then tie a Rope or Chain to the Spike.",
+      "attributes": {
+        "dnd5e.cost": "1 GP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.spyglass",
+      "kind": "equipment",
+      "name": "Spyglass",
+      "summary": "Objects viewed through a Spyglass are magnified to twice their size.",
+      "attributes": {
+        "dnd5e.cost": "1,000 GP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.string",
+      "kind": "equipment",
+      "name": "String",
+      "summary": "String is 10 feet long. You can tie a knot in it as a Utilize action.",
+      "attributes": {
+        "dnd5e.cost": "1 SP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.tent",
+      "kind": "equipment",
+      "name": "Tent",
+      "summary": "A Tent sleeps up to two Small or Medium creatures.",
+      "attributes": {
+        "dnd5e.cost": "2 GP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.tinderbox",
+      "kind": "equipment",
+      "name": "Tinderbox",
+      "summary": "A Tinderbox is a small container holding flint, fire steel, and tinder (usually dry cloth soaked in light oil) used to kindle a fire. Using it to light a Candle, Lamp, Lantern, or Torch—or anything else with exposed fuel—takes a Bonus Action. Lighting any other fire takes 1 minute.",
+      "attributes": {
+        "dnd5e.cost": "5 SP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.torch",
+      "kind": "equipment",
+      "name": "Torch",
+      "summary": "A Torch burns for 1 hour, casting Bright Light in a 20-foot radius and Dim Light for an additional 20 feet. When you take the Attack action, you can attack with the Torch, using it as a Simple Melee weapon. On a hit, the target takes 1 Fire damage.",
+      "attributes": {
+        "dnd5e.cost": "1 CP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.vial",
+      "kind": "equipment",
+      "name": "Vial",
+      "summary": "A Vial holds up to 4 ounces.",
+      "attributes": {
+        "dnd5e.cost": "1 GP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.waterskin",
+      "kind": "equipment",
+      "name": "Waterskin",
+      "summary": "A Waterskin holds up to 4 pints. If you don’t drink sufficient water, you risk dehydration (see “Rules Glossary”).",
+      "attributes": {
+        "dnd5e.cost": "2 SP",
+        "dnd5e.equipmentCategory": "Adventuring Gear"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.club",
+      "kind": "equipment",
+      "name": "Club",
+      "attributes": {
+        "dnd5e.cost": "1 SP",
+        "dnd5e.damage": "1d4 Bludgeoning",
+        "dnd5e.equipmentCategory": "Simple Melee Weapons",
+        "dnd5e.weaponMastery": "Slow",
+        "dnd5e.weaponProperties": "Light",
+        "dnd5e.weight": "2 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.dagger",
+      "kind": "equipment",
+      "name": "Dagger",
+      "attributes": {
+        "dnd5e.cost": "2 GP",
+        "dnd5e.damage": "1d4 Piercing",
+        "dnd5e.equipmentCategory": "Simple Melee Weapons",
+        "dnd5e.weaponMastery": "Nick",
+        "dnd5e.weaponProperties": "Finesse, Light, Thrown (Range 20/60)",
+        "dnd5e.weight": "1 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.greatclub",
+      "kind": "equipment",
+      "name": "Greatclub",
+      "attributes": {
+        "dnd5e.cost": "2 SP",
+        "dnd5e.damage": "1d8 Bludgeoning",
+        "dnd5e.equipmentCategory": "Simple Melee Weapons",
+        "dnd5e.weaponMastery": "Push",
+        "dnd5e.weaponProperties": "Two-Handed",
+        "dnd5e.weight": "10 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.handaxe",
+      "kind": "equipment",
+      "name": "Handaxe",
+      "attributes": {
+        "dnd5e.cost": "5 GP",
+        "dnd5e.damage": "1d6 Slashing",
+        "dnd5e.equipmentCategory": "Simple Melee Weapons",
+        "dnd5e.weaponMastery": "Vex",
+        "dnd5e.weaponProperties": "Light, Thrown (Range 20/60)",
+        "dnd5e.weight": "2 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.javelin",
+      "kind": "equipment",
+      "name": "Javelin",
+      "attributes": {
+        "dnd5e.cost": "5 SP",
+        "dnd5e.damage": "1d6 Piercing",
+        "dnd5e.equipmentCategory": "Simple Melee Weapons",
+        "dnd5e.weaponMastery": "Slow",
+        "dnd5e.weaponProperties": "Thrown (Range 30/120)",
+        "dnd5e.weight": "2 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.light-hammer",
+      "kind": "equipment",
+      "name": "Light Hammer",
+      "attributes": {
+        "dnd5e.cost": "2 GP",
+        "dnd5e.damage": "1d4 Bludgeoning",
+        "dnd5e.equipmentCategory": "Simple Melee Weapons",
+        "dnd5e.weaponMastery": "Nick",
+        "dnd5e.weaponProperties": "Light, Thrown (Range 20/60)",
+        "dnd5e.weight": "2 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.mace",
+      "kind": "equipment",
+      "name": "Mace",
+      "attributes": {
+        "dnd5e.cost": "5 GP",
+        "dnd5e.damage": "1d6 Bludgeoning",
+        "dnd5e.equipmentCategory": "Simple Melee Weapons",
+        "dnd5e.weaponMastery": "Sap",
+        "dnd5e.weaponProperties": "—",
+        "dnd5e.weight": "4 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.quarterstaff",
+      "kind": "equipment",
+      "name": "Quarterstaff",
+      "attributes": {
+        "dnd5e.cost": "2 SP",
+        "dnd5e.damage": "1d6 Bludgeoning",
+        "dnd5e.equipmentCategory": "Simple Melee Weapons",
+        "dnd5e.weaponMastery": "Topple",
+        "dnd5e.weaponProperties": "Versatile (1d8)",
+        "dnd5e.weight": "4 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.sickle",
+      "kind": "equipment",
+      "name": "Sickle",
+      "attributes": {
+        "dnd5e.cost": "1 GP",
+        "dnd5e.damage": "1d4 Slashing",
+        "dnd5e.equipmentCategory": "Simple Melee Weapons",
+        "dnd5e.weaponMastery": "Nick",
+        "dnd5e.weaponProperties": "Light",
+        "dnd5e.weight": "2 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.spear",
+      "kind": "equipment",
+      "name": "Spear",
+      "attributes": {
+        "dnd5e.cost": "1 GP",
+        "dnd5e.damage": "1d6 Piercing",
+        "dnd5e.equipmentCategory": "Simple Melee Weapons",
+        "dnd5e.weaponMastery": "Sap",
+        "dnd5e.weaponProperties": "Thrown (Range 20/60), Versatile (1d8)",
+        "dnd5e.weight": "3 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.dart",
+      "kind": "equipment",
+      "name": "Dart",
+      "attributes": {
+        "dnd5e.cost": "5 CP",
+        "dnd5e.damage": "1d4 Piercing",
+        "dnd5e.equipmentCategory": "Simple Ranged Weapons",
+        "dnd5e.weaponMastery": "Vex",
+        "dnd5e.weaponProperties": "Finesse, Thrown (Range 20/60)",
+        "dnd5e.weight": "1/4 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.light-crossbow",
+      "kind": "equipment",
+      "name": "Light Crossbow",
+      "attributes": {
+        "dnd5e.cost": "25 GP",
+        "dnd5e.damage": "1d8 Piercing",
+        "dnd5e.equipmentCategory": "Simple Ranged Weapons",
+        "dnd5e.weaponMastery": "Slow",
+        "dnd5e.weaponProperties": "Ammunition (Range 80/320; Bolt), Loading, Two-Handed",
+        "dnd5e.weight": "5 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.shortbow",
+      "kind": "equipment",
+      "name": "Shortbow",
+      "attributes": {
+        "dnd5e.cost": "25 GP",
+        "dnd5e.damage": "1d6 Piercing",
+        "dnd5e.equipmentCategory": "Simple Ranged Weapons",
+        "dnd5e.weaponMastery": "Vex",
+        "dnd5e.weaponProperties": "Ammunition (Range 80/320; Arrow), Two-Handed",
+        "dnd5e.weight": "2 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.sling",
+      "kind": "equipment",
+      "name": "Sling",
+      "attributes": {
+        "dnd5e.cost": "1 SP",
+        "dnd5e.damage": "1d4 Bludgeoning",
+        "dnd5e.equipmentCategory": "Simple Ranged Weapons",
+        "dnd5e.weaponMastery": "Slow",
+        "dnd5e.weaponProperties": "Ammunition (Range 30/120; Bullet)"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.battleaxe",
+      "kind": "equipment",
+      "name": "Battleaxe",
+      "attributes": {
+        "dnd5e.cost": "10 GP",
+        "dnd5e.damage": "1d8 Slashing",
+        "dnd5e.equipmentCategory": "Martial Melee Weapons",
+        "dnd5e.weaponMastery": "Topple",
+        "dnd5e.weaponProperties": "Versatile (1d10)",
+        "dnd5e.weight": "4 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.flail",
+      "kind": "equipment",
+      "name": "Flail",
+      "attributes": {
+        "dnd5e.cost": "10 GP",
+        "dnd5e.damage": "1d8 Bludgeoning",
+        "dnd5e.equipmentCategory": "Martial Melee Weapons",
+        "dnd5e.weaponMastery": "Sap",
+        "dnd5e.weaponProperties": "—",
+        "dnd5e.weight": "2 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.glaive",
+      "kind": "equipment",
+      "name": "Glaive",
+      "attributes": {
+        "dnd5e.cost": "20 GP",
+        "dnd5e.damage": "1d10 Slashing",
+        "dnd5e.equipmentCategory": "Martial Melee Weapons",
+        "dnd5e.weaponMastery": "Graze",
+        "dnd5e.weaponProperties": "Heavy, Reach, Two-Handed",
+        "dnd5e.weight": "6 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.greataxe",
+      "kind": "equipment",
+      "name": "Greataxe",
+      "attributes": {
+        "dnd5e.cost": "30 GP",
+        "dnd5e.damage": "1d12 Slashing",
+        "dnd5e.equipmentCategory": "Martial Melee Weapons",
+        "dnd5e.weaponMastery": "Cleave",
+        "dnd5e.weaponProperties": "Heavy, Two-Handed",
+        "dnd5e.weight": "7 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.greatsword",
+      "kind": "equipment",
+      "name": "Greatsword",
+      "attributes": {
+        "dnd5e.cost": "50 GP",
+        "dnd5e.damage": "2d6 Slashing",
+        "dnd5e.equipmentCategory": "Martial Melee Weapons",
+        "dnd5e.weaponMastery": "Graze",
+        "dnd5e.weaponProperties": "Heavy, Two-Handed",
+        "dnd5e.weight": "6 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.halberd",
+      "kind": "equipment",
+      "name": "Halberd",
+      "attributes": {
+        "dnd5e.cost": "20 GP",
+        "dnd5e.damage": "1d10 Slashing",
+        "dnd5e.equipmentCategory": "Martial Melee Weapons",
+        "dnd5e.weaponMastery": "Cleave",
+        "dnd5e.weaponProperties": "Heavy, Reach, Two-Handed",
+        "dnd5e.weight": "6 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.lance",
+      "kind": "equipment",
+      "name": "Lance",
+      "attributes": {
+        "dnd5e.cost": "10 GP",
+        "dnd5e.damage": "1d10 Piercing",
+        "dnd5e.equipmentCategory": "Martial Melee Weapons",
+        "dnd5e.weaponMastery": "Topple",
+        "dnd5e.weaponProperties": "Heavy, Reach, Two-Handed (unless mounted)",
+        "dnd5e.weight": "6 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.longsword",
+      "kind": "equipment",
+      "name": "Longsword",
+      "attributes": {
+        "dnd5e.cost": "15 GP",
+        "dnd5e.damage": "1d8 Slashing",
+        "dnd5e.equipmentCategory": "Martial Melee Weapons",
+        "dnd5e.weaponMastery": "Sap",
+        "dnd5e.weaponProperties": "Versatile (1d10)",
+        "dnd5e.weight": "3 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.maul",
+      "kind": "equipment",
+      "name": "Maul",
+      "attributes": {
+        "dnd5e.cost": "10 GP",
+        "dnd5e.damage": "2d6 Bludgeoning",
+        "dnd5e.equipmentCategory": "Martial Melee Weapons",
+        "dnd5e.weaponMastery": "Topple",
+        "dnd5e.weaponProperties": "Heavy, Two-Handed",
+        "dnd5e.weight": "10 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.morningstar",
+      "kind": "equipment",
+      "name": "Morningstar",
+      "attributes": {
+        "dnd5e.cost": "15 GP",
+        "dnd5e.damage": "1d8 Piercing",
+        "dnd5e.equipmentCategory": "Martial Melee Weapons",
+        "dnd5e.weaponMastery": "Sap",
+        "dnd5e.weaponProperties": "—",
+        "dnd5e.weight": "4 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.pike",
+      "kind": "equipment",
+      "name": "Pike",
+      "attributes": {
+        "dnd5e.cost": "5 GP",
+        "dnd5e.damage": "1d10 Piercing",
+        "dnd5e.equipmentCategory": "Martial Melee Weapons",
+        "dnd5e.weaponMastery": "Push",
+        "dnd5e.weaponProperties": "Heavy, Reach, Two-Handed",
+        "dnd5e.weight": "18 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.rapier",
+      "kind": "equipment",
+      "name": "Rapier",
+      "attributes": {
+        "dnd5e.cost": "25 GP",
+        "dnd5e.damage": "1d8 Piercing",
+        "dnd5e.equipmentCategory": "Martial Melee Weapons",
+        "dnd5e.weaponMastery": "Vex",
+        "dnd5e.weaponProperties": "Finesse",
+        "dnd5e.weight": "2 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.scimitar",
+      "kind": "equipment",
+      "name": "Scimitar",
+      "attributes": {
+        "dnd5e.cost": "25 GP",
+        "dnd5e.damage": "1d6 Slashing",
+        "dnd5e.equipmentCategory": "Martial Melee Weapons",
+        "dnd5e.weaponMastery": "Nick",
+        "dnd5e.weaponProperties": "Finesse, Light",
+        "dnd5e.weight": "3 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.shortsword",
+      "kind": "equipment",
+      "name": "Shortsword",
+      "attributes": {
+        "dnd5e.cost": "10 GP",
+        "dnd5e.damage": "1d6 Piercing",
+        "dnd5e.equipmentCategory": "Martial Melee Weapons",
+        "dnd5e.weaponMastery": "Vex",
+        "dnd5e.weaponProperties": "Finesse, Light",
+        "dnd5e.weight": "2 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.trident",
+      "kind": "equipment",
+      "name": "Trident",
+      "attributes": {
+        "dnd5e.cost": "5 GP",
+        "dnd5e.damage": "1d8 Piercing",
+        "dnd5e.equipmentCategory": "Martial Melee Weapons",
+        "dnd5e.weaponMastery": "Topple",
+        "dnd5e.weaponProperties": "Thrown (Range 20/60), Versatile (1d10)",
+        "dnd5e.weight": "4 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.warhammer",
+      "kind": "equipment",
+      "name": "Warhammer",
+      "attributes": {
+        "dnd5e.cost": "15 GP",
+        "dnd5e.damage": "1d8 Bludgeoning",
+        "dnd5e.equipmentCategory": "Martial Melee Weapons",
+        "dnd5e.weaponMastery": "Push",
+        "dnd5e.weaponProperties": "Versatile (1d10)",
+        "dnd5e.weight": "5 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.war-pick",
+      "kind": "equipment",
+      "name": "War Pick",
+      "attributes": {
+        "dnd5e.cost": "5 GP",
+        "dnd5e.damage": "1d8 Piercing",
+        "dnd5e.equipmentCategory": "Martial Melee Weapons",
+        "dnd5e.weaponMastery": "Sap",
+        "dnd5e.weaponProperties": "Versatile (1d10)",
+        "dnd5e.weight": "2 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.whip",
+      "kind": "equipment",
+      "name": "Whip",
+      "attributes": {
+        "dnd5e.cost": "2 GP",
+        "dnd5e.damage": "1d4 Slashing",
+        "dnd5e.equipmentCategory": "Martial Melee Weapons",
+        "dnd5e.weaponMastery": "Slow",
+        "dnd5e.weaponProperties": "Finesse, Reach",
+        "dnd5e.weight": "3 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.blowgun",
+      "kind": "equipment",
+      "name": "Blowgun",
+      "attributes": {
+        "dnd5e.cost": "10 GP",
+        "dnd5e.damage": "1 Piercing",
+        "dnd5e.equipmentCategory": "Martial Ranged Weapons",
+        "dnd5e.weaponMastery": "Vex",
+        "dnd5e.weaponProperties": "Ammunition (Range 25/100; Needle), Loading",
+        "dnd5e.weight": "1 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.hand-crossbow",
+      "kind": "equipment",
+      "name": "Hand Crossbow",
+      "attributes": {
+        "dnd5e.cost": "75 GP",
+        "dnd5e.damage": "1d6 Piercing",
+        "dnd5e.equipmentCategory": "Martial Ranged Weapons",
+        "dnd5e.weaponMastery": "Vex",
+        "dnd5e.weaponProperties": "Ammunition (Range 30/120; Bolt), Light, Loading",
+        "dnd5e.weight": "3 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.heavy-crossbow",
+      "kind": "equipment",
+      "name": "Heavy Crossbow",
+      "attributes": {
+        "dnd5e.cost": "50 GP",
+        "dnd5e.damage": "1d10 Piercing",
+        "dnd5e.equipmentCategory": "Martial Ranged Weapons",
+        "dnd5e.weaponMastery": "Push",
+        "dnd5e.weaponProperties": "Ammunition (Range 100/400; Bolt), Heavy, Loading, Two-Handed",
+        "dnd5e.weight": "18 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.longbow",
+      "kind": "equipment",
+      "name": "Longbow",
+      "attributes": {
+        "dnd5e.cost": "50 GP",
+        "dnd5e.damage": "1d8 Piercing",
+        "dnd5e.equipmentCategory": "Martial Ranged Weapons",
+        "dnd5e.weaponMastery": "Slow",
+        "dnd5e.weaponProperties": "Ammunition (Range 150/600; Arrow), Heavy, Two-Handed",
+        "dnd5e.weight": "2 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.musket",
+      "kind": "equipment",
+      "name": "Musket",
+      "attributes": {
+        "dnd5e.cost": "500 GP",
+        "dnd5e.damage": "1d12 Piercing",
+        "dnd5e.equipmentCategory": "Martial Ranged Weapons",
+        "dnd5e.weaponMastery": "Slow",
+        "dnd5e.weaponProperties": "Ammunition (Range 40/120; Bullet), Loading, Two-Handed",
+        "dnd5e.weight": "10 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.pistol",
+      "kind": "equipment",
+      "name": "Pistol",
+      "attributes": {
+        "dnd5e.cost": "250 GP",
+        "dnd5e.damage": "1d10 Piercing",
+        "dnd5e.equipmentCategory": "Martial Ranged Weapons",
+        "dnd5e.weaponMastery": "Vex",
+        "dnd5e.weaponProperties": "Ammunition (Range 30/90; Bullet), Loading",
+        "dnd5e.weight": "3 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.padded-armor",
+      "kind": "equipment",
+      "name": "Padded Armor",
+      "attributes": {
+        "dnd5e.armorFormula": "11 + Dex modifier",
+        "dnd5e.cost": "5 GP",
+        "dnd5e.equipmentCategory": "Light Armor",
+        "dnd5e.stealth": "Disadvantage",
+        "dnd5e.weight": "8 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.leather-armor",
+      "kind": "equipment",
+      "name": "Leather Armor",
+      "attributes": {
+        "dnd5e.armorFormula": "11 + Dex modifier",
+        "dnd5e.cost": "10 GP",
+        "dnd5e.equipmentCategory": "Light Armor",
+        "dnd5e.weight": "10 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.studded-leather-armor",
+      "kind": "equipment",
+      "name": "Studded Leather Armor",
+      "attributes": {
+        "dnd5e.armorFormula": "12 + Dex modifier",
+        "dnd5e.cost": "45 GP",
+        "dnd5e.equipmentCategory": "Light Armor",
+        "dnd5e.weight": "13 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.hide-armor",
+      "kind": "equipment",
+      "name": "Hide Armor",
+      "attributes": {
+        "dnd5e.armorFormula": "12 + Dex modifier (max 2)",
+        "dnd5e.cost": "10 GP",
+        "dnd5e.equipmentCategory": "Medium Armor",
+        "dnd5e.weight": "12 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.chain-shirt",
+      "kind": "equipment",
+      "name": "Chain Shirt",
+      "attributes": {
+        "dnd5e.armorFormula": "13 + Dex modifier (max 2)",
+        "dnd5e.cost": "50 GP",
+        "dnd5e.equipmentCategory": "Medium Armor",
+        "dnd5e.weight": "20 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.scale-mail",
+      "kind": "equipment",
+      "name": "Scale Mail",
+      "attributes": {
+        "dnd5e.armorFormula": "14 + Dex modifier (max 2)",
+        "dnd5e.cost": "50 GP",
+        "dnd5e.equipmentCategory": "Medium Armor",
+        "dnd5e.stealth": "Disadvantage",
+        "dnd5e.weight": "45 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.breastplate",
+      "kind": "equipment",
+      "name": "Breastplate",
+      "attributes": {
+        "dnd5e.armorFormula": "14 + Dex modifier (max 2)",
+        "dnd5e.cost": "400 GP",
+        "dnd5e.equipmentCategory": "Medium Armor",
+        "dnd5e.weight": "20 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.half-plate-armor",
+      "kind": "equipment",
+      "name": "Half Plate Armor",
+      "attributes": {
+        "dnd5e.armorFormula": "15 + Dex modifier (max 2)",
+        "dnd5e.cost": "750 GP",
+        "dnd5e.equipmentCategory": "Medium Armor",
+        "dnd5e.stealth": "Disadvantage",
+        "dnd5e.weight": "40 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.ring-mail",
+      "kind": "equipment",
+      "name": "Ring Mail",
+      "attributes": {
+        "dnd5e.armorFormula": "14",
+        "dnd5e.cost": "30 GP",
+        "dnd5e.equipmentCategory": "Heavy Armor",
+        "dnd5e.stealth": "Disadvantage",
+        "dnd5e.weight": "40 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.chain-mail",
+      "kind": "equipment",
+      "name": "Chain Mail",
+      "attributes": {
+        "dnd5e.armorFormula": "16",
+        "dnd5e.cost": "75 GP",
+        "dnd5e.equipmentCategory": "Heavy Armor",
+        "dnd5e.stealth": "Disadvantage",
+        "dnd5e.strengthRequirement": "Str 13",
+        "dnd5e.weight": "55 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.splint-armor",
+      "kind": "equipment",
+      "name": "Splint Armor",
+      "attributes": {
+        "dnd5e.armorFormula": "17",
+        "dnd5e.cost": "200 GP",
+        "dnd5e.equipmentCategory": "Heavy Armor",
+        "dnd5e.stealth": "Disadvantage",
+        "dnd5e.strengthRequirement": "Str 15",
+        "dnd5e.weight": "60 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.plate-armor",
+      "kind": "equipment",
+      "name": "Plate Armor",
+      "attributes": {
+        "dnd5e.armorFormula": "18",
+        "dnd5e.cost": "1,500 GP",
+        "dnd5e.equipmentCategory": "Heavy Armor",
+        "dnd5e.stealth": "Disadvantage",
+        "dnd5e.strengthRequirement": "Str 15",
+        "dnd5e.weight": "65 lb."
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.equipment.shield",
+      "kind": "equipment",
+      "name": "Shield",
+      "attributes": {
+        "dnd5e.armorFormula": "+2",
+        "dnd5e.cost": "10 GP",
+        "dnd5e.equipmentCategory": "Shield",
+        "dnd5e.weight": "6 lb."
       },
       "entries": [
 

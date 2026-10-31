@@ -77,7 +77,7 @@ enum CoreAttributes {
 
         // Classes
         .init(key: featuresKey, label: "Features", type: .entries(showsLevel: true), appliesTo: [.characterClass], group: "Features"),
-        .init(key: detailsKey, label: "Details", type: .entries(showsLevel: false), appliesTo: [.background, .feat], group: "Details"),
+        .init(key: detailsKey, label: "Details", type: .entries(showsLevel: false), appliesTo: [.background, .feat, .item], group: "Details"),
     ]
 
     static func definitions(for kind: PageKind) -> [AttributeDefinition] {

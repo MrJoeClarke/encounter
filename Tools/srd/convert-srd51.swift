@@ -426,6 +426,12 @@ for chapter in chapters where classNames.contains(chapter.title) {
             if let range = text.range(of: "(?<=Hit Dice: 1)d\\d+", options: .regularExpression) {
                 classAttributes.append(("dnd5e.hitDie", String(text[range])))
             } else { review.append("\(className): no hit die found") }
+        case "Equipment":
+            let bodyLines = section.blocks.flatMap { block -> [String] in
+                if case .body(let lines) = block { return lines }
+                return []
+            }
+            classAttributes.append(("dnd5e.startingEquipment", paragraphs(from: bodyLines, lineWidth: lineWidth).joined(separator: "\n")))
         case "Proficiencies":
             let labels = ["Armor", "Weapons", "Tools", "Saving Throws", "Skills"]
             let keys = ["dnd5e.armorProficiencies", "dnd5e.weaponProficiencies", "dnd5e.toolProficiencies", "dnd5e.savingThrows", "dnd5e.skillChoices"]
@@ -770,6 +776,134 @@ func appendWrapped51(_ text: inout String, _ line: String) {
 
 readBackgrounds()
 readFeats()
+
+// MARK: Equipment
+
+/// Groups of a number and a unit that rows of the equipment tables are made of.
+let costPattern = "[\\d,]+ (?:cp|sp|ep|gp|pp)"
+let weightPattern = "[\\d½/]+ lb\\."
+
+/// Armor, weapons, adventuring gear and tools, from the tables of the Equipment chapter, and the equipment packs.
+func readEquipment() {
+    var section = ""
+    var started = false
+    var category = ""
+    var rows: [(entry: PackEntry, kind: String)] = []
+    var last: Int?                // the row a wrapped line carries on
+    var pendingPacks: [String] = []
+    var inPacks = false
+
+    func attributes(_ pairs: [(String, String?)]) -> [(String, String)] { pairs.compactMap { pair in pair.1.map { (pair.0, $0) } } }
+
+    let armorRow = try! NSRegularExpression(pattern: "^(.+?) (\(costPattern)) (\\+?\\d+(?: \\+ Dex modifier(?: \\(max 2\\))?)?) (—|Str \\d+) (—|Disadvantage) (\(weightPattern)|—)$")
+    let weaponRow = try! NSRegularExpression(pattern: "^(.+?) (\(costPattern)) (—|\\d+(?:d\\d+)? (?:bludgeoning|piercing|slashing)) (\(weightPattern)|—)(?: (.*))?$")
+    let gearRow = try! NSRegularExpression(pattern: "^(.+?) (\(costPattern)) (\(weightPattern)|—)$")
+
+    func groups(_ expression: NSRegularExpression, in text: String) -> [String]? {
+        let range = NSRange(text.startIndex..., in: text)
+        guard let match = expression.firstMatch(in: text, range: range) else { return nil }
+        return (1..<match.numberOfRanges).map { index in
+            match.range(at: index).location == NSNotFound ? "" : (text as NSString).substring(with: match.range(at: index))
+        }
+    }
+
+    for index in 0..<document.pageCount {
+        guard let page = document.page(at: index) else { continue }
+        for line in readingOrder(of: page, profile: srd51Profile) {
+            let text = cleanLine(line.text)
+            if case .heading(1) = line.kind {
+                if text == "Equipment" { started = true } else if started { return finishEquipment(rows.map(\.entry), packs: pendingPacks) }
+            }
+            guard started else { continue }
+            switch line.kind {
+            case .heading(2):
+                section = text
+                category = ""
+                inPacks = false
+            case .heading(5):
+                inPacks = text == "Equipment Packs"
+            case .caption:
+                inPacks = false   // a table's caption ends the sidebar before it
+            case .table where inPacks:
+                pendingPacks.append(text)
+            case .table:
+                guard ["Armor", "Weapons", "Adventuring Gear", "Tools"].contains(section) else { continue }
+                // Rows under a heading are indented, in the left or right column.
+                let indented = line.minX - (line.minX < 300 ? 57.6 : 328.6) > 5
+                if section == "Armor", let g = groups(armorRow, in: text) {
+                    let name = g[0]
+                    rows.append((PackEntry(key: "srd51.equipment.\(slug(name))", kind: "equipment", name: name.prefix(1).uppercased() + name.dropFirst(), parent: nil, summary: "",
+                        attributes: attributes([("dnd5e.equipmentCategory", category.isEmpty ? "Armor" : category), ("dnd5e.cost", g[1]), ("dnd5e.armorFormula", g[2]),
+                                                ("dnd5e.strengthRequirement", g[3] == "—" ? nil : g[3]), ("dnd5e.stealth", g[4] == "—" ? nil : g[4]),
+                                                ("dnd5e.weight", g[5] == "—" ? nil : g[5])]), features: []), "armor"))
+                    last = rows.count - 1
+                } else if section == "Weapons", let g = groups(weaponRow, in: text) {
+                    let name = g[0]
+                    rows.append((PackEntry(key: "srd51.equipment.\(slug(name))", kind: "equipment", name: name, parent: nil, summary: "",
+                        attributes: attributes([("dnd5e.equipmentCategory", category), ("dnd5e.cost", g[1]), ("dnd5e.damage", g[2] == "—" ? nil : g[2]),
+                                                ("dnd5e.weight", g[3] == "—" ? nil : g[3]), ("dnd5e.weaponProperties", g[4].isEmpty || g[4] == "—" ? nil : g[4])]), features: []), "weapon"))
+                    last = rows.count - 1
+                } else if section == "Adventuring Gear" || section == "Tools", let g = groups(gearRow, in: text) {
+                    var name = g[0]
+                    // Items grouped under a heading such as "Arcane focus" have names like "Crystal".
+                    if indented, category.lowercased().hasSuffix("focus") || category.lowercased().hasSuffix("symbol") {
+                        name = "\(name) (\(category.lowercased()))"
+                    }
+                    let group = indented && !category.isEmpty ? category : section
+                    rows.append((PackEntry(key: "srd51.equipment.\(slug(name))", kind: "equipment", name: name.prefix(1).uppercased() + name.dropFirst(), parent: nil, summary: "",
+                        attributes: attributes([("dnd5e.equipmentCategory", group), ("dnd5e.cost", g[1]), ("dnd5e.weight", g[2] == "—" ? nil : g[2])]), features: []), "gear"))
+                    last = rows.count - 1
+                } else if !indented, text.range(of: "\\d") == nil, !text.hasPrefix("*"), text.count < 40 {
+                    // A heading inside the table, such as "Light Armor" or "Simple Melee Weapons".
+                    category = text
+                    last = nil
+                } else if let at = last, rows[at].kind == "weapon" {
+                    // The properties of a weapon can wrap onto another line.
+                    var current = rows[at].entry.attributes.first { $0.0 == "dnd5e.weaponProperties" }?.1 ?? ""
+                    current += (current.isEmpty ? "" : " ") + text
+                    rows[at].entry.attributes.removeAll { $0.0 == "dnd5e.weaponProperties" }
+                    rows[at].entry.attributes.append(("dnd5e.weaponProperties", current))
+                }
+            default:
+                break
+            }
+        }
+    }
+    finishEquipment(rows.map(\.entry), packs: pendingPacks)
+}
+
+/// Adds the rows to the pack, along with the equipment packs.
+func finishEquipment(_ rows: [PackEntry], packs: [String]) {
+    var seen = Set<String>()
+    for row in rows {
+        var entry = row
+        // A name can appear twice, such as "Club" as a weapon, and an item can fall under two groups.
+        if !seen.insert(entry.key).inserted { review.append("Equipment “\(entry.name)” appears twice; the second was left out"); continue }
+        entry.attributes.sort { $0.0 < $1.0 }
+        entries.append(entry)
+    }
+    // The packs: "Burglar’s Pack (16 gp). Includes a backpack, ..."
+    var text = ""
+    for line in packs { appendWrapped51(&text, line) }
+    let pattern = try! NSRegularExpression(pattern: "([A-Z][A-Za-z’ ]+ Pack) \\((\(costPattern))\\)\\. ")
+    let ns = text as NSString
+    let matches = pattern.matches(in: text, range: NSRange(location: 0, length: ns.length))
+    for (index, match) in matches.enumerated() {
+        let end = index + 1 < matches.count ? matches[index + 1].range.location : ns.length
+        let name = ns.substring(with: match.range(at: 1))
+        let cost = ns.substring(with: match.range(at: 2))
+        let contents = ns.substring(with: NSRange(location: match.range.upperBound, length: end - match.range.upperBound)).trimmingCharacters(in: .whitespaces)
+        entries.append(PackEntry(key: "srd51.equipment.\(slug(name))", kind: "equipment", name: name, parent: nil, summary: contents,
+                                 attributes: [("dnd5e.cost", cost), ("dnd5e.equipmentCategory", "Equipment Pack")], features: []))
+    }
+    let byCategory = Dictionary(grouping: entries.filter { $0.kind == "equipment" }) { entry in
+        entry.attributes.first { $0.0 == "dnd5e.equipmentCategory" }?.1 ?? "?"
+    }
+    report.append("Equipment (\(entries.filter { $0.kind == "equipment" }.count)): " + byCategory.sorted { $0.key < $1.key }.map { "\($0.key) \($0.value.count)" }.joined(separator: ", "))
+    if matches.count != 7 { review.append("Found \(matches.count) equipment packs, expected 7") }
+}
+
+readEquipment()
 
 // MARK: Writing the pack
 

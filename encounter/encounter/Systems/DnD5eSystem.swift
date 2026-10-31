@@ -71,6 +71,7 @@ struct DnD5eSystem: RuleSystem {
         .init(key: "dnd5e.weaponProficiencies", label: "Weapon Proficiencies", type: .text, appliesTo: [.characterClass], group: "D&D 5e"),
         .init(key: "dnd5e.toolProficiencies", label: "Tool Proficiencies", type: .text, appliesTo: [.characterClass], group: "D&D 5e"),
         .init(key: "dnd5e.skillChoices", label: "Skill Choices", type: .text, appliesTo: [.characterClass], group: "D&D 5e"),
+        .init(key: "dnd5e.startingEquipment", label: "Starting Equipment", type: .text, appliesTo: [.characterClass], group: "D&D 5e"),
 
         // Backgrounds. What a background gives is kept as text, as the rules word it, until the character builder reads it.
         .init(key: "dnd5e.backgroundAbilityScores", label: "Ability Scores", type: .text, appliesTo: [.background], group: "D&D 5e"),
@@ -79,6 +80,18 @@ struct DnD5eSystem: RuleSystem {
         .init(key: "dnd5e.backgroundTools", label: "Tool Proficiency", type: .text, appliesTo: [.background], group: "D&D 5e"),
         .init(key: "dnd5e.backgroundLanguages", label: "Languages", type: .text, appliesTo: [.background], group: "D&D 5e"),
         .init(key: "dnd5e.backgroundEquipment", label: "Starting Equipment", type: .text, appliesTo: [.background], group: "D&D 5e"),
+
+        // Equipment. Armor, weapons, tools and gear from the library become items.
+        .init(key: "dnd5e.equipmentCategory", label: "Category", type: .text, appliesTo: [.item], group: "D&D 5e"),
+        .init(key: "dnd5e.cost", label: "Cost", type: .text, appliesTo: [.item], group: "D&D 5e"),
+        .init(key: "dnd5e.weight", label: "Weight", type: .text, appliesTo: [.item], group: "D&D 5e"),
+        .init(key: "dnd5e.damage", label: "Damage", type: .text, appliesTo: [.item], group: "D&D 5e"),
+        .init(key: "dnd5e.weaponProperties", label: "Properties", type: .text, appliesTo: [.item], group: "D&D 5e"),
+        .init(key: "dnd5e.weaponMastery", label: "Mastery", type: .text, appliesTo: [.item], group: "D&D 5e"),
+        .init(key: "dnd5e.armorFormula", label: "Armor Class", type: .text, appliesTo: [.item], group: "D&D 5e"),
+        .init(key: "dnd5e.strengthRequirement", label: "Strength Needed", type: .text, appliesTo: [.item], group: "D&D 5e"),
+        .init(key: "dnd5e.stealth", label: "Stealth", type: .text, appliesTo: [.item], group: "D&D 5e"),
+        .init(key: "dnd5e.toolAbility", label: "Tool Ability", type: .text, appliesTo: [.item], group: "D&D 5e"),
 
         // Feats
         .init(key: "dnd5e.featCategory", label: "Category", type: .text, appliesTo: [.feat], group: "D&D 5e"),
