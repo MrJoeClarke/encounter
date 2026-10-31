@@ -101,6 +101,19 @@ private final class LibraryBundleToken {}
 // MARK: Create Custom Version
 
 extension Library {
+    /// An entry's attributes and traits or features. A subrace's include its parent's, then its own.
+    func traits(of entry: LibraryEntry) -> (attributes: [String: AttributeValue], entries: [EntryValue]) {
+        var attributes: [String: AttributeValue] = [:]
+        var entries: [EntryValue] = []
+        if entry.kind == .race, let parentKey = entry.parent, let parent = self.entry(forKey: parentKey) {
+            attributes.merge(parent.attributes) { $1 }
+            entries += parent.entries
+        }
+        attributes.merge(entry.attributes) { $1 }
+        entries += entry.entries
+        return (attributes, entries)
+    }
+
     /// Makes an editable page in the world from a library entry, a variant to change as the creator likes.
     ///
     /// A subrace becomes a complete race: the parent's attributes and traits, then its own. A class includes the

@@ -61,6 +61,7 @@ struct DnD5eSystem: RuleSystem {
         // A character's class and level. The class can be a page in the world or a library entry.
         .init(key: "core.class", label: "Class", type: .contentReference(.characterClass, role: LinkRole.characterClass), appliesTo: [.character], group: "D&D 5e"),
         .init(key: "dnd5e.subclass", label: "Subclass", type: .subclassReference(role: "subclass", classRole: LinkRole.characterClass), appliesTo: [.character], group: "D&D 5e"),
+        .init(key: "core.background", label: "Background", type: .contentReference(.background, role: LinkRole.background), appliesTo: [.character], group: "D&D 5e"),
         .init(key: "dnd5e.classLevel", label: "Class Level", type: .number, appliesTo: [.character], group: "D&D 5e"),
 
         // Classes
@@ -92,6 +93,15 @@ struct DnD5eSystem: RuleSystem {
         .init(key: "dnd5e.strengthRequirement", label: "Strength Needed", type: .text, appliesTo: [.item], group: "D&D 5e"),
         .init(key: "dnd5e.stealth", label: "Stealth", type: .text, appliesTo: [.item], group: "D&D 5e"),
         .init(key: "dnd5e.toolAbility", label: "Tool Ability", type: .text, appliesTo: [.item], group: "D&D 5e"),
+
+        // What a character built from the library has.
+        .init(key: "dnd5e.proficiencyBonus", label: "Proficiency Bonus", type: .number, appliesTo: [.character], group: "Combat"),
+        .init(key: "dnd5e.savingThrowProficiencies", label: "Saving Throw Proficiencies", type: .text, appliesTo: [.character], group: "Proficiencies"),
+        .init(key: "dnd5e.skillProficiencies", label: "Skill Proficiencies", type: .text, appliesTo: [.character], group: "Proficiencies"),
+        .init(key: "dnd5e.racialTraits", label: "Racial Traits", type: .entries(showsLevel: false), appliesTo: [.character], group: "Traits"),
+        .init(key: "dnd5e.classFeatures", label: "Class Features", type: .entries(showsLevel: true), appliesTo: [.character], group: "Features"),
+        .init(key: "dnd5e.equipment", label: "Equipment", type: .entries(showsLevel: false), appliesTo: [.character], group: "Equipment"),
+        .init(key: "dnd5e.spells", label: "Spells", type: .entries(showsLevel: false), appliesTo: [.character], group: "Spells"),
 
         // Spells
         .init(key: "dnd5e.spellLevel", label: "Level", type: .number, appliesTo: [.spell], group: "D&D 5e"),

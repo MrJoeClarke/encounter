@@ -77,6 +77,7 @@ struct ContentReferenceField: View {
         switch kind {
         case .race: .race
         case .characterClass: .class
+        case .background: .background
         default: nil
         }
     }

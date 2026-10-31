@@ -15,6 +15,7 @@ struct PageListView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var pages: [Page]
     @State private var pageToDelete: Page?
+    @State private var isBuildingCharacter = false
 
     init(world: World, kind: PageKind, selection: Binding<Page?>) {
         self.world = world
@@ -59,10 +60,9 @@ struct PageListView: View {
             }
         }
         .navigationTitle(Text(kind.title))
-        .toolbar {
-            ToolbarItem {
-                Button("New \(String(localized: kind.singularTitle))", systemImage: "plus", action: addPage)
-            }
+        .toolbar { toolbarItems }
+        .sheet(isPresented: $isBuildingCharacter) {
+            CharacterBuilderView(world: world) { selection = $0 }
         }
         .alert(
             "Delete Page?",
@@ -73,6 +73,23 @@ struct PageListView: View {
             Button("Cancel", role: .cancel) {}
         } message: { page in
             Text("“\(page.title.isEmpty ? String(localized: "Untitled") : page.title)” and its links will be deleted. This can’t be undone.")
+        }
+    }
+
+    /// A character list in a world with a content library can also build a character from it.
+    private var canBuildCharacter: Bool {
+        kind == .character && RuleSystems.system(for: world.system).hasContentLibrary
+    }
+
+    @ToolbarContentBuilder
+    private var toolbarItems: some ToolbarContent {
+        if canBuildCharacter {
+            ToolbarItem {
+                Button("Build Character…", systemImage: "wand.and.stars") { isBuildingCharacter = true }
+            }
+        }
+        ToolbarItem {
+            Button("New \(String(localized: kind.singularTitle))", systemImage: "plus", action: addPage)
         }
     }
 
