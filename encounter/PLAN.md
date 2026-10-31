@@ -171,6 +171,13 @@ protocol RuleSystem {
 - **Pins are derived:** with a calibrated map, a pin just points at a place and is drawn from `place.geometry`. Pins on an uncalibrated map keep their own normalised image position. `MapPin` isn't used by any screen yet, so changing it is cheap.
 - **Limit:** a world has one plane. Building floors, dungeon levels and other planes would overlap on it, and will need their own plane (a "space" a place belongs to) or a height value later. The geometry maths wouldn't change.
 
+### 5.3a Calendars (milestone 10)
+- **Editor:** the world's home page shows the calendar and opens a sheet to edit it: months (name, days, add, delete, reorder), hours in a day, days of the week, and starting presets (twelve months of 30 days, and Gregorian). A "Try a Date" row shows how a date reads.
+- **Dates:** `InWorldDateField` picks a year, a month by name, a day that exists in that month and an hour if the day has more than one. Changing the month keeps the day if it fits (`clamped`). `format` reads a date as "14 Frost 1203", or "Moonday 14 Frost 1203, hour 6".
+- **Years before 0:** allowed. They order before year 0, and weekdays count back from it.
+- **Weekdays:** year 0, month 1, day 1 is the first weekday listed. A different starting weekday isn't supported yet.
+- **Editing a calendar under existing dates:** dates are never changed. The editor warns how many dates in the world no longer fit.
+
 ### 5.4 Events, timelines and movement
 - Events carry an in-world date, a location and participants.
 - The **timeline** view sorts a world's events, with filters (campaign or backstory, character, place, organisation).
@@ -317,7 +324,7 @@ Each milestone ends with a building app and passing tests. I'll stop and show yo
 | 8a | **Place hierarchy** | Built, awaiting review | Parenting, outline, breadcrumbs, children, safe deletion. |
 | 8b | **Place coordinates** | Built, awaiting review | Metre-based positions and polygons, spatial maths, automatic parents. |
 | 9 | **Search** | Built, awaiting review | Global search and kind filters, including library entries. |
-| 10 | **Calendars** | Planned | Custom calendar editor per world, `InWorldDate` entry and formatting. |
+| 10 | **Calendars** | Built, awaiting review | Custom calendar editor per world, `InWorldDate` entry and formatting. |
 | 11 | **Maps** | Planned | Import, view, pins, nested maps. |
 | 12 | **Events and timelines** | Planned | Event fields, campaign vs backstory, timeline view, character journey. |
 | 13 | **Character levelling** | Planned (deferred until after events and timelines) | Level a character up to 20: hit points, proficiency bonus, class features gained, subclass choice, and new spells. |
