@@ -47,19 +47,14 @@ struct WorldShellView: View {
 
                 if hasLibrary {
                     Section("Library") {
-                        Label {
-                            Text(world.edition.raceTermPlural)
-                        } icon: {
-                            Image(systemName: "pawprint")
+                        ForEach(Library.shared.listKinds(in: world.edition), id: \.self) { kind in
+                            Label {
+                                Text(kind.listTitle(in: world.edition))
+                            } icon: {
+                                Image(systemName: kind.systemImage)
+                            }
+                            .tag(WorldSidebarItem.library(kind))
                         }
-                        .tag(WorldSidebarItem.library(.race))
-
-                        Label {
-                            Text("Classes")
-                        } icon: {
-                            Image(systemName: "shield.lefthalf.filled")
-                        }
-                        .tag(WorldSidebarItem.library(.class))
                     }
                 }
             }

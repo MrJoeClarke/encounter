@@ -129,7 +129,7 @@ private struct MentionResultRow: View {
                 icon(page.kind.systemImage)
             }
         case .library(let entry):
-            icon((entry.kind.pageKind ?? .characterClass).systemImage)
+            icon(entry.kind.systemImage)
         }
     }
 

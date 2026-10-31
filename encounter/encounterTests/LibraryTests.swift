@@ -108,7 +108,7 @@ struct LibraryTests {
         { "formatVersion": 1, "id": "p", "name": "P", "edition": "E", "attribution": "A",
           "entries": [
             { "key": "p.race.a", "kind": "race", "name": "A" },
-            { "key": "p.spell.b", "kind": "spell", "name": "B" },
+            { "key": "p.vehicle.b", "kind": "vehicle", "name": "B" },
             { "key": "p.race.c", "kind": "race" },
             { "key": "p.race.d", "kind": "race", "name": "D" }
           ] }
@@ -166,7 +166,7 @@ struct LibraryTests {
                     switch entry.kind {
                     case .race: #expect(parent?.kind == .race)
                     case .subclass: #expect(parent?.kind == .class)
-                    case .class: Issue.record("\(entry.key) is a class with a parent")
+                    default: Issue.record("\(entry.key) is a \(entry.kind) with a parent")
                     }
                 }
                 for feature in entry.entries {
@@ -177,6 +177,8 @@ struct LibraryTests {
                         #expect(feature.level == nil, "\(entry.key) / \(feature.name) has a level")
                     case .class, .subclass:
                         #expect((1...20).contains(feature.level ?? 0), "\(entry.key) / \(feature.name) needs a level from 1 to 20")
+                    case .skill, .background, .feat, .equipment, .spell:
+                        break
                     }
                 }
             }
@@ -189,7 +191,9 @@ struct LibraryTests {
             let pack = try #require(Library.shared.pack(for: edition))
             for entry in pack.entries {
                 let pageKind = try #require(entry.kind.pageKind ?? .characterClass)
-                let known = Set(RuleSystems.definitions(for: pageKind, system: .dnd5e).map(\.key))
+                // Skills and the like have no page to edit, so their attributes only need a label in the library.
+                let libraryOnly: Set<String> = ["dnd5e.ability"]
+                let known = Set(RuleSystems.definitions(for: pageKind, system: .dnd5e).map(\.key)).union(libraryOnly)
                 for key in entry.attributes.keys {
                     #expect(known.contains(key), "\(entry.key) uses \(key), which the editor has no field for")
                 }
@@ -789,5 +793,85 @@ struct LibraryTests {
         let classes = Library.shared.topLevelEntries(.class, in: .srd52)
         #expect(classes.count == 12)
         #expect(classes.allSatisfy { $0.kind == .class })
+    }
+
+    // MARK: Skills and the other library kinds
+
+    @Test func bothEditionsHaveTheEighteenSkillsWithTheirAbilities() throws {
+        let abilities = ["Strength", "Dexterity", "Constitution", "Intelligence", "Wisdom", "Charisma"]
+        let expected: [String: String] = [
+            "Athletics": "Strength",
+            "Acrobatics": "Dexterity", "Sleight of Hand": "Dexterity", "Stealth": "Dexterity",
+            "Arcana": "Intelligence", "History": "Intelligence", "Investigation": "Intelligence", "Nature": "Intelligence", "Religion": "Intelligence",
+            "Animal Handling": "Wisdom", "Insight": "Wisdom", "Medicine": "Wisdom", "Perception": "Wisdom", "Survival": "Wisdom",
+            "Deception": "Charisma", "Intimidation": "Charisma", "Performance": "Charisma", "Persuasion": "Charisma",
+        ]
+        for edition in LibraryEdition.allCases {
+            let skills = Library.shared.entries(.skill, in: edition)
+            #expect(skills.count == 18, "\(edition)")
+            for skill in skills {
+                #expect(skill.kind == .skill)
+                #expect(skill.parent == nil)
+                #expect(!skill.summary.isEmpty, "\(skill.name) has no description")
+                guard case .text(let ability)? = skill.attributes["dnd5e.ability"] else {
+                    Issue.record("\(skill.name) has no ability")
+                    continue
+                }
+                #expect(abilities.contains(ability))
+                #expect(expected[skill.name] == ability, "\(skill.name) in \(edition)")
+            }
+            // Constitution has no skills.
+            #expect(!skills.contains { $0.attributes["dnd5e.ability"] == .text("Constitution") })
+        }
+    }
+
+    @Test func theLibraryListsOnlyKindsThatHaveEntries() {
+        for edition in LibraryEdition.allCases {
+            let kinds = Library.shared.listKinds(in: edition)
+            #expect(kinds.starts(with: [.race, .class]))
+            #expect(kinds.contains(.skill))
+            #expect(!kinds.contains(.subclass))
+            #expect(kinds == kinds.sorted { LibraryKind.listKinds.firstIndex(of: $0)! < LibraryKind.listKinds.firstIndex(of: $1)! })
+        }
+        #expect(makeLibrary().listKinds(in: .srd51) == [.race, .class])
+        #expect(makeLibrary().listKinds(in: .srd52).isEmpty)
+    }
+
+    @Test func everyKindHasATitleAnIconAndALabel() {
+        for kind in LibraryKind.allCases {
+            #expect(!kind.systemImage.isEmpty)
+            #expect(!String(localized: kind.listTitle(in: .srd51)).isEmpty)
+        }
+        #expect(String(localized: LibraryKind.race.listTitle(in: .srd51)) == "Races")
+        #expect(String(localized: LibraryKind.race.listTitle(in: .srd52)) == "Species")
+        #expect(String(localized: LibraryKind.skill.listTitle(in: .srd52)) == "Skills")
+        for kind in LibraryKind.allCases {
+            #expect(!String(localized: LibraryEntry(key: "srd52.x.y", kind: kind, name: "N").kindTitle).isEmpty)
+        }
+    }
+
+    @Test func aSkillCanBeMentionedAndOpenedButNotCopied() throws {
+        let context = try makeContext()
+        let world = makeWorld(in: context, edition: .srd51)
+        let athletics = try #require(Library.shared.entry(forKey: "srd51.skill.athletics"))
+
+        #expect(Library.shared.mentionableEntries(matching: "athlet", in: .srd51, limit: 8).map(\.key) == ["srd51.skill.athletics"])
+        #expect(Library.shared.makeCustomVersion(of: athletics, in: world, context: context) == nil)
+
+        let navigation = WorldNavigation()
+        navigation.openLibraryEntry(athletics)
+        #expect(navigation.selection == .library(.skill))
+        #expect(navigation.selectedLibraryKey == "srd51.skill.athletics")
+    }
+
+    @Test func aPackWithAKindThisAppDoesNotKnowStillLoads() throws {
+        let pack = try decode("""
+        { "formatVersion": 1, "id": "p", "name": "P", "edition": "E", "attribution": "A",
+          "entries": [
+            { "key": "p.skill.a", "kind": "skill", "name": "A" },
+            { "key": "p.vehicle.b", "kind": "vehicle", "name": "B" }
+          ] }
+        """)
+        #expect(pack.entries.map(\.key) == ["p.skill.a"])
     }
 }

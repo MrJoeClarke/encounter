@@ -34,7 +34,7 @@ struct LibraryBrowser: View {
     }
 
     private var title: LocalizedStringResource {
-        kind == .race ? world.edition.raceTermPlural : "Classes"
+        kind.listTitle(in: world.edition)
     }
 
     private var entries: [LibraryEntry] {
@@ -94,7 +94,7 @@ private struct LibraryRow: View {
 
     var body: some View {
         HStack(spacing: 10) {
-            Image(systemName: (entry.kind.pageKind ?? .characterClass).systemImage)
+            Image(systemName: entry.kind.systemImage)
                 .foregroundStyle(.secondary)
                 .frame(width: iconSize, height: iconSize)
                 .background(.quaternary, in: RoundedRectangle(cornerRadius: 6))
@@ -119,6 +119,8 @@ private struct LibraryRow: View {
         switch entry.kind {
         case .class: parts = [text("dnd5e.hitDie").map { String(localized: "Hit die \($0)") }, text("dnd5e.primaryAbility")]
         case .race, .subclass: parts = [text("core.raceSize"), text("dnd5e.speed")]
+        case .skill: parts = [text("dnd5e.ability")]
+        case .background, .feat, .equipment, .spell: parts = []
         }
         let joined = parts.compactMap { $0 }.joined(separator: " · ")
         return joined.isEmpty ? nil : joined

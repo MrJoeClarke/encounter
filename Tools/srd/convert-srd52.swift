@@ -522,6 +522,47 @@ for line in lines {
 if let draft = currentClass { finish(draft) }
 if let draft = species { finish(draft) }
 
+// MARK: Skills
+
+let skillAbilities = ["Strength", "Dexterity", "Constitution", "Intelligence", "Wisdom", "Charisma"]
+let skillNames = ["Acrobatics", "Animal Handling", "Arcana", "Athletics", "Deception", "History", "Insight", "Intimidation", "Investigation",
+                  "Medicine", "Nature", "Perception", "Performance", "Persuasion", "Religion", "Sleight of Hand", "Stealth", "Survival"]
+
+/// The Skills table in "Playing the Game": each skill, its ability and an example of its use. Each row is read
+/// from the cells that sit on one line of the page.
+func readSkills() {
+    var rows: [(y: Double, cells: [Line])] = []
+    for index in 0..<document.pageCount {
+        guard let page = document.page(at: index), page.string?.contains("Skill Ability Example Uses") == true else { continue }
+        for line in readingOrder(of: page, profile: srd52Profile) {
+            guard case .table = line.kind else { continue }
+            if let at = rows.firstIndex(where: { abs($0.y - line.y) < 2 }) {
+                rows[at].cells.append(line)
+            } else {
+                rows.append((line.y, [line]))
+            }
+        }
+        break
+    }
+    var found: [PackEntry] = []
+    for row in rows {
+        let text = cleanLine(row.cells.sorted { $0.minX < $1.minX }.map(\.text).joined(separator: " "))
+        guard let name = skillNames.first(where: { text.hasPrefix($0 + " ") }) else { continue }
+        let rest = String(text.dropFirst(name.count + 1))
+        guard let ability = skillAbilities.first(where: { rest.hasPrefix($0 + " ") }) else {
+            review.append("Skill \(name): no ability found in “\(text)”")
+            continue
+        }
+        found.append(PackEntry(key: "srd52.skill.\(slug(name))", kind: "skill", name: name, parent: nil,
+                               summary: String(rest.dropFirst(ability.count + 1)), attributes: [("dnd5e.ability", ability)], features: []))
+    }
+    entries += found.sorted { $0.name < $1.name }
+    report.append("Skills (\(found.count)): " + found.map { "\($0.name) (\($0.attributes.first?.1 ?? "?"))" }.joined(separator: ", "))
+    if found.count != 18 { review.append("Found \(found.count) skills, expected 18") }
+}
+
+readSkills()
+
 // MARK: Writing the pack
 
 let attribution = "This work includes material from the System Reference Document 5.2.1 (“SRD 5.2.1”) by Wizards of the Coast LLC, available at https://www.dndbeyond.com/srd. The SRD 5.2.1 is licensed under the Creative Commons Attribution 4.0 International License, available at https://creativecommons.org/licenses/by/4.0/legalcode."

@@ -58,6 +58,11 @@ final class Library {
         entries(kind, in: edition).filter { $0.parent == nil }
     }
 
+    /// The lists to show in the Library for an edition: those that have entries, in order.
+    func listKinds(in edition: LibraryEdition) -> [LibraryKind] {
+        LibraryKind.listKinds.filter { !topLevelEntries($0, in: edition).isEmpty }
+    }
+
     /// The subraces of a race or subclasses of a class.
     func children(of entry: LibraryEntry, in edition: LibraryEdition) -> [LibraryEntry] {
         (pack(for: edition)?.entries ?? [])
@@ -126,7 +131,7 @@ extension Library {
                     EntryValue(name: "\(subclass.name): \(feature.name)", level: feature.level, text: feature.text)
                 }
             }
-        case .subclass:
+        case .subclass, .skill, .background, .feat, .equipment, .spell:
             return nil
         }
 
@@ -156,6 +161,11 @@ extension LibraryEntry {
         case .race: return parent == nil ? edition.raceTermSingular : "Subrace"
         case .class: return "Class"
         case .subclass: return "Subclass"
+        case .skill: return "Skill"
+        case .background: return "Background"
+        case .feat: return "Feat"
+        case .equipment: return "Equipment"
+        case .spell: return "Spell"
         }
     }
 }

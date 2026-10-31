@@ -57,7 +57,7 @@ struct NotesSection: View {
                         Label {
                             Text(entry.name)
                         } icon: {
-                            Image(systemName: (entry.kind.pageKind ?? .characterClass).systemImage)
+                            Image(systemName: entry.kind.systemImage)
                         }
                     }
                     .buttonStyle(.plain)

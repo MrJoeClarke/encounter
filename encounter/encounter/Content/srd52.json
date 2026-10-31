@@ -690,6 +690,222 @@
         { "name": "Otherworldly Presence", "text": "You know the Thaumaturgy cantrip. When you cast it with this trait, the spell uses the same spellcasting ability you use for your Fiendish Legacy trait." },
         { "name": "Fiendish Legacies", "text": "Legacy Level 1 Level 3 Level 5\nAbyssal\nYou have Resistance to Poison damage.\nRay of Sickness Hold Person\nYou also know the Poison Spray cantrip.\nChthonic\nYou have Resistance to Necrotic damage.\nFalse Life Ray of Enfeeblement\nYou also know the Chill Touch cantrip.\nInfernal\nYou have Resistance to Fire damage.\nHellish Rebuke Darkness\nYou also know the Fire Bolt cantrip." }
       ]
+    },
+    {
+      "key": "srd52.skill.acrobatics",
+      "kind": "skill",
+      "name": "Acrobatics",
+      "summary": "Stay on your feet in a tricky situation, or perform an acrobatic stunt.",
+      "attributes": {
+        "dnd5e.ability": "Dexterity"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.skill.animal-handling",
+      "kind": "skill",
+      "name": "Animal Handling",
+      "summary": "Calm or train an animal, or get an animal to behave in a certain way.",
+      "attributes": {
+        "dnd5e.ability": "Wisdom"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.skill.arcana",
+      "kind": "skill",
+      "name": "Arcana",
+      "summary": "Recall lore about spells, magic items, and the planes of existence.",
+      "attributes": {
+        "dnd5e.ability": "Intelligence"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.skill.athletics",
+      "kind": "skill",
+      "name": "Athletics",
+      "summary": "Jump farther than normal, stay afloat in rough water, or break something.",
+      "attributes": {
+        "dnd5e.ability": "Strength"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.skill.deception",
+      "kind": "skill",
+      "name": "Deception",
+      "summary": "Tell a convincing lie, or wear a disguise convincingly.",
+      "attributes": {
+        "dnd5e.ability": "Charisma"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.skill.history",
+      "kind": "skill",
+      "name": "History",
+      "summary": "Recall lore about historical events, people, nations, and cultures.",
+      "attributes": {
+        "dnd5e.ability": "Intelligence"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.skill.insight",
+      "kind": "skill",
+      "name": "Insight",
+      "summary": "Discern a person’s mood and intentions.",
+      "attributes": {
+        "dnd5e.ability": "Wisdom"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.skill.intimidation",
+      "kind": "skill",
+      "name": "Intimidation",
+      "summary": "Awe or threaten someone into doing what you want.",
+      "attributes": {
+        "dnd5e.ability": "Charisma"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.skill.investigation",
+      "kind": "skill",
+      "name": "Investigation",
+      "summary": "Find obscure information in books, or deduce how something works.",
+      "attributes": {
+        "dnd5e.ability": "Intelligence"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.skill.medicine",
+      "kind": "skill",
+      "name": "Medicine",
+      "summary": "Diagnose an illness, or determine what killed the recently slain.",
+      "attributes": {
+        "dnd5e.ability": "Wisdom"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.skill.nature",
+      "kind": "skill",
+      "name": "Nature",
+      "summary": "Recall lore about terrain, plants, animals, and weather.",
+      "attributes": {
+        "dnd5e.ability": "Intelligence"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.skill.perception",
+      "kind": "skill",
+      "name": "Perception",
+      "summary": "Using a combination of senses, notice something that’s easy to miss.",
+      "attributes": {
+        "dnd5e.ability": "Wisdom"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.skill.performance",
+      "kind": "skill",
+      "name": "Performance",
+      "summary": "Act, tell a story, perform music, or dance.",
+      "attributes": {
+        "dnd5e.ability": "Charisma"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.skill.persuasion",
+      "kind": "skill",
+      "name": "Persuasion",
+      "summary": "Honestly and graciously convince someone of something.",
+      "attributes": {
+        "dnd5e.ability": "Charisma"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.skill.religion",
+      "kind": "skill",
+      "name": "Religion",
+      "summary": "Recall lore about gods, religious rituals, and holy symbols.",
+      "attributes": {
+        "dnd5e.ability": "Intelligence"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.skill.sleight-of-hand",
+      "kind": "skill",
+      "name": "Sleight of Hand",
+      "summary": "Pick a pocket, conceal a handheld object, or perform legerdemain.",
+      "attributes": {
+        "dnd5e.ability": "Dexterity"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.skill.stealth",
+      "kind": "skill",
+      "name": "Stealth",
+      "summary": "Escape notice by moving quietly and hiding behind things.",
+      "attributes": {
+        "dnd5e.ability": "Dexterity"
+      },
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.skill.survival",
+      "kind": "skill",
+      "name": "Survival",
+      "summary": "Follow tracks, forage, find a trail, or avoid natural hazards.",
+      "attributes": {
+        "dnd5e.ability": "Wisdom"
+      },
+      "entries": [
+
+      ]
     }
   ]
 }

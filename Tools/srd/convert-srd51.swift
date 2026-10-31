@@ -543,6 +543,102 @@ func mergedFeatureText(_ section: Section) -> String {
     return paragraphList.joined(separator: "\n\n")
 }
 
+// MARK: Skills
+
+let skillAbilityNames = ["Strength", "Dexterity", "Constitution", "Intelligence", "Wisdom", "Charisma"]
+
+/// The 18 skills: which ability each belongs to, from the list in "Using Ability Scores", and the description of
+/// each from the ability sections that follow, with its examples.
+func readSkills() {
+    var firstPage: Int?
+    var lastPage: Int?
+    for index in 0..<document.pageCount {
+        guard let raw = document.page(at: index)?.string else { continue }
+        let text = cleanLine(raw)
+        if firstPage == nil, text.contains("related to each ability") { firstPage = index }
+        if text.contains("(Persuasion)") { lastPage = index }
+    }
+    guard let firstPage, let lastPage, lastPage >= firstPage else {
+        review.append("Couldn't find the skills section")
+        return
+    }
+
+    var abilityOfSkill: [String: String] = [:]
+    var skillOrder: [String] = []
+    var ability: String?
+    var listDone = false
+    var blocksOfLines: [[String]] = []
+    var current: [String] = []
+    func flush() { if !current.isEmpty { blocksOfLines.append(current); current = [] } }
+
+    for index in firstPage...min(lastPage + 1, document.pageCount - 1) {
+        guard let page = document.page(at: index) else { continue }
+        for line in readingOrder(of: page, profile: srd51Profile) {
+            let text = cleanLine(line.text)
+            switch line.kind {
+            case .body:
+                if index == firstPage, !listDone {
+                    if text.hasPrefix("•"), let ability {
+                        let name = text.dropFirst().trimmingCharacters(in: .whitespaces)
+                        abilityOfSkill[name] = ability
+                        skillOrder.append(name)
+                        continue
+                    }
+                    if text.hasPrefix("Sometimes, the GM") { listDone = true }
+                }
+                current.append(line.text)
+            case .heading:
+                // In the list of skills, each ability is a heading with its skills beneath it.
+                if index == firstPage, !listDone, skillAbilityNames.contains(text) { ability = text }
+                flush()
+            default:
+                flush()
+            }
+        }
+        // A description can carry on to the next page, so the page's end doesn't end the block.
+    }
+    flush()
+
+    // A skill's description starts with its name, run in at the start of a paragraph or part way through one,
+    // and runs to the next skill's, or to the end of the section it's in. Blocks are kept apart by a separator
+    // so a description never runs across a heading.
+    let separator = "\u{1F}"
+    let text = blocksOfLines.map { paragraphs(from: $0, lineWidth: lineWidth).joined(separator: "\n\n") }.joined(separator: separator)
+    var starts: [(name: String, start: Range<String.Index>)] = []
+    var searchFrom = text.startIndex
+    for name in skillOrder {
+        let pattern = "(?<=^|[.!?:)\\n\u{1F}] ?)" + NSRegularExpression.escapedPattern(for: name) + "\\. (?=[A-Z])"
+        guard let range = text.range(of: pattern, options: .regularExpression, range: searchFrom..<text.endIndex) else { continue }
+        starts.append((name, range))
+        searchFrom = range.upperBound
+    }
+    var descriptions: [String: [String]] = [:]
+    for (index, item) in starts.enumerated() {
+        var end = index + 1 < starts.count ? starts[index + 1].start.lowerBound : text.endIndex
+        var body = String(text[item.start.upperBound..<end])
+        if let cut = body.firstIndex(of: Character(separator)) { body = String(body[..<cut]) }
+        // "Other Strength Checks." and the like begin the next part of the section.
+        if let other = body.range(of: "\\s+Other [A-Za-z ]+ Checks\\. ", options: .regularExpression) { body = String(body[..<other.lowerBound]) }
+        end = text.endIndex
+        // A paragraph never starts in lower case: that's a line wrapped after a short line ending in a bracket.
+        body = body.replacingOccurrences(of: "\n\n(?=[a-z])", with: " ", options: .regularExpression)
+        descriptions[item.name] = [body.trimmingCharacters(in: .whitespacesAndNewlines)]
+    }
+
+    for name in skillOrder.sorted() {
+        guard let parts = descriptions[name], let ability = abilityOfSkill[name] else {
+            review.append("Skill \(name): no description found")
+            continue
+        }
+        entries.append(PackEntry(key: "srd51.skill.\(slug(name))", kind: "skill", name: name, parent: nil,
+                                 summary: parts.joined(separator: "\n\n"), attributes: [("dnd5e.ability", ability)], features: []))
+    }
+    report.append("Skills (\(skillOrder.count)): " + skillOrder.map { "\($0) (\(abilityOfSkill[$0] ?? "?"))" }.joined(separator: ", "))
+    if skillOrder.count != 18 { review.append("Found \(skillOrder.count) skills, expected 18") }
+}
+
+readSkills()
+
 // MARK: Writing the pack
 
 let attribution = "This work includes material taken from the System Reference Document 5.1 (“SRD 5.1”) by Wizards of the Coast LLC and available at https://dnd.wizards.com/resources/systems-reference-document. The SRD 5.1 is licensed under the Creative Commons Attribution 4.0 International License available at https://creativecommons.org/licenses/by/4.0/legalcode."
