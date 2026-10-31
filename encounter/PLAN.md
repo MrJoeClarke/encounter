@@ -154,8 +154,10 @@ protocol RuleSystem {
 
 ### 5.2 Place hierarchy
 - Places have a `parent`, with a place type (region, settlement, building, wilderness, point of interest and so on).
-- The UI shows a tree (outline) and breadcrumbs.
-- Cycles are prevented.
+- **Outline and breadcrumbs (8a, built):** the Places list is an outline that opens down to the selected place. A place page shows breadcrumbs (each opens that place), a **Located In** picker, the places inside it and **Add Place Here**. Cycles are prevented: the picker leaves out the place itself and what is inside it. Deleting a place moves its contents up a level.
+- **World coordinates (8b, planned):** places get real positions on a flat plane of metres, like the UK National Grid: **eastings** (x, east) and **northings** (y, north) from a south-west origin, both non-negative. Users never see raw numbers. A place's `geometry` is a point (a tavern) or a polygon footprint (a settlement or region), stored as plain numbers in a `Codable` value so CloudKit is fine with it. Maps (milestone 11) will set them, by drawing polygons and dropping pins on a map calibrated in metres.
+- **Spatial logic (8b):** a pure `PlaceGeometry` calculator: point in polygon, polygon in polygon, area, distance, and the smallest polygon around a place. Tested like the character rules.
+- **Automatic parents (8b):** a place with a position and no hand-chosen parent gets the smallest enclosing polygon as its parent. A hand-chosen parent is never replaced. `parentIsAutomatic` marks which parents the app may recompute. Geometry and that flag are exported and imported, and the format version is bumped.
 
 ### 5.3 Maps
 - Import an image with `PhotosPicker` or `fileImporter`.
@@ -258,7 +260,7 @@ A guided flow that produces a playable character page.
 - **Level 1 first:** milestone 7e builds level 1, including **skills, equipment, spells and backgrounds**, so those are added to the library first (milestones 7a to 7d).
 - **Editions differ:** in 5.1, ability score bonuses, languages and some proficiencies come from the race. In 5.2.1 the ability score bonuses, two skills, a tool and an origin feat come from the background, and species have none.
 - **Few backgrounds in the SRD:** the 5.1 SRD has one background (Acolyte) and 5.2.1 has four. The builder treats library and world backgrounds alike, so creators add their own as pages, starting from Create Custom Version.
-- **Higher levels soon after:** milestone 8 adds levelling up to a character page: choosing the new level, applying hit points, proficiency bonus changes and the class features gained, with subclass choice where the class requires it.
+- **Higher levels soon after:** a later milestone (13, after events and timelines) adds levelling up to a character page: choosing the new level, applying hit points, proficiency bonus changes and the class features gained, with subclass choice where the class requires it.
 
 ## 6. Architecture and Layout
 
@@ -303,16 +305,17 @@ Each milestone ends with a building app and passing tests. I'll stop and show yo
 | 7c | **D&D library: equipment** | Built, awaiting review | Weapons, armor, tools, adventuring gear and packs with cost, weight and properties, for both editions, plus the starting equipment choices for each class and background. |
 | 7d | **D&D library: spells** | Built, awaiting review | Every SRD spell for both editions (level, school, casting time, range, components, duration, text) and each class's spell list. |
 | 7e | **Character builder (level 1)** | Built, awaiting review | Guided flow (name, race or species, class, background, ability scores, skills, equipment, spells, review) that creates a level 1 playable character page. The 5.1 species bonuses come from the race, and the 5.2.1 ones from the background. |
-| 8 | **Character levelling** | Planned | Level a character up to 20: hit points, proficiency bonus, class features gained, subclass choice, and new spells. |
-| 9 | **Place hierarchy** | Planned | Parenting, outline, breadcrumbs. |
-| 10 | **Search** | Planned | Global search and kind filters, including library entries. |
-| 11 | **Calendars** | Planned | Custom calendar editor per world, `InWorldDate` entry and formatting. |
-| 12 | **Maps** | Planned | Import, view, pins, nested maps. |
-| 13 | **Events and timelines** | Planned | Event fields, campaign vs backstory, timeline view, character journey. |
+| 8a | **Place hierarchy** | Built, awaiting review | Parenting, outline, breadcrumbs, children, safe deletion. |
+| 8b | **Place coordinates** | Planned | Metre-based positions and polygons, spatial maths, automatic parents. |
+| 9 | **Search** | Planned | Global search and kind filters, including library entries. |
+| 10 | **Calendars** | Planned | Custom calendar editor per world, `InWorldDate` entry and formatting. |
+| 11 | **Maps** | Planned | Import, view, pins, nested maps. |
+| 12 | **Events and timelines** | Planned | Event fields, campaign vs backstory, timeline view, character journey. |
+| 13 | **Character levelling** | Planned (deferred until after events and timelines) | Level a character up to 20: hit points, proficiency bonus, class features gained, subclass choice, and new spells. |
 | 14 | **Polish** | Planned | Keyboard shortcuts and menus on Mac, iPad multitasking, accessibility audit (Dynamic Type, VoiceOver, contrast), empty states. |
 | 15 | **CloudKit** (when a developer account exists) | Planned | Capability, container, conflict testing on multiple devices. The library is bundled and is not synced. |
 
-Search comes before maps because the `@` picker needs it. Import/export comes early so every later feature can be tested against realistic data, and the export format grows with each milestone (maps, events and so on). The D&D content library follows import/export and links because content packs reuse the import format and a character cross-references its race and class. The character builder follows the library because it reads those entries, which now include skills, backgrounds, feats, equipment and spells (7a to 7d), and levelling follows the builder. Library entries should join search when search is built, so milestone 10 covers them.
+Search comes before maps because the `@` picker needs it. Import/export comes early so every later feature can be tested against realistic data, and the export format grows with each milestone (maps, events and so on). The D&D content library follows import/export and links because content packs reuse the import format and a character cross-references its race and class. The character builder follows the library because it reads those entries, which now include skills, backgrounds, feats, equipment and spells (7a to 7d), and levelling follows the builder. Library entries should join search when search is built, so the search milestone (9) covers them.
 
 ### JSON format notes
 - Top-level `formatVersion`, so older files can still be read.

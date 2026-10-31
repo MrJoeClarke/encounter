@@ -16,6 +16,8 @@ struct PageListView: View {
     @Query private var pages: [Page]
     @State private var pageToDelete: Page?
     @State private var isBuildingCharacter = false
+    /// Places that are open in the outline.
+    @State private var expanded: Set<UUID> = []
 
     init(world: World, kind: PageKind, selection: Binding<Page?>) {
         self.world = world
@@ -46,8 +48,12 @@ struct PageListView: View {
                 }
             } else {
                 List(selection: $selection) {
-                    ForEach(pages) { page in
-                        PageRow(page: page)
+                    ForEach(rows) { row in
+                        let page = row.page
+                        HStack(spacing: 4) {
+                            if kind == .place { disclosure(for: row) }
+                            PageRow(page: page)
+                        }
                             .tag(page)
                             .contextMenu {
                                 Button("Delete…", systemImage: "trash", role: .destructive) { pageToDelete = page }
@@ -61,6 +67,11 @@ struct PageListView: View {
         }
         .navigationTitle(Text(kind.title))
         .toolbar { toolbarItems }
+        .onChange(of: selection, initial: true) { _, page in
+            // Open the outline down to the selected place, so a place opened from elsewhere is visible.
+            guard kind == .place, let page else { return }
+            expanded.formUnion(page.ancestors.map(\.id))
+        }
         .sheet(isPresented: $isBuildingCharacter) {
             CharacterBuilderView(world: world) { selection = $0 }
         }
@@ -93,6 +104,56 @@ struct PageListView: View {
         }
     }
 
+    /// One line of the list. Places are an outline: top-level places first, with the contents of open places
+    /// under them. Other kinds are flat.
+    private struct OutlineRow: Identifiable {
+        let page: Page
+        let depth: Int
+        let hasChildren: Bool
+        var id: UUID { page.id }
+    }
+
+    private var rows: [OutlineRow] {
+        guard kind == .place else {
+            return pages.map { OutlineRow(page: $0, depth: 0, hasChildren: false) }
+        }
+        var result: [OutlineRow] = []
+        func add(_ page: Page, depth: Int, visited: inout Set<UUID>) {
+            guard visited.insert(page.id).inserted else { return }
+            let children = page.childPages
+            result.append(OutlineRow(page: page, depth: depth, hasChildren: !children.isEmpty))
+            if expanded.contains(page.id) {
+                for child in children { add(child, depth: depth + 1, visited: &visited) }
+            }
+        }
+        var visited: Set<UUID> = []
+        // A place whose parent isn't a place (or is missing from this world) is shown at the top level too.
+        for page in pages where page.parent == nil || page.parent?.kindRaw != kind.rawValue {
+            add(page, depth: 0, visited: &visited)
+        }
+        return result
+    }
+
+    private func disclosure(for row: OutlineRow) -> some View {
+        HStack(spacing: 0) {
+            Color.clear.frame(width: CGFloat(row.depth) * 16, height: 1)
+            if row.hasChildren {
+                Button {
+                    if !expanded.insert(row.page.id).inserted { expanded.remove(row.page.id) }
+                } label: {
+                    Image(systemName: expanded.contains(row.page.id) ? "chevron.down" : "chevron.right")
+                        .font(.caption.weight(.semibold))
+                        .frame(width: 16, height: 24)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(expanded.contains(row.page.id) ? "Collapse" : "Expand")
+            } else {
+                Color.clear.frame(width: 16, height: 1)
+            }
+        }
+    }
+
     private func addPage() {
         selection = world.addPage(kind: kind, in: modelContext)
     }
@@ -100,6 +161,8 @@ struct PageListView: View {
     private func delete(_ page: Page) {
         // Clear the selection first so the detail pane never shows a deleted page.
         if selection == page { selection = nil }
+        // Places inside a deleted place move up a level rather than being lost.
+        page.liftChildrenToParent()
         modelContext.delete(page)
     }
 }
