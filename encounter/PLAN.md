@@ -190,6 +190,8 @@ protocol RuleSystem {
 
 ### 5.4 Events, timelines and movement
 - Events carry an in-world date, a location and participants.
+- **Editing (12a, built):** an event page has When, Where and Who Took Part sections. **Part Of** is Backstory or Campaign, and backstory belongs to no campaign. Putting an event in a campaign makes it a campaign event, and taking it out makes it backstory. **Dates** use the world's calendar: a start, and optionally an end. An event with no start has no end. An end before the start is moved up to the start, and moving the start past the end moves the end with it. **Location** is any place page, whether or not it is on a map. **Participants** are characters and organisations, added from a searchable list, each once.
+- **Campaigns (12a, built):** a **Campaigns** item in the sidebar, below World Map. It lists campaigns with their event counts, edits a name and summary, lists the campaign's events by date, and adds a new event to it. Deleting a campaign keeps its events and makes them backstory.
 - The **timeline** view sorts a world's events, with filters (campaign or backstory, character, place, organisation).
 - The **character journey** is derived. For a character, take the events they participated in, order them by date, and read each event's location. That gives an ordered list of places.
 - Journey display is a list and timeline first. A path overlaid on a map comes later, using pins for the places.
@@ -338,7 +340,9 @@ Each milestone ends with a building app and passing tests. I'll stop and show yo
 | 11a | **Maps: import, view, calibrate** | Built, awaiting review | A World Map screen, adding maps to places from files, a drop or Photos, zoom and scroll, and two-point calibration of a world map into the world's metre plane. |
 | 11b | **Maps: places and map types** | Built, awaiting review | Add places by right-click (Mac) or press and hold (touch), pins you can tap and drag, a place's own maps, and settlement and scene (grid) maps. |
 | 11c | **Maps: MapKit and outlines** | Built, awaiting review | MapKit replaces the custom map view. Places cluster when crowded, a right-click menu adds places, scene maps get a grid, and a place can be given an outline by clicking its corners, which adopts the places inside it. Nesting between maps comes from their places, so it needs no calibration-based detection. |
-| 12 | **Events and timelines** | Planned | Event fields, campaign vs backstory, timeline view, character journey. |
+| 12a | **Events: editing and campaigns** | Built, awaiting review | An event page edits whether it is backstory or in a campaign, its start and end date, its location and its participants. A **Campaigns** item in the sidebar lists, renames, deletes and adds events to campaigns. |
+| 12b | **Events: timeline** | Planned | A Timeline item listing events by date, grouped by year, with filters for campaign or backstory, character, organisation and place. |
+| 12c | **Events: character journey** | Planned | A character's events in date order with their places, derived rather than stored, and optionally drawn as a line on the world map. |
 | 13 | **Character levelling** | Planned (deferred until after events and timelines) | Level a character up to 20: hit points, proficiency bonus, class features gained, subclass choice, and new spells. |
 | 14 | **Polish** | Planned | Keyboard shortcuts and menus on Mac, iPad multitasking, accessibility audit (Dynamic Type, VoiceOver, contrast), empty states. |
 | 15 | **CloudKit** (when a developer account exists) | Planned | Capability, container, conflict testing on multiple devices. The library is bundled and is not synced. |

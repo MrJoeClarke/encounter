@@ -14,6 +14,8 @@ final class WorldNavigation {
     var selectedPage: Page?
     /// The key of the library entry open in the Library, if any.
     var selectedLibraryKey: String?
+    /// The campaign open in Campaigns, if any.
+    var selectedCampaign: Campaign?
     /// The map open in the map view, if it isn't the world map.
     var selectedMap: WorldMap?
     /// What the user has typed in the search field. While it isn't empty, the results are showing.
@@ -32,6 +34,15 @@ final class WorldNavigation {
     func openMap(_ map: WorldMap) {
         selection = .worldMap
         selectedMap = map
+        selectedPage = nil
+        selectedLibraryKey = nil
+        searchText = ""
+    }
+
+    /// Shows the campaign: switches the sidebar to Campaigns and selects it.
+    func openCampaign(_ campaign: Campaign) {
+        selection = .campaigns
+        selectedCampaign = campaign
         selectedPage = nil
         selectedLibraryKey = nil
         searchText = ""
@@ -56,5 +67,6 @@ final class WorldNavigation {
         selectedPage = nil
         selectedLibraryKey = nil
         selectedMap = nil
+        selectedCampaign = nil
     }
 }

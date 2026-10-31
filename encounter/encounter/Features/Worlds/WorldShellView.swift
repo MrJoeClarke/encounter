@@ -11,6 +11,7 @@ enum WorldSidebarItem: Hashable {
     case home
     case kind(PageKind)
     case worldMap
+    case campaigns
     case library(LibraryKind)
 }
 
@@ -40,6 +41,10 @@ struct WorldShellView: View {
 
                 Label("World Map", systemImage: "map")
                     .tag(WorldSidebarItem.worldMap)
+
+                Label("Campaigns", systemImage: "flag")
+                    .badge((world.campaigns ?? []).count)
+                    .tag(WorldSidebarItem.campaigns)
 
                 Section("Pages") {
                     ForEach(world.visibleKinds) { kind in
@@ -79,6 +84,8 @@ struct WorldShellView: View {
                         .id(kind)
                 case .worldMap:
                     WorldMapView(world: world)
+                case .campaigns:
+                    CampaignsBrowser(world: world)
                 case .library(let kind):
                     LibraryBrowser(world: world, kind: kind)
                         .id(kind)
