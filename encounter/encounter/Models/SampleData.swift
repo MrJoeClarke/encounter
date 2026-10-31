@@ -82,7 +82,12 @@ enum SampleData {
             }
         }
 
-        context.insert(World(name: "Homebrew Isles"))
+        // Every world has a root place at the top of its hierarchy.
+        world.ensureRootPlace(in: context)
+
+        let homebrew = World(name: "Homebrew Isles")
+        context.insert(homebrew)
+        homebrew.ensureRootPlace(in: context)
     }
 
     /// A plain-colour image, JPEG normally or PNG with an alpha channel. For previews and tests.

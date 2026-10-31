@@ -16,6 +16,8 @@ final class World {
     /// Which edition of the content library the world uses. Only matters for systems that have a library.
     var editionRaw: String = LibraryEdition.default.rawValue
     var createdAt: Date = Date()
+    /// The place at the top of the world's hierarchy, whose map is the world map. See `rootPlace`.
+    var rootPlaceID: UUID?
 
     @Relationship(deleteRule: .cascade, inverse: \CalendarDefinition.world)
     var calendar: CalendarDefinition?

@@ -10,6 +10,7 @@ import SwiftData
 enum WorldSidebarItem: Hashable {
     case home
     case kind(PageKind)
+    case worldMap
     case library(LibraryKind)
 }
 
@@ -36,6 +37,9 @@ struct WorldShellView: View {
             List(selection: sidebarSelection) {
                 Label("Home", systemImage: "house")
                     .tag(WorldSidebarItem.home)
+
+                Label("World Map", systemImage: "map")
+                    .tag(WorldSidebarItem.worldMap)
 
                 Section("Pages") {
                     ForEach(world.visibleKinds) { kind in
@@ -73,6 +77,8 @@ struct WorldShellView: View {
                 case .kind(let kind):
                     PagesBrowser(world: world, kind: kind)
                         .id(kind)
+                case .worldMap:
+                    WorldMapView(world: world)
                 case .library(let kind):
                     LibraryBrowser(world: world, kind: kind)
                         .id(kind)

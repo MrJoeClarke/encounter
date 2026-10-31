@@ -6,22 +6,117 @@
 import Foundation
 import SwiftData
 
-/// A map image with pins. Viewing and pinning arrive in the maps milestone.
+/// A map image. A map must be calibrated before places can be put on it, so that a position on it means a
+/// position in the world. Places are drawn on the map from their own positions.
 @Model
 final class WorldMap {
     var id: UUID = UUID()
     var name: String = ""
+    var kindRaw: String = MapKind.world.rawValue
     @Attribute(.externalStorage)
     var imageData: Data?
+    /// Small version for lists.
+    var thumbnailData: Data?
+    var pixelWidth: Int = 0
+    var pixelHeight: Int = 0
+    /// How the image lines up with the world's plane, encoded as JSON. Use `calibration`.
+    var calibrationData: Data?
+    /// For a scene map, how many squares the grid has across and down. Zero otherwise.
+    var gridColumns: Int = 0
+    var gridRows: Int = 0
+    var createdAt: Date = Date()
     var world: World?
-    /// The place this map depicts, which lets a pin drill down into a more detailed map.
+    /// The place this map depicts, which lets a place open its own map. A world map has none.
     var place: Page?
 
-    @Relationship(deleteRule: .cascade, inverse: \MapPin.map)
-    var pins: [MapPin]?
-
-    init(name: String, imageData: Data? = nil) {
+    init(name: String, imageData: Data? = nil, kind: MapKind = .world) {
         self.name = name
         self.imageData = imageData
+        self.kindRaw = kind.rawValue
+    }
+
+    var kind: MapKind {
+        get { MapKind(rawValue: kindRaw) ?? .world }
+        set { kindRaw = newValue.rawValue }
+    }
+
+    var calibration: MapCalibration? {
+        get { calibrationData.flatMap { try? JSONDecoder().decode(MapCalibration.self, from: $0) } }
+        set { calibrationData = newValue.flatMap { try? JSONEncoder().encode($0) } }
+    }
+
+    var isCalibrated: Bool { calibrationData != nil && calibration != nil }
+
+    /// Whether this is the world map, the map of the world's root place.
+    var isWorldMap: Bool { place?.isWorldRoot ?? (kind == .world) }
+
+    /// Settlement and scene maps are centred on the place they show. The world map isn't.
+    var needsPlace: Bool { !isWorldMap }
+
+    /// Where the place this map shows is in the world, which settlement and scene maps are centred on.
+    var anchorPosition: GridPoint? { place?.geometry?.centre }
+
+    /// Whether the map can be calibrated yet: the world map always can, the others once their place has a position.
+    var canBeCalibrated: Bool { !needsPlace || anchorPosition != nil }
+
+    /// Changes whether this is a settlement map or a scene map. The world map can't change, and a map can't
+    /// become the world map. A change of kind makes the old calibration (and grid) meaningless.
+    func change(to newKind: MapKind) {
+        guard newKind != kind, newKind != .world, !isWorldMap else { return }
+        kind = newKind
+        calibration = nil
+        gridColumns = 0
+        gridRows = 0
+    }
+}
+
+/// What happened when a place was put on a map.
+enum PlacementResult: Equatable {
+    case placed
+    case mapNotCalibrated
+    /// The spot is off the edge of the world's plane, where positions can't be negative.
+    case outsideWorld
+    case notAPlace
+}
+
+extension WorldMap {
+    /// Puts a place at an image position, which sets the place's position in the world.
+    @discardableResult
+    func position(_ page: Page, atPixelX x: Double, y: Double) -> PlacementResult {
+        guard page.kind == .place else { return .notAPlace }
+        guard let calibration else { return .mapNotCalibrated }
+        let point = calibration.gridPoint(atX: x, y: y)
+        guard page.setGeometry(.point(point)) else { return .outsideWorld }
+        return .placed
+    }
+
+    /// Where a place is on this map's image, or nil if the map isn't calibrated, the place has no position, or
+    /// the place is off the edge of the image.
+    func pixel(of page: Page) -> (x: Double, y: Double)? {
+        guard let calibration, let centre = page.geometry?.centre else { return nil }
+        let pixel = calibration.pixel(at: centre)
+        guard (0...Double(pixelWidth)).contains(pixel.x), (0...Double(pixelHeight)).contains(pixel.y) else { return nil }
+        return pixel
+    }
+}
+
+extension World {
+    /// Adds a map of a place, from image data kept at full size so no detail is lost. The map of the root place is
+    /// the world map, and any other is a settlement map until it is changed to a scene map. The image is prepared
+    /// off the main actor, and nil is returned if it can't be read as an image.
+    @MainActor
+    @discardableResult
+    func addMap(named name: String, from data: Data, for place: Page, in context: ModelContext) async -> WorldMap? {
+        guard let prepared = await ImageProcessing.prepareKeepingFullSize(data),
+              let size = ImageProcessing.pixelSize(of: prepared.imageData)
+        else { return nil }
+        let map = WorldMap(name: name, imageData: prepared.imageData, kind: place.isWorldRoot ? .world : .settlement)
+        map.thumbnailData = prepared.thumbnailData
+        map.pixelWidth = size.width
+        map.pixelHeight = size.height
+        context.insert(map)
+        map.world = self
+        map.place = place
+        return map
     }
 }

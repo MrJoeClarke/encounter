@@ -56,10 +56,14 @@ struct PageListView: View {
                         }
                             .tag(page)
                             .contextMenu {
-                                Button("Delete…", systemImage: "trash", role: .destructive) { pageToDelete = page }
+                                if !page.isWorldRoot {
+                                    Button("Delete…", systemImage: "trash", role: .destructive) { pageToDelete = page }
+                                }
                             }
                             .swipeActions {
-                                Button("Delete", systemImage: "trash", role: .destructive) { pageToDelete = page }
+                                if !page.isWorldRoot {
+                                    Button("Delete", systemImage: "trash", role: .destructive) { pageToDelete = page }
+                                }
                             }
                     }
                 }
@@ -69,7 +73,10 @@ struct PageListView: View {
         .toolbar { toolbarItems }
         .onChange(of: selection, initial: true) { _, page in
             // Open the outline down to the selected place, so a place opened from elsewhere is visible.
-            guard kind == .place, let page else { return }
+            guard kind == .place else { return }
+            // The root place is always open, so the places directly inside the world show.
+            if let root = world.rootPlace { expanded.insert(root.id) }
+            guard let page else { return }
             expanded.formUnion(page.ancestors.map(\.id))
         }
         .sheet(isPresented: $isBuildingCharacter) {
@@ -159,6 +166,8 @@ struct PageListView: View {
     }
 
     private func delete(_ page: Page) {
+        // The root place holds the whole world, so it can't be deleted on its own.
+        guard !page.isWorldRoot else { return }
         // Clear the selection first so the detail pane never shows a deleted page.
         if selection == page { selection = nil }
         // Places inside a deleted place move up a level rather than being lost.

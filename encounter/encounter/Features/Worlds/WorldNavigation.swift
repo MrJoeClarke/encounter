@@ -14,6 +14,8 @@ final class WorldNavigation {
     var selectedPage: Page?
     /// The key of the library entry open in the Library, if any.
     var selectedLibraryKey: String?
+    /// The map open in the map view, if it isn't the world map.
+    var selectedMap: WorldMap?
     /// What the user has typed in the search field. While it isn't empty, the results are showing.
     var searchText = ""
     var searchScope: SearchScope = .all
@@ -22,6 +24,15 @@ final class WorldNavigation {
     func open(_ page: Page) {
         selection = .kind(page.kind)
         selectedPage = page
+        selectedLibraryKey = nil
+        searchText = ""
+    }
+
+    /// Shows the map: switches the sidebar to the world map, which holds whichever map is open.
+    func openMap(_ map: WorldMap) {
+        selection = .worldMap
+        selectedMap = map
+        selectedPage = nil
         selectedLibraryKey = nil
         searchText = ""
     }
@@ -38,9 +49,12 @@ final class WorldNavigation {
     func choose(_ item: WorldSidebarItem) {
         // Choosing anything in the sidebar leaves the search, even the item that was already showing.
         searchText = ""
+        // Choosing the world map again comes back from a map further down to the world map itself.
+        if item == .worldMap { selectedMap = nil }
         guard item != selection else { return }
         selection = item
         selectedPage = nil
         selectedLibraryKey = nil
+        selectedMap = nil
     }
 }

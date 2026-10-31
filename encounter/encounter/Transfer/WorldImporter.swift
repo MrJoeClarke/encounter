@@ -117,24 +117,30 @@ enum WorldImporter {
             MentionSync.sync(page, in: context)
         }
 
+        // The root place comes from the file, or is made now for a file from before there was one.
+        world.rootPlaceID = archive.world.rootPlaceID.flatMap { pages[$0]?.id }
+        world.ensureRootPlace(in: context)
+
         for record in archive.maps {
-            let map = WorldMap(name: record.name)
+            let map = WorldMap(name: record.name, kind: record.kind.flatMap(MapKind.init(rawValue:)) ?? .world)
             if let file = record.imageFile {
                 if let data = contents.files[file] {
                     map.imageData = data
+                    if let size = ImageProcessing.pixelSize(of: data) {
+                        map.pixelWidth = size.width
+                        map.pixelHeight = size.height
+                    }
+                    map.thumbnailData = await ImageProcessing.prepareKeepingFullSize(data)?.thumbnailData
                 } else {
                     summary.skippedImages += 1
                 }
             }
+            map.calibration = record.calibration
+            map.gridColumns = record.gridColumns ?? 0
+            map.gridRows = record.gridRows ?? 0
             context.insert(map)
             map.world = world
-            map.place = record.placeID.flatMap { pages[$0] }
-            for pinRecord in record.pins {
-                let pin = MapPin(x: pinRecord.x, y: pinRecord.y)
-                context.insert(pin)
-                pin.map = map
-                pin.target = pinRecord.targetID.flatMap { pages[$0] }
-            }
+            map.place = record.placeID.flatMap { pages[$0] } ?? (map.kind == .world ? world.rootPlace : nil)
             summary.maps += 1
         }
 

@@ -58,7 +58,10 @@ struct NewWorldSheet: View {
     }
 
     private func create() {
-        modelContext.insert(World(name: trimmedName, summary: summary, system: system))
+        let world = World(name: trimmedName, summary: summary, system: system)
+        modelContext.insert(world)
+        // Every world has a place at the top of its hierarchy, named after it, whose map is the world map.
+        world.ensureRootPlace(in: modelContext)
         dismiss()
     }
 }
