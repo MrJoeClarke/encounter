@@ -29,13 +29,16 @@ struct PlaceHierarchySection: View {
             if !page.ancestors.isEmpty {
                 breadcrumbs
             }
-            Picker("Located In", selection: parentBinding) {
-                Text("Nowhere (Top Level)").tag(Page?.none)
-                ForEach(candidates) { place in
-                    Text(place.pathTitle).tag(Optional(place))
+            if !page.isWorldRoot {
+                Picker("Located In", selection: parentBinding) {
+                    // A place with no root place above it (an older world) can still be left at the top.
+                    if page.world?.rootPlaceID == nil { Text("Nowhere (Top Level)").tag(Page?.none) }
+                    ForEach(candidates) { place in
+                        Text(place.isWorldRoot ? worldName(of: place) : place.pathTitle).tag(Optional(place))
+                    }
                 }
             }
-            if page.parentSource == .automatic {
+            if page.parentSource == .automatic && !page.isWorldRoot {
                 Text("Worked out from where this place is. Choose a place to override it.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -50,6 +53,29 @@ struct PlaceHierarchySection: View {
             }
             Button("Add Place Here", systemImage: "plus", action: addChild)
         }
+        mapsSection
+    }
+
+    /// The maps of this place, and a way to add one. The world has a single map, and other places can have several,
+    /// such as a building with a map for each floor.
+    private var mapsSection: some View {
+        Section(page.isWorldRoot ? "World Map" : "Maps") {
+            ForEach(page.sortedMaps) { map in
+                Button {
+                    navigation.openMap(map)
+                } label: {
+                    Label(map.name.isEmpty ? String(localized: "Untitled Map") : map.name, systemImage: map.kind.systemImage)
+                }
+                .buttonStyle(.plain)
+            }
+            if !(page.isWorldRoot && !page.sortedMaps.isEmpty) {
+                AddMapControls(place: page)
+            }
+        }
+    }
+
+    private func worldName(of root: Page) -> String {
+        root.title.isEmpty ? String(localized: "The World") : root.title
     }
 
     /// The path from the top, each part opening that place. The last part is this page, so it isn't a button.

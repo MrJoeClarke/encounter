@@ -71,6 +71,34 @@ nonisolated struct MapCalibration: Codable, Hashable, Sendable {
         self.init(anchoringPixel: (0, Double(imageHeight)), at: GridPoint(easting: 0, northing: 0), metresPerPixel: scale)
     }
 
+    /// A settlement map, from two points marked on it and the distance between them. The map is north up and its
+    /// centre sits at the settlement's position in the world.
+    init?(
+        pixelA: (x: Double, y: Double), pixelB: (x: Double, y: Double), distanceMetres: Double,
+        imageWidth: Int, imageHeight: Int, centredOn place: GridPoint
+    ) {
+        guard let scale = Self.metresPerPixel(pixelA: pixelA, pixelB: pixelB, distanceMetres: distanceMetres),
+              imageWidth > 0, imageHeight > 0
+        else { return nil }
+        self.init(anchoringPixel: (Double(imageWidth) / 2, Double(imageHeight) / 2), at: place, metresPerPixel: scale)
+    }
+
+    /// A scene map, from the number of squares across and down its grid and how big a square is. The map is
+    /// north up and its centre sits at the position of the place it shows. `shapeMismatch` is true when the image
+    /// is noticeably a different shape from the grid, so the squares would not come out square.
+    static func scene(
+        columns: Int, rows: Int, squareMetres: Double, imageWidth: Int, imageHeight: Int, centredOn place: GridPoint
+    ) -> (calibration: MapCalibration, shapeMismatch: Bool)? {
+        guard columns > 0, rows > 0, squareMetres > 0, squareMetres.isFinite, imageWidth > 0, imageHeight > 0,
+              let calibration = MapCalibration(
+                anchoringPixel: (Double(imageWidth) / 2, Double(imageHeight) / 2), at: place,
+                metresPerPixel: squareMetres * Double(columns) / Double(imageWidth)
+              )
+        else { return nil }
+        let impliedRows = Double(imageHeight) * calibration.metresPerPixel / squareMetres
+        return (calibration, abs(impliedRows - Double(rows)) / Double(rows) > 0.05)
+    }
+
     /// A calibration where the plane position `grid` sits at the image's pixel `pixel`, with the given scale and
     /// turn. For maps that are centred on a place.
     init?(anchoringPixel pixel: (x: Double, y: Double), at grid: GridPoint, metresPerPixel: Double, rotation: Double = 0) {

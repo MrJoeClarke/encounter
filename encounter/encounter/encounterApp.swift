@@ -30,6 +30,8 @@ struct encounterApp: App {
                 .handlesExternalEvents(preferring: ["*"], allowing: ["*"])
                 // Notes written before their plain text was kept need it filled in so they can be searched.
                 .task { Page.backfillSearchText(in: modelContainer.mainContext) }
+                // Worlds from before there were root places get one, with their places and world map inside it.
+                .task { World.ensureRootPlaces(in: modelContainer.mainContext) }
         }
         .modelContainer(modelContainer)
     }

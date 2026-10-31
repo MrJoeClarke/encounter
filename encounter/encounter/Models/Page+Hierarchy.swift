@@ -54,7 +54,9 @@ extension Page {
     /// Whether `candidate` may become this page's parent: nothing (a top-level page), or a page of the same
     /// kind and world that isn't this page or inside it, which would make a loop.
     func canHaveParent(_ candidate: Page?) -> Bool {
-        guard let candidate else { return true }
+        // The root place has no parent, and every other place has one once there is a root.
+        if isWorldRoot { return candidate == nil }
+        guard let candidate else { return world?.rootPlaceID == nil }
         return candidate !== self
             && candidate.kindRaw == kindRaw
             && candidate.world?.id == world?.id
@@ -114,7 +116,9 @@ extension Page {
 
     /// "Region › Town › Harbour", for pickers that need to tell same-named pages apart.
     var pathTitle: String {
-        let names = (ancestors.reversed() + [self]).map { $0.title.isEmpty ? String(localized: "Untitled") : $0.title }
+        // The root place is the same for every place, so it isn't repeated in the path.
+        let chain = (ancestors.reversed() + [self]).filter { !$0.isWorldRoot || $0 === self }
+        let names = chain.map { $0.title.isEmpty ? String(localized: "Untitled") : $0.title }
         return names.joined(separator: " › ")
     }
 }
@@ -122,13 +126,15 @@ extension Page {
 extension World {
     /// Works out parents from positions. A place whose parent was chosen by the creator is left alone. Any
     /// other place with a position gets the smallest place around it, and one that has lost its position
-    /// (or its enclosing place) loses the parent that came from it.
+    /// (or its enclosing place) goes back to being directly inside the root place.
     func refreshAutomaticParents() {
         let places = (pages ?? []).filter { $0.kind == .place && !$0.isDeleted }
-        for place in places where place.mayHaveAutomaticParent {
-            let enclosing = place.enclosingPlace(among: places)
-            if place.parent !== enclosing { place.parent = enclosing }
-            place.parentSource = enclosing == nil ? nil : .automatic
+        let root = rootPlace
+        for place in places where place !== root && place.mayHaveAutomaticParent {
+            // Inside the smallest outline around it, or else directly inside the root place.
+            let target = place.enclosingPlace(among: places) ?? root
+            if place.parent !== target { place.parent = target }
+            place.parentSource = target == nil ? nil : .automatic
         }
     }
 }

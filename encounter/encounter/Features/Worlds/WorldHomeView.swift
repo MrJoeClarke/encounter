@@ -24,6 +24,8 @@ struct WorldHomeView: View {
             Section {
                 TextField("Name", text: $world.name, prompt: Text("Untitled World"))
                     .font(.title2.weight(.semibold))
+                    // The root place is named after the world, so renaming the world renames it too.
+                    .onChange(of: world.name) { old, _ in world.renameRootPlace(from: old) }
             }
 
             Section("Summary") {

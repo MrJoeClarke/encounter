@@ -64,6 +64,8 @@ enum WorldExporter {
                     imageFile: map.imageData.map { store($0, id: map.id, in: &files) },
                     kind: map.kindRaw,
                     calibration: map.calibration,
+                    gridColumns: map.gridColumns == 0 ? nil : map.gridColumns,
+                    gridRows: map.gridRows == 0 ? nil : map.gridRows,
                     placeID: map.place?.id
                 )
             }
@@ -84,7 +86,8 @@ enum WorldExporter {
                     )
                 },
                 images: imageRecords(for: world, files: &files),
-                edition: world.editionRaw
+                edition: world.editionRaw,
+                rootPlaceID: world.rootPlaceID
             ),
             campaigns: campaignRecords,
             pages: pageRecords,

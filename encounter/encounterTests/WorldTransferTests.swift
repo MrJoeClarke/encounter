@@ -121,7 +121,7 @@ struct WorldTransferTests {
 
         // Pages
         let pages = Dictionary(uniqueKeysWithValues: (imported.pages ?? []).map { ($0.title, $0) })
-        #expect(pages.count == 5)
+        #expect(pages.count == 6)   // the five pages, and the root place the import adds to a world that had none
         let hero = try #require(pages["Aria Vale"])
         #expect(hero.kind == .character)
         #expect(hero.characterRole == .playable)
@@ -202,7 +202,7 @@ struct WorldTransferTests {
         #expect(second.name == "Faerûn (2)")
         #expect(third.name == "Faerûn (3)")
         #expect(try context.fetchCount(FetchDescriptor<World>()) == 3)
-        #expect(try context.fetchCount(FetchDescriptor<Page>()) == 15)
+        #expect(try context.fetchCount(FetchDescriptor<Page>()) == 17)   // five, and six in each import with its root place
 
         // Changing one copy leaves the others alone.
         let page = try #require((second.pages ?? []).first { $0.title == "Elf" })
@@ -278,7 +278,7 @@ struct WorldTransferTests {
         let (imported, _) = await WorldImporter.importWorld(try roundTrip(world), into: try makeContext())
 
         #expect(imported.systemRaw == "pathfinder9")
-        #expect(imported.pages?.first?.kindRaw == "spaceship")
+        #expect((imported.pages ?? []).contains { $0.kindRaw == "spaceship" })   // beside the root place the import adds
     }
 
     @Test func aMissingImageFileIsSkippedAndTheRestStillImports() async throws {
@@ -292,7 +292,7 @@ struct WorldTransferTests {
 
         #expect(summary.skippedImages == 1)
         #expect(summary.pages == 5)
-        #expect(imported.pages?.count == 5)
+        #expect(imported.pages?.count == 6)   // including the root place
     }
 
     @Test func anUndecodableImageFileIsSkipped() async throws {
@@ -322,7 +322,7 @@ struct WorldTransferTests {
         #expect(imported.sortedImages.isEmpty)
         #expect(imported.defaultImage == nil)
         #expect(summary.images == 3)  // the hero's images are unaffected
-        #expect(imported.pages?.count == 5)
+        #expect(imported.pages?.count == 6)   // including the root place
     }
 
     @Test func aWorldImageWithAMissingFileIsSkipped() async throws {
@@ -352,7 +352,7 @@ struct WorldTransferTests {
         #expect(summary.skippedLinks == 2)
         #expect(summary.links == 3)
         #expect(summary.skippedAnything)
-        #expect(imported.pages?.count == 5)
+        #expect(imported.pages?.count == 6)   // including the root place
     }
 
     @Test func parentLoopsInAFileAreIgnored() async throws {
@@ -528,7 +528,10 @@ struct WorldTransferTests {
         #expect(world.defaultImage != nil)
         #expect(!summary.skippedAnything)
 
-        let pages = Dictionary(uniqueKeysWithValues: (world.pages ?? []).map { ($0.title, $0) })
+        // The root place is named after the world, which has a region of the same name, so it is left out here.
+        let pages = Dictionary(uniqueKeysWithValues: (world.pages ?? []).filter { !$0.isWorldRoot }.map { ($0.title, $0) })
+        #expect(world.rootPlace?.title == "Saltmarch Coast")
+        #expect(pages["Saltmarch Coast"]?.parent === world.rootPlace)
         #expect(pages["Brackwater"]?.parent === pages["Saltmarch Coast"])
         #expect(pages["The Gilded Gull"]?.parent === pages["Brackwater"])
         #expect(pages["Mira Thorne"]?.characterRole == .playable)
@@ -578,7 +581,7 @@ struct WorldTransferTests {
 
         let contents = try await WorldPackage.read(from: url)
         let (imported, summary) = await WorldImporter.importWorld(contents, into: try makeContext())
-        #expect(imported.pages?.count == 5)
+        #expect(imported.pages?.count == 6)   // including the root place
         #expect(summary.images == 5)  // three on the hero, two on the world
         #expect(!summary.skippedAnything)
     }

@@ -37,6 +37,9 @@ nonisolated struct WorldRecord: Codable, Sendable {
     var images: [ImageRecord]?
     /// `LibraryEdition` raw value. Optional, because files written before editions existed don't have it.
     var edition: String?
+    /// The root place, at the top of the place hierarchy. Optional, because older files don't have one, and a
+    /// root place is made on import.
+    var rootPlaceID: UUID?
 }
 
 nonisolated struct CalendarRecord: Codable, Sendable {
@@ -110,6 +113,9 @@ nonisolated struct MapRecord: Codable, Sendable {
     var kind: String?
     /// How the map lines up with the world's plane. Optional, because older files and uncalibrated maps don't have it.
     var calibration: MapCalibration?
+    /// A scene map's grid. Optional, because older files don't have it.
+    var gridColumns: Int?
+    var gridRows: Int?
     /// The page this map depicts.
     var placeID: UUID?
 }
