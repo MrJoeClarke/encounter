@@ -76,6 +76,8 @@ enum WorldImporter {
             page.basedOnKey = record.basedOnKey
             context.insert(page)
             page.world = world
+            // A shape that isn't valid on the plane would break the spatial checks, so it is dropped.
+            page.geometry = record.geometry.flatMap { $0.isValid && page.kind == .place ? $0 : nil }
             pages[record.id] = page
             summary.pages += 1
         }
@@ -92,6 +94,7 @@ enum WorldImporter {
             if let parentID = record.parentID, let parent = pages[parentID], !wouldCreateCycle(making: parent, parentOf: page) {
                 page.parent = parent
             }
+            page.parentSourceRaw = record.parentSource
             if let campaignID = record.campaignID {
                 page.campaign = campaigns[campaignID]
             }

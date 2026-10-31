@@ -35,6 +35,11 @@ struct PlaceHierarchySection: View {
                     Text(place.pathTitle).tag(Optional(place))
                 }
             }
+            if page.parentSource == .automatic {
+                Text("Worked out from where this place is. Choose a place to override it.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
             ForEach(page.childPages) { child in
                 Button {
                     navigation.open(child)

@@ -6,7 +6,20 @@
 import Foundation
 import SwiftData
 
+/// Who chose a place's parent.
+enum ParentSource: String {
+    /// Worked out from where the place sits inside another place's outline. May be recalculated.
+    case automatic
+    /// Chosen by the creator, including choosing no parent. Never replaced by a calculation.
+    case manual
+}
+
 extension Page {
+    var parentSource: ParentSource? {
+        get { parentSourceRaw.flatMap(ParentSource.init(rawValue:)) }
+        set { parentSourceRaw = newValue?.rawValue }
+    }
+
     /// The pages above this one, nearest first. Stops if the data somehow contains a loop.
     var ancestors: [Page] {
         var result: [Page] = []
@@ -48,12 +61,46 @@ extension Page {
             && !candidate.ancestors.contains { $0 === self }
     }
 
-    /// Sets the parent unless that would break `canHaveParent`. Returns whether it was set.
+    /// Sets the parent as the creator's own choice unless that would break `canHaveParent`. Returns whether
+    /// it was set. A choice made this way is never replaced by an automatic parent.
     @discardableResult
     func setParent(_ candidate: Page?) -> Bool {
         guard canHaveParent(candidate) else { return false }
         parent = candidate
+        parentSource = .manual
         return true
+    }
+
+    /// Gives the place a position (or removes it with nil) and brings automatic parents up to date.
+    /// Returns false, changing nothing, for a shape that isn't valid or a page that isn't a place.
+    @discardableResult
+    func setGeometry(_ newGeometry: PlaceGeometry?) -> Bool {
+        guard kind == .place, newGeometry?.isValid ?? true else { return false }
+        geometry = newGeometry
+        world?.refreshAutomaticParents()
+        return true
+    }
+
+    /// False once the creator has chosen the parent. A parent with no recorded source (from before sources
+    /// were kept) is taken to be the creator's choice too.
+    var mayHaveAutomaticParent: Bool {
+        switch parentSource {
+        case .manual: false
+        case .automatic: true
+        case nil: parent == nil
+        }
+    }
+
+    /// The smallest outline among `places` that holds this place, if any. Places this one holds, or that
+    /// couldn't be its parent, are ignored.
+    func enclosingPlace(among places: [Page]) -> Page? {
+        guard let geometry else { return nil }
+        return places
+            .filter { candidate in
+                guard let outline = candidate.geometry, canHaveParent(candidate) else { return false }
+                return outline.contains(geometry)
+            }
+            .min { ($0.geometry?.area ?? 0, $0.id.uuidString) < ($1.geometry?.area ?? 0, $1.id.uuidString) }
     }
 
     /// Moves this page's children up to its own parent, so deleting the page doesn't lose them or leave them
@@ -69,5 +116,19 @@ extension Page {
     var pathTitle: String {
         let names = (ancestors.reversed() + [self]).map { $0.title.isEmpty ? String(localized: "Untitled") : $0.title }
         return names.joined(separator: " › ")
+    }
+}
+
+extension World {
+    /// Works out parents from positions. A place whose parent was chosen by the creator is left alone. Any
+    /// other place with a position gets the smallest place around it, and one that has lost its position
+    /// (or its enclosing place) loses the parent that came from it.
+    func refreshAutomaticParents() {
+        let places = (pages ?? []).filter { $0.kind == .place && !$0.isDeleted }
+        for place in places where place.mayHaveAutomaticParent {
+            let enclosing = place.enclosingPlace(among: places)
+            if place.parent !== enclosing { place.parent = enclosing }
+            place.parentSource = enclosing == nil ? nil : .automatic
+        }
     }
 }

@@ -76,6 +76,10 @@ nonisolated struct PageRecord: Codable, Sendable {
     var endDate: InWorldDate?
     var campaignID: UUID?
     var parentID: UUID?
+    /// `ParentSource` raw value. Optional, because older files don't have it.
+    var parentSource: String?
+    /// Where a place is. Optional, because older files don't have it.
+    var geometry: PlaceGeometry?
     var images: [ImageRecord]
     /// The library entry this page was made from. Optional, because older files don't have it.
     var basedOnKey: String?

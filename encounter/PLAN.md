@@ -155,9 +155,10 @@ protocol RuleSystem {
 ### 5.2 Place hierarchy
 - Places have a `parent`, with a place type (region, settlement, building, wilderness, point of interest and so on).
 - **Outline and breadcrumbs (8a, built):** the Places list is an outline that opens down to the selected place. A place page shows breadcrumbs (each opens that place), a **Located In** picker, the places inside it and **Add Place Here**. Cycles are prevented: the picker leaves out the place itself and what is inside it. Deleting a place moves its contents up a level.
-- **World coordinates (8b, planned):** places get real positions on a flat plane of metres, like the UK National Grid: **eastings** (x, east) and **northings** (y, north) from a south-west origin, both non-negative. Users never see raw numbers. A place's `geometry` is a point (a tavern) or a polygon footprint (a settlement or region), stored as plain numbers in a `Codable` value so CloudKit is fine with it. Maps (milestone 11) will set them, by drawing polygons and dropping pins on a map calibrated in metres.
-- **Spatial logic (8b):** a pure `PlaceGeometry` calculator: point in polygon, polygon in polygon, area, distance, and the smallest polygon around a place. Tested like the character rules.
-- **Automatic parents (8b):** a place with a position and no hand-chosen parent gets the smallest enclosing polygon as its parent. A hand-chosen parent is never replaced. `parentIsAutomatic` marks which parents the app may recompute. Geometry and that flag are exported and imported, and the format version is bumped.
+- **World coordinates (8b, built):** places get real positions on a flat plane of metres, like the UK National Grid: **eastings** (x, east) and **northings** (y, north) from a south-west origin, both non-negative. Users never see raw numbers. A place's `geometry` is a point (a tavern) or a polygon footprint (a settlement or region). It is stored on the page as encoded JSON, because SwiftData lost a polygon's corners when it stored the enum directly (a test caught this). Maps (milestone 11) will set positions, by drawing polygons and dropping pins on a map calibrated in metres. Until then they are set in code and tests only.
+- **Spatial logic:** a pure `PlaceGeometry` calculator: validity (on the plane, a polygon needs three corners, an area and no self-crossing), area, centre, distance, point in polygon (edges count as inside) and polygon in polygon (smaller, all inside, no edge crossing out, so concave outlines work).
+- **Automatic parents:** `setGeometry` refreshes the world. A place with a position and no parent chosen by the creator gets the smallest place around it as its parent. `parentSource` records who chose a parent: `automatic` (may be recalculated) or `manual` (never replaced, and choosing "Nowhere" counts as a choice). A parent with no recorded source is treated as manual. Removing a position, or the outline around it, removes an automatic parent.
+- **Export and import:** `geometry` and `parentSource` are optional fields on a page record, so the format version stays 1 and older files still import. An invalid shape in a file is dropped.
 
 ### 5.3 Maps
 - Import an image with `PhotosPicker` or `fileImporter`.
@@ -165,6 +166,10 @@ protocol RuleSystem {
 - Tap to add a pin, then pick or create a Place. Pins are stored in normalised coordinates, so image resolution doesn't matter.
 - A place can have its own map, so a pin can drill down (region map to town map).
 - Very large images are downsampled for display with ImageIO, and the original is kept.
+
+- **Calibrated maps (milestone 11):** a map gets a calibration from pixels to metres (an origin, a scale and a rotation, set by marking two known points). Drawing a polygon or dropping a pin then writes `Page.geometry`, and automatic parents follow. A place appears on every map that covers it, and nesting between maps comes from their areas, so nothing is pinned twice.
+- **Pins are derived:** with a calibrated map, a pin just points at a place and is drawn from `place.geometry`. Pins on an uncalibrated map keep their own normalised image position. `MapPin` isn't used by any screen yet, so changing it is cheap.
+- **Limit:** a world has one plane. Building floors, dungeon levels and other planes would overlap on it, and will need their own plane (a "space" a place belongs to) or a height value later. The geometry maths wouldn't change.
 
 ### 5.4 Events, timelines and movement
 - Events carry an in-world date, a location and participants.
@@ -306,7 +311,7 @@ Each milestone ends with a building app and passing tests. I'll stop and show yo
 | 7d | **D&D library: spells** | Built, awaiting review | Every SRD spell for both editions (level, school, casting time, range, components, duration, text) and each class's spell list. |
 | 7e | **Character builder (level 1)** | Built, awaiting review | Guided flow (name, race or species, class, background, ability scores, skills, equipment, spells, review) that creates a level 1 playable character page. The 5.1 species bonuses come from the race, and the 5.2.1 ones from the background. |
 | 8a | **Place hierarchy** | Built, awaiting review | Parenting, outline, breadcrumbs, children, safe deletion. |
-| 8b | **Place coordinates** | Planned | Metre-based positions and polygons, spatial maths, automatic parents. |
+| 8b | **Place coordinates** | Built, awaiting review | Metre-based positions and polygons, spatial maths, automatic parents. |
 | 9 | **Search** | Planned | Global search and kind filters, including library entries. |
 | 10 | **Calendars** | Planned | Custom calendar editor per world, `InWorldDate` entry and formatting. |
 | 11 | **Maps** | Planned | Import, view, pins, nested maps. |

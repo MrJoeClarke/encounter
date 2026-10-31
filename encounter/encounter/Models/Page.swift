@@ -36,6 +36,11 @@ final class Page {
 
     /// Hierarchy, used mainly for places (region, settlement, building).
     var parent: Page?
+    /// Who chose the parent: `ParentSource` raw value. Nil means nobody has, so a position may fill it in.
+    var parentSourceRaw: String?
+    /// Where this place is on its world's plane, encoded as JSON. SwiftData loses a polygon's corners when it
+    /// stores the enum directly, so the shape is kept as data. Use `geometry`.
+    var geometryData: Data?
     @Relationship(deleteRule: .nullify, inverse: \Page.parent)
     var children: [Page]?
 
@@ -66,6 +71,13 @@ final class Page {
     var kind: PageKind {
         get { PageKind(rawValue: kindRaw) ?? .character }
         set { kindRaw = newValue.rawValue }
+    }
+
+    /// Where this place is on its world's plane, if known. Not shown to users. Set it with `setGeometry`, which
+    /// also updates automatic parents.
+    var geometry: PlaceGeometry? {
+        get { geometryData.flatMap { try? JSONDecoder().decode(PlaceGeometry.self, from: $0) } }
+        set { geometryData = newValue.flatMap { try? JSONEncoder().encode($0) } }
     }
 
     var characterRole: CharacterRole? {

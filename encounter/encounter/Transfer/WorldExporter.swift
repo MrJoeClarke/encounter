@@ -36,6 +36,8 @@ enum WorldExporter {
                 endDate: page.endDate,
                 campaignID: page.campaign?.id,
                 parentID: page.parent?.id,
+                parentSource: page.parentSourceRaw,
+                geometry: page.geometry,
                 images: imageRecords(for: page, files: &files),
                 basedOnKey: page.basedOnKey
             ))
