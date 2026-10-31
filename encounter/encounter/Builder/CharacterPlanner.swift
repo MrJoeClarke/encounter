@@ -24,6 +24,16 @@ nonisolated struct ContentSource: Sendable, Identifiable, Hashable {
 
     var id: ContentChoice { choice }
 
+    /// Where this comes from: the library's pack for the edition, such as "SRD 5.2.1", or the world's own pages.
+    var sourceTitle: String {
+        guard let key = libraryKey ?? { if case .library(let key) = choice { key } else { nil } }(),
+              case .library = choice,
+              let edition = LibraryEdition(key: key),
+              let pack = Library.shared.pack(for: edition)
+        else { return String(localized: "This World") }
+        return pack.name
+    }
+
     func text(_ key: String) -> String? {
         if case .text(let value)? = attributes[key], !value.isEmpty { value } else { nil }
     }
@@ -198,10 +208,10 @@ nonisolated enum CharacterPlanner {
         // Equipment: fixed groups as they are, choices as picked.
         for (index, group) in plan.equipmentGroups.enumerated() {
             if group.isChoice {
-                if let pick = draft.equipmentChoices[index], group.options.indices.contains(pick) { plan.equipment.append(group.options[pick].text) }
+                if let pick = draft.equipmentChoices[index], group.options.indices.contains(pick) { plan.equipment += EquipmentGroup.items(in: group.options[pick].text) }
                 else { plan.problems.append("Choose your starting equipment.") }
             } else if let only = group.options.first {
-                plan.equipment.append(only.text)
+                plan.equipment += EquipmentGroup.items(in: only.text)
             }
         }
         plan.problems = plan.problems.reduce(into: [String]()) { if !$0.contains($1) { $0.append($1) } }

@@ -129,6 +129,68 @@ nonisolated struct EquipmentGroup: Equatable, Sendable {
         return groups
     }
 
+    /// Names that contain "and", which doesn't separate two items there.
+    private static let namesWithAnd = ["Block and Tackle"]
+
+    /// The separate items in a package, such as "Spear, 5 Daggers, Explorer's Pack, and 11 GP" or "a light crossbow and 20 bolts".
+    /// Commas and "and" separate items, except inside brackets and within a name like "Block and Tackle".
+    static func items(in text: String) -> [String] {
+        var pieces: [String] = []
+        var current = ""
+        var depth = 0
+        for character in text {
+            if character == "(" { depth += 1 }
+            if character == ")" { depth = max(0, depth - 1) }
+            if (character == "," || character == ";") && depth == 0 {
+                pieces.append(current)
+                current = ""
+            } else {
+                current.append(character)
+            }
+        }
+        pieces.append(current)
+
+        var items: [String] = []
+        for piece in pieces {
+            var text = piece.trimmingCharacters(in: .whitespaces)
+            if text.lowercased().hasPrefix("and ") { text = String(text.dropFirst(4)) }
+            if text.lowercased().hasPrefix("or ") { text = String(text.dropFirst(3)) }
+            items += splitOnAnd(text)
+        }
+        return items.map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+    }
+
+    private static func splitOnAnd(_ text: String) -> [String] {
+        // Keep a name that contains "and" whole, and split what's around it.
+        for name in namesWithAnd {
+            if let range = text.range(of: name, options: .caseInsensitive) {
+                let before = String(text[..<range.lowerBound])
+                let after = String(text[range.upperBound...])
+                return splitOnAnd(before) + [String(text[range])] + splitOnAnd(after)
+            }
+        }
+        // Not inside brackets, and not a choice ("Artisan's Tools or Musical Instrument").
+        var parts: [String] = []
+        var current = ""
+        var depth = 0
+        var index = text.startIndex
+        while index < text.endIndex {
+            let character = text[index]
+            if character == "(" { depth += 1 }
+            if character == ")" { depth = max(0, depth - 1) }
+            if depth == 0, text[index...].hasPrefix(" and ") {
+                parts.append(current)
+                current = ""
+                index = text.index(index, offsetBy: 5)
+                continue
+            }
+            current.append(character)
+            index = text.index(after: index)
+        }
+        parts.append(current)
+        return parts
+    }
+
     /// Splits "(a) one thing or (b) another" or "(A) one; (B) two; or (C) 155 GP" into its options.
     private static func lettered(_ text: String, uppercase: Bool) -> [Option] {
         let pattern = try! NSRegularExpression(pattern: "\\(([A-Za-z])\\)")

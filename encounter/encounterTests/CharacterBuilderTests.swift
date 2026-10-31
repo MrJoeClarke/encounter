@@ -202,6 +202,8 @@ struct CharacterBuilderTests {
         #expect(Set(plan.skills) == ["Insight", "Religion", "Athletics", "Perception"])
         #expect(plan.proficiencyBonus == 2)
         #expect(plan.equipment.first == "chain mail")
+        #expect(plan.equipment.contains("A holy symbol (a gift to you when you entered the priesthood)"))
+        #expect(plan.equipment.contains("a prayer book or prayer wheel") && plan.equipment.contains("a pouch containing 15 gp"))
     }
 
     @Test func aPlanSaysWhatIsMissing() throws {
@@ -420,6 +422,17 @@ struct CharacterBuilderTests {
         #expect(CharacterContent.resolve(.page(racePage.id), in: world)?.name == "Moss Gnome")
     }
 
+    @Test func everyChoiceSaysWhereItComesFrom() throws {
+        let context = try makeContext()
+        let world = makeWorld(.srd52, in: context)
+        let elf = try #require(Library.shared.entry(forKey: "srd52.race.elf"))
+        let page = try #require(Library.shared.makeCustomVersion(of: elf, in: world, context: context))
+        #expect(try source("srd52.race.elf").sourceTitle == "SRD 5.2.1")
+        #expect(try source("srd51.race.elf").sourceTitle == "SRD 5.1")
+        // A world's own page says so, even one copied from the library.
+        #expect(CharacterContent.source(for: page).sourceTitle == "This World")
+    }
+
     @Test func raceClassAndBackgroundListsHaveTheLibraryFirstAndOnlyForDnD() throws {
         let context = try makeContext()
         let dnd = makeWorld(.srd52, in: context)
@@ -427,5 +440,61 @@ struct CharacterBuilderTests {
         let plain = World(name: "Plain")
         context.insert(plain)
         #expect(CharacterContent.races(in: plain).isEmpty)
+    }
+}
+
+struct EquipmentItemsTests {
+    @Test func aPackageIsSplitIntoItsItems() {
+        #expect(EquipmentGroup.items(in: "Spear, 5 Daggers, Artisan’s Tools or Musical Instrument chosen for the tool proficiency above, Explorer’s Pack, and 11 GP")
+                == ["Spear", "5 Daggers", "Artisan’s Tools or Musical Instrument chosen for the tool proficiency above", "Explorer’s Pack", "11 GP"])
+        #expect(EquipmentGroup.items(in: "Calligrapher’s Supplies, Book (prayers), Holy Symbol, Parchment (10 sheets), Robe, 8 GP")
+                == ["Calligrapher’s Supplies", "Book (prayers)", "Holy Symbol", "Parchment (10 sheets)", "Robe", "8 GP"])
+        // 2014 wording joins with "and" and has no capitals.
+        #expect(EquipmentGroup.items(in: "a light crossbow and 20 bolts") == ["a light crossbow", "20 bolts"])
+        #expect(EquipmentGroup.items(in: "leather armor, longbow, and 20 arrows") == ["leather armor", "longbow", "20 arrows"])
+        #expect(EquipmentGroup.items(in: "An explorer’s pack and four javelins") == ["An explorer’s pack", "four javelins"])
+        #expect(EquipmentGroup.items(in: "75 GP") == ["75 GP"])
+    }
+
+    @Test func bracketsAndNamesWithAndStayWhole() {
+        #expect(EquipmentGroup.items(in: "Arcane Focus (Staff, or Wand), Block and Tackle, and Rope") == ["Arcane Focus (Staff, or Wand)", "Block and Tackle", "Rope"])
+        #expect(EquipmentGroup.items(in: "a dagger, a pouch (coins and a key)") == ["a dagger", "a pouch (coins and a key)"])
+    }
+
+    @Test func everyStartingPackageInTheLibrarySplitsIntoSeveralItemsOrOne() {
+        for edition in LibraryEdition.allCases {
+            let texts = (Library.shared.topLevelEntries(.class, in: edition) + Library.shared.entries(.background, in: edition)).flatMap { entry -> [String] in
+                let key = entry.kind == .class ? "dnd5e.startingEquipment" : "dnd5e.backgroundEquipment"
+                guard case .text(let text)? = entry.attributes[key] else { return [] }
+                return EquipmentGroup.parse(text).flatMap { $0.options.map(\.text) }
+            }
+            #expect(!texts.isEmpty)
+            for text in texts {
+                let items = EquipmentGroup.items(in: text)
+                #expect(!items.isEmpty && items.allSatisfy { !$0.hasPrefix("and ") && !$0.hasSuffix(",") }, "\(text)")
+            }
+        }
+    }
+}
+
+@MainActor
+struct CharacterBuilderModelTests {
+    @Test func theBuilderMovesThroughItsStepsInOrder() throws {
+        let context = ModelContext(try AppSchema.makeContainer(inMemory: true))
+        let world = World(name: "W", system: .dnd5e)
+        context.insert(world)
+        let model = CharacterBuilderModel(world: world)
+
+        #expect(model.step == .concept && !model.canGoBack && model.canGoForward)
+        model.goForward()
+        #expect(model.step == .race)
+        for _ in 0..<5 { model.goForward() }
+        #expect(model.step == .equipment)
+        model.goForward()
+        // The review comes last. The spells step is left out until a class that casts is chosen.
+        #expect(model.step == .review && !model.canGoForward)
+        model.goBack()
+        #expect(model.step == .equipment)
+        #expect(!model.steps.contains(.spells))
     }
 }

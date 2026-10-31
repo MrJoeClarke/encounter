@@ -32,19 +32,37 @@ struct CharacterBuilderView: View {
                 #endif
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
-                    ToolbarItemGroup(placement: .confirmationAction) {
-                        Button("Back") { model.goBack() }.disabled(!model.canGoBack)
-                        if model.canGoForward {
-                            Button("Next") { model.goForward() }
-                        } else {
-                            Button("Create") { create() }.disabled(!model.plan.problems.isEmpty)
-                        }
-                    }
                 }
+                // Moving between steps is at the bottom of the sheet, in plain sight, rather than in the toolbar.
+                .safeAreaInset(edge: .bottom) { navigationBar }
         }
         #if os(macOS)
         .frame(minWidth: 560, minHeight: 620)
         #endif
+    }
+
+    private var navigationBar: some View {
+        HStack {
+            Button("Back") { model.goBack() }
+                .disabled(!model.canGoBack)
+            Spacer()
+            Text("Step \((model.steps.firstIndex(of: model.step) ?? 0) + 1) of \(model.steps.count)")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            Spacer()
+            if model.canGoForward {
+                Button("Next") { model.goForward() }
+                    .keyboardShortcut(.defaultAction)
+            } else {
+                Button("Create") { create() }
+                    .keyboardShortcut(.defaultAction)
+                    .disabled(!model.plan.problems.isEmpty)
+            }
+        }
+        .buttonStyle(.bordered)
+        .controlSize(.large)
+        .padding()
+        .background(.bar)
     }
 
     private var title: LocalizedStringResource {
@@ -117,7 +135,7 @@ private struct SourcePicker: View {
                     HStack {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(source.name)
-                            if source.choice.isPage { Text("This World").font(.caption).foregroundStyle(.secondary) }
+                            Text(source.sourceTitle).font(.caption).foregroundStyle(.secondary)
                         }
                         Spacer()
                         if source.choice == selection { Image(systemName: "checkmark").foregroundStyle(.tint) }
@@ -128,10 +146,6 @@ private struct SourcePicker: View {
             }
         }
     }
-}
-
-private extension ContentChoice {
-    var isPage: Bool { if case .page = self { true } else { false } }
 }
 
 /// The traits or features of what's chosen, to read before moving on.
