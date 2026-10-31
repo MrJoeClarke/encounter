@@ -186,6 +186,7 @@ Races or species with their traits, and classes with their features, shipped wit
 - **Library entries:** a name, summary, attributes (size, speed, hit die and so on) and structured **entries** (see below), plus the source and attribution.
 - **Races and species:** size, speed, darkvision, languages and a list of traits. Subraces refer to their parent.
 - **Classes:** a new page kind, **Class**, with hit die, primary ability, saving throw proficiencies, armor and weapon proficiencies, spellcasting ability, and features by level. Subclasses refer to their class.
+- **More kinds (milestones 7a to 7d):** skills, backgrounds, feats, equipment and spells, in both editions. The SRDs hold one background in 5.1 and four in 5.2.1, so most backgrounds are creators' own pages. They are read the same way as library ones.
 - **Structured entries:** traits and class features are lists of entries (name, description and, for classes, level). `AttributeValue` gains an entries case, and the page editor gains a list editor for it.
 - **Browsing:** a **Library** section in the sidebar lists library entries read-only, with the Create Custom Version button. Library entries also appear in search and in the pickers below.
 - **Referencing library content:** a character's race and class can each be a world page or a library entry. Pickers show both, grouped as "This World" and "Library". A world page is stored as a `PageLink`. A library entry is stored by key, in an attribute such as `core.raceLibraryKey`. Exactly one of the two is set.
@@ -254,7 +255,9 @@ A guided flow that produces a playable character page.
 
 - Derivations live in plain Swift types (a `CharacterDraft` plus calculators) so they're unit-tested without UI.
 - The builder reads the library and the world's own pages together, so homebrew races and classes work the same as bundled ones.
-- **Level 1 first:** milestone 7 builds level 1. Skills, equipment, spells and backgrounds come later.
+- **Level 1 first:** milestone 7e builds level 1, including **skills, equipment, spells and backgrounds**, so those are added to the library first (milestones 7a to 7d).
+- **Editions differ:** in 5.1, ability score bonuses, languages and some proficiencies come from the race. In 5.2.1 the ability score bonuses, two skills, a tool and an origin feat come from the background, and species have none.
+- **Few backgrounds in the SRD:** the 5.1 SRD has one background (Acolyte) and 5.2.1 has four. The builder treats library and world backgrounds alike, so creators add their own as pages, starting from Create Custom Version.
 - **Higher levels soon after:** milestone 8 adds levelling up to a character page: choosing the new level, applying hit points, proficiency bonus changes and the class features gained, with subclass choice where the class requires it.
 
 ## 6. Architecture and Layout
@@ -295,8 +298,12 @@ Each milestone ends with a building app and passing tests. I'll stop and show yo
 | 6a | **D&D library: foundations** | Built, awaiting review | Content pack format and loader, structured trait and feature entries (and their editor), Class page kind (shown when relevant), per-world edition setting, Library section in the sidebar, read-only library browser, Create Custom Version (`basedOnKey`), race and class references that can be library or world entries, Class Level on characters, attribution screen. Proven with a small set of entries taken verbatim from the real SRDs (Dwarf, Hill Dwarf, Fighter in 5.1; Dwarf, Fighter in 5.2.1), checked by `Tools/srd/verify.sh`. 181 tests pass. |
 | 6b | **D&D library: SRD 5.1 content** | Built, awaiting review | A converter tool that reads the official SRD 5.1 PDF and writes the content pack, then all races (with subraces) and all 12 classes (with their subclass and every feature by level). Includes a checks report for you to review. |
 | 6c | **D&D library: SRD 5.2.1 content** | Built, awaiting review | The same for the official SRD 5.2.1: all 9 species and all 12 classes. |
-| 7 | **Character builder (level 1)** | Planned | Guided flow (name, race, class, ability scores, review) that creates a level 1 playable character page. |
-| 8 | **Character levelling** | Planned | Level a character up to 20: hit points, proficiency bonus, class features gained, subclass choice. |
+| 7a | **D&D library: new kinds and skills** | Planned | The pack format and library browser gain **skills**, **backgrounds**, **feats**, **equipment** and **spells** as kinds (each with its own sidebar list, `@` mentions and Create Custom Version). The 18 skills, with their abilities, for both editions. |
+| 7b | **D&D library: backgrounds and feats** | Planned | Converter support, then the SRD 5.1 background (Acolyte only) and the SRD 5.2.1 backgrounds (Acolyte, Criminal, Sage, Soldier) and feats, including the origin feats backgrounds grant. Includes a checks report. |
+| 7c | **D&D library: equipment** | Planned | Weapons, armor, tools, adventuring gear and packs with cost, weight and properties, for both editions, plus the starting equipment choices for each class and background. |
+| 7d | **D&D library: spells** | Planned | Every SRD spell for both editions (level, school, casting time, range, components, duration, text) and each class's spell list. |
+| 7e | **Character builder (level 1)** | Planned | Guided flow (name, race or species, class, background, ability scores, skills, equipment, spells, review) that creates a level 1 playable character page. The 5.1 species bonuses come from the race, and the 5.2.1 ones from the background. |
+| 8 | **Character levelling** | Planned | Level a character up to 20: hit points, proficiency bonus, class features gained, subclass choice, and new spells. |
 | 9 | **Place hierarchy** | Planned | Parenting, outline, breadcrumbs. |
 | 10 | **Search** | Planned | Global search and kind filters, including library entries. |
 | 11 | **Calendars** | Planned | Custom calendar editor per world, `InWorldDate` entry and formatting. |
@@ -305,7 +312,7 @@ Each milestone ends with a building app and passing tests. I'll stop and show yo
 | 14 | **Polish** | Planned | Keyboard shortcuts and menus on Mac, iPad multitasking, accessibility audit (Dynamic Type, VoiceOver, contrast), empty states. |
 | 15 | **CloudKit** (when a developer account exists) | Planned | Capability, container, conflict testing on multiple devices. The library is bundled and is not synced. |
 
-Search comes before maps because the `@` picker needs it. Import/export comes early so every later feature can be tested against realistic data, and the export format grows with each milestone (maps, events and so on). The D&D content library follows import/export and links because content packs reuse the import format and a character cross-references its race and class. The character builder follows the library because it reads those entries, and levelling follows the builder. Library entries should join search when search is built, so milestone 10 covers them.
+Search comes before maps because the `@` picker needs it. Import/export comes early so every later feature can be tested against realistic data, and the export format grows with each milestone (maps, events and so on). The D&D content library follows import/export and links because content packs reuse the import format and a character cross-references its race and class. The character builder follows the library because it reads those entries, which now include skills, backgrounds, feats, equipment and spells (7a to 7d), and levelling follows the builder. Library entries should join search when search is built, so milestone 10 covers them.
 
 ### JSON format notes
 - Top-level `formatVersion`, so older files can still be read.
@@ -358,12 +365,12 @@ Please edit anything here that doesn't suit you.
 5. **Images:** pages hold multiple images, one of which is the default.
 6. **Import/export:** JSON, also used to create initial test data. The format is a `.encounterworld` package (a folder holding `world.json` and `images/`).
 
-7. **D&D content and character builder:** both are in scope for v1 (sections 5.6 and 5.7, milestones 6 to 8).
+7. **D&D content and character builder:** both are in scope for v1 (sections 5.6 and 5.7, milestones 6 to 8, with 7a to 7e building the library kinds and then the builder).
 8. **Editions:** both SRD editions (5.1 and 5.2) are bundled, and each world chooses which one it uses.
 9. **Content delivery:** a shared, read-only library bundled with the app. Creators can make editable custom versions of any entry in their own world.
 10. **Class kind:** Class is a new page kind. Its sidebar category shows when the world's rule system has classes or the world already has class pages. (My recommended default. It only affects what the sidebar shows, so it's easy to change.)
 11. **Traits and features:** structured entries (name, description, level) on the page or library entry, not separate pages.
-12. **Builder scope:** level 1 first (milestone 7), with levels 2 to 20 soon after (milestone 8). Skills, equipment, spells and backgrounds come later.
+12. **Builder scope:** level 1 first (milestone 7e), including skills, equipment, spells and backgrounds, which need those kinds in the library first (7a to 7d). Levels 2 to 20 follow in milestone 8.
 
 ## 10. Open Questions
 
