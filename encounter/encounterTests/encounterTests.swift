@@ -254,7 +254,9 @@ struct PageEditingTests {
         #expect(CoreAttributes.definitions(for: .place).contains { $0.key == "core.placeType" })
         #expect(!CoreAttributes.definitions(for: .place).contains { $0.key == "core.creatureType" })
         #expect(CoreAttributes.definitions(for: .event).isEmpty)
-        #expect(PageKind.allCases.filter { $0 != .event }.allSatisfy { !CoreAttributes.definitions(for: $0).isEmpty })
+        // Events and spells have only the attributes a rule system gives them.
+        #expect(PageKind.allCases.filter { $0 != .event && $0 != .spell }.allSatisfy { !CoreAttributes.definitions(for: $0).isEmpty })
+        #expect(CoreAttributes.definitions(for: .spell).isEmpty)
     }
 }
 

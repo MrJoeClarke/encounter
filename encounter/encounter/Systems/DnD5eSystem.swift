@@ -9,7 +9,7 @@ import Foundation
 struct DnD5eSystem: RuleSystem {
     let id = RuleSystemID.dnd5e
 
-    var additionalPageKinds: Set<PageKind> { [.characterClass] }
+    var additionalPageKinds: Set<PageKind> { [.characterClass, .background, .feat, .spell] }
     var hasContentLibrary: Bool { true }
 
     static let hitDice = ["d6", "d8", "d10", "d12"]
@@ -61,6 +61,7 @@ struct DnD5eSystem: RuleSystem {
         // A character's class and level. The class can be a page in the world or a library entry.
         .init(key: "core.class", label: "Class", type: .contentReference(.characterClass, role: LinkRole.characterClass), appliesTo: [.character], group: "D&D 5e"),
         .init(key: "dnd5e.subclass", label: "Subclass", type: .subclassReference(role: "subclass", classRole: LinkRole.characterClass), appliesTo: [.character], group: "D&D 5e"),
+        .init(key: "core.background", label: "Background", type: .contentReference(.background, role: LinkRole.background), appliesTo: [.character], group: "D&D 5e"),
         .init(key: "dnd5e.classLevel", label: "Class Level", type: .number, appliesTo: [.character], group: "D&D 5e"),
 
         // Classes
@@ -71,6 +72,51 @@ struct DnD5eSystem: RuleSystem {
         .init(key: "dnd5e.weaponProficiencies", label: "Weapon Proficiencies", type: .text, appliesTo: [.characterClass], group: "D&D 5e"),
         .init(key: "dnd5e.toolProficiencies", label: "Tool Proficiencies", type: .text, appliesTo: [.characterClass], group: "D&D 5e"),
         .init(key: "dnd5e.skillChoices", label: "Skill Choices", type: .text, appliesTo: [.characterClass], group: "D&D 5e"),
+        .init(key: "dnd5e.startingEquipment", label: "Starting Equipment", type: .text, appliesTo: [.characterClass], group: "D&D 5e"),
+
+        // Backgrounds. What a background gives is kept as text, as the rules word it, until the character builder reads it.
+        .init(key: "dnd5e.backgroundAbilityScores", label: "Ability Scores", type: .text, appliesTo: [.background], group: "D&D 5e"),
+        .init(key: "dnd5e.backgroundFeat", label: "Feat", type: .text, appliesTo: [.background], group: "D&D 5e"),
+        .init(key: "dnd5e.backgroundSkills", label: "Skill Proficiencies", type: .text, appliesTo: [.background], group: "D&D 5e"),
+        .init(key: "dnd5e.backgroundTools", label: "Tool Proficiency", type: .text, appliesTo: [.background], group: "D&D 5e"),
+        .init(key: "dnd5e.backgroundLanguages", label: "Languages", type: .text, appliesTo: [.background], group: "D&D 5e"),
+        .init(key: "dnd5e.backgroundEquipment", label: "Starting Equipment", type: .text, appliesTo: [.background], group: "D&D 5e"),
+
+        // Equipment. Armor, weapons, tools and gear from the library become items.
+        .init(key: "dnd5e.equipmentCategory", label: "Category", type: .text, appliesTo: [.item], group: "D&D 5e"),
+        .init(key: "dnd5e.cost", label: "Cost", type: .text, appliesTo: [.item], group: "D&D 5e"),
+        .init(key: "dnd5e.weight", label: "Weight", type: .text, appliesTo: [.item], group: "D&D 5e"),
+        .init(key: "dnd5e.damage", label: "Damage", type: .text, appliesTo: [.item], group: "D&D 5e"),
+        .init(key: "dnd5e.weaponProperties", label: "Properties", type: .text, appliesTo: [.item], group: "D&D 5e"),
+        .init(key: "dnd5e.weaponMastery", label: "Mastery", type: .text, appliesTo: [.item], group: "D&D 5e"),
+        .init(key: "dnd5e.armorFormula", label: "Armor Class", type: .text, appliesTo: [.item], group: "D&D 5e"),
+        .init(key: "dnd5e.strengthRequirement", label: "Strength Needed", type: .text, appliesTo: [.item], group: "D&D 5e"),
+        .init(key: "dnd5e.stealth", label: "Stealth", type: .text, appliesTo: [.item], group: "D&D 5e"),
+        .init(key: "dnd5e.toolAbility", label: "Tool Ability", type: .text, appliesTo: [.item], group: "D&D 5e"),
+
+        // What a character built from the library has.
+        .init(key: "dnd5e.proficiencyBonus", label: "Proficiency Bonus", type: .number, appliesTo: [.character], group: "Combat"),
+        .init(key: "dnd5e.savingThrowProficiencies", label: "Saving Throw Proficiencies", type: .text, appliesTo: [.character], group: "Proficiencies"),
+        .init(key: "dnd5e.skillProficiencies", label: "Skill Proficiencies", type: .text, appliesTo: [.character], group: "Proficiencies"),
+        .init(key: "dnd5e.characterToolProficiencies", label: "Tool Proficiencies", type: .text, appliesTo: [.character], group: "Proficiencies"),
+        .init(key: "dnd5e.racialTraits", label: "Racial Traits", type: .entries(showsLevel: false), appliesTo: [.character], group: "Traits"),
+        .init(key: "dnd5e.classFeatures", label: "Class Features", type: .entries(showsLevel: true), appliesTo: [.character], group: "Features"),
+        .init(key: "dnd5e.equipment", label: "Equipment", type: .entries(showsLevel: false), appliesTo: [.character], group: "Equipment"),
+        .init(key: "dnd5e.spells", label: "Spells", type: .entries(showsLevel: false), appliesTo: [.character], group: "Spells"),
+
+        // Spells
+        .init(key: "dnd5e.spellLevel", label: "Level", type: .number, appliesTo: [.spell], group: "D&D 5e"),
+        .init(key: "dnd5e.spellSchool", label: "School", type: .text, appliesTo: [.spell], group: "D&D 5e"),
+        .init(key: "dnd5e.spellClasses", label: "Classes", type: .text, appliesTo: [.spell], group: "D&D 5e"),
+        .init(key: "dnd5e.castingTime", label: "Casting Time", type: .text, appliesTo: [.spell], group: "D&D 5e"),
+        .init(key: "dnd5e.spellRange", label: "Range", type: .text, appliesTo: [.spell], group: "D&D 5e"),
+        .init(key: "dnd5e.components", label: "Components", type: .text, appliesTo: [.spell], group: "D&D 5e"),
+        .init(key: "dnd5e.duration", label: "Duration", type: .text, appliesTo: [.spell], group: "D&D 5e"),
+        .init(key: "dnd5e.ritual", label: "Ritual", type: .bool, appliesTo: [.spell], group: "D&D 5e"),
+
+        // Feats
+        .init(key: "dnd5e.featCategory", label: "Category", type: .text, appliesTo: [.feat], group: "D&D 5e"),
+        .init(key: "dnd5e.featPrerequisite", label: "Prerequisite", type: .text, appliesTo: [.feat], group: "D&D 5e"),
 
         // Characters and monsters
         .init(key: "dnd5e.size", label: "Size", type: .choice(sizes), appliesTo: [.character], group: "D&D 5e"),

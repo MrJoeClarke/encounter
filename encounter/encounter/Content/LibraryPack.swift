@@ -50,24 +50,62 @@ enum LibraryEdition: String, CaseIterable, Identifiable, Codable {
 }
 
 /// The kinds of entry a content pack holds.
-nonisolated enum LibraryKind: String, Codable, Sendable {
+nonisolated enum LibraryKind: String, Codable, Sendable, CaseIterable {
     case race
     case `class`
     case subclass
+    case skill
+    case background
+    case feat
+    case equipment
+    case spell
 
     /// The kind of page a custom version becomes. Subclasses don't have a page kind of their own: they're
-    /// copied as part of their class.
+    /// copied as part of their class. Skills are fixed rules data, with no custom version. Equipment becomes an
+    /// item.
     var pageKind: PageKind? {
         switch self {
         case .race: .race
         case .class: .characterClass
-        case .subclass: nil
+        case .background: .background
+        case .feat: .feat
+        case .equipment: .item
+        case .spell: .spell
+        case .subclass, .skill: nil
         }
     }
 
     /// The list a subrace or subclass appears in.
     var listKind: LibraryKind {
         self == .subclass ? .class : self
+    }
+
+    /// The kinds that have a list of their own in the Library, in the order they're shown.
+    static let listKinds: [LibraryKind] = [.race, .class, .background, .feat, .skill, .equipment, .spell]
+
+    var systemImage: String {
+        switch self {
+        case .race: "pawprint"
+        case .class, .subclass: "shield.lefthalf.filled"
+        case .skill: "star.circle"
+        case .background: "book.closed"
+        case .feat: "medal"
+        case .equipment: "backpack"
+        case .spell: "wand.and.stars"
+        }
+    }
+
+    /// The heading of this kind's list. Races are species in 5.2.1.
+    func listTitle(in edition: LibraryEdition) -> LocalizedStringResource {
+        switch self {
+        case .race: edition.raceTermPlural
+        case .class, .subclass: "Classes"
+        case .skill: "Skills"
+        case .background: "Backgrounds"
+        case .feat: "Feats"
+        case .equipment: "Equipment"
+        case .spell: "Spells"
+        }
     }
 }
 

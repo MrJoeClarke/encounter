@@ -58,7 +58,7 @@ struct LibraryEntryView: View {
             }
 
             if !entry.entries.isEmpty {
-                Section(entry.kind == .race ? "Traits" : "Features") {
+                Section(entriesTitle) {
                     ForEach(entry.entries.indices, id: \.self) { index in
                         EntryText(entry: entry.entries[index])
                     }
@@ -99,6 +99,19 @@ struct LibraryEntryView: View {
         .navigationTitle(entry.name)
     }
 
+    private var entriesTitle: LocalizedStringResource {
+        switch entry.kind {
+        case .race: "Traits"
+        case .class, .subclass: "Features"
+        case .skill, .background, .feat, .equipment, .spell: "Details"
+        }
+    }
+
+    /// Labels for attributes that only library entries have, since they have no page editor.
+    private static let libraryOnlyLabels: [String: LocalizedStringResource] = [
+        "dnd5e.ability": "Ability",
+    ]
+
     private var attribution: String? {
         LibraryEdition(key: entry.key).flatMap { Library.shared.attribution(for: $0) }
     }
@@ -117,7 +130,7 @@ struct LibraryEntryView: View {
         }
         for (key, value) in entry.attributes.sorted(by: { $0.key < $1.key }) where !shown.contains(key) {
             if let text = displayText(for: value) {
-                rows.append(Row(label: key, value: text))
+                rows.append(Row(label: Self.libraryOnlyLabels[key].map { String(localized: $0) } ?? key, value: text))
             }
         }
         return rows

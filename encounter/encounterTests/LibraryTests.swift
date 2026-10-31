@@ -108,7 +108,7 @@ struct LibraryTests {
         { "formatVersion": 1, "id": "p", "name": "P", "edition": "E", "attribution": "A",
           "entries": [
             { "key": "p.race.a", "kind": "race", "name": "A" },
-            { "key": "p.spell.b", "kind": "spell", "name": "B" },
+            { "key": "p.vehicle.b", "kind": "vehicle", "name": "B" },
             { "key": "p.race.c", "kind": "race" },
             { "key": "p.race.d", "kind": "race", "name": "D" }
           ] }
@@ -166,7 +166,7 @@ struct LibraryTests {
                     switch entry.kind {
                     case .race: #expect(parent?.kind == .race)
                     case .subclass: #expect(parent?.kind == .class)
-                    case .class: Issue.record("\(entry.key) is a class with a parent")
+                    default: Issue.record("\(entry.key) is a \(entry.kind) with a parent")
                     }
                 }
                 for feature in entry.entries {
@@ -177,6 +177,8 @@ struct LibraryTests {
                         #expect(feature.level == nil, "\(entry.key) / \(feature.name) has a level")
                     case .class, .subclass:
                         #expect((1...20).contains(feature.level ?? 0), "\(entry.key) / \(feature.name) needs a level from 1 to 20")
+                    case .skill, .background, .feat, .equipment, .spell:
+                        break
                     }
                 }
             }
@@ -189,7 +191,9 @@ struct LibraryTests {
             let pack = try #require(Library.shared.pack(for: edition))
             for entry in pack.entries {
                 let pageKind = try #require(entry.kind.pageKind ?? .characterClass)
-                let known = Set(RuleSystems.definitions(for: pageKind, system: .dnd5e).map(\.key))
+                // Skills and the like have no page to edit, so their attributes only need a label in the library.
+                let libraryOnly: Set<String> = ["dnd5e.ability"]
+                let known = Set(RuleSystems.definitions(for: pageKind, system: .dnd5e).map(\.key)).union(libraryOnly)
                 for key in entry.attributes.keys {
                     #expect(known.contains(key), "\(entry.key) uses \(key), which the editor has no field for")
                 }
@@ -530,7 +534,8 @@ struct LibraryTests {
         let plain = World(name: "Plain")
         context.insert(plain)
         #expect(!plain.visibleKinds.contains(.characterClass))
-        #expect(plain.visibleKinds.count == PageKind.allCases.count - 1)
+        #expect(plain.visibleKinds.count == PageKind.allCases.filter { !$0.isConditional }.count)
+        #expect(!plain.visibleKinds.contains(.background) && !plain.visibleKinds.contains(.feat))
 
         let dnd = World(name: "D&D", system: .dnd5e)
         context.insert(dnd)
@@ -552,7 +557,7 @@ struct LibraryTests {
     @Test func onlyDnDHasALibraryAndClasses() {
         #expect(RuleSystems.system(for: .dnd5e).hasContentLibrary)
         #expect(!RuleSystems.system(for: .none).hasContentLibrary)
-        #expect(RuleSystems.system(for: .dnd5e).additionalPageKinds == [.characterClass])
+        #expect(RuleSystems.system(for: .dnd5e).additionalPageKinds == [.characterClass, .background, .feat, .spell])
         #expect(RuleSystems.system(for: .none).additionalPageKinds.isEmpty)
     }
 
@@ -789,5 +794,367 @@ struct LibraryTests {
         let classes = Library.shared.topLevelEntries(.class, in: .srd52)
         #expect(classes.count == 12)
         #expect(classes.allSatisfy { $0.kind == .class })
+    }
+
+    // MARK: Skills and the other library kinds
+
+    @Test func bothEditionsHaveTheEighteenSkillsWithTheirAbilities() throws {
+        let abilities = ["Strength", "Dexterity", "Constitution", "Intelligence", "Wisdom", "Charisma"]
+        let expected: [String: String] = [
+            "Athletics": "Strength",
+            "Acrobatics": "Dexterity", "Sleight of Hand": "Dexterity", "Stealth": "Dexterity",
+            "Arcana": "Intelligence", "History": "Intelligence", "Investigation": "Intelligence", "Nature": "Intelligence", "Religion": "Intelligence",
+            "Animal Handling": "Wisdom", "Insight": "Wisdom", "Medicine": "Wisdom", "Perception": "Wisdom", "Survival": "Wisdom",
+            "Deception": "Charisma", "Intimidation": "Charisma", "Performance": "Charisma", "Persuasion": "Charisma",
+        ]
+        for edition in LibraryEdition.allCases {
+            let skills = Library.shared.entries(.skill, in: edition)
+            #expect(skills.count == 18, "\(edition)")
+            for skill in skills {
+                #expect(skill.kind == .skill)
+                #expect(skill.parent == nil)
+                #expect(!skill.summary.isEmpty, "\(skill.name) has no description")
+                guard case .text(let ability)? = skill.attributes["dnd5e.ability"] else {
+                    Issue.record("\(skill.name) has no ability")
+                    continue
+                }
+                #expect(abilities.contains(ability))
+                #expect(expected[skill.name] == ability, "\(skill.name) in \(edition)")
+            }
+            // Constitution has no skills.
+            #expect(!skills.contains { $0.attributes["dnd5e.ability"] == .text("Constitution") })
+        }
+    }
+
+    @Test func theLibraryListsOnlyKindsThatHaveEntries() {
+        for edition in LibraryEdition.allCases {
+            let kinds = Library.shared.listKinds(in: edition)
+            #expect(kinds.starts(with: [.race, .class]))
+            #expect(kinds.contains(.skill))
+            #expect(!kinds.contains(.subclass))
+            #expect(kinds == kinds.sorted { LibraryKind.listKinds.firstIndex(of: $0)! < LibraryKind.listKinds.firstIndex(of: $1)! })
+        }
+        #expect(makeLibrary().listKinds(in: .srd51) == [.race, .class])
+        #expect(makeLibrary().listKinds(in: .srd52).isEmpty)
+    }
+
+    @Test func everyKindHasATitleAnIconAndALabel() {
+        for kind in LibraryKind.allCases {
+            #expect(!kind.systemImage.isEmpty)
+            #expect(!String(localized: kind.listTitle(in: .srd51)).isEmpty)
+        }
+        #expect(String(localized: LibraryKind.race.listTitle(in: .srd51)) == "Races")
+        #expect(String(localized: LibraryKind.race.listTitle(in: .srd52)) == "Species")
+        #expect(String(localized: LibraryKind.skill.listTitle(in: .srd52)) == "Skills")
+        for kind in LibraryKind.allCases {
+            #expect(!String(localized: LibraryEntry(key: "srd52.x.y", kind: kind, name: "N").kindTitle).isEmpty)
+        }
+    }
+
+    @Test func aSkillCanBeMentionedAndOpenedButNotCopied() throws {
+        let context = try makeContext()
+        let world = makeWorld(in: context, edition: .srd51)
+        let athletics = try #require(Library.shared.entry(forKey: "srd51.skill.athletics"))
+
+        #expect(Library.shared.mentionableEntries(matching: "athlet", in: .srd51, limit: 8).map(\.key) == ["srd51.skill.athletics"])
+        #expect(Library.shared.makeCustomVersion(of: athletics, in: world, context: context) == nil)
+
+        let navigation = WorldNavigation()
+        navigation.openLibraryEntry(athletics)
+        #expect(navigation.selection == .library(.skill))
+        #expect(navigation.selectedLibraryKey == "srd51.skill.athletics")
+    }
+
+    @Test func aPackWithAKindThisAppDoesNotKnowStillLoads() throws {
+        let pack = try decode("""
+        { "formatVersion": 1, "id": "p", "name": "P", "edition": "E", "attribution": "A",
+          "entries": [
+            { "key": "p.skill.a", "kind": "skill", "name": "A" },
+            { "key": "p.vehicle.b", "kind": "vehicle", "name": "B" }
+          ] }
+        """)
+        #expect(pack.entries.map(\.key) == ["p.skill.a"])
+    }
+
+    // MARK: Backgrounds and feats
+
+    private func text(_ entry: LibraryEntry, _ key: String) -> String? {
+        if case .text(let value)? = entry.attributes[key] { value } else { nil }
+    }
+
+    @Test func theBundledBackgroundsAreComplete() throws {
+        let acolyte51 = try #require(Library.shared.entry(forKey: "srd51.background.acolyte"))
+        #expect(Library.shared.entries(.background, in: .srd51).map(\.name) == ["Acolyte"])
+        #expect(text(acolyte51, "dnd5e.backgroundSkills") == "Insight, Religion")
+        #expect(text(acolyte51, "dnd5e.backgroundLanguages") == "Two of your choice")
+        #expect(acolyte51.entries.map(\.name).first == "Shelter of the Faithful")
+        #expect(["Personality Trait", "Ideal", "Bond", "Flaw"].allSatisfy { name in acolyte51.entries.contains { $0.name == name } })
+
+        let backgrounds = Library.shared.entries(.background, in: .srd52)
+        #expect(backgrounds.map(\.name) == ["Acolyte", "Criminal", "Sage", "Soldier"])
+        for background in backgrounds {
+            for key in ["dnd5e.backgroundAbilityScores", "dnd5e.backgroundFeat", "dnd5e.backgroundSkills", "dnd5e.backgroundTools", "dnd5e.backgroundEquipment"] {
+                #expect(text(background, key)?.isEmpty == false, "\(background.name) is missing \(key)")
+            }
+            #expect(text(background, "dnd5e.backgroundEquipment")?.hasPrefix("Choose A or B:") == true)
+        }
+        let soldier = try #require(Library.shared.entry(forKey: "srd52.background.soldier"))
+        #expect(text(soldier, "dnd5e.backgroundSkills") == "Athletics and Intimidation")
+        #expect(text(soldier, "dnd5e.backgroundFeat") == "Savage Attacker (see “Feats”)")
+    }
+
+    @Test func theBundledFeatsAreComplete() throws {
+        let grappler = try #require(Library.shared.entry(forKey: "srd51.feat.grappler"))
+        #expect(Library.shared.entries(.feat, in: .srd51).count == 1)
+        #expect(text(grappler, "dnd5e.featPrerequisite") == "Strength 13 or higher")
+
+        let feats = Library.shared.entries(.feat, in: .srd52)
+        #expect(feats.count == 17)
+        func count(_ category: String) -> Int { feats.filter { text($0, "dnd5e.featCategory") == category }.count }
+        #expect(count("Origin Feat") == 4)
+        #expect(count("General Feat") == 2)
+        #expect(count("Fighting Style Feat") == 4)
+        #expect(count("Epic Boon Feat") == 7)
+        #expect(feats.filter { text($0, "dnd5e.featCategory") == "Epic Boon Feat" }.allSatisfy { text($0, "dnd5e.featPrerequisite")?.hasPrefix("Level 19+") == true })
+        let grappler52 = try #require(Library.shared.entry(forKey: "srd52.feat.grappler"))
+        #expect(text(grappler52, "dnd5e.featPrerequisite") == "Level 4+, Strength or Dexterity 13+")
+        #expect(grappler52.entries.map(\.name) == ["Ability Score Increase", "Punch and Grab", "Attack Advantage", "Fast Wrestler"])
+    }
+
+    @Test func aBackgroundOrFeatCanBeCopiedIntoTheWorld() throws {
+        let context = try makeContext()
+        let world = makeWorld(in: context, edition: .srd52)
+
+        let sage = try #require(Library.shared.entry(forKey: "srd52.background.sage"))
+        let background = try #require(Library.shared.makeCustomVersion(of: sage, in: world, context: context))
+        #expect(background.kind == .background)
+        #expect(background.title == "Sage")
+        #expect(background.basedOnKey == "srd52.background.sage")
+        #expect(background.attributeText("dnd5e.backgroundSkills") == "Arcana and History")
+
+        let alert = try #require(Library.shared.entry(forKey: "srd52.feat.alert"))
+        let feat = try #require(Library.shared.makeCustomVersion(of: alert, in: world, context: context))
+        #expect(feat.kind == .feat)
+        #expect(feat.attributeText("dnd5e.featCategory") == "Origin Feat")
+        guard case .entries(let benefits)? = feat.attributes[CoreAttributes.detailsKey] else {
+            Issue.record("Expected the feat's benefits")
+            return
+        }
+        #expect(benefits.map(\.name) == ["Initiative Proficiency", "Initiative Swap"])
+    }
+
+    @Test func backgroundAndFeatPagesOnlyBelongToDnD() {
+        func keys(_ kind: PageKind, _ system: RuleSystemID) -> [String] {
+            RuleSystems.definitions(for: kind, system: system).map(\.key)
+        }
+        #expect(keys(.background, .dnd5e).contains("dnd5e.backgroundSkills"))
+        #expect(keys(.background, .dnd5e).contains(CoreAttributes.detailsKey))
+        #expect(keys(.feat, .dnd5e).contains("dnd5e.featCategory"))
+        #expect(!keys(.background, .none).contains("dnd5e.backgroundSkills"))
+        #expect(PageKind.background.isConditional && PageKind.feat.isConditional)
+    }
+
+    @Test func theLibraryNowListsBackgroundsAndFeatsToo() {
+        for edition in LibraryEdition.allCases {
+            let kinds = Library.shared.listKinds(in: edition)
+            #expect(kinds.contains(.background) && kinds.contains(.feat) && kinds.contains(.skill))
+        }
+    }
+
+    // MARK: Equipment
+
+    private func equipment(_ key: String) throws -> LibraryEntry {
+        try #require(Library.shared.entry(forKey: key), "\(key) isn't in the library")
+    }
+
+    private func equipmentCount(_ category: String, in edition: LibraryEdition) -> Int {
+        Library.shared.entries(.equipment, in: edition).filter { text($0, "dnd5e.equipmentCategory") == category }.count
+    }
+
+    @Test func srd51WeaponsAndArmorHaveTheirStats() throws {
+        let longsword = try equipment("srd51.equipment.longsword")
+        #expect(text(longsword, "dnd5e.damage") == "1d8 slashing")
+        #expect(text(longsword, "dnd5e.weaponProperties") == "Versatile (1d10)")
+        #expect(text(longsword, "dnd5e.cost") == "15 gp")
+        #expect(text(longsword, "dnd5e.weight") == "3 lb.")
+        #expect(text(longsword, "dnd5e.equipmentCategory") == "Martial Melee Weapons")
+
+        // A weapon whose properties wrap onto a second line of the table keeps all of them.
+        let heavyCrossbow = try equipment("srd51.equipment.crossbow-heavy")
+        #expect(text(heavyCrossbow, "dnd5e.weaponProperties") == "Ammunition (range 100/400), heavy, loading, two-handed")
+
+        let chainMail = try equipment("srd51.equipment.chain-mail")
+        #expect(text(chainMail, "dnd5e.armorFormula") == "16")
+        #expect(text(chainMail, "dnd5e.strengthRequirement") == "Str 13")
+        #expect(text(chainMail, "dnd5e.stealth") == "Disadvantage")
+        #expect(text(try equipment("srd51.equipment.chain-shirt"), "dnd5e.armorFormula") == "13 + Dex modifier (max 2)")
+        #expect(text(try equipment("srd51.equipment.shield"), "dnd5e.armorFormula") == "+2")
+
+        #expect(equipmentCount("Simple Melee Weapons", in: .srd51) == 10)
+        #expect(equipmentCount("Martial Melee Weapons", in: .srd51) == 18)
+        #expect(equipmentCount("Heavy Armor", in: .srd51) == 4)
+    }
+
+    @Test func srd52WeaponsAndArmorHaveTheirStatsIncludingMastery() throws {
+        let longsword = try equipment("srd52.equipment.longsword")
+        #expect(text(longsword, "dnd5e.damage") == "1d8 Slashing")
+        #expect(text(longsword, "dnd5e.weaponMastery") == "Sap")
+        #expect(text(longsword, "dnd5e.cost") == "15 GP")
+
+        // A property that wraps onto a second line, in the middle of the row, stays in place.
+        let lightCrossbow = try equipment("srd52.equipment.light-crossbow")
+        #expect(text(lightCrossbow, "dnd5e.weaponProperties") == "Ammunition (Range 80/320; Bolt), Loading, Two-Handed")
+        #expect(text(lightCrossbow, "dnd5e.weaponMastery") == "Slow")
+
+        let chainMail = try equipment("srd52.equipment.chain-mail")
+        #expect(text(chainMail, "dnd5e.armorFormula") == "16")
+        #expect(text(chainMail, "dnd5e.strengthRequirement") == "Str 13")
+        #expect(text(try equipment("srd52.equipment.hide-armor"), "dnd5e.armorFormula") == "12 + Dex modifier (max 2)")
+        #expect(equipmentCount("Heavy Armor", in: .srd52) == 4)
+        #expect(Library.shared.entries(.equipment, in: .srd52).filter { text($0, "dnd5e.damage") != nil }.count == 38)
+    }
+
+    @Test func toolsGearAndPacksAreInBothEditions() throws {
+        let tools51 = try equipment("srd51.equipment.thieves-tools")
+        #expect(text(tools51, "dnd5e.cost") == "25 gp")
+        #expect(text(tools51, "dnd5e.weight") == "1 lb.")
+        #expect(equipmentCount("Artisan’s tools", in: .srd51) == 19)
+
+        let supplies = try equipment("srd52.equipment.alchemists-supplies")
+        #expect(text(supplies, "dnd5e.toolAbility") == "Intelligence")
+        #expect(text(supplies, "dnd5e.weight") == "8 lb.")
+        #expect(supplies.entries.map(\.name) == ["Utilize", "Craft"])
+        #expect(equipmentCount("Artisan’s Tools", in: .srd52) == 17)
+
+        for edition in LibraryEdition.allCases {
+            let packs = Library.shared.entries(.equipment, in: edition).filter { $0.name.hasSuffix("Pack") }
+            #expect(Set(packs.map(\.name)) == ["Burglar’s Pack", "Diplomat’s Pack", "Dungeoneer’s Pack", "Entertainer’s Pack", "Explorer’s Pack", "Priest’s Pack", "Scholar’s Pack"], "\(edition)")
+            #expect(packs.allSatisfy { !$0.summary.isEmpty && text($0, "dnd5e.cost") != nil })
+        }
+        #expect(try equipment("srd51.equipment.explorers-pack").summary.hasPrefix("Includes a backpack, a bedroll"))
+    }
+
+    @Test func everyClassHasItsStartingEquipment() {
+        for edition in LibraryEdition.allCases {
+            for entry in Library.shared.topLevelEntries(.class, in: edition) {
+                #expect(text(entry, "dnd5e.startingEquipment")?.isEmpty == false, "\(entry.name) in \(edition)")
+            }
+        }
+        #expect(text(Library.shared.entry(forKey: "srd52.class.fighter")!, "dnd5e.startingEquipment")?.hasPrefix("Choose A, B, or C:") == true)
+        #expect(text(Library.shared.entry(forKey: "srd51.class.fighter")!, "dnd5e.startingEquipment")?.contains("(a) chain mail or (b) leather armor") == true)
+    }
+
+    @Test func anEquipmentEntryBecomesAnItem() throws {
+        let context = try makeContext()
+        let world = makeWorld(in: context, edition: .srd52)
+        let supplies = try equipment("srd52.equipment.alchemists-supplies")
+
+        let item = try #require(Library.shared.makeCustomVersion(of: supplies, in: world, context: context))
+
+        #expect(item.kind == .item)
+        #expect(item.title == "Alchemist’s Supplies")
+        #expect(item.basedOnKey == "srd52.equipment.alchemists-supplies")
+        #expect(item.attributeText("dnd5e.cost") == "50 GP")
+        guard case .entries(let details)? = item.attributes[CoreAttributes.detailsKey] else {
+            Issue.record("Expected the tool's details")
+            return
+        }
+        #expect(details.map(\.name) == ["Utilize", "Craft"])
+        #expect(RuleSystems.definitions(for: .item, system: .dnd5e).map(\.key).contains("dnd5e.cost"))
+        #expect(!RuleSystems.definitions(for: .item, system: .none).map(\.key).contains("dnd5e.cost"))
+    }
+
+    @Test func theLibraryListsEquipmentToo() {
+        for edition in LibraryEdition.allCases {
+            #expect(Library.shared.listKinds(in: edition).contains(.equipment))
+        }
+    }
+
+    // MARK: Spells
+
+    private func number(_ entry: LibraryEntry, _ key: String) -> Double? {
+        if case .number(let value)? = entry.attributes[key] { value } else { nil }
+    }
+
+    @Test func bothEditionsHaveEverySpellWithItsFacts() {
+        let counts: [LibraryEdition: Int] = [.srd51: 319, .srd52: 339]
+        for edition in LibraryEdition.allCases {
+            let spells = Library.shared.entries(.spell, in: edition)
+            #expect(spells.count == counts[edition], "\(edition)")
+            for spell in spells {
+                #expect(spell.parent == nil && !spell.summary.isEmpty, "\(spell.name) has no text")
+                let level = number(spell, "dnd5e.spellLevel")
+                #expect(level.map { (0...9).contains($0) } == true, "\(spell.name) level")
+                for key in ["dnd5e.spellSchool", "dnd5e.spellClasses", "dnd5e.castingTime", "dnd5e.spellRange", "dnd5e.duration"] {
+                    #expect(text(spell, key)?.isEmpty == false, "\(spell.name) is missing \(key) in \(edition)")
+                }
+                // A spell of a level needs a slot, and every spell is on at least one class's list.
+                #expect(text(spell, "dnd5e.components")?.isEmpty == false, "\(spell.name) components")
+            }
+            let schools = Set(spells.compactMap { text($0, "dnd5e.spellSchool") })
+            #expect(schools == ["Abjuration", "Conjuration", "Divination", "Enchantment", "Evocation", "Illusion", "Necromancy", "Transmutation"], "\(edition)")
+        }
+    }
+
+    @Test func spellsHaveTheirLevelSchoolClassesAndText() throws {
+        let fireball = try equipment("srd51.spell.fireball")
+        #expect(number(fireball, "dnd5e.spellLevel") == 3)
+        #expect(text(fireball, "dnd5e.spellSchool") == "Evocation")
+        #expect(text(fireball, "dnd5e.spellClasses") == "Sorcerer, Wizard")
+        #expect(text(fireball, "dnd5e.spellRange") == "150 feet")
+        #expect(text(fireball, "dnd5e.components") == "V, S, M (a tiny ball of bat guano and sulfur)")
+        #expect(fireball.summary.contains("At Higher Levels."))
+
+        let fireball52 = try equipment("srd52.spell.fireball")
+        #expect(text(fireball52, "dnd5e.castingTime") == "Action")
+        #expect(text(fireball52, "dnd5e.spellClasses") == "Sorcerer, Wizard")
+        #expect(fireball52.summary.contains("Using a Higher-Level Spell Slot."))
+
+        let cureWounds = try equipment("srd51.spell.cure-wounds")
+        #expect(text(cureWounds, "dnd5e.spellClasses") == "Bard, Cleric, Druid, Paladin, Ranger")
+
+        let acidSplash = try equipment("srd52.spell.acid-splash")
+        #expect(acidSplash.name == "Acid Splash")
+        #expect(number(acidSplash, "dnd5e.spellLevel") == 0)
+        #expect(text(acidSplash, "dnd5e.spellSchool") == "Evocation")
+    }
+
+    @Test func ritualsAreFlaggedAndLongFactsKeepAllTheirLines() throws {
+        let detectMagic51 = try equipment("srd51.spell.detect-magic")
+        #expect(detectMagic51.attributes["dnd5e.ritual"] == .bool(true))
+        #expect(text(detectMagic51, "dnd5e.duration")?.hasPrefix("Concentration") == true)
+        #expect(try equipment("srd52.spell.detect-magic").attributes["dnd5e.ritual"] == .bool(true))
+        #expect(try equipment("srd51.spell.fireball").attributes["dnd5e.ritual"] == nil)
+
+        // Components that wrap onto a second line, and a casting time that does.
+        #expect(text(try equipment("srd52.spell.animate-dead"), "dnd5e.components")?.hasSuffix("and a pinch of bone dust)") == true)
+        #expect(text(try equipment("srd52.spell.counterspell"), "dnd5e.castingTime")?.contains("which you take") == true)
+        // The one place the PDF says "Component:".
+        #expect(text(try equipment("srd51.spell.contagion"), "dnd5e.components") == "V, S")
+    }
+
+    @Test func aSpellBecomesASpellPage() throws {
+        let context = try makeContext()
+        let world = makeWorld(in: context, edition: .srd51)
+        let fireball = try equipment("srd51.spell.fireball")
+
+        let page = try #require(Library.shared.makeCustomVersion(of: fireball, in: world, context: context))
+
+        #expect(page.kind == .spell)
+        #expect(page.title == "Fireball")
+        #expect(page.summary == "Level 3 Evocation")
+        #expect(String(page.body.characters).contains("A bright streak flashes"))
+        #expect(page.attributes["dnd5e.spellLevel"] == .number(3))
+        #expect(page.basedOnKey == "srd51.spell.fireball")
+        #expect(RuleSystems.definitions(for: .spell, system: .dnd5e).map(\.key).contains("dnd5e.castingTime"))
+        #expect(PageKind.spell.isConditional && !RuleSystems.definitions(for: .spell, system: .none).map(\.key).contains("dnd5e.castingTime"))
+        #expect(try equipment("srd52.spell.acid-splash").spellHeadline == "Evocation cantrip")
+    }
+
+    @Test func theLibraryListsSpellsAndTheyCanBeMentioned() {
+        for edition in LibraryEdition.allCases {
+            #expect(Library.shared.listKinds(in: edition).contains(.spell))
+        }
+        #expect(Library.shared.mentionableEntries(matching: "fireball", in: .srd51, limit: 8).map(\.name).contains("Fireball"))
     }
 }

@@ -14,6 +14,8 @@ final class Library {
 
     private var packs: [LibraryEdition: LibraryPack] = [:]
     private var attemptedEditions: Set<LibraryEdition> = []
+    /// Packs are loaded the first time they're asked for, which can happen on several threads at once, such as in tests.
+    private let lock = NSLock()
     private let isPreloaded: Bool
 
     /// Loads packs from the app bundle as they're first needed.
@@ -28,6 +30,8 @@ final class Library {
     }
 
     func pack(for edition: LibraryEdition) -> LibraryPack? {
+        lock.lock()
+        defer { lock.unlock() }
         if let pack = packs[edition] { return pack }
         guard !isPreloaded, attemptedEditions.insert(edition).inserted else { return nil }
         guard let url = Bundle(for: LibraryBundleToken.self).url(forResource: edition.resourceName, withExtension: "json"),
@@ -56,6 +60,11 @@ final class Library {
     /// The entries of a list that don't belong to another entry: races and classes, without their children.
     func topLevelEntries(_ kind: LibraryKind, in edition: LibraryEdition) -> [LibraryEntry] {
         entries(kind, in: edition).filter { $0.parent == nil }
+    }
+
+    /// The lists to show in the Library for an edition: those that have entries, in order.
+    func listKinds(in edition: LibraryEdition) -> [LibraryKind] {
+        LibraryKind.listKinds.filter { !topLevelEntries($0, in: edition).isEmpty }
     }
 
     /// The subraces of a race or subclasses of a class.
@@ -96,6 +105,19 @@ private final class LibraryBundleToken {}
 // MARK: Create Custom Version
 
 extension Library {
+    /// An entry's attributes and traits or features. A subrace's include its parent's, then its own.
+    func traits(of entry: LibraryEntry) -> (attributes: [String: AttributeValue], entries: [EntryValue]) {
+        var attributes: [String: AttributeValue] = [:]
+        var entries: [EntryValue] = []
+        if entry.kind == .race, let parentKey = entry.parent, let parent = self.entry(forKey: parentKey) {
+            attributes.merge(parent.attributes) { $1 }
+            entries += parent.entries
+        }
+        attributes.merge(entry.attributes) { $1 }
+        entries += entry.entries
+        return (attributes, entries)
+    }
+
     /// Makes an editable page in the world from a library entry, a variant to change as the creator likes.
     ///
     /// A subrace becomes a complete race: the parent's attributes and traits, then its own. A class includes the
@@ -126,12 +148,18 @@ extension Library {
                     EntryValue(name: "\(subclass.name): \(feature.name)", level: feature.level, text: feature.text)
                 }
             }
-        case .subclass:
+        case .background, .feat, .equipment, .spell:
+            attributes = entry.attributes
+            entries = entry.entries
+        case .subclass, .skill:
             return nil
         }
 
-        let page = Page(title: entry.name, kind: pageKind, summary: entry.summary)
+        // A spell's description is long, so it goes in the notes, with a line of what kind of spell it is as the summary.
+        let isSpell = entry.kind == .spell
+        let page = Page(title: entry.name, kind: pageKind, summary: isSpell ? entry.spellHeadline : entry.summary)
         context.insert(page)
+        if isSpell { page.body = AttributedString(entry.summary) }
         page.world = world
         page.basedOnKey = entry.key
         if !entries.isEmpty {
@@ -143,7 +171,11 @@ extension Library {
 
     /// The attribute that holds a kind's traits or features.
     private func entriesKey(for kind: PageKind) -> String {
-        kind == .characterClass ? CoreAttributes.featuresKey : CoreAttributes.traitsKey
+        switch kind {
+        case .characterClass: CoreAttributes.featuresKey
+        case .background, .feat, .item: CoreAttributes.detailsKey
+        default: CoreAttributes.traitsKey
+        }
     }
 }
 
@@ -156,6 +188,21 @@ extension LibraryEntry {
         case .race: return parent == nil ? edition.raceTermSingular : "Subrace"
         case .class: return "Class"
         case .subclass: return "Subclass"
+        case .skill: return "Skill"
+        case .background: return "Background"
+        case .feat: return "Feat"
+        case .equipment: return "Equipment"
+        case .spell: return "Spell"
         }
+    }
+}
+
+
+extension LibraryEntry {
+    /// "Level 3 Evocation" or "Evocation cantrip", for a spell.
+    var spellHeadline: String {
+        let school: String = { if case .text(let text)? = attributes["dnd5e.spellSchool"] { text } else { "" } }()
+        guard case .number(let level)? = attributes["dnd5e.spellLevel"] else { return school }
+        return level == 0 ? "\(school) cantrip" : "Level \(Int(level)) \(school)"
     }
 }

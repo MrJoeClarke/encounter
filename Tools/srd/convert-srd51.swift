@@ -426,6 +426,12 @@ for chapter in chapters where classNames.contains(chapter.title) {
             if let range = text.range(of: "(?<=Hit Dice: 1)d\\d+", options: .regularExpression) {
                 classAttributes.append(("dnd5e.hitDie", String(text[range])))
             } else { review.append("\(className): no hit die found") }
+        case "Equipment":
+            let bodyLines = section.blocks.flatMap { block -> [String] in
+                if case .body(let lines) = block { return lines }
+                return []
+            }
+            classAttributes.append(("dnd5e.startingEquipment", paragraphs(from: bodyLines, lineWidth: lineWidth).joined(separator: "\n")))
         case "Proficiencies":
             let labels = ["Armor", "Weapons", "Tools", "Saving Throws", "Skills"]
             let keys = ["dnd5e.armorProficiencies", "dnd5e.weaponProficiencies", "dnd5e.toolProficiencies", "dnd5e.savingThrows", "dnd5e.skillChoices"]
@@ -543,6 +549,497 @@ func mergedFeatureText(_ section: Section) -> String {
     return paragraphList.joined(separator: "\n\n")
 }
 
+// MARK: Skills
+
+let skillAbilityNames = ["Strength", "Dexterity", "Constitution", "Intelligence", "Wisdom", "Charisma"]
+
+/// The 18 skills: which ability each belongs to, from the list in "Using Ability Scores", and the description of
+/// each from the ability sections that follow, with its examples.
+func readSkills() {
+    var firstPage: Int?
+    var lastPage: Int?
+    for index in 0..<document.pageCount {
+        guard let raw = document.page(at: index)?.string else { continue }
+        let text = cleanLine(raw)
+        if firstPage == nil, text.contains("related to each ability") { firstPage = index }
+        if text.contains("(Persuasion)") { lastPage = index }
+    }
+    guard let firstPage, let lastPage, lastPage >= firstPage else {
+        review.append("Couldn't find the skills section")
+        return
+    }
+
+    var abilityOfSkill: [String: String] = [:]
+    var skillOrder: [String] = []
+    var ability: String?
+    var listDone = false
+    var blocksOfLines: [[String]] = []
+    var current: [String] = []
+    func flush() { if !current.isEmpty { blocksOfLines.append(current); current = [] } }
+
+    for index in firstPage...min(lastPage + 1, document.pageCount - 1) {
+        guard let page = document.page(at: index) else { continue }
+        for line in readingOrder(of: page, profile: srd51Profile) {
+            let text = cleanLine(line.text)
+            switch line.kind {
+            case .body:
+                if index == firstPage, !listDone {
+                    if text.hasPrefix("•"), let ability {
+                        let name = text.dropFirst().trimmingCharacters(in: .whitespaces)
+                        abilityOfSkill[name] = ability
+                        skillOrder.append(name)
+                        continue
+                    }
+                    if text.hasPrefix("Sometimes, the GM") { listDone = true }
+                }
+                current.append(line.text)
+            case .heading:
+                // In the list of skills, each ability is a heading with its skills beneath it.
+                if index == firstPage, !listDone, skillAbilityNames.contains(text) { ability = text }
+                flush()
+            default:
+                flush()
+            }
+        }
+        // A description can carry on to the next page, so the page's end doesn't end the block.
+    }
+    flush()
+
+    // A skill's description starts with its name, run in at the start of a paragraph or part way through one,
+    // and runs to the next skill's, or to the end of the section it's in. Blocks are kept apart by a separator
+    // so a description never runs across a heading.
+    let separator = "\u{1F}"
+    let text = blocksOfLines.map { paragraphs(from: $0, lineWidth: lineWidth).joined(separator: "\n\n") }.joined(separator: separator)
+    var starts: [(name: String, start: Range<String.Index>)] = []
+    var searchFrom = text.startIndex
+    for name in skillOrder {
+        let pattern = "(?<=^|[.!?:)\\n\u{1F}] ?)" + NSRegularExpression.escapedPattern(for: name) + "\\. (?=[A-Z])"
+        guard let range = text.range(of: pattern, options: .regularExpression, range: searchFrom..<text.endIndex) else { continue }
+        starts.append((name, range))
+        searchFrom = range.upperBound
+    }
+    var descriptions: [String: [String]] = [:]
+    for (index, item) in starts.enumerated() {
+        var end = index + 1 < starts.count ? starts[index + 1].start.lowerBound : text.endIndex
+        var body = String(text[item.start.upperBound..<end])
+        if let cut = body.firstIndex(of: Character(separator)) { body = String(body[..<cut]) }
+        // "Other Strength Checks." and the like begin the next part of the section.
+        if let other = body.range(of: "\\s+Other [A-Za-z ]+ Checks\\. ", options: .regularExpression) { body = String(body[..<other.lowerBound]) }
+        end = text.endIndex
+        // A paragraph never starts in lower case: that's a line wrapped after a short line ending in a bracket.
+        body = body.replacingOccurrences(of: "\n\n(?=[a-z])", with: " ", options: .regularExpression)
+        descriptions[item.name] = [body.trimmingCharacters(in: .whitespacesAndNewlines)]
+    }
+
+    for name in skillOrder.sorted() {
+        guard let parts = descriptions[name], let ability = abilityOfSkill[name] else {
+            review.append("Skill \(name): no description found")
+            continue
+        }
+        entries.append(PackEntry(key: "srd51.skill.\(slug(name))", kind: "skill", name: name, parent: nil,
+                                 summary: parts.joined(separator: "\n\n"), attributes: [("dnd5e.ability", ability)], features: []))
+    }
+    report.append("Skills (\(skillOrder.count)): " + skillOrder.map { "\($0) (\(abilityOfSkill[$0] ?? "?"))" }.joined(separator: ", "))
+    if skillOrder.count != 18 { review.append("Found \(skillOrder.count) skills, expected 18") }
+}
+
+readSkills()
+
+// MARK: Backgrounds and feats
+
+/// All the lines of the pages from the one with this heading to the heading that ends the section, in reading order.
+func lines(from startHeading: (level: Int, text: String), until endHeading: (level: Int, text: String)) -> [Line] {
+    var result: [Line] = []
+    var started = false
+    for index in 0..<document.pageCount {
+        guard let page = document.page(at: index) else { continue }
+        for line in readingOrder(of: page, profile: srd51Profile) {
+            if case .heading(let level) = line.kind {
+                if !started, level == startHeading.level, line.text == startHeading.text { started = true }
+                else if started, level == endHeading.level, line.text == endHeading.text { return result }
+            }
+            if started { result.append(line) }
+        }
+    }
+    return result
+}
+
+/// The SRD's one background: its proficiencies, languages and equipment, its feature, and its suggested characteristics.
+func readBackgrounds() {
+    let section = lines(from: (3, "Acolyte"), until: (1, "Equipment"))
+    guard !section.isEmpty else { review.append("Couldn't find the Acolyte background"); return }
+
+    let labels = ["Skill Proficiencies", "Tool Proficiencies", "Languages", "Equipment"]
+    let attributeKeys = ["Skill Proficiencies": "dnd5e.backgroundSkills", "Tool Proficiencies": "dnd5e.backgroundTools",
+                         "Languages": "dnd5e.backgroundLanguages", "Equipment": "dnd5e.backgroundEquipment"]
+    var intro: [String] = []
+    var facts: [(label: String, lines: [String])] = []
+    var features: [Feature] = []
+    var current: (name: String, lines: [String])?
+    var tableName: String?
+    var tables: [(name: String, rows: [String])] = []
+    var characteristicsIntro: [String] = []
+    var inCharacteristics = false
+
+    func closeFeature() {
+        if let current { features.append(Feature(name: current.name, level: nil, text: paragraphs(from: current.lines, lineWidth: lineWidth).joined(separator: "\n\n"))) }
+        current = nil
+    }
+
+    for line in section.dropFirst() {
+        let text = cleanLine(line.text)
+        switch line.kind {
+        case .heading(4):
+            closeFeature()
+            tableName = nil
+            if text.hasPrefix("Feature: ") {
+                current = (String(text.dropFirst("Feature: ".count)), [])
+                inCharacteristics = false
+            } else if text == "Suggested Characteristics" {
+                inCharacteristics = true
+            }
+        case .table:
+            if let range = text.range(of: "^d\\d+ ", options: .regularExpression) {
+                tableName = String(text[range.upperBound...])
+                tables.append((tableName ?? "", []))
+            } else if !tables.isEmpty {
+                // A row starts with its number. A line without one carries on the row before it.
+                if text.range(of: "^\\d+ ", options: .regularExpression) != nil || tables[tables.count - 1].rows.isEmpty {
+                    tables[tables.count - 1].rows.append(text)
+                } else {
+                    tables[tables.count - 1].rows[tables[tables.count - 1].rows.count - 1] += " " + text
+                }
+            }
+        case .body:
+            if inCharacteristics { characteristicsIntro.append(line.text) }
+            else if current != nil { current?.lines.append(line.text) }
+            else if let label = labels.first(where: { text.hasPrefix($0 + ":") }) {
+                facts.append((label, [String(text.dropFirst(label.count + 1)).trimmingCharacters(in: .whitespaces)]))
+            } else if !facts.isEmpty {
+                facts[facts.count - 1].lines.append(line.text)
+            } else {
+                intro.append(line.text)
+            }
+        default:
+            break
+        }
+    }
+    closeFeature()
+
+    func joined(_ lines: [String]) -> String {
+        var text = ""
+        for raw in lines { appendWrapped51(&text, cleanLine(raw)) }
+        return text
+    }
+    var attributes: [(String, String)] = []
+    for fact in facts { if let key = attributeKeys[fact.label] { attributes.append((key, joined(fact.lines))) } }
+    var details = features
+    let suggested = paragraphs(from: characteristicsIntro, lineWidth: lineWidth).joined(separator: "\n\n")
+    if !suggested.isEmpty { details.append(Feature(name: "Suggested Characteristics", level: nil, text: suggested)) }
+    for table in tables { details.append(Feature(name: table.name, level: nil, text: table.rows.joined(separator: "\n"))) }
+
+    entries.append(PackEntry(key: "srd51.background.acolyte", kind: "background", name: "Acolyte", parent: nil,
+                             summary: paragraphs(from: intro, lineWidth: lineWidth).joined(separator: "\n\n"),
+                             attributes: attributes, features: details))
+    report.append("Background Acolyte: " + attributes.map { "\($0.0.replacingOccurrences(of: "dnd5e.background", with: "")) = \($0.1)" }.joined(separator: "; ")
+                  + " | " + details.map(\.name).joined(separator: ", "))
+    if tables.count != 4 { review.append("Acolyte: found \(tables.count) suggested characteristics tables, expected 4") }
+}
+
+/// The SRD's one feat, Grappler.
+func readFeats() {
+    let section = lines(from: (3, "Grappler"), until: (1, "Using Ability Scores"))
+    // The next chapter's heading is on the following page, so stop at the first heading of its own.
+    var body: [String] = []
+    for line in section.dropFirst() {
+        if case .heading = line.kind { break }   // the next chapter's
+        if case .body = line.kind { body.append(line.text) }
+    }
+    guard let first = body.first else { review.append("Couldn't find the Grappler feat"); return }
+    var attributes: [(String, String)] = []
+    var rest = body
+    let firstText = cleanLine(first)
+    if firstText.hasPrefix("Prerequisite:") {
+        attributes.append(("dnd5e.featPrerequisite", String(firstText.dropFirst("Prerequisite:".count)).trimmingCharacters(in: .whitespaces)))
+        rest.removeFirst()
+    }
+    entries.append(PackEntry(key: "srd51.feat.grappler", kind: "feat", name: "Grappler", parent: nil,
+                             summary: paragraphs(from: rest, lineWidth: lineWidth).joined(separator: "\n\n"),
+                             attributes: attributes, features: []))
+    report.append("Feat Grappler: " + attributes.map { "\($0.0) = \($0.1)" }.joined())
+}
+
+/// Adds a line to text that wraps, rejoining a word split by a hyphen.
+func appendWrapped51(_ text: inout String, _ line: String) {
+    if text.isEmpty { text = line } else { text += " " + line }
+}
+
+readBackgrounds()
+readFeats()
+
+// MARK: Equipment
+
+/// Groups of a number and a unit that rows of the equipment tables are made of.
+let costPattern = "[\\d,]+ (?:cp|sp|ep|gp|pp)"
+let weightPattern = "[\\d½/]+ lb\\."
+
+/// Armor, weapons, adventuring gear and tools, from the tables of the Equipment chapter, and the equipment packs.
+func readEquipment() {
+    var section = ""
+    var started = false
+    var category = ""
+    var rows: [(entry: PackEntry, kind: String)] = []
+    var last: Int?                // the row a wrapped line carries on
+    var pendingPacks: [String] = []
+    var inPacks = false
+
+    func attributes(_ pairs: [(String, String?)]) -> [(String, String)] { pairs.compactMap { pair in pair.1.map { (pair.0, $0) } } }
+
+    let armorRow = try! NSRegularExpression(pattern: "^(.+?) (\(costPattern)) (\\+?\\d+(?: \\+ Dex modifier(?: \\(max 2\\))?)?) (—|Str \\d+) (—|Disadvantage) (\(weightPattern)|—)$")
+    let weaponRow = try! NSRegularExpression(pattern: "^(.+?) (\(costPattern)) (—|\\d+(?:d\\d+)? (?:bludgeoning|piercing|slashing)) (\(weightPattern)|—)(?: (.*))?$")
+    let gearRow = try! NSRegularExpression(pattern: "^(.+?) (\(costPattern)) (\(weightPattern)|—)$")
+
+    func groups(_ expression: NSRegularExpression, in text: String) -> [String]? {
+        let range = NSRange(text.startIndex..., in: text)
+        guard let match = expression.firstMatch(in: text, range: range) else { return nil }
+        return (1..<match.numberOfRanges).map { index in
+            match.range(at: index).location == NSNotFound ? "" : (text as NSString).substring(with: match.range(at: index))
+        }
+    }
+
+    for index in 0..<document.pageCount {
+        guard let page = document.page(at: index) else { continue }
+        for line in readingOrder(of: page, profile: srd51Profile) {
+            let text = cleanLine(line.text)
+            if case .heading(1) = line.kind {
+                if text == "Equipment" { started = true } else if started { return finishEquipment(rows.map(\.entry), packs: pendingPacks) }
+            }
+            guard started else { continue }
+            switch line.kind {
+            case .heading(2):
+                section = text
+                category = ""
+                inPacks = false
+            case .heading(5):
+                inPacks = text == "Equipment Packs"
+            case .caption:
+                inPacks = false   // a table's caption ends the sidebar before it
+            case .table where inPacks:
+                pendingPacks.append(text)
+            case .table:
+                guard ["Armor", "Weapons", "Adventuring Gear", "Tools"].contains(section) else { continue }
+                // Rows under a heading are indented, in the left or right column.
+                let indented = line.minX - (line.minX < 300 ? 57.6 : 328.6) > 5
+                if section == "Armor", let g = groups(armorRow, in: text) {
+                    let name = g[0]
+                    rows.append((PackEntry(key: "srd51.equipment.\(slug(name))", kind: "equipment", name: name.prefix(1).uppercased() + name.dropFirst(), parent: nil, summary: "",
+                        attributes: attributes([("dnd5e.equipmentCategory", category.isEmpty ? "Armor" : category), ("dnd5e.cost", g[1]), ("dnd5e.armorFormula", g[2]),
+                                                ("dnd5e.strengthRequirement", g[3] == "—" ? nil : g[3]), ("dnd5e.stealth", g[4] == "—" ? nil : g[4]),
+                                                ("dnd5e.weight", g[5] == "—" ? nil : g[5])]), features: []), "armor"))
+                    last = rows.count - 1
+                } else if section == "Weapons", let g = groups(weaponRow, in: text) {
+                    let name = g[0]
+                    rows.append((PackEntry(key: "srd51.equipment.\(slug(name))", kind: "equipment", name: name, parent: nil, summary: "",
+                        attributes: attributes([("dnd5e.equipmentCategory", category), ("dnd5e.cost", g[1]), ("dnd5e.damage", g[2] == "—" ? nil : g[2]),
+                                                ("dnd5e.weight", g[3] == "—" ? nil : g[3]), ("dnd5e.weaponProperties", g[4].isEmpty || g[4] == "—" ? nil : g[4])]), features: []), "weapon"))
+                    last = rows.count - 1
+                } else if section == "Adventuring Gear" || section == "Tools", let g = groups(gearRow, in: text) {
+                    var name = g[0]
+                    // Items grouped under a heading such as "Arcane focus" have names like "Crystal".
+                    if indented, category.lowercased().hasSuffix("focus") || category.lowercased().hasSuffix("symbol") {
+                        name = "\(name) (\(category.lowercased()))"
+                    }
+                    let group = indented && !category.isEmpty ? category : section
+                    rows.append((PackEntry(key: "srd51.equipment.\(slug(name))", kind: "equipment", name: name.prefix(1).uppercased() + name.dropFirst(), parent: nil, summary: "",
+                        attributes: attributes([("dnd5e.equipmentCategory", group), ("dnd5e.cost", g[1]), ("dnd5e.weight", g[2] == "—" ? nil : g[2])]), features: []), "gear"))
+                    last = rows.count - 1
+                } else if !indented, text.range(of: "\\d") == nil, !text.hasPrefix("*"), text.count < 40 {
+                    // A heading inside the table, such as "Light Armor" or "Simple Melee Weapons".
+                    category = text
+                    last = nil
+                } else if let at = last, rows[at].kind == "weapon" {
+                    // The properties of a weapon can wrap onto another line.
+                    var current = rows[at].entry.attributes.first { $0.0 == "dnd5e.weaponProperties" }?.1 ?? ""
+                    current += (current.isEmpty ? "" : " ") + text
+                    rows[at].entry.attributes.removeAll { $0.0 == "dnd5e.weaponProperties" }
+                    rows[at].entry.attributes.append(("dnd5e.weaponProperties", current))
+                }
+            default:
+                break
+            }
+        }
+    }
+    finishEquipment(rows.map(\.entry), packs: pendingPacks)
+}
+
+/// Adds the rows to the pack, along with the equipment packs.
+func finishEquipment(_ rows: [PackEntry], packs: [String]) {
+    var seen = Set<String>()
+    for row in rows {
+        var entry = row
+        // A name can appear twice, such as "Club" as a weapon, and an item can fall under two groups.
+        if !seen.insert(entry.key).inserted { review.append("Equipment “\(entry.name)” appears twice; the second was left out"); continue }
+        entry.attributes.sort { $0.0 < $1.0 }
+        entries.append(entry)
+    }
+    // The packs: "Burglar’s Pack (16 gp). Includes a backpack, ..."
+    var text = ""
+    for line in packs { appendWrapped51(&text, line) }
+    let pattern = try! NSRegularExpression(pattern: "([A-Z][A-Za-z’ ]+ Pack) \\((\(costPattern))\\)\\. ")
+    let ns = text as NSString
+    let matches = pattern.matches(in: text, range: NSRange(location: 0, length: ns.length))
+    for (index, match) in matches.enumerated() {
+        let end = index + 1 < matches.count ? matches[index + 1].range.location : ns.length
+        let name = ns.substring(with: match.range(at: 1))
+        let cost = ns.substring(with: match.range(at: 2))
+        let contents = ns.substring(with: NSRange(location: match.range.upperBound, length: end - match.range.upperBound)).trimmingCharacters(in: .whitespaces)
+        entries.append(PackEntry(key: "srd51.equipment.\(slug(name))", kind: "equipment", name: name, parent: nil, summary: contents,
+                                 attributes: [("dnd5e.cost", cost), ("dnd5e.equipmentCategory", "Equipment Pack")], features: []))
+    }
+    let byCategory = Dictionary(grouping: entries.filter { $0.kind == "equipment" }) { entry in
+        entry.attributes.first { $0.0 == "dnd5e.equipmentCategory" }?.1 ?? "?"
+    }
+    report.append("Equipment (\(entries.filter { $0.kind == "equipment" }.count)): " + byCategory.sorted { $0.key < $1.key }.map { "\($0.key) \($0.value.count)" }.joined(separator: ", "))
+    if matches.count != 7 { review.append("Found \(matches.count) equipment packs, expected 7") }
+}
+
+readEquipment()
+
+// MARK: Spells
+
+/// Every spell, from the Spell Descriptions, with the classes that have it from the Spell Lists.
+func readSpells() {
+    var classesOfSpell: [String: [String]] = [:]
+    var descriptionLines: [Line] = []
+    var section = ""
+    var listClass: String?
+    var listLevel = 0
+    var done = false
+
+    for index in 0..<document.pageCount where !done {
+        guard let page = document.page(at: index) else { continue }
+        for line in readingOrder(of: page, profile: srd51Profile) {
+            let text = cleanLine(line.text)
+            if case .heading(let level) = line.kind {
+                if level <= 2, !section.isEmpty, section == "Spell Descriptions" { done = true; break }
+                if level == 2 { section = text; listClass = nil }
+                else if section == "Spell Lists", level == 3, text.hasSuffix(" Spells") { listClass = String(text.dropLast(" Spells".count)) }
+                else if section == "Spell Lists", level == 4 {
+                    listLevel = text.hasPrefix("Cantrips") ? 0 : Int(text.prefix { $0.isNumber }) ?? 0
+                }
+            }
+            if section == "Spell Lists", let listClass, case .body = line.kind, !text.isEmpty {
+                classesOfSpell[text.replacingOccurrences(of: "'", with: "’"), default: []].append(listClass)
+            }
+            if section == "Spell Descriptions" { descriptionLines.append(line) }
+        }
+    }
+    _ = listLevel
+
+    // The type line: "2nd-level evocation", "Conjuration cantrip", "1st-level divination (ritual)".
+    let typeLine = try! NSRegularExpression(pattern: "^(?:(\\d)(?:st|nd|rd|th)-level ([a-z]+)|([A-Z][a-z]+) cantrip)( \\(ritual\\))?$")
+    let labels = ["Casting Time:", "Range:", "Components:", "Duration:"]
+    let keys = ["dnd5e.castingTime", "dnd5e.spellRange", "dnd5e.components", "dnd5e.duration"]
+
+    struct Draft { var name: String; var level = 0; var school = ""; var ritual = false; var facts: [String: String] = [:]; var lastLabel: String?; var paragraphs: [String] = []; var tableRows: [String] = []; var current = ""; var base = 0.0 }
+    var drafts: [Draft] = []
+    var draft: Draft?
+
+    func flushParagraph() {
+        guard var d = draft else { return }
+        if !d.current.isEmpty { d.paragraphs.append(d.current); d.current = "" }
+        if !d.tableRows.isEmpty { d.paragraphs.append(d.tableRows.joined(separator: "\n")); d.tableRows = [] }
+        draft = d
+    }
+    func finishDraft() {
+        flushParagraph()
+        if let d = draft { drafts.append(d) }
+        draft = nil
+    }
+
+    for line in descriptionLines {
+        let text = cleanLine(line.text)
+        switch line.kind {
+        case .heading(4):
+            finishDraft()
+            draft = Draft(name: text)
+        case .body, .table:
+            guard var d = draft else { continue }
+            if d.school.isEmpty {
+                let range = NSRange(text.startIndex..., in: text)
+                if let match = typeLine.firstMatch(in: text, range: range) {
+                    func group(_ n: Int) -> String? { match.range(at: n).location == NSNotFound ? nil : (text as NSString).substring(with: match.range(at: n)) }
+                    if let level = group(1) { d.level = Int(level) ?? 0; d.school = group(2) ?? "" } else { d.level = 0; d.school = (group(3) ?? "").lowercased() }
+                    d.ritual = group(4) != nil
+                    draft = d
+                } else { review.append("\(d.name): type line not understood: \(text)") }
+                continue
+            }
+            // The SRD has "Component:" once, for "Components:".
+            let text = text.hasPrefix("Component: ") ? "Components: " + text.dropFirst("Component: ".count) : text
+            if let label = labels.first(where: { text.hasPrefix($0) }) {
+                d.facts[label] = String(text.dropFirst(label.count)).trimmingCharacters(in: .whitespaces)
+                d.lastLabel = label
+                draft = d
+                continue
+            }
+            // A fact can wrap onto the next line, such as a long list of components.
+            if let label = d.lastLabel, d.paragraphs.isEmpty, d.current.isEmpty, d.tableRows.isEmpty, line.minX - (line.minX < 300 ? 57.6 : 328.6) > 5, case .body = line.kind {
+                appendWrapped51(&d.facts[label]!, text)
+                draft = d
+                continue
+            }
+            d.lastLabel = nil
+            draft = d
+            if case .table = line.kind {
+                if !d.current.isEmpty { d.paragraphs.append(d.current); draft?.current = ""; draft?.paragraphs = d.paragraphs }
+                draft?.tableRows.append(text)
+                continue
+            }
+            flushTableRows(&draft)
+            // The first line of a paragraph is indented, and a bullet starts one of its own.
+            let indented = line.minX - (line.minX < 300 ? 57.6 : 328.6) > 5
+            let previousEndedSentence = draft?.current.last.map { ".!?:”\")".contains($0) } ?? true
+            if (draft?.current.isEmpty ?? true) || text.hasPrefix("•") || (indented && previousEndedSentence) {
+                if let current = draft?.current, !current.isEmpty { draft?.paragraphs.append(current) }
+                draft?.current = text
+            } else {
+                appendWrapped51(&draft!.current, text)
+            }
+        default:
+            break
+        }
+    }
+    finishDraft()
+
+    func flushTableRows(_ draft: inout Draft?) {
+        if let rows = draft?.tableRows, !rows.isEmpty {
+            draft?.paragraphs.append(rows.joined(separator: "\n"))
+            draft?.tableRows = []
+        }
+    }
+
+    var unlisted: [String] = []
+    for d in drafts {
+        var attributes: [(String, String)] = [("dnd5e.spellLevel", String(d.level)), ("dnd5e.spellSchool", d.school.prefix(1).uppercased() + d.school.dropFirst())]
+        let classes = classesOfSpell[d.name] ?? []
+        if classes.isEmpty { unlisted.append(d.name) } else { attributes.append(("dnd5e.spellClasses", classes.sorted().joined(separator: ", "))) }
+        for (label, key) in zip(labels, keys) {
+            if let value = d.facts[label] { attributes.append((key, value)) } else { review.append("\(d.name): no \(label)") }
+        }
+        if d.ritual { attributes.append(("dnd5e.ritual", "true")) }
+        entries.append(PackEntry(key: "srd51.spell.\(slug(d.name))", kind: "spell", name: d.name, parent: nil,
+                                 summary: d.paragraphs.joined(separator: "\n\n"), attributes: attributes, features: []))
+    }
+    let names = Set(drafts.map(\.name))
+    let missing = classesOfSpell.keys.filter { !names.contains($0) }.sorted()
+    report.append("Spells (\(drafts.count)): \(Dictionary(grouping: drafts, by: \.level).sorted { $0.key < $1.key }.map { "L\($0.key) \($0.value.count)" }.joined(separator: ", "))")
+    if !unlisted.isEmpty { review.append("Spells on no class list: \(unlisted.joined(separator: ", "))") }
+    if !missing.isEmpty { review.append("On a class list but not described: \(missing.joined(separator: ", "))") }
+}
+
+readSpells()
+
 // MARK: Writing the pack
 
 let attribution = "This work includes material taken from the System Reference Document 5.1 (“SRD 5.1”) by Wizards of the Coast LLC and available at https://dnd.wizards.com/resources/systems-reference-document. The SRD 5.1 is licensed under the Creative Commons Attribution 4.0 International License available at https://creativecommons.org/licenses/by/4.0/legalcode."
@@ -555,7 +1052,7 @@ for entry in entries {
     if !entry.summary.isEmpty { lines.append("      \"summary\": \(jsonString(entry.summary)),") }
     if !entry.attributes.isEmpty {
         lines.append("      \"attributes\": {")
-        lines.append(entry.attributes.map { "        \(jsonString($0.0)): \(jsonString($0.1))" }.joined(separator: ",\n"))
+        lines.append(entry.attributes.map { "        \(jsonString($0.0)): \(jsonValue(key: $0.0, value: $0.1))" }.joined(separator: ",\n"))
         lines.append("      },")
     }
     lines.append("      \"entries\": [")
