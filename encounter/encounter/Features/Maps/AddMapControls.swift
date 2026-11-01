@@ -19,6 +19,7 @@ struct AddMapControls: View {
     @State private var isChoosingFiles = false
     @State private var isImporting = false
     @State private var failedImportCount = 0
+    @State private var isAddingVectorMap = false
 
     var body: some View {
         HStack {
@@ -26,8 +27,15 @@ struct AddMapControls: View {
             PhotosPicker(selection: $photoSelection, maxSelectionCount: 1, matching: .images) {
                 Label("From Photos", systemImage: "photo.on.rectangle")
             }
+            Button("Blank Vector Map…", systemImage: "scribble.variable") { isAddingVectorMap = true }
             if isImporting {
                 ProgressView().controlSize(.small)
+            }
+        }
+        .sheet(isPresented: $isAddingVectorMap) {
+            NewVectorMapSheet(place: place) { map in
+                isAddingVectorMap = false
+                if let map { navigation.openMap(map) }
             }
         }
         .dropDestination(for: URL.self) { urls, _ in
@@ -84,5 +92,61 @@ struct AddMapControls: View {
             }
             navigation.openMap(map)
         }
+    }
+}
+
+/// Asks how big a map with no picture is, in the unit the kind of map is measured in, and makes it.
+struct NewVectorMapSheet: View {
+    let place: Page
+    let onDone: (WorldMap?) -> Void
+
+    @Environment(\.modelContext) private var modelContext
+    @State private var name = ""
+    @State private var width = 0.0
+
+    private var kind: MapKind { place.isWorldRoot ? .world : .settlement }
+    private var unit: DistanceUnit { .forCalibrating(kind) }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    TextField("Name", text: $name, prompt: Text(place.title.isEmpty ? "Untitled Map" : "\(place.title) Map"))
+                    LabeledContent("Width and Height") {
+                        HStack {
+                            TextField("Size", value: $width, format: .number)
+                                .multilineTextAlignment(.trailing)
+                                .frame(width: 100)
+                            Text(unit.name)
+                        }
+                    }
+                } footer: {
+                    Text("A map with no picture. Its places are drawn on it, and it is as sharp as you zoom. A settlement map is centred on its place.")
+                }
+            }
+            .formStyle(.grouped)
+            .navigationTitle("New Vector Map")
+            #if os(iOS)
+            .navigationBarTitleDisplayMode(.inline)
+            #endif
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { onDone(nil) } }
+                ToolbarItem(placement: .confirmationAction) { Button("Add", action: add).disabled(width < 1) }
+            }
+            .onAppear { if width == 0 { width = kind == .world ? 1_000 : 2_000 } }
+        }
+        #if os(macOS)
+        .frame(minWidth: 420, minHeight: 240)
+        #endif
+    }
+
+    private func add() {
+        guard let world = place.world else { return }
+        let title = name.trimmingCharacters(in: .whitespaces)
+        let map = world.addVectorMap(
+            named: title.isEmpty ? (place.title.isEmpty ? String(localized: "Untitled Map") : "\(place.title) Map") : title,
+            for: place, extentMetres: width * unit.metres, in: modelContext
+        )
+        onDone(map)
     }
 }

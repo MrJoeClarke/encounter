@@ -24,6 +24,9 @@ final class WorldMap {
     /// For a scene map, how many squares the grid has across and down. Zero otherwise.
     var gridColumns: Int = 0
     var gridRows: Int = 0
+    /// A map with no picture: its places are drawn over a plain background. Its size is in `pixelWidth` and
+    /// `pixelHeight`, at a metre to a pixel.
+    var isVector: Bool = false
     var createdAt: Date = Date()
     var world: World?
     /// The place this map depicts, which lets a place open its own map. A world map has none.
@@ -96,8 +99,10 @@ extension WorldMap {
     func visiblePlaces(among places: [Page]) -> [Page] {
         func isOnMap(_ page: Page) -> Bool {
             guard page !== place, !page.isDeleted, let geometry = page.geometry else { return false }
-            if case .polygon = geometry { return true }
-            return pixel(of: page) != nil
+            switch geometry {
+            case .polygon, .line: return true
+            case .point: return pixel(of: page) != nil
+            }
         }
         let shown = places.filter(isOnMap)
         let shownIDs = Set(shown.map(\.id))
@@ -115,6 +120,29 @@ extension WorldMap {
 }
 
 extension World {
+    /// Adds a map with no picture, which covers `extentMetres` across and up, and is calibrated from the start at a
+    /// metre to a pixel. The world map starts at the south-west corner of the plane. A settlement map is centred on
+    /// its place, as far as the edge of the plane allows.
+    @MainActor
+    @discardableResult
+    func addVectorMap(named name: String, for place: Page, extentMetres: Double, in context: ModelContext) -> WorldMap? {
+        guard extentMetres.isFinite, extentMetres >= 10 else { return nil }
+        let size = Int(extentMetres.rounded())
+        let map = WorldMap(name: name, kind: place.isWorldRoot ? .world : .settlement)
+        map.isVector = true
+        map.pixelWidth = size
+        map.pixelHeight = size
+        var origin = GridPoint(easting: 0, northing: 0)
+        if !place.isWorldRoot, let centre = place.geometry?.centre {
+            origin = GridPoint(easting: max(0, centre.easting - Double(size) / 2), northing: max(0, centre.northing - Double(size) / 2))
+        }
+        map.calibration = MapCalibration(anchoringPixel: (0, Double(size)), at: origin, metresPerPixel: 1)
+        context.insert(map)
+        map.world = self
+        map.place = place
+        return map
+    }
+
     /// Adds a map of a place, from image data kept at full size so no detail is lost. The map of the root place is
     /// the world map, and any other is a settlement map until it is changed to a scene map. The image is prepared
     /// off the main actor, and nil is returned if it can't be read as an image.

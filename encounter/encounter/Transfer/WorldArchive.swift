@@ -118,4 +118,7 @@ nonisolated struct MapRecord: Codable, Sendable {
     var gridRows: Int?
     /// The page this map depicts.
     var placeID: UUID?
+    /// A map with no picture, and how big it is in metres. Optional, because older files don't have them.
+    var isVector: Bool?
+    var extentMetres: Int?
 }

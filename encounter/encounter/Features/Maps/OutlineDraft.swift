@@ -14,10 +14,13 @@ struct OutlineDraft {
     }
 
     let page: Page
+    /// Whether this is a line (a road or river), which is left open, rather than an area.
+    let isLine: Bool
     private(set) var corners: [Corner] = []
 
-    init(page: Page) {
+    init(page: Page, isLine: Bool = false) {
         self.page = page
+        self.isLine = isLine
     }
 
     /// Adds a corner at an image position. A click on top of the last corner is ignored.
@@ -32,12 +35,18 @@ struct OutlineDraft {
 
     /// The outline in the world, or nil until it has three corners that form a proper shape that lies on the plane.
     func geometry(on calibration: MapCalibration) -> PlaceGeometry? {
-        let shape = PlaceGeometry.polygon(corners.map { calibration.gridPoint(atX: $0.x, y: $0.y) })
-        return corners.count >= 3 && shape.isValid ? shape : nil
+        let points = corners.map { calibration.gridPoint(atX: $0.x, y: $0.y) }
+        let shape: PlaceGeometry = isLine ? .line(points) : .polygon(points)
+        return corners.count >= (isLine ? 2 : 3) && shape.isValid ? shape : nil
     }
 
     /// What is wrong with the outline so far, in words for the creator, or nil if it can be finished.
     func problem(on calibration: MapCalibration) -> String? {
+        if isLine {
+            if corners.count < 2 { return String(localized: "Click the map to add points along the line. It needs at least two.") }
+            if geometry(on: calibration) == nil { return String(localized: "The line reaches off the edge of the world. Undo a point, or start again.") }
+            return nil
+        }
         if corners.count < 3 { return String(localized: "Click the map to add corners. An outline needs at least three.") }
         if geometry(on: calibration) == nil {
             return String(localized: "The outline crosses itself, or reaches off the edge of the world. Undo a corner, or start again.")

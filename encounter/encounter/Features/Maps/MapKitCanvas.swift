@@ -40,6 +40,13 @@ struct PlaceShape: Identifiable {
     var id: UUID { page.id }
 }
 
+/// A place drawn as a line on the map: a road or a river.
+struct PlaceLine: Identifiable {
+    let page: Page
+    let points: [GridPoint]
+    var id: UUID { page.id }
+}
+
 /// Shows a map with MapKit. The image is cut into tiles that replace the base map, places are annotations that
 /// cluster when they crowd, outlines are polygons, and zooming, panning and scrolling come from MapKit. Positions
 /// are given and reported in pixels of the full image, and turned into the world's plane through the calibration.
@@ -48,8 +55,11 @@ struct MapKitCanvas: PlatformViewRepresentable {
     var markers: [MapMarker] = []
     var pins: [PlacePin] = []
     var shapes: [PlaceShape] = []
+    var lines: [PlaceLine] = []
     /// The corners of an outline being drawn, in image pixels.
     var draftCorners: [CGPoint] = []
+    /// Whether the draft is a line, which is left open, rather than an outline, which is closed.
+    var draftIsLine = false
     /// A character's journey as a line through these image positions, in order.
     var route: [CGPoint] = []
     /// Whether a click on the map is wanted as a point (a calibration point or the corner of an outline), rather
@@ -126,7 +136,7 @@ struct MapKitCanvas: PlatformViewRepresentable {
 
         // The tiles are rebuilt when the map or its calibration changes.
         let key = "\(map.id)|\(map.pixelWidth)x\(map.pixelHeight)|\(calibration.originEasting),\(calibration.originNorthing),\(calibration.metresPerPixel),\(calibration.rotation)"
-        if coordinator.tileKey != key, let data = map.imageData, map.pixelWidth > 0 {
+        if coordinator.tileKey != key, let data = map.imageData ?? (map.isVector ? Data() : nil), map.pixelWidth > 0 {
             if let old = coordinator.overlay { view.removeOverlay(old) }
             let source = MapTileSource(imageData: data, pixelWidth: map.pixelWidth, pixelHeight: map.pixelHeight, calibration: calibration)
             let overlay = MapTileOverlay(source: source)
@@ -140,7 +150,7 @@ struct MapKitCanvas: PlatformViewRepresentable {
         #if os(macOS)
         (view as? PlacingMapView)?.canPlace = canPlace
         #endif
-        coordinator.sync(markers: markers, pins: pins, shapes: shapes, draft: draftCorners, route: route, grid: showsGrid ? sceneGrid : nil, in: view)
+        coordinator.sync(markers: markers, pins: pins, shapes: shapes, draft: draftCorners, draftIsLine: draftIsLine, route: route, lines: lines, grid: showsGrid ? sceneGrid : nil, in: view)
     }
 
     /// The grid of squares to draw, for a scene map that has one.
@@ -164,6 +174,7 @@ struct MapKitCanvas: PlatformViewRepresentable {
         private var pinAnnotations: [UUID: PlaceAnnotation] = [:]
         private var markAnnotations: [MarkAnnotation] = []
         private var shapeOverlays: [UUID: PlaceOverlay] = [:]
+        private var lineOverlays: [UUID: PlaceLineOverlay] = [:]
         private var isDragging = false
 
         /// The deepest zoom the tiles go to. Past it MapKit stops drawing the map and shows the world beneath, so the
@@ -193,19 +204,21 @@ struct MapKitCanvas: PlatformViewRepresentable {
         private var gridOverlay: SceneGridOverlay?
 
         private var draftOverlay: DraftOutline?
+        private var draftIsLine = false
         private var draftCorners: [CGPoint] = []
         private var journeyOverlay: JourneyLine?
         private var journeyRoute: [CGPoint] = []
 
-        func sync(markers: [MapMarker], pins: [PlacePin], shapes: [PlaceShape], draft: [CGPoint], route: [CGPoint], grid: SceneGridOverlay?, in view: MKMapView) {
+        func sync(markers: [MapMarker], pins: [PlacePin], shapes: [PlaceShape], draft: [CGPoint], draftIsLine: Bool, route: [CGPoint], lines: [PlaceLine], grid: SceneGridOverlay?, in view: MKMapView) {
             // The outline being drawn is replaced as corners are added.
-            if draft != draftCorners {
+            if draft != draftCorners || draftIsLine != self.draftIsLine {
                 draftCorners = draft
+                self.draftIsLine = draftIsLine
                 if let draftOverlay { view.removeOverlay(draftOverlay) }
                 draftOverlay = nil
                 if draft.count >= 2 {
                     // Closed up once it could be a shape, so it shows what finishing it would give.
-                    let path = (draft + (draft.count >= 3 ? [draft[0]] : [])).map {
+                    let path = (draft + (draft.count >= 3 && !draftIsLine ? [draft[0]] : [])).map {
                         WebMercator.coordinate(calibration.gridPoint(atX: $0.x, y: $0.y))
                     }
                     let overlay = DraftOutline(coordinates: path, count: path.count)
@@ -268,16 +281,41 @@ struct MapKitCanvas: PlatformViewRepresentable {
             }
             view.addAnnotations(markAnnotations)
 
-            // Outlines are replaced when they change.
-            let wanted = Dictionary(uniqueKeysWithValues: shapes.map { ($0.id, $0) })
-            for (id, overlay) in shapeOverlays where wanted[id] == nil || overlay.corners != wanted[id]?.corners {
-                view.removeOverlay(overlay)
-                shapeOverlays[id] = nil
-            }
-            for shape in shapes where shapeOverlays[shape.id] == nil {
-                let overlay = PlaceOverlay(page: shape.page, corners: shape.corners)
-                shapeOverlays[shape.id] = overlay
-                view.addOverlay(overlay, level: .aboveLabels)
+            // Outlines and lines are replaced when they change, and drawn from the bottom up: seas under settlements,
+            // buildings above those, roads and rivers over all. Anything that changes redraws them all in that order.
+            let wantedShapes = Dictionary(uniqueKeysWithValues: shapes.map { ($0.id, $0.corners) })
+            let wantedLines = Dictionary(uniqueKeysWithValues: lines.map { ($0.id, $0.points) })
+            let overlaysUnchanged = wantedShapes.count == shapeOverlays.count && wantedLines.count == lineOverlays.count
+                && shapeOverlays.allSatisfy { wantedShapes[$0.key] == $0.value.corners && $0.value.styleType == $0.value.page.attributeText("core.placeType") }
+                && lineOverlays.allSatisfy { wantedLines[$0.key] == $0.value.points && $0.value.styleType == $0.value.page.attributeText("core.placeType") }
+            if !overlaysUnchanged {
+                for overlay in shapeOverlays.values { view.removeOverlay(overlay) }
+                for overlay in lineOverlays.values { view.removeOverlay(overlay) }
+                shapeOverlays = [:]
+                lineOverlays = [:]
+                func order(_ page: Page) -> Int { PlaceStyle.style(forPlaceType: page.attributeText("core.placeType")).drawOrder }
+                // Bigger areas go under smaller ones of the same kind.
+                let sortedShapes = shapes.sorted { (order($0.page), -PlaceGeometry.polygon($0.corners).area) < (order($1.page), -PlaceGeometry.polygon($1.corners).area) }
+                let sortedLines = lines.sorted { order($0.page) < order($1.page) }
+                var layers: [(order: Int, add: () -> Void)] = []
+                for shape in sortedShapes {
+                    layers.append((order(shape.page), { [unowned self] in
+                        let overlay = PlaceOverlay(page: shape.page, corners: shape.corners)
+                        self.shapeOverlays[shape.id] = overlay
+                        view.addOverlay(overlay, level: .aboveLabels)
+                    }))
+                }
+                for line in sortedLines {
+                    layers.append((order(line.page), { [unowned self] in
+                        let overlay = PlaceLineOverlay(page: line.page, points: line.points)
+                        self.lineOverlays[line.id] = overlay
+                        view.addOverlay(overlay, level: .aboveLabels)
+                    }))
+                }
+                for layer in layers.sorted(by: { $0.order < $1.order }) { layer.add() }
+                // The draft and the journey stay on top of what they are drawn over.
+                if let draftOverlay { view.removeOverlay(draftOverlay); view.addOverlay(draftOverlay, level: .aboveLabels) }
+                if let journeyOverlay { view.removeOverlay(journeyOverlay); view.addOverlay(journeyOverlay, level: .aboveLabels) }
             }
         }
 
@@ -308,10 +346,22 @@ struct MapKitCanvas: PlatformViewRepresentable {
                 return renderer
             }
             if let shape = overlay as? PlaceOverlay {
+                let style = PlaceStyle.style(forPlaceType: shape.page.attributeText("core.placeType"))
                 let renderer = MKPolygonRenderer(polygon: shape)
-                renderer.fillColor = PlatformColor.systemRed.withAlphaComponent(0.18)
-                renderer.strokeColor = PlatformColor.systemRed
-                renderer.lineWidth = 2
+                renderer.fillColor = style.fill.map(PlatformColor.init(style:))
+                renderer.strokeColor = PlatformColor(style: style.stroke)
+                renderer.lineWidth = style.lineWidth
+                if style.isDashed { renderer.lineDashPattern = [6, 4] }
+                return renderer
+            }
+            if let line = overlay as? PlaceLineOverlay {
+                let style = PlaceStyle.style(forPlaceType: line.page.attributeText("core.placeType"))
+                let renderer = MKPolylineRenderer(overlay: line)
+                renderer.strokeColor = PlatformColor(style: style.stroke)
+                renderer.lineWidth = style.lineWidth
+                renderer.lineJoin = .round
+                renderer.lineCap = .round
+                if style.isDashed { renderer.lineDashPattern = [6, 4] }
                 return renderer
             }
             return MKOverlayRenderer(overlay: overlay)
@@ -395,11 +445,30 @@ struct MapKitCanvas: PlatformViewRepresentable {
                 parent?.onPlace?(p.x, p.y)
             } else if parent?.isMarking == true {
                 parent?.onTap?(p.x, p.y)
+            } else if let hit = line(near: point, in: view) {
+                parent?.onSelect?(hit)
             } else if let hit = outline(at: WebMercator.point(coordinate)) {
                 parent?.onSelect?(hit)
             } else if view.selectedAnnotations.isEmpty {
                 parent?.onSelect?(nil)
             }
+        }
+
+        /// The road or river a click is on or close to, the nearest if several are. The distance is in points on the
+        /// screen, so a line can be picked at any zoom.
+        private func line(near point: CGPoint, in view: MKMapView, within tolerance: CGFloat = 8) -> Page? {
+            var best: (page: Page, distance: CGFloat)?
+            for line in parent?.lines ?? [] {
+                let screen = line.points.map { view.convert(WebMercator.coordinate($0), toPointTo: view) }
+                for (a, b) in zip(screen, screen.dropFirst()) {
+                    let dx = b.x - a.x, dy = b.y - a.y
+                    let lengthSquared = dx * dx + dy * dy
+                    let t = lengthSquared > 0 ? max(0, min(1, ((point.x - a.x) * dx + (point.y - a.y) * dy) / lengthSquared)) : 0
+                    let distance = hypot(point.x - (a.x + t * dx), point.y - (a.y + t * dy))
+                    if distance <= tolerance, distance < (best?.distance ?? .infinity) { best = (line.page, distance) }
+                }
+            }
+            return best?.page
         }
 
         /// The place whose outline holds a position, the smallest if several do.
@@ -478,16 +547,40 @@ final class MarkAnnotation: NSObject, MKAnnotation {
     }
 }
 
+extension PlatformColor {
+    convenience init(style color: StyleColor) {
+        self.init(red: color.red, green: color.green, blue: color.blue, alpha: color.alpha)
+    }
+}
+
+/// A road or river on the MapKit map.
+final class PlaceLineOverlay: MKPolyline {
+    private(set) var page: Page!
+    private(set) var points: [GridPoint] = []
+    /// The place type it was drawn for, so a change of type redraws it.
+    private(set) var styleType = ""
+
+    convenience init(page: Page, points: [GridPoint]) {
+        var coordinates = points.map(WebMercator.coordinate)
+        self.init(coordinates: &coordinates, count: coordinates.count)
+        self.page = page
+        self.points = points
+        self.styleType = page.attributeText("core.placeType")
+    }
+}
+
 /// A place outline on the MapKit map.
 final class PlaceOverlay: MKPolygon {
     private(set) var page: Page!
     private(set) var corners: [GridPoint] = []
+    private(set) var styleType = ""
 
     convenience init(page: Page, corners: [GridPoint]) {
         var coordinates = corners.map(WebMercator.coordinate)
         self.init(coordinates: &coordinates, count: coordinates.count)
         self.page = page
         self.corners = corners
+        self.styleType = page.attributeText("core.placeType")
     }
 }
 

@@ -51,7 +51,9 @@ struct MapDetailView: View {
                 markers: markers,
                 pins: pins,
                 shapes: shapes,
+                lines: lines,
                 draftCorners: (outline?.corners ?? []).map { CGPoint(x: $0.x, y: $0.y) },
+                draftIsLine: outline?.isLine ?? false,
                 route: route,
                 isMarking: (isCalibrating && map.kind != .scene) || outline != nil,
                 canPlace: map.isCalibrated && !isCalibrating && outline == nil,
@@ -67,6 +69,13 @@ struct MapDetailView: View {
             Divider()
             if outline != nil {
                 outlinePanel
+            } else if map.isVector {
+                Text("This map is drawn from its places. Add places by right-clicking or pressing and holding, and draw their outlines and lines. Roads and rivers are places drawn as lines.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding()
+                    .background(.bar)
             } else {
                 MapCalibrationPanel(map: map, draft: $draft, grid: $grid, isCalibrating: $isCalibrating, markingPoint: $markingPoint)
             }
@@ -220,6 +229,14 @@ struct MapDetailView: View {
         }
     }
 
+    /// Places drawn as lines, which are roads and rivers.
+    private var lines: [PlaceLine] {
+        map.visiblePlaces(among: places).compactMap { page in
+            guard case .line(let points)? = page.geometry else { return nil }
+            return PlaceLine(page: page, points: points)
+        }
+    }
+
     /// What can be done with the place picked on the MapKit map, in place of the popover of the custom canvas.
     private func selectedPlaceBar(_ page: Page) -> some View {
         HStack {
@@ -232,10 +249,11 @@ struct MapDetailView: View {
                 Button("Open Map") { navigation.openMap(other) }
             }
             if map.isCalibrated && outline == nil {
-                Button(page.isPoint ? "Draw Outline" : "Redraw Outline") { outline = OutlineDraft(page: page) }
+                if !page.isLine { Button(page.isPoint ? "Draw Outline" : "Redraw Outline") { outline = OutlineDraft(page: page) } }
+                Button(page.isLine ? "Redraw Line" : "Draw Line") { outline = OutlineDraft(page: page, isLine: true) }
             }
             if !page.isPoint, let centre = page.geometry?.centre {
-                Button("Remove Outline") { page.setGeometry(.point(centre)) }
+                Button(page.isLine ? "Remove Line" : "Remove Outline") { page.setGeometry(.point(centre)) }
             }
             Button("Remove From Maps", role: .destructive) {
                 selectedPlace = nil
@@ -251,7 +269,9 @@ struct MapDetailView: View {
     private var pins: [PlacePin] {
         guard map.isCalibrated else { return [] }
         return map.visiblePlaces(among: places).compactMap { page in
-            map.pixel(of: page).map { PlacePin(page: page, pixelX: $0.x, pixelY: $0.y, isMovable: page.isPoint) }
+            // A road or river is its line, with no pin.
+            if page.isLine { return nil }
+            return map.pixel(of: page).map { PlacePin(page: page, pixelX: $0.x, pixelY: $0.y, isMovable: page.isPoint) }
         }
     }
 
@@ -285,7 +305,10 @@ struct MapDetailView: View {
     private var outlinePanel: some View {
         VStack(alignment: .leading, spacing: 10) {
             if let outline {
-                Text("Drawing the outline of “\(outline.page.title.isEmpty ? String(localized: "Untitled") : outline.page.title)”. Click each corner in turn, going round the edge. Places inside it will be put inside this place.")
+                let name = outline.page.title.isEmpty ? String(localized: "Untitled") : outline.page.title
+                Text(outline.isLine
+                     ? String(localized: "Drawing “\(name)” as a line. Click each point in turn, along its way.")
+                     : String(localized: "Drawing the outline of “\(name)”. Click each corner in turn, going round the edge. Places inside it will be put inside this place."))
                     .font(.callout)
                 HStack {
                     if let calibration = map.calibration, let problem = outline.problem(on: calibration) {
@@ -294,7 +317,7 @@ struct MapDetailView: View {
                             .foregroundStyle(.secondary)
                     }
                     Spacer()
-                    Button("Undo Corner") { self.outline?.removeLast() }
+                    Button(outline.isLine ? "Undo Point" : "Undo Corner") { self.outline?.removeLast() }
                         .disabled(outline.corners.isEmpty)
                     Button("Cancel", role: .cancel) { self.outline = nil }
                     Button("Finish", action: finishOutline)
@@ -438,8 +461,50 @@ private func previewMap(kind: MapKind = .world, calibrated: Bool) -> (ModelConta
 }
 
 extension Page {
-    /// Whether the place is a single point, rather than an area with an outline.
+    /// Whether the place is a single point, rather than an area with an outline or a line.
     var isPoint: Bool {
         if case .point? = geometry { true } else { false }
     }
+
+    /// Whether the place is a line, such as a road or river.
+    var isLine: Bool {
+        if case .line? = geometry { true } else { false }
+    }
+}
+
+#Preview("Vector map") {
+    let container = try! AppSchema.makeContainer(inMemory: true)
+    let context = container.mainContext
+    let world = World(name: "Preview")
+    context.insert(world)
+    let root = world.ensureRootPlace(in: context)
+    let map = world.addVectorMap(named: "World", for: root, extentMetres: 400_000, in: context)!
+    func area(_ title: String, _ type: String, _ corners: [(Double, Double)]) -> Page {
+        let page = world.addPage(kind: .place, in: context)
+        page.title = title
+        page.setAttributeText("core.placeType", type)
+        _ = page.setGeometry(.polygon(corners.map { GridPoint(easting: $0.0, northing: $0.1) }))
+        return page
+    }
+    func line(_ title: String, _ type: String, _ points: [(Double, Double)]) {
+        let page = world.addPage(kind: .place, in: context)
+        page.title = title
+        page.setAttributeText("core.placeType", type)
+        _ = page.setGeometry(.line(points.map { GridPoint(easting: $0.0, northing: $0.1) }))
+    }
+    _ = area("Sea", "Water", [(0, 0), (400_000, 0), (400_000, 90_000), (300_000, 70_000), (200_000, 100_000), (100_000, 60_000), (0, 80_000)])
+    _ = area("Greenwood", "Forest", [(60_000, 180_000), (150_000, 170_000), (170_000, 260_000), (90_000, 290_000)])
+    _ = area("Ironspine", "Mountains", [(250_000, 250_000), (360_000, 230_000), (380_000, 340_000), (280_000, 370_000)])
+    let town = area("Harrowgate", "Settlement", [(190_000, 150_000), (215_000, 150_000), (215_000, 175_000), (190_000, 175_000)])
+    let hall = area("Guildhall", "Building", [(196_000, 156_000), (202_000, 156_000), (202_000, 162_000), (196_000, 162_000)])
+    hall.parent = town
+    line("The Silverrun", "River", [(120_000, 330_000), (160_000, 250_000), (200_000, 190_000), (205_000, 120_000), (230_000, 60_000)])
+    line("King's Road", "Road", [(20_000, 140_000), (120_000, 160_000), (202_000, 162_000), (300_000, 200_000), (380_000, 215_000)])
+    map.place = root
+    return NavigationStack {
+        MapDetailView(map: map)
+    }
+    .environment(WorldNavigation())
+    .modelContainer(container)
+    .frame(width: 900, height: 700)
 }

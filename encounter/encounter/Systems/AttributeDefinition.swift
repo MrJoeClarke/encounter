@@ -56,7 +56,7 @@ enum CoreAttributes {
         .init(
             key: "core.placeType",
             label: "Place Type",
-            type: .choice(["Region", "Settlement", "Building", "Wilderness", "Point of Interest"]),
+            type: .choice(PlaceStyle.types),
             appliesTo: [.place],
             group: "Details"
         ),
