@@ -50,6 +50,8 @@ struct MapKitCanvas: PlatformViewRepresentable {
     var shapes: [PlaceShape] = []
     /// The corners of an outline being drawn, in image pixels.
     var draftCorners: [CGPoint] = []
+    /// A character's journey as a line through these image positions, in order.
+    var route: [CGPoint] = []
     /// Whether a click on the map is wanted as a point (a calibration point or the corner of an outline), rather
     /// than selecting a place.
     var isMarking = false
@@ -138,7 +140,7 @@ struct MapKitCanvas: PlatformViewRepresentable {
         #if os(macOS)
         (view as? PlacingMapView)?.canPlace = canPlace
         #endif
-        coordinator.sync(markers: markers, pins: pins, shapes: shapes, draft: draftCorners, grid: showsGrid ? sceneGrid : nil, in: view)
+        coordinator.sync(markers: markers, pins: pins, shapes: shapes, draft: draftCorners, route: route, grid: showsGrid ? sceneGrid : nil, in: view)
     }
 
     /// The grid of squares to draw, for a scene map that has one.
@@ -187,8 +189,10 @@ struct MapKitCanvas: PlatformViewRepresentable {
 
         private var draftOverlay: DraftOutline?
         private var draftCorners: [CGPoint] = []
+        private var journeyOverlay: JourneyLine?
+        private var journeyRoute: [CGPoint] = []
 
-        func sync(markers: [MapMarker], pins: [PlacePin], shapes: [PlaceShape], draft: [CGPoint], grid: SceneGridOverlay?, in view: MKMapView) {
+        func sync(markers: [MapMarker], pins: [PlacePin], shapes: [PlaceShape], draft: [CGPoint], route: [CGPoint], grid: SceneGridOverlay?, in view: MKMapView) {
             // The outline being drawn is replaced as corners are added.
             if draft != draftCorners {
                 draftCorners = draft
@@ -202,6 +206,19 @@ struct MapKitCanvas: PlatformViewRepresentable {
                     let overlay = DraftOutline(coordinates: path, count: path.count)
                     draftOverlay = overlay
                     view.addOverlay(overlay, level: .aboveLabels)
+                }
+            }
+
+            // A character's journey is replaced when it changes.
+            if route != journeyRoute {
+                journeyRoute = route
+                if let journeyOverlay { view.removeOverlay(journeyOverlay) }
+                journeyOverlay = nil
+                if route.count >= 2 {
+                    let path = route.map { WebMercator.coordinate(calibration.gridPoint(atX: $0.x, y: $0.y)) }
+                    let line = JourneyLine(coordinates: path, count: path.count)
+                    journeyOverlay = line
+                    view.addOverlay(line, level: .aboveLabels)
                 }
             }
 
@@ -270,6 +287,14 @@ struct MapKitCanvas: PlatformViewRepresentable {
         func mapView(_ mapView: MKMapView, rendererFor overlay: any MKOverlay) -> MKOverlayRenderer {
             if let tiles = overlay as? MKTileOverlay { return MKTileOverlayRenderer(tileOverlay: tiles) }
             if let grid = overlay as? SceneGridOverlay { return SceneGridRenderer(grid: grid) }
+            if overlay is JourneyLine {
+                let renderer = MKPolylineRenderer(overlay: overlay)
+                renderer.strokeColor = PlatformColor.systemPurple
+                renderer.lineWidth = 3
+                renderer.lineJoin = .round
+                renderer.lineCap = .round
+                return renderer
+            }
             if overlay is DraftOutline {
                 let renderer = MKPolylineRenderer(overlay: overlay)
                 renderer.strokeColor = PlatformColor.systemBlue
@@ -557,3 +582,6 @@ final class SceneGridRenderer: MKOverlayRenderer {
 
 /// The outline being drawn on the MapKit map, as a dashed line.
 final class DraftOutline: MKPolyline {}
+
+/// The line a character's journey draws on the map.
+final class JourneyLine: MKPolyline {}

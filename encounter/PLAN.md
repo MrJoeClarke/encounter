@@ -296,6 +296,19 @@ A guided flow that produces a playable character page.
 - **Few backgrounds in the SRD:** the 5.1 SRD has one background (Acolyte) and 5.2.1 has four. The builder treats library and world backgrounds alike, so creators add their own as pages, starting from Create Custom Version.
 - **Higher levels soon after:** a later milestone (13, after events and timelines) adds levelling up to a character page: choosing the new level, applying hit points, proficiency bonus changes and the class features gained, with subclass choice where the class requires it.
 
+### 5.8 Character sheet (milestone 14)
+
+A read-and-play view of a character, laid out like a D&D sheet. It sits on the character's page as a **Sheet** view beside the page's own fields, and what you edit on the sheet goes straight back to the character page, so there is one set of data.
+
+- **Header:** name, race or species, class and level, background, alignment.
+- **Abilities and skills:** the six ability scores with modifiers, saving throws, and the 18 skills, with proficiency marked and the bonuses worked out.
+- **Combat:** hit points (current, maximum and temporary), hit dice, armor class, initiative, speed, proficiency bonus, and attacks from the equipped weapons.
+- **Features and spells:** class, race and background features by level, and the spell list with slots and the spells prepared or known.
+- **Equipment and notes:** equipment and money, languages and proficiencies, and the character's own notes.
+- **Play:** current hit points and spell slots can be changed from the sheet, with the maximums coming from the character's level.
+- Derived values come from the same plain Swift calculators the builder and levelling use, so they are unit-tested without UI.
+- **After levelling:** the sheet comes after milestone 13 so it is built once on full level 1 to 20 data rather than reworked. A printable PDF is not planned yet, and can be added on top of the sheet later.
+
 ## 6. Architecture and Layout
 
 ```
@@ -348,10 +361,11 @@ Each milestone ends with a building app and passing tests. I'll stop and show yo
 | 11c | **Maps: MapKit and outlines** | Built, awaiting review | MapKit replaces the custom map view. Places cluster when crowded, a right-click menu adds places, scene maps get a grid, and a place can be given an outline by clicking its corners, which adopts the places inside it. Nesting between maps comes from their places, so it needs no calibration-based detection. |
 | 12a | **Events: editing and campaigns** | Built, awaiting review | An event page edits whether it is backstory or in a campaign, its start and end date, its location and its participants. A **Campaigns** item in the sidebar lists, renames, deletes and adds events to campaigns. |
 | 12b | **Events: timeline** | Built, awaiting review | A Timeline item listing events by date, grouped by year, with filters for campaign or backstory, character, organisation and place. |
-| 12c | **Events: character journey** | Planned | A character's events in date order with their places, derived rather than stored, and optionally drawn as a line on the world map. |
+| 12c | **Events: character journey** | Built, awaiting review | A character's page lists their events in date order with dates and places (derived, not stored). A **Show Journey** menu on a map draws a purple line through the places of the chosen character's dated events that are on that map. |
 | 13 | **Character levelling** | Planned (deferred until after events and timelines) | Level a character up to 20: hit points, proficiency bonus, class features gained, subclass choice, and new spells. |
-| 14 | **Polish** | Planned | Keyboard shortcuts and menus on Mac, iPad multitasking, accessibility audit (Dynamic Type, VoiceOver, contrast), empty states. |
-| 15 | **CloudKit** (when a developer account exists) | Planned | Capability, container, conflict testing on multiple devices. The library is bundled and is not synced. |
+| 14 | **Character sheet** | Planned | A dedicated on-screen sheet for a D&D character, laid out like the paper one and built on full level 1 to 20 data. See 5.8. |
+| 15 | **Polish** | Planned | Keyboard shortcuts and menus on Mac, iPad multitasking, accessibility audit (Dynamic Type, VoiceOver, contrast), empty states. |
+| 16 | **CloudKit** (when a developer account exists) | Planned | Capability, container, conflict testing on multiple devices. The library is bundled and is not synced. |
 
 Search comes before maps because the `@` picker needs it. Import/export comes early so every later feature can be tested against realistic data, and the export format grows with each milestone (maps, events and so on). The D&D content library follows import/export and links because content packs reuse the import format and a character cross-references its race and class. The character builder follows the library because it reads those entries, which now include skills, backgrounds, feats, equipment and spells (7a to 7d), and levelling follows the builder. Library entries should join search when search is built, so the search milestone (9) covers them.
 

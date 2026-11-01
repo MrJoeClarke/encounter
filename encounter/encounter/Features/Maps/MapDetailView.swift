@@ -26,6 +26,8 @@ struct MapDetailView: View {
     @State private var outlineProblem: String?
     @AppStorage("showsMapGrid") private var showsGrid = true
     @State private var selectedPlace: Page?
+    /// The character whose journey is drawn as a line, if any.
+    @State private var journeyCharacter: Page?
 
     private struct PlacementSpot: Identifiable {
         let id = UUID()
@@ -50,6 +52,7 @@ struct MapDetailView: View {
                 pins: pins,
                 shapes: shapes,
                 draftCorners: (outline?.corners ?? []).map { CGPoint(x: $0.x, y: $0.y) },
+                route: route,
                 isMarking: (isCalibrating && map.kind != .scene) || outline != nil,
                 canPlace: map.isCalibrated && !isCalibrating && outline == nil,
                 showsGrid: showsGrid,
@@ -108,6 +111,7 @@ struct MapDetailView: View {
                     if map.kind == .scene {
                         Toggle("Show Grid", isOn: $showsGrid)
                     }
+                    journeyMenu
                     Button("Delete Map…", systemImage: "trash", role: .destructive) { isConfirmingDelete = true }
                 }
                 .labelStyle(.iconOnly)
@@ -173,6 +177,37 @@ struct MapDetailView: View {
         let wasOpen = navigation.selectedMap === map
         if wasOpen { navigation.selectedMap = nil }
         modelContext.delete(map)
+    }
+
+    // MARK: Journey
+
+    /// The world's characters, to choose whose journey to draw.
+    private var characters: [Page] {
+        (map.world?.pages ?? []).filter { $0.kind == .character && !$0.isDeleted }
+            .sorted { $0.title.localizedLowercase < $1.title.localizedLowercase }
+    }
+
+    private var journeyMenu: some View {
+        Menu("Show Journey", systemImage: "point.topleft.down.to.point.bottomright.curvepath") {
+            if journeyCharacter != nil {
+                Button("Hide Journey") { journeyCharacter = nil }
+                Divider()
+            }
+            ForEach(characters) { character in
+                Toggle(character.title.isEmpty ? String(localized: "Untitled") : character.title, isOn: Binding(
+                    get: { journeyCharacter === character },
+                    set: { journeyCharacter = $0 ? character : nil }
+                ))
+            }
+        }
+        .disabled(!map.isCalibrated || characters.isEmpty)
+    }
+
+    /// The line for the chosen character's journey, through the places of their events that are on this map.
+    private var route: [CGPoint] {
+        guard let journeyCharacter, !journeyCharacter.isDeleted, map.isCalibrated else { return [] }
+        let stops = JourneyBuilder.stops(of: journeyCharacter, calendar: map.world?.calendar)
+        return JourneyBuilder.route(of: stops, on: map)
     }
 
     // MARK: Pins and marks
