@@ -103,7 +103,7 @@ struct LibraryEntryView: View {
         switch entry.kind {
         case .race: "Traits"
         case .class, .subclass: "Features"
-        case .skill, .background, .feat, .equipment, .spell: "Details"
+        case .skill, .condition, .background, .feat, .equipment, .spell: "Details"
         }
     }
 

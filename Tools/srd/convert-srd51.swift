@@ -646,6 +646,76 @@ func readSkills() {
 
 readSkills()
 
+// MARK: Conditions
+
+let conditionNames = ["Blinded", "Charmed", "Deafened", "Exhaustion", "Frightened", "Grappled", "Incapacitated", "Invisible", "Paralyzed", "Petrified", "Poisoned", "Prone", "Restrained", "Stunned", "Unconscious"]
+
+/// The conditions in Appendix PH-A: each is a heading followed by its effects, in bullets. Exhaustion's text has a
+/// table of its levels, which is kept as lines of its own.
+func readConditions() {
+    var started = false
+    var current: (name: String, lines: [Line])?
+    var found: [(name: String, lines: [Line])] = []
+    pages: for index in 0..<document.pageCount {
+        guard let page = document.page(at: index) else { continue }
+        for line in readingOrder(of: page, profile: srd51Profile) {
+            let text = cleanLine(line.text)
+            if case .heading(1) = line.kind {
+                if text.hasPrefix("Appendix PH-A") { started = true; continue }
+                if started && text != "Conditions" { break pages }
+                continue
+            }
+            guard started else { continue }
+            switch line.kind {
+            case .heading(let level) where level >= 4 && conditionNames.contains(text):
+                if let current { found.append(current) }
+                current = (text, [])
+            case .heading, .caption:
+                continue
+            default:
+                current?.lines.append(line)
+            }
+        }
+    }
+    if let current { found.append(current) }
+
+    for condition in found {
+        func isRow(_ line: Line) -> Bool {
+            guard case .table = line.kind else { return false }
+            let text = cleanLine(line.text)
+            return text == "Level Effect" || text.range(of: "^\\d ", options: .regularExpression) != nil
+        }
+        var parts: [String] = []
+        var pending: [String] = []
+        var rows: [String] = []
+        func flushPending() {
+            parts += paragraphs(from: pending, lineWidth: lineWidth)
+            pending = []
+        }
+        func flushRows() {
+            if !rows.isEmpty { parts.append(rows.joined(separator: "\n")) }
+            rows = []
+        }
+        for line in condition.lines {
+            if isRow(line) {
+                flushPending()
+                rows.append(cleanLine(line.text))
+            } else {
+                flushRows()
+                pending.append(line.text)
+            }
+        }
+        flushPending()
+        flushRows()
+        entries.append(PackEntry(key: "srd51.condition.\(slug(condition.name))", kind: "condition", name: condition.name, parent: nil,
+                                 summary: parts.joined(separator: "\n\n"), attributes: [], features: []))
+    }
+    report.append("Conditions (\(found.count)): " + found.map(\.name).joined(separator: ", "))
+    if found.count != conditionNames.count { review.append("Found \(found.count) conditions, expected \(conditionNames.count)") }
+}
+
+readConditions()
+
 // MARK: Backgrounds and feats
 
 /// All the lines of the pages from the one with this heading to the heading that ends the section, in reading order.

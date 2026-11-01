@@ -306,6 +306,9 @@ A read-and-play view of a character, laid out like a D&D sheet. It sits on the c
 - **Features and spells:** class, race and background features by level, and the spell list with slots and the spells prepared or known.
 - **Equipment and notes:** equipment and money, languages and proficiencies, and the character's own notes.
 - **Play:** current hit points and spell slots can be changed from the sheet, with the maximums coming from the character's level.
+- **Actions:** every weapon, spell, ability check, saving throw and skill on the sheet can be tapped to open a card that says exactly what to roll and what to add. A longsword reads "Attack: d20 + 5 (Strength +3, proficiency +2). Damage: 1d8 + 3 slashing". A fireball reads "Each creature in the area makes a Dexterity saving throw against DC 15. Damage: 8d6 fire, half on a save". Attack spells show the spell attack bonus, and weapons use Strength or Dexterity as their properties allow (finesse, ranged, thrown).
+- **Rolling in the app (optional):** a setting turns on Roll buttons on those cards. A roll shows each die, the modifier and the total, with advantage and disadvantage, a critical hit on a natural 20 that doubles the damage dice, and a short log of recent rolls on the sheet. With the setting off the cards only say what to roll, for players using real dice. The dice live in a plain Swift roller with a replaceable source of randomness, so they are unit-tested.
+- **Spell slots:** casting a spell from its card spends a slot. The card offers the slots the character has left, from the spell's level up, and says what changes when cast at a higher level. Cantrips spend nothing, and a ritual can be cast without a slot. Slots are shown as dots to tap by hand too. A warlock's pact slots come back on a short rest, all other slots on a long rest.
 - Derived values come from the same plain Swift calculators the builder and levelling use, so they are unit-tested without UI.
 - **After levelling:** the sheet comes after milestone 13 so it is built once on full level 1 to 20 data rather than reworked. A printable PDF is not planned yet, and can be added on top of the sheet later.
 
@@ -316,6 +319,61 @@ A read-and-play view of a character, laid out like a D&D sheet. It sits on the c
 - **Rules:** `ClassProgression` and `LevelRules` are plain Swift, tested without UI. A level gives the average roll (half the die rounded up) or a roll, plus the Constitution modifier, at least 1. A Constitution increase also raises the hit points of every earlier level. An improvement is 2 points in one ability or 1 in two, never above 20, or a feat (general and fighting style feats, and epic boons from level 19 in the 2024 rules).
 - **Spells:** a caster learns the difference in the table (known in 2014, prepared in 2024) from its class list, up to the highest level it has slots for. A wizard adds two spells to the spellbook with each level. 2014 clerics, druids and paladins prepare from their whole list each day, so they choose nothing.
 - **Not in this milestone:** multiclassing, swapping a known spell for another, choosing eldritch invocations, and recalculating armor class or other values the creator may have changed by hand.
+
+### 5.9 Map generators (milestone 15)
+
+Generate maps instead of importing them, for the three kinds of map the app has. **A generated map is vectors, not a picture.** Everything the generator makes is a place, with a shape in the world's plane of metres, and the map is drawn from those places.
+
+- **What is made:**
+  - **Areas** are polygons: regions, seas and lakes, forests, mountain ranges, districts and so on. Each is a place with an outline.
+  - **Settlements** are places: a point on a world map, or an outline when zoomed in.
+  - **Buildings** are polygons, and each is attached to a sub-place of its settlement (a smithy, a tavern, a house), so it has a page, a parent and everything else a place has.
+  - **Roads and rivers** are polylines. A named road or river is a place too, with a line for its shape.
+  - **Scene maps** make rooms as polygons and walls and corridors as lines, on the grid of 5-foot squares. Doors, stairs and features are places.
+- **No image:** a generated map has no picture to cut into tiles. MapKit draws its places as overlays, each styled by its place type (water, forest, road, building and so on), and the same map stays sharp at any zoom. A plain background replaces the tiles. Imported pictures work as they do now, and a map can have both: a picture below, with places drawn over it.
+- **Places are the map:** since the map is its places, moving a corner of a settlement, redrawing a lake or deleting a road is editing the map. Pins, outlines, journeys, the hierarchy and "only the higher-level place is shown" work on generated maps unchanged: a building shows on its settlement's map and not on the world's.
+- **A new shape:** the place shapes the app has today are a point and a polygon. A line (a polyline of points, with the same metre coordinates and spatial maths) is added for roads and rivers.
+- **Detail by zoom:** what is drawn depends on the zoom, so a world map shows regions, rivers and settlements, and a settlement map shows streets and buildings. Each place type has a level it appears at.
+- **From a seed:** the same seed and options always give the same map, so a map can be regenerated, or tweaked (a different sea level, more rivers) and compared. The seed and options are kept with the map, and regenerating asks before it replaces the places it made, leaving alone any place the creator has edited or added.
+- **Made here, not by a model:** the generators are algorithms in plain Swift with a seeded random source, so they are unit-tested, with no network and no cost. A built-in style gives each place type its colours and line weights, and a map can be exported as an image or as vectors.
+- **Open choices:** which styles to ship, whether generated places get names from a name list, and how a settlement's street layout is chosen (planned grid, organic, or radial around a centre).
+
+### 5.10 More rule systems: modular rule systems and Daggerheart (milestones 16 and 17)
+
+D&D 5e is one rule system among several: Daggerheart is next, and my own ruleset after it. Milestone 16 makes the app modular enough that adding a system means supplying parts, not changing the app. Milestone 17 adds Daggerheart as the first system that isn't D&D, to prove it.
+
+- **Where D&D is built in today:** the rule system chooses the attributes shown on a page (already data-driven), but the character builder, levelling, sheet, dice, conditions, library kinds and content packs are all written for D&D 5e (they read `dnd5e.*` attributes and use a d20). A second system needs each of those to be a part the rule system supplies.
+- **Milestone 16, a rule system is a set of modules:** each is independent and optional, and a system supplies only the ones it has. The screens ask what a system has and show only that, so a system with no spell slots has none, and a system with no levels has no Level Up.
+  - **Attributes:** the definitions a page of each kind has (this exists).
+  - **Library:** the kinds of content the system has (classes, domain cards, ancestries and so on) and the packs that fill them.
+  - **Resources:** tracks with a current and a maximum value that reset on a rest or a trigger: hit points, Stress, Hope, spell slots, uses per day. The sheet, rests and slot tracking use these rather than D&D's own numbers.
+  - **Rolls:** a roll model that says what dice are rolled, what is added, and how the result is read (a d20 against a target, two dice and which is higher, a pool of dice). Action cards, the dice roller and the log use it, so advantage in D&D and its Daggerheart equivalent are two readings of one mechanism.
+  - **Derived values:** formulas over a character's attributes, such as modifiers, armor class, save DCs and thresholds, evaluated by one small engine, so a system adds a value by describing it.
+  - **Creation and advancement:** a flow made of generic steps (choose one from a list, choose some, assign values, enter text, review) that a system composes. The D&D builder and Level Up become two compositions of the same steps.
+  - **Sheet:** a layout of sections, each reading attributes and resources, with the tappable action cards.
+  - **Conditions and rests:** the system's conditions and what they do to rolls, and what each kind of rest restores.
+- **Data first, code where it must be:** simple modules are described in data (a rules file for the system), so a system like mine can be defined without writing Swift. A module that needs real logic (the D&D spell and slot rules) is a Swift type with the same interface, registered with the system. Both kinds sit behind the same protocols.
+- **D&D 5e moves over with no change in what it does:** its builder, levelling, sheet, cards, conditions and library become modules, and the existing tests (plus parity tests that compare the new path with the old results) prove nothing moved.
+- **Proving it is modular:** a small made-up rule system, defined only in data, is part of the tests. It must create a character, show a sheet, roll and rest without any D&D code, and it fails the build if a screen reaches for D&D by name.
+- **Rule systems are versioned and portable:** a system's attributes keep their own key prefix, so a world can change system, as D&D worlds can today, without losing what was stored. A world records which system and which version of it it uses.
+- **Daggerheart differences to handle** (to be confirmed against the Daggerheart SRD, which I'll read first, including its licence and the attribution it needs):
+  - Rolling uses two dice of different colours (Duality Dice) rather than a d20, so a roll has a total and also says which die was higher (Hope or Fear), and a critical is two matching dice. Advantage and disadvantage add or subtract a smaller die rather than rolling twice.
+  - Characters have six traits rather than ability scores, with no proficiency bonus or skill list. Experiences take the place of skills.
+  - Classes, ancestries, communities and domain cards are the content, instead of classes, species, backgrounds and spells. A character has a loadout of domain cards and a vault of those not in use, and no spell slots. Abilities are paid for in Hope and Stress.
+  - Hit points and Stress are tracks to mark, with damage thresholds that decide how many hit points an attack takes, and armor is slots that are marked off.
+  - Levelling follows tiers (levels 1 to 10 in groups) with choices at each level, not a class table of slots.
+  - Rests and their downtime moves differ, and so does the list of conditions.
+- **Existing features that change with it:** the roll cards and dice roller, the sheet, the builder and level-up flows, conditions, search and the library's lists, the content converter (a new source, with its own format), and import and export of a world's rule system. The timeline, maps, places and campaigns are unaffected, since they don't depend on the system.
+- **Data stays portable:** each system's attributes keep their own key prefix (`daggerheart.*`), so a world can change system, as D&D worlds can today, without losing what was stored.
+
+### 5.11 My own ruleset (milestone 18)
+
+A custom TTRPG ruleset, written up in Notion and exported, as a rule system of its own.
+
+- **Starting from the export:** I'll read the Notion export first (the markdown and CSV files and any images) and propose how it maps onto the app: its attributes, the kinds of page it has (classes, items, spells or whatever it calls them), its dice, its character creation and advancement, and its sheet. Nothing is built before that proposal is agreed.
+- **Data-driven:** where the app's rule-system parts (milestone 16) allow, the ruleset is described in data, not code, so it can be changed by editing a file. A rule system file would define the attributes, the dice and how a roll reads, the library kinds and their content, and the sheet layout.
+- **Content import:** the ruleset's own content (the Notion pages and tables) is converted into a content pack by a tool in the repository, like the SRD converters, so the text is copied and not retyped.
+- **Open choices:** whether the ruleset stays private to me or is shipped as a bundled system, and how much of it is expressed in data and how much in code. Both depend on what the export holds.
 
 ## 6. Architecture and Layout
 
@@ -371,9 +429,14 @@ Each milestone ends with a building app and passing tests. I'll stop and show yo
 | 12b | **Events: timeline** | Built, awaiting review | A Timeline item listing events by date, grouped by year, with filters for campaign or backstory, character, organisation and place. |
 | 12c | **Events: character journey** | Built, awaiting review | A character's page lists their events in date order with dates and places (derived, not stored). A **Show Journey** menu on a map draws a purple line through the places of the chosen character's dated events that are on that map. |
 | 13 | **Character levelling** | Built, awaiting review | The converter reads each class's table (cantrips, spells known or prepared, spell slots, pact slots, invocations and the Ability Score Improvement levels) into the packs for both editions. A **Level Up** button on a playable character takes them up to level 20: hit points (average or rolled), proficiency bonus, the class and subclass features gained, the subclass choice, an ability increase or a feat, new cantrips and spells, and spell slots. Includes a checks report for the tables. |
-| 14 | **Character sheet** | Planned | A dedicated on-screen sheet for a D&D character, laid out like the paper one and built on full level 1 to 20 data. See 5.8. |
-| 15 | **Polish** | Planned | Keyboard shortcuts and menus on Mac, iPad multitasking, accessibility audit (Dynamic Type, VoiceOver, contrast), empty states. |
-| 16 | **CloudKit** (when a developer account exists) | Planned | Capability, container, conflict testing on multiple devices. The library is bundled and is not synced. |
+| 14 | **Character sheet** | Built, awaiting review | A **Page | Sheet** switch on a D&D character. The sheet shows abilities, saves, skills, hit points (with damage, healing, temporary points, hit dice and rests), armor class, initiative, passive Perception, weapons as attacks, spellcasting with tappable slot dots, and features. Weapons, spells, checks and saves open a card that says what to roll and what to add. A setting adds Roll buttons (advantage, critical hits, a roll log), and casting a spell from its card spends a slot of the level chosen. Skills can have expertise (double the bonus), Jack of All Trades adds half the bonus where it applies, death saves are tracked at 0 hit points (rolled in the app or typed in from a real die), and Magic Missile and Scorching Ray gain darts and rays with higher slots. |
+| 14b | **Conditions** | Built, awaiting review | All 15 conditions in the library for both editions (exact text, from the converter), and a Conditions box on the sheet. Active conditions set advantage or disadvantage on the cards, fail Strength and Dexterity saves where the rules do, stop movement and actions, and exhaustion works as each edition has it (levels 1 to 6 in 5.1, minus 2 per level in 5.2.1). A long rest removes a level of exhaustion. |
+| 15 | **Map generators** | Planned | Generate world, settlement and scene maps from a seed as vectors: polygons for areas, settlements and buildings (each attached to a sub-place), and polylines for roads and rivers, drawn by MapKit with no image. The places are the map. See 5.9. |
+| 16 | **Modular rule systems** | Planned | A rule system becomes a set of independent modules (attributes, library, resources, rolls, derived values, creation and advancement, sheet, conditions and rests), described in data where possible and in Swift where not, so Daggerheart and my own ruleset are added by supplying modules. D&D 5e moves over with no change, and a made-up data-only system in the tests proves it. See 5.10. |
+| 17 | **Daggerheart** | Planned | Daggerheart as the first rule system built from the modules: Duality Dice, traits and experiences, classes, ancestries, communities and domain cards, Hope and Stress, its sheet, creation and levelling, and the differences in the features built for D&D. Starts by reading its SRD and licence. See 5.10. |
+| 18 | **My own ruleset** | Planned | A rule system built from my Notion export, mostly in data on the modules from 16, with its content converted into a pack. Starts with a proposal from reading the export. See 5.11. |
+| 19 | **Polish** | Planned | Keyboard shortcuts and menus on Mac, iPad multitasking, accessibility audit (Dynamic Type, VoiceOver, contrast), empty states. |
+| 20 | **CloudKit** (when a developer account exists) | Planned | Capability, container, conflict testing on multiple devices. The library is bundled and is not synced. |
 
 Search comes before maps because the `@` picker needs it. Import/export comes early so every later feature can be tested against realistic data, and the export format grows with each milestone (maps, events and so on). The D&D content library follows import/export and links because content packs reuse the import format and a character cross-references its race and class. The character builder follows the library because it reads those entries, which now include skills, backgrounds, feats, equipment and spells (7a to 7d), and levelling follows the builder. Library entries should join search when search is built, so the search milestone (9) covers them.
 
@@ -437,4 +500,4 @@ Please edit anything here that doesn't suit you.
 
 ## 10. Open Questions
 
-None blocking. Before milestone 6 I'll check the exact SRD 5.1 and 5.2 licence and attribution wording, and I'll post the milestone plan with the content pack format for review.
+None blocking. Before milestone 17 I'll read the Daggerheart SRD and check its licence and attribution wording, and before milestone 18 I'll read the Notion export and propose how it maps onto the app. Earlier, before milestone 6, I checked the exact SRD 5.1 and 5.2 licence and attribution wording, and I'll post the milestone plan with the content pack format for review.

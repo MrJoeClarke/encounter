@@ -55,6 +55,7 @@ nonisolated enum LibraryKind: String, Codable, Sendable, CaseIterable {
     case `class`
     case subclass
     case skill
+    case condition
     case background
     case feat
     case equipment
@@ -71,7 +72,7 @@ nonisolated enum LibraryKind: String, Codable, Sendable, CaseIterable {
         case .feat: .feat
         case .equipment: .item
         case .spell: .spell
-        case .subclass, .skill: nil
+        case .subclass, .skill, .condition: nil
         }
     }
 
@@ -81,13 +82,14 @@ nonisolated enum LibraryKind: String, Codable, Sendable, CaseIterable {
     }
 
     /// The kinds that have a list of their own in the Library, in the order they're shown.
-    static let listKinds: [LibraryKind] = [.race, .class, .background, .feat, .skill, .equipment, .spell]
+    static let listKinds: [LibraryKind] = [.race, .class, .background, .feat, .skill, .condition, .equipment, .spell]
 
     var systemImage: String {
         switch self {
         case .race: "pawprint"
         case .class, .subclass: "shield.lefthalf.filled"
         case .skill: "star.circle"
+        case .condition: "waveform.path.ecg"
         case .background: "book.closed"
         case .feat: "medal"
         case .equipment: "backpack"
@@ -101,6 +103,7 @@ nonisolated enum LibraryKind: String, Codable, Sendable, CaseIterable {
         case .race: edition.raceTermPlural
         case .class, .subclass: "Classes"
         case .skill: "Skills"
+        case .condition: "Conditions"
         case .background: "Backgrounds"
         case .feat: "Feats"
         case .equipment: "Equipment"

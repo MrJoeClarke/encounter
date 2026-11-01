@@ -47,6 +47,13 @@ nonisolated final class MapTileSource: @unchecked Sendable {
         WebMercator.zoom(forMetresPerPixel: calibration.metresPerPixel)
     }
 
+    /// How much deeper than the image's own resolution tiles are cut, which magnifies the image a little so the map can
+    /// be zoomed in on without it running out. Past this MapKit stops asking for tiles and shows the world beneath.
+    static let overzoom = 3
+
+    /// The deepest zoom tiles are made for, and so the deepest the map is zoomed to.
+    var maximumDisplayZoom: Int { min(maximumZoom + Self.overzoom, 21) }
+
     /// The PNG for one tile. Tiles the image doesn't touch are the plain background.
     func tile(zoom: Int, x: Int, y: Int) -> Data? {
         let area = WebMercator.bounds(zoom: zoom, x: x, y: y)
@@ -154,7 +161,7 @@ final class MapTileOverlay: MKTileOverlay {
         // Every tile is opaque, so MapKit needn't draw the world underneath.
         canReplaceMapContent = true
         minimumZ = 0
-        maximumZ = source.maximumZoom
+        maximumZ = source.maximumDisplayZoom
     }
 
     override func loadTile(at path: MKTileOverlayPath, result: @escaping (Data?, (any Error)?) -> Void) {

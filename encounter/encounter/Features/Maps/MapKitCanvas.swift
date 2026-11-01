@@ -166,8 +166,13 @@ struct MapKitCanvas: PlatformViewRepresentable {
         private var shapeOverlays: [UUID: PlaceOverlay] = [:]
         private var isDragging = false
 
+        /// The deepest zoom the tiles go to. Past it MapKit stops drawing the map and shows the world beneath, so the
+        /// camera is held to it.
+        private var deepestZoom = 21.0
+
         /// Fits the whole map in view and keeps the camera near it.
         func show(_ source: MapTileSource, in view: MKMapView) {
+            deepestZoom = Double(source.maximumDisplayZoom)
             let b = source.bounds
             let southWest = WebMercator.coordinate(easting: b.minEasting, northing: b.minNorthing)
             let northEast = WebMercator.coordinate(easting: b.maxEasting, northing: b.maxNorthing)
@@ -336,6 +341,25 @@ struct MapKitCanvas: PlatformViewRepresentable {
                 return view
             }
             return nil   // clusters use the default look
+        }
+
+        /// Stops the camera going closer than the deepest tiles. The first time it does, the distance it was put back
+        /// to becomes the closest the camera may be, so the gesture meets a limit rather than being pushed back.
+        func mapView(_ mapView: MKMapView, regionDidChangeAnimated animated: Bool) {
+            let width = Double(mapView.bounds.width)
+            let delta = mapView.region.span.longitudeDelta
+            guard width > 0, delta > 0 else { return }
+            // MapKit's tiles are 256 points across, and a zoom level halves the longitude each tile covers.
+            let zoom = log2(360 * width / (WebMercator.tileSize * delta))
+            guard zoom > deepestZoom + 0.25 else { return }
+            guard let camera = mapView.camera.copy() as? MKMapCamera else { return }
+            camera.centerCoordinateDistance *= pow(2, zoom - deepestZoom)
+            mapView.setCamera(camera, animated: false)
+            mapView.setCameraZoomRange(
+                MKMapView.CameraZoomRange(minCenterCoordinateDistance: camera.centerCoordinateDistance,
+                                          maxCenterCoordinateDistance: mapView.cameraZoomRange.maxCenterCoordinateDistance),
+                animated: false
+            )
         }
 
         func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {

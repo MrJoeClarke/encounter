@@ -12,8 +12,37 @@ struct PageEditorView: View {
 
     @State private var newTag = ""
     @FocusState private var titleIsFocused: Bool
+    @State private var mode = Mode.page
+
+    /// A D&D character can be looked at as its page, or as a sheet to play from.
+    private enum Mode: String, CaseIterable, Identifiable {
+        case page, sheet
+        var id: String { rawValue }
+    }
+
+    private var hasSheet: Bool { page.kind == .character && page.world?.system == .dnd5e }
 
     var body: some View {
+        VStack(spacing: 0) {
+            if hasSheet {
+                Picker("View", selection: $mode) {
+                    Text("Page").tag(Mode.page)
+                    Text("Sheet").tag(Mode.sheet)
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                .padding([.horizontal, .top])
+                .padding(.bottom, 8)
+            }
+            if hasSheet && mode == .sheet {
+                CharacterSheetView(page: page)
+            } else {
+                form
+            }
+        }
+    }
+
+    private var form: some View {
         Form {
             Section {
                 TextField("Title", text: $page.title, prompt: Text("Untitled"))

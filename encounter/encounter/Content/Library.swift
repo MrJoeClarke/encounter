@@ -156,7 +156,7 @@ extension Library {
         case .background, .feat, .equipment, .spell:
             attributes = entry.attributes
             entries = entry.entries
-        case .subclass, .skill:
+        case .subclass, .skill, .condition:
             return nil
         }
 
@@ -197,6 +197,7 @@ extension LibraryEntry {
         case .class: return "Class"
         case .subclass: return "Subclass"
         case .skill: return "Skill"
+        case .condition: return "Condition"
         case .background: return "Background"
         case .feat: return "Feat"
         case .equipment: return "Equipment"
