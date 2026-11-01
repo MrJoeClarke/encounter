@@ -121,4 +121,6 @@ nonisolated struct MapRecord: Codable, Sendable {
     /// A map with no picture, and how big it is in metres. Optional, because older files don't have them.
     var isVector: Bool?
     var extentMetres: Int?
+    /// What a settlement map was generated from, so it can be generated again.
+    var settlementOptions: SettlementOptions?
 }

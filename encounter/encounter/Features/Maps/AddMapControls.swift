@@ -20,6 +20,7 @@ struct AddMapControls: View {
     @State private var isImporting = false
     @State private var failedImportCount = 0
     @State private var isAddingVectorMap = false
+    @State private var isGeneratingSettlement = false
 
     var body: some View {
         HStack {
@@ -28,8 +29,17 @@ struct AddMapControls: View {
                 Label("From Photos", systemImage: "photo.on.rectangle")
             }
             Button("Blank Vector Map…", systemImage: "scribble.variable") { isAddingVectorMap = true }
+            if !place.isWorldRoot {
+                Button("Generate Settlement…", systemImage: "building.2") { isGeneratingSettlement = true }
+            }
             if isImporting {
                 ProgressView().controlSize(.small)
+            }
+        }
+        .sheet(isPresented: $isGeneratingSettlement) {
+            GenerateSettlementSheet(place: place) { map in
+                isGeneratingSettlement = false
+                if let map { navigation.openMap(map) }
             }
         }
         .sheet(isPresented: $isAddingVectorMap) {

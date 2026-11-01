@@ -27,6 +27,8 @@ final class WorldMap {
     /// A map with no picture: its places are drawn over a plain background. Its size is in `pixelWidth` and
     /// `pixelHeight`, at a metre to a pixel.
     var isVector: Bool = false
+    /// The options a generator made this map from, as JSON, so it can be made again. Use `settlementOptions`.
+    var generatorData: Data?
     var createdAt: Date = Date()
     var world: World?
     /// The place this map depicts, which lets a place open its own map. A world map has none.
@@ -132,15 +134,22 @@ extension World {
         map.isVector = true
         map.pixelWidth = size
         map.pixelHeight = size
-        var origin = GridPoint(easting: 0, northing: 0)
-        if !place.isWorldRoot, let centre = place.geometry?.centre {
-            origin = GridPoint(easting: max(0, centre.easting - Double(size) / 2), northing: max(0, centre.northing - Double(size) / 2))
-        }
-        map.calibration = MapCalibration(anchoringPixel: (0, Double(size)), at: origin, metresPerPixel: 1)
+        map.calibration = Self.vectorCalibration(for: place, size: size)
         context.insert(map)
         map.world = self
         map.place = place
         return map
+    }
+
+    /// How a vector map of `size` metres lines up with the plane: the world map from the south-west corner, and any other
+    /// centred on its place as far as the edge of the plane allows.
+    @MainActor
+    static func vectorCalibration(for place: Page, size: Int) -> MapCalibration? {
+        var origin = GridPoint(easting: 0, northing: 0)
+        if !place.isWorldRoot, let centre = place.geometry?.centre {
+            origin = GridPoint(easting: max(0, centre.easting - Double(size) / 2), northing: max(0, centre.northing - Double(size) / 2))
+        }
+        return MapCalibration(anchoringPixel: (0, Double(size)), at: origin, metresPerPixel: 1)
     }
 
     /// Adds a map of a place, from image data kept at full size so no detail is lost. The map of the root place is

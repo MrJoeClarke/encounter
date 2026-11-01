@@ -68,7 +68,8 @@ enum WorldExporter {
                     gridRows: map.gridRows == 0 ? nil : map.gridRows,
                     placeID: map.place?.id,
                     isVector: map.isVector ? true : nil,
-                    extentMetres: map.isVector ? map.pixelWidth : nil
+                    extentMetres: map.isVector ? map.pixelWidth : nil,
+                    settlementOptions: map.settlementOptions
                 )
             }
 

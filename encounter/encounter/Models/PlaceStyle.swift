@@ -33,7 +33,7 @@ nonisolated struct PlaceStyle: Equatable, Sendable {
     )
 
     /// The place types the map knows how to draw, with the order they are listed in.
-    static let types = ["Region", "Settlement", "District", "Building", "Wilderness", "Water", "Forest", "Mountains", "River", "Road", "Point of Interest"]
+    static let types = ["Region", "Settlement", "District", "Building", "Wilderness", "Water", "Forest", "Mountains", "River", "Road", "Street", "Wall", "Square", "Garden", "Landmark", "Point of Interest"]
 
     static func style(forPlaceType type: String?) -> PlaceStyle {
         switch type {
@@ -48,7 +48,7 @@ nonisolated struct PlaceStyle: Equatable, Sendable {
         case "Mountains":
             PlaceStyle(fill: StyleColor(red: 0.55, green: 0.5, blue: 0.45, alpha: 0.6), stroke: StyleColor(red: 0.4, green: 0.36, blue: 0.32), lineWidth: 1, drawOrder: 10)
         case "District":
-            PlaceStyle(fill: StyleColor(red: 0.95, green: 0.8, blue: 0.3, alpha: 0.2), stroke: StyleColor(red: 0.8, green: 0.6, blue: 0.1), lineWidth: 1.5, isDashed: true, drawOrder: 18)
+            PlaceStyle(fill: StyleColor(red: 0.95, green: 0.8, blue: 0.3, alpha: 0.1), stroke: StyleColor(red: 0.8, green: 0.6, blue: 0.1), lineWidth: 1.5, isDashed: true, drawOrder: 18)
         case "Settlement":
             PlaceStyle(fill: StyleColor(red: 0.95, green: 0.6, blue: 0.2, alpha: 0.3), stroke: StyleColor(red: 0.85, green: 0.45, blue: 0.1), lineWidth: 2, drawOrder: 20)
         case "Building":
@@ -57,11 +57,21 @@ nonisolated struct PlaceStyle: Equatable, Sendable {
             PlaceStyle(fill: nil, stroke: StyleColor(red: 0.2, green: 0.45, blue: 0.85), lineWidth: 3.5, drawOrder: 40)
         case "Road":
             PlaceStyle(fill: nil, stroke: StyleColor(red: 0.65, green: 0.5, blue: 0.3), lineWidth: 2.5, drawOrder: 41)
+        case "Street":
+            PlaceStyle(fill: nil, stroke: StyleColor(red: 0.62, green: 0.52, blue: 0.38), lineWidth: 1.5, drawOrder: 40)
+        case "Square":
+            PlaceStyle(fill: StyleColor(red: 0.8, green: 0.75, blue: 0.62, alpha: 0.4), stroke: StyleColor(red: 0.65, green: 0.58, blue: 0.4), lineWidth: 1.5, drawOrder: 19)
+        case "Garden":
+            PlaceStyle(fill: StyleColor(red: 0.35, green: 0.65, blue: 0.3, alpha: 0.28), stroke: StyleColor(red: 0.25, green: 0.5, blue: 0.2), lineWidth: 1.5, isDashed: true, drawOrder: 18)
+        case "Landmark":
+            PlaceStyle(fill: StyleColor(red: 0.85, green: 0.65, blue: 0.2, alpha: 0.9), stroke: StyleColor(red: 0.5, green: 0.35, blue: 0.05), lineWidth: 1.5, drawOrder: 31)
+        case "Wall":
+            PlaceStyle(fill: nil, stroke: StyleColor(red: 0.4, green: 0.4, blue: 0.43), lineWidth: 4, drawOrder: 42)
         default:
             .plain
         }
     }
 
     /// Whether the type is drawn as a line by default, which is what a new place of the type is offered.
-    static func isLineType(_ type: String?) -> Bool { type == "River" || type == "Road" }
+    static func isLineType(_ type: String?) -> Bool { type == "River" || type == "Road" || type == "Street" || type == "Wall" }
 }
