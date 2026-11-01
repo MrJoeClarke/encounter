@@ -465,6 +465,7 @@ for chapter in chapters where classNames.contains(chapter.title) {
         features.append(Feature(name: section.heading, level: level, text: text))
     }
 
+    classAttributes += classTableAttributes(for: className, edition: 51, review: &review)
     entries.append(PackEntry(key: classKey, kind: "class", name: className, parent: nil, summary: summary,
                              attributes: classAttributes, features: features))
     report.append("Class \(className) (\(classAttributes.count) attributes): " + features.map { "\($0.name) \($0.level ?? 0)" }.joined(separator: ", "))

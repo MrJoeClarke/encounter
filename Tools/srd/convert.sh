@@ -5,6 +5,6 @@ set -e
 DIR="$(cd "$(dirname "$0")" && pwd)"
 TMP=$(mktemp -d)
 cp "$DIR/convert-srd$1.swift" "$TMP/main.swift"
-swiftc -O -o "$TMP/convert" "$TMP/main.swift" "$DIR/PageReading.swift"
+swiftc -O -o "$TMP/convert" "$TMP/main.swift" "$DIR/PageReading.swift" "$DIR/ClassTables.swift"
 "$TMP/convert" "$2" "$3"
 rm -rf "$TMP"

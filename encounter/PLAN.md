@@ -309,6 +309,14 @@ A read-and-play view of a character, laid out like a D&D sheet. It sits on the c
 - Derived values come from the same plain Swift calculators the builder and levelling use, so they are unit-tested without UI.
 - **After levelling:** the sheet comes after milestone 13 so it is built once on full level 1 to 20 data rather than reworked. A printable PDF is not planned yet, and can be added on top of the sheet later.
 
+### 5.7a Levelling up (milestone 13)
+
+- **Data:** each class entry in a pack carries its table as plain text attributes (`dnd5e.asiLevels`, `dnd5e.cantripsKnownByLevel`, `dnd5e.spellsKnownByLevel` or `dnd5e.preparedSpellsByLevel`, `dnd5e.spellSlotsByLevel`, `dnd5e.pactSlotsByLevel`, `dnd5e.invocationsKnownByLevel`), so a custom class made from a library class levels the same way and its table can be edited. A class made from scratch has no table and can't be levelled.
+- **Reading the tables:** the SRD PDFs scatter a table row's numbers away from its label, so the converter reads each table as twenty rows of numbers in order, and the checks fail the run if a column ever falls as the level rises or the level 20 slots aren't the rules' ones.
+- **Rules:** `ClassProgression` and `LevelRules` are plain Swift, tested without UI. A level gives the average roll (half the die rounded up) or a roll, plus the Constitution modifier, at least 1. A Constitution increase also raises the hit points of every earlier level. An improvement is 2 points in one ability or 1 in two, never above 20, or a feat (general and fighting style feats, and epic boons from level 19 in the 2024 rules).
+- **Spells:** a caster learns the difference in the table (known in 2014, prepared in 2024) from its class list, up to the highest level it has slots for. A wizard adds two spells to the spellbook with each level. 2014 clerics, druids and paladins prepare from their whole list each day, so they choose nothing.
+- **Not in this milestone:** multiclassing, swapping a known spell for another, choosing eldritch invocations, and recalculating armor class or other values the creator may have changed by hand.
+
 ## 6. Architecture and Layout
 
 ```
@@ -362,7 +370,7 @@ Each milestone ends with a building app and passing tests. I'll stop and show yo
 | 12a | **Events: editing and campaigns** | Built, awaiting review | An event page edits whether it is backstory or in a campaign, its start and end date, its location and its participants. A **Campaigns** item in the sidebar lists, renames, deletes and adds events to campaigns. |
 | 12b | **Events: timeline** | Built, awaiting review | A Timeline item listing events by date, grouped by year, with filters for campaign or backstory, character, organisation and place. |
 | 12c | **Events: character journey** | Built, awaiting review | A character's page lists their events in date order with dates and places (derived, not stored). A **Show Journey** menu on a map draws a purple line through the places of the chosen character's dated events that are on that map. |
-| 13 | **Character levelling** | Planned (deferred until after events and timelines) | Level a character up to 20: hit points, proficiency bonus, class features gained, subclass choice, and new spells. |
+| 13 | **Character levelling** | Built, awaiting review | The converter reads each class's table (cantrips, spells known or prepared, spell slots, pact slots, invocations and the Ability Score Improvement levels) into the packs for both editions. A **Level Up** button on a playable character takes them up to level 20: hit points (average or rolled), proficiency bonus, the class and subclass features gained, the subclass choice, an ability increase or a feat, new cantrips and spells, and spell slots. Includes a checks report for the tables. |
 | 14 | **Character sheet** | Planned | A dedicated on-screen sheet for a D&D character, laid out like the paper one and built on full level 1 to 20 data. See 5.8. |
 | 15 | **Polish** | Planned | Keyboard shortcuts and menus on Mac, iPad multitasking, accessibility audit (Dynamic Type, VoiceOver, contrast), empty states. |
 | 16 | **CloudKit** (when a developer account exists) | Planned | Capability, container, conflict testing on multiple devices. The library is bundled and is not synced. |
