@@ -110,6 +110,39 @@ nonisolated enum Plane {
         return (clip(polygon, through: point, normal: normal), clip(polygon, through: point, normal: V(x: -normal.x, y: -normal.y)))
     }
 
+    /// Cuts a polygon in two along the longest stretch of a line through `point` in `direction` that lies inside it. Unlike
+    /// `split`, it works for a polygon that is hollowed or bent, where the line may enter and leave several times.
+    /// Returns nil if the line doesn't pass through the polygon.
+    static func cut(_ polygon: [V], through point: V, direction: V) -> (first: [V], second: [V])? {
+        let along = direction.unit, normal = along.perpendicular
+        func side(_ v: V) -> Double { (v.x - point.x) * normal.x + (v.y - point.y) * normal.y }
+        func position(_ v: V) -> Double { v.x * along.x + v.y * along.y }
+        var ring: [V] = []
+        var crossings: [Int] = []
+        for i in polygon.indices {
+            let a = polygon[i], b = polygon[(i + 1) % polygon.count]
+            ring.append(a)
+            let sa = side(a), sb = side(b)
+            if (sa > 1e-9 && sb < -1e-9) || (sa < -1e-9 && sb > 1e-9) {
+                let t = sa / (sa - sb)
+                ring.append(V(x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t))
+                crossings.append(ring.count - 1)
+            }
+        }
+        guard crossings.count >= 2 else { return nil }
+        let ordered = crossings.sorted { position(ring[$0]) < position(ring[$1]) }
+        var best: (Int, Int)?
+        var bestLength = 0.0
+        for k in stride(from: 0, to: ordered.count - 1, by: 2) {
+            let a = ring[ordered[k]], b = ring[ordered[k + 1]]
+            let length = a.distance(to: b)
+            if length > bestLength, contains(polygon, V(x: (a.x + b.x) / 2, y: (a.y + b.y) / 2)) { best = (ordered[k], ordered[k + 1]); bestLength = length }
+        }
+        guard let (i, j) = best else { return nil }
+        let low = min(i, j), high = max(i, j)
+        return (Array(ring[low...high]), Array(ring[high...]) + Array(ring[...low]))
+    }
+
     /// The direction of the polygon's longest edge, which is the way a block runs.
     static func longestEdgeDirection(_ polygon: [V]) -> V {
         var best = V(x: 1, y: 0), bestLength = 0.0

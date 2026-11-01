@@ -31,6 +31,9 @@ extension SettlementGenerator {
         var edges: [Edge] = []
         var vertexGrid: [Int: [Int]] = [:]
         var edgeIndex: [Int: Int] = [:]
+        /// Corners that lie on the river, and the ones among them where a road crosses it.
+        var riverNodes = Set<Int>()
+        var bridgeNodes = Set<Int>()
 
         struct Ward {
             var site: V
@@ -49,6 +52,8 @@ extension SettlementGenerator {
             var a: Int
             var b: Int
             var isBoundary: Bool
+            /// The river runs along this edge, so no street does.
+            var isRiver = false
             var rank = Rank.none
             /// Random wobble in how attractive the edge is to route along, so main streets don't all go the shortest way.
             var cost = 1.0
@@ -108,9 +113,7 @@ extension SettlementGenerator {
             if !hasOutline { makeBoundary() }
             if options.hasRiver { makeRiver() }
             placeSquareAndGates()
-            makeWards()
-            buildGraph()
-            routeStreets()
+            makeLayout()
             assignQuarters()
             let streets = chainStreets()
 
@@ -328,97 +331,170 @@ extension SettlementGenerator {
             return ((d1 > 0) != (d2 > 0)) && ((d3 > 0) != (d4 > 0))
         }
 
-        /// Marks the main streets: from each gate to the main square by the cheapest way along the ward edges, and round
-        /// the square. Everything else that isn't the edge is a side street.
-        mutating func routeStreets() {
-            guard let plaza = wards.first(where: \.isSquare) else { return }
-            let plazaIDs = Set(plaza.vertexIDs)
-
-            // The edge of the settlement is not a street, so nothing routes along it.
+        /// The edges a street can run along, as the corners they join: not the edge of the settlement and not the river.
+        func walkableEdges(excludingSquare: Bool = false) -> [[(vertex: Int, edge: Int)]] {
+            let ring = Set(wards.first(where: \.isSquare)?.vertexIDs ?? [])
             var neighbours: [[(vertex: Int, edge: Int)]] = Array(repeating: [], count: vertices.count)
-            for (index, edge) in edges.enumerated() where !edge.isBoundary {
+            for (index, edge) in edges.enumerated() where !edge.isBoundary && !edge.isRiver {
+                if excludingSquare, ring.contains(edge.a), ring.contains(edge.b) { continue }
                 neighbours[edge.a].append((edge.b, index))
                 neighbours[edge.b].append((edge.a, index))
             }
-            for index in edges.indices where !edges[index].isBoundary { edges[index].rank = .minor }
+            return neighbours
+        }
 
-            // Cost of an edge: its length, dearer where it would need a bridge.
-            func cost(_ index: Int) -> Double {
-                let edge = edges[index]
-                let length = vertices[edge.a].distance(to: vertices[edge.b])
-                return length * edge.cost * (crossesRiver(vertices[edge.a], vertices[edge.b]) ? 3 : 1)
+        /// The cheapest way from a corner to any corner that `goal` accepts, as the edges along it. `cost` is what it costs
+        /// to go along an edge to a corner, and an edge it returns nil for can't be used.
+        func shortestPath(
+            from start: Int, to goal: (Int) -> Bool, over neighbours: [[(vertex: Int, edge: Int)]], cost: (Int, Int) -> Double?
+        ) -> [Int]? {
+            var distance = [Double](repeating: .infinity, count: vertices.count)
+            var previous = [(vertex: Int, edge: Int)?](repeating: nil, count: vertices.count)
+            var done = [Bool](repeating: false, count: vertices.count)
+            distance[start] = 0
+            var reached: Int?
+            while true {
+                var best = -1
+                var bestDistance = Double.infinity
+                for v in vertices.indices where !done[v] && distance[v] < bestDistance { best = v; bestDistance = distance[v] }
+                if best < 0 { break }
+                done[best] = true
+                if best != start, goal(best) { reached = best; break }
+                for (next, edge) in neighbours[best] where !done[next] {
+                    guard let step = cost(edge, next) else { continue }
+                    let through = distance[best] + step
+                    if through < distance[next] { distance[next] = through; previous[next] = (best, edge) }
+                }
             }
+            guard var at = reached else { return nil }
+            var path: [Int] = []
+            while let step = previous[at] {
+                path.append(step.edge)
+                at = step.vertex
+            }
+            return path
+        }
 
-            // Each gate goes to the boundary vertex nearest it, and the gate moves there.
-            // Only where a street can leave: a corner of a single ward on the edge has nothing running inward from it.
+        /// Marks the main streets: from each gate to the main square by the cheapest way along the ward edges, and with
+        /// `ring`, round the square. Roads share where they can, and cross the river only where they have to, at a bridge.
+        /// Everything else that isn't the edge or the river is a side street.
+        mutating func routeStreets(ring: Bool = true) {
+            guard let plaza = wards.first(where: \.isSquare) else { return }
+            let plazaIDs = Set(plaza.vertexIDs)
+            let neighbours = walkableEdges()
+            for index in edges.indices where !edges[index].isBoundary && !edges[index].isRiver { edges[index].rank = .minor }
+
+            // Each gate goes to the corner on the edge nearest it, where a street can leave, and the gate moves there.
             let boundaryVertices = Set(edges.filter(\.isBoundary).flatMap { [$0.a, $0.b] }.filter { !neighbours[$0].isEmpty })
+            let bridgeCost = radius * 0.5
             for (g, gate) in gatePoints.enumerated() {
                 guard let start = boundaryVertices.sorted().min(by: { vertices[$0].distance(to: gate) < vertices[$1].distance(to: gate) }) else { continue }
                 gatePoints[g] = vertices[start]
-                var distance = [Double](repeating: .infinity, count: vertices.count)
-                var previous = [(vertex: Int, edge: Int)?](repeating: nil, count: vertices.count)
-                var done = [Bool](repeating: false, count: vertices.count)
-                distance[start] = 0
-                var goal: Int?
-                while true {
-                    var best = -1
-                    var bestDistance = Double.infinity
-                    for v in vertices.indices where !done[v] && distance[v] < bestDistance { best = v; bestDistance = distance[v] }
-                    if best < 0 { break }
-                    done[best] = true
-                    if plazaIDs.contains(best) { goal = best; break }
-                    for (next, edge) in neighbours[best] where !done[next] {
-                        let through = distance[best] + cost(edge)
-                        if through < distance[next] { distance[next] = through; previous[next] = (best, edge) }
-                    }
+                let path = shortestPath(from: start, to: { plazaIDs.contains($0) }, over: neighbours) { index, next in
+                    let edge = edges[index]
+                    var length = vertices[edge.a].distance(to: vertices[edge.b]) * edge.cost
+                    if crossesRiver(vertices[edge.a], vertices[edge.b]) { length *= 12 }
+                    if riverNodes.contains(next) { length += bridgeCost }
+                    return edge.rank == .major ? length * 0.5 : length
                 }
-                var at = goal
-                while let current = at, let step = previous[current] {
-                    edges[step.edge].rank = .major
-                    at = step.vertex
-                }
+                for index in path ?? [] { edges[index].rank = .major }
             }
-            // Round the square.
+            if ring { markRingRoundSquare() }
+            findBridges()
+        }
+
+        /// The edges round the main square are main streets.
+        mutating func markRingRoundSquare() {
+            guard let plaza = wards.first(where: \.isSquare) else { return }
             let ids = plaza.vertexIDs
             for i in ids.indices {
-                if let index = edgeIndex[edgeKey(ids[i], ids[(i + 1) % ids.count])], !edges[index].isBoundary { edges[index].rank = .major }
+                if let index = edgeIndex[edgeKey(ids[i], ids[(i + 1) % ids.count])], !edges[index].isBoundary, !edges[index].isRiver { edges[index].rank = .major }
+            }
+        }
+
+        /// A few more main roads, joining two of the main roads part of the way out, so the settlement isn't only spokes.
+        /// They stay on one side of the river.
+        mutating func addSecondaryRoutes() {
+            let wanted: Int
+            switch size {
+            case .hamlet, .village: wanted = 0
+            case .town: wanted = 2
+            case .city: wanted = 4
+            }
+            guard wanted > 0 else { return }
+            let neighbours = walkableEdges(excludingSquare: true)
+            for _ in 0..<wanted {
+                var onRoad = Set<Int>()
+                for edge in edges where edge.rank == .major { onRoad.insert(edge.a); onRoad.insert(edge.b) }
+                let middle = onRoad.sorted().filter { (0.35...0.7).contains(vertices[$0].distance(to: square) / radius) }
+                guard let start = middle.isEmpty ? nil : middle[Int.random(in: 0..<middle.count, using: &random)] else { return }
+                let far = middle.filter { vertices[$0].distance(to: vertices[start]) > radius * 0.6 }
+                guard !far.isEmpty else { continue }
+                let goal = far[Int.random(in: 0..<far.count, using: &random)]
+                let path = shortestPath(from: start, to: { $0 == goal }, over: neighbours) { index, _ in
+                    let edge = edges[index]
+                    if crossesRiver(vertices[edge.a], vertices[edge.b]) { return nil }
+                    let length = vertices[edge.a].distance(to: vertices[edge.b]) * edge.cost
+                    return edge.rank == .major ? length * 0.3 : length
+                }
+                for index in path ?? [] { edges[index].rank = .major }
+            }
+        }
+
+        /// The corners on the river where a main road crosses it.
+        mutating func findBridges() {
+            bridgeNodes = []
+            for edge in edges where edge.rank == .major {
+                if riverNodes.contains(edge.a) { bridgeNodes.insert(edge.a) }
+                if riverNodes.contains(edge.b) { bridgeNodes.insert(edge.b) }
             }
         }
 
         // MARK: Streets
 
-        /// Joins the edges of each rank into long streets: at every junction a street carries straight on if the way
-        /// ahead bends less than a limit, so side streets end at the street they meet.
+        /// Joins the edges of a rank into long lines of corners: at every junction a line carries straight on if the way
+        /// ahead bends less than a limit, so side streets end at the street they meet. A line also stops at the river
+        /// unless it is a main road at a bridge.
+        func chains(of rank: Rank) -> [[Int]] {
+            var lines: [[Int]] = []
+            let ranked = edges.indices.filter { edges[$0].rank == rank }
+            var adjacency: [Int: [Int]] = [:]
+            for index in ranked {
+                adjacency[edges[index].a, default: []].append(index)
+                adjacency[edges[index].b, default: []].append(index)
+            }
+            var used = Set<Int>()
+            for start in ranked where !used.contains(start) {
+                used.insert(start)
+                var line = [edges[start].a, edges[start].b]
+                // Grow from the far end, then from the near end.
+                for _ in 0..<2 {
+                    while let last = line.last, line.count >= 2 {
+                        if riverNodes.contains(last), rank != .major || !bridgeNodes.contains(last) { break }
+                        let before = line[line.count - 2]
+                        let heading = (vertices[last] - vertices[before]).unit
+                        let candidates = (adjacency[last] ?? []).filter { !used.contains($0) }
+                        func other(_ index: Int) -> Int { edges[index].a == last ? edges[index].b : edges[index].a }
+                        func turn(_ index: Int) -> Double {
+                            let direction = (vertices[other(index)] - vertices[last]).unit
+                            return acos(max(-1, min(1, heading.x * direction.x + heading.y * direction.y)))
+                        }
+                        guard let next = candidates.min(by: { turn($0) < turn($1) }), turn(next) < 0.95 else { break }
+                        used.insert(next)
+                        line.append(other(next))
+                    }
+                    line.reverse()
+                }
+                lines.append(line)
+            }
+            return lines
+        }
+
+        /// The streets: the main roads, then the side streets, each named. A road that comes from a gate is named for it.
         mutating func chainStreets() -> [Street] {
             var streets: [Street] = []
             for rank in [Rank.major, .minor] {
-                let ranked = edges.indices.filter { edges[$0].rank == rank }
-                var adjacency: [Int: [Int]] = [:]
-                for index in ranked {
-                    adjacency[edges[index].a, default: []].append(index)
-                    adjacency[edges[index].b, default: []].append(index)
-                }
-                var used = Set<Int>()
-                for start in ranked where !used.contains(start) {
-                    used.insert(start)
-                    var line = [edges[start].a, edges[start].b]
-                    // Grow from the far end, then from the near end.
-                    for _ in 0..<2 {
-                        while let last = line.last, line.count >= 2 {
-                            let before = line[line.count - 2]
-                            let heading = (vertices[last] - vertices[before]).unit
-                            let candidates = (adjacency[last] ?? []).filter { !used.contains($0) }
-                            func other(_ index: Int) -> Int { edges[index].a == last ? edges[index].b : edges[index].a }
-                            func turn(_ index: Int) -> Double {
-                                let direction = (vertices[other(index)] - vertices[last]).unit
-                                return acos(max(-1, min(1, heading.x * direction.x + heading.y * direction.y)))
-                            }
-                            guard let next = candidates.min(by: { turn($0) < turn($1) }), turn(next) < 0.95 else { break }
-                            used.insert(next)
-                            line.append(other(next))
-                        }
-                        line.reverse()
-                    }
+                for line in chains(of: rank) {
                     let gateIndex = gatePoints.indices.first { gate in line.contains { vertices[$0].distance(to: gatePoints[gate]) < 0.7 } }
                     let name: String
                     if rank == .major, let gateIndex {

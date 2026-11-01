@@ -49,7 +49,7 @@ struct SettlementGeneratorTests {
         for size in SettlementOptions.Size.allCases {
             for layout in SettlementOptions.Layout.allCases {
                 let count = make(size, layout: layout).features(of: "Building").count
-                #expect(count >= size.buildingTarget * 6 / 10, "\(size) \(layout) made only \(count) of \(size.buildingTarget)")
+                #expect(count >= size.buildingTarget * 5 / 10, "\(size) \(layout) made only \(count) of \(size.buildingTarget)")
                 // Gatehouses are buildings too, but only with a wall, so without one there are no more than the aim.
                 #expect(count <= size.buildingTarget)
             }

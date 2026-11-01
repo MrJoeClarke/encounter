@@ -93,8 +93,9 @@ extension SettlementGenerator.TownMaker {
             let ids = wards[index].vertexIDs
             for i in ids.indices { edgeOwners[edgeKey(ids[i], ids[(i + 1) % ids.count]), default: []].append(index) }
         }
+        // Wards either side of the river share its edges, but they are not neighbours.
         var neighbours: [Int: Set<Int>] = [:]
-        for owners in edgeOwners.values where owners.count == 2 {
+        for (key, owners) in edgeOwners.sorted(by: { $0.key < $1.key }) where owners.count == 2 && !(edgeIndex[key].map { edges[$0].isRiver } ?? false) {
             neighbours[owners[0], default: []].insert(owners[1])
             neighbours[owners[1], default: []].insert(owners[0])
         }
