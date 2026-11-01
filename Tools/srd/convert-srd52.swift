@@ -363,6 +363,7 @@ func finish(_ draft: ClassDraft) {
     }
     if rows.count != 20 { review.append("\(draft.name): found \(rows.count) rows in the features table, expected 20") }
 
+    attributes += classTableAttributes(for: draft.name, edition: 52, review: &review)
     entries.append(PackEntry(key: key, kind: "class", name: draft.name, parent: nil, summary: draft.summary.text,
                              attributes: attributes, features: features))
     report.append("Class \(draft.name) (\(attributes.count) attributes): " + features.map { "\($0.name) \($0.level ?? 0)" }.joined(separator: ", "))
