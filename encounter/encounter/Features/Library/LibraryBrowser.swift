@@ -13,24 +13,22 @@ struct LibraryBrowser: View {
 
     @Environment(WorldNavigation.self) private var navigation
 
+    @Environment(\.horizontalSizeClass) private var sizeClass
+
     var body: some View {
-        #if os(macOS)
-        HSplitView {
+        if showsSideBySide(sizeClass) {
+            ListDetailSplit { list } detail: { detail }
+        } else {
+            // The entry opens on top of the list, in the navigation stack the world is already in.
             list
-                .frame(minWidth: 240, idealWidth: 300, maxWidth: 420, maxHeight: .infinity)
-                .layoutPriority(-1)
-            detail
-                .frame(minWidth: 360, idealWidth: 800, maxWidth: .infinity, maxHeight: .infinity)
-                .layoutPriority(1)
+                .navigationDestination(item: openKey) { key in
+                    if let entry = Library.shared.entry(forKey: key) {
+                        LibraryEntryView(entry: entry, world: world)
+                            .id(entry.key)
+                            .environment(navigation)
+                    }
+                }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        #else
-        NavigationSplitView {
-            list
-        } detail: {
-            detail
-        }
-        #endif
     }
 
     private var title: LocalizedStringResource {
@@ -52,6 +50,12 @@ struct LibraryBrowser: View {
         )
     }
 
+    /// The entry that is open, which on iOS is the screen on top of the list. It is the entry itself, even a
+    /// subrace, where `selection` names the parent that the list highlights.
+    private var openKey: Binding<String?> {
+        Binding(get: { navigation.selectedLibraryKey }, set: { navigation.selectedLibraryKey = $0 })
+    }
+
     @ViewBuilder
     private var list: some View {
         let entries = entries
@@ -63,10 +67,10 @@ struct LibraryBrowser: View {
                     description: Text("The \(String(localized: world.edition.title)) library has no entries of this kind.")
                 )
             } else {
-                List(selection: selection) {
+                ChoosableList(choice: selection) {
                     ForEach(entries) { entry in
                         LibraryRow(entry: entry)
-                            .tag(entry.key)
+                            .choosable(entry.key, in: selection)
                     }
                 }
             }

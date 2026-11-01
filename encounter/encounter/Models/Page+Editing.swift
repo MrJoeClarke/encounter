@@ -14,6 +14,7 @@ extension World {
         context.insert(page)
         page.world = self
         // Every place is inside the world's root place, unless something puts it somewhere more particular.
+        if kind == .event { page.eventOrigin = .backstory }
         if kind == .place, let root = rootPlace {
             page.parent = root
             page.parentSource = .automatic

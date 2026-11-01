@@ -11,6 +11,8 @@ enum WorldSidebarItem: Hashable {
     case home
     case kind(PageKind)
     case worldMap
+    case timeline
+    case campaigns
     case library(LibraryKind)
 }
 
@@ -23,6 +25,7 @@ struct WorldShellView: View {
 
     @State private var navigation = WorldNavigation()
     @Environment(LinkRouter.self) private var linkRouter
+    @Environment(\.horizontalSizeClass) private var sizeClass
 
     private var isSearching: Bool {
         !navigation.searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -32,69 +35,152 @@ struct WorldShellView: View {
         RuleSystems.system(for: world.system).hasContentLibrary
     }
 
+    /// On iOS, whether the screen chosen from the menu is open on top of it.
+    @State private var isShowingDetail = false
+    /// Beside the screen, whether the menu is showing. Where it slides over the screen, choosing a row closes it.
+    @State private var columnVisibility = NavigationSplitViewVisibility.automatic
+
     var body: some View {
-        NavigationSplitView {
-            List(selection: sidebarSelection) {
-                Label("Home", systemImage: "house")
-                    .tag(WorldSidebarItem.home)
-
-                Label("World Map", systemImage: "map")
-                    .tag(WorldSidebarItem.worldMap)
-
-                Section("Pages") {
-                    ForEach(world.visibleKinds) { kind in
-                        Label {
-                            Text(kind.title)
-                        } icon: {
-                            Image(systemName: kind.systemImage)
-                        }
-                        .badge(count(of: kind))
-                        .tag(WorldSidebarItem.kind(kind))
-                    }
-                }
-
-                if hasLibrary {
-                    Section("Library") {
-                        ForEach(Library.shared.listKinds(in: world.edition), id: \.self) { kind in
-                            Label {
-                                Text(kind.listTitle(in: world.edition))
-                            } icon: {
-                                Image(systemName: kind.systemImage)
-                            }
-                            .tag(WorldSidebarItem.library(kind))
-                        }
-                    }
+        layout
+            .searchable(text: $navigation.searchText, prompt: "Search \(world.name)")
+            .environment(navigation)
+            // Something opened from elsewhere (a link, a pin, a search result) shows its screen on a phone too.
+            .onChange(of: navigation.selection) {
+                isShowingDetail = true
+                columnVisibility = .automatic
+            }
+            .onChange(of: navigation.selectedPage) { if navigation.selectedPage != nil { isShowingDetail = true } }
+            .onChange(of: navigation.selectedMap) { if navigation.selectedMap != nil { isShowingDetail = true } }
+            .onChange(of: navigation.selectedCampaign) { if navigation.selectedCampaign != nil { isShowingDetail = true } }
+            .onChange(of: navigation.selectedLibraryKey) { if navigation.selectedLibraryKey != nil { isShowingDetail = true } }
+            // Mention links that arrive from the system are opened in the world that's showing.
+            .onAppear { linkRouter.activate(world: world, navigation: navigation) }
+            .onDisappear { linkRouter.deactivate(navigation: navigation) }
+            // If the rule system changes to one without a library while the library is showing, go home.
+            .onChange(of: hasLibrary) {
+                if !hasLibrary, case .library = navigation.selection {
+                    navigation.choose(.home)
                 }
             }
-            .navigationTitle(world.name)
-        } detail: {
-            if isSearching {
-                SearchResultsView(world: world)
-            } else {
-                switch navigation.selection {
-                case .home:
-                    WorldHomeView(world: world, onDelete: onDelete)
-                case .kind(let kind):
-                    PagesBrowser(world: world, kind: kind)
-                        .id(kind)
-                case .worldMap:
-                    WorldMapView(world: world)
-                case .library(let kind):
-                    LibraryBrowser(world: world, kind: kind)
-                        .id(kind)
+    }
+
+    /// With room (a Mac, or an iPad at regular width) the menu sits beside the screen it chose. On a phone, or a
+    /// narrow iPad window, the menu is shown and the screen it chose is pushed on top of it, in the navigation
+    /// stack the world list already provides. (A split view inside that stack would not navigate when collapsed.)
+    @ViewBuilder
+    private var layout: some View {
+        if showsSideBySide(sizeClass) {
+            NavigationSplitView(columnVisibility: $columnVisibility) {
+                sidebar
+                    .navigationTitle(world.name)
+            } detail: {
+                if isSearching {
+                    SearchResultsView(world: world)
+                } else {
+                    screen
+                }
+            }
+            #if os(iOS)
+            // In a narrow iPad window the menu slides over the screen rather than squeezing it.
+            .navigationSplitViewStyle(.prominentDetail)
+            #endif
+        } else {
+            Group {
+                if isSearching {
+                    SearchResultsView(world: world)
+                } else {
+                    sidebar
+                        .navigationTitle(world.name)
+                }
+            }
+            // The screen is presented by the world list's stack, so it doesn't see what is set on this view. It
+            // needs the navigation passed on to it.
+            .navigationDestination(isPresented: $isShowingDetail) { screen.environment(navigation) }
+        }
+    }
+
+    /// The screen the menu has chosen.
+    @ViewBuilder
+    private var screen: some View {
+        switch navigation.selection {
+        case .home:
+            WorldHomeView(world: world, onDelete: onDelete)
+        case .kind(let kind):
+            PagesBrowser(world: world, kind: kind)
+                .id(kind)
+        case .worldMap:
+            WorldMapView(world: world)
+        case .timeline:
+            WorldTimelineView(world: world)
+        case .campaigns:
+            CampaignsBrowser(world: world)
+        case .library(let kind):
+            LibraryBrowser(world: world, kind: kind)
+                .id(kind)
+        }
+    }
+
+    /// The menu. Beside the screen a row is selected, which highlights it. Otherwise the rows are buttons and the
+    /// list has no selection, so a phone starts on the menu rather than on the screen the selection would open.
+    @ViewBuilder
+    private var sidebar: some View {
+        if showsSideBySide(sizeClass) {
+            List(selection: sidebarSelection) { sidebarRows }
+        } else {
+            List { sidebarRows }
+        }
+    }
+
+    @ViewBuilder
+    private var sidebarRows: some View {
+        row(.home, "Home", systemImage: "house")
+        row(.worldMap, "World Map", systemImage: "map")
+        row(.timeline, "Timeline", systemImage: "clock")
+        row(.campaigns, "Campaigns", systemImage: "flag", badge: (world.campaigns ?? []).count)
+
+        Section("Pages") {
+            ForEach(world.visibleKinds) { kind in
+                row(.kind(kind), kind.title, systemImage: kind.systemImage, badge: count(of: kind))
+            }
+        }
+
+        if hasLibrary {
+            Section("Library") {
+                ForEach(Library.shared.listKinds(in: world.edition), id: \.self) { kind in
+                    row(.library(kind), kind.listTitle(in: world.edition), systemImage: kind.systemImage)
                 }
             }
         }
-        .searchable(text: $navigation.searchText, prompt: "Search \(world.name)")
-        .environment(navigation)
-        // Mention links that arrive from the system are opened in the world that's showing.
-        .onAppear { linkRouter.activate(world: world, navigation: navigation) }
-        .onDisappear { linkRouter.deactivate(navigation: navigation) }
-        // If the rule system changes to one without a library while the library is showing, go home.
-        .onChange(of: hasLibrary) {
-            if !hasLibrary, case .library = navigation.selection {
-                navigation.choose(.home)
+    }
+
+    /// One row of the menu. Beside the screen it is a selectable row. Otherwise it is a button that opens its
+    /// screen, so choosing a row works even if it is already the current one, which a phone's list wouldn't report.
+    @ViewBuilder
+    private func row(_ item: WorldSidebarItem, _ title: LocalizedStringResource, systemImage: String, badge: Int = 0) -> some View {
+        if showsSideBySide(sizeClass) {
+            Label {
+                Text(title)
+            } icon: {
+                Image(systemName: systemImage)
             }
+            .badge(badge)
+            .tag(item)
+        } else {
+            Button {
+                navigation.choose(item)
+                isShowingDetail = true
+            } label: {
+                Label {
+                    Text(title)
+                } icon: {
+                    Image(systemName: systemImage)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .badge(badge)
+            .listRowBackground(navigation.selection == item ? Color.accentColor.opacity(0.18) : nil)
         }
     }
 
@@ -120,6 +206,8 @@ struct WorldShellView: View {
         }
     }
     .environment(LinkRouter())
+    #if os(macOS)
     .frame(width: 1100, height: 800)
+    #endif
     .modelContainer(container)
 }
