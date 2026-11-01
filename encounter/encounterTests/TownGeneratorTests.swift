@@ -312,3 +312,81 @@ struct TownGeneratorTests {
         }
     }
 }
+
+struct TownGeneratorSweepTests {
+    @Test(arguments: SettlementOptions.Layout.allCases, SettlementOptions.Size.allCases)
+    func everySizeAndLayoutFinishes(layout: SettlementOptions.Layout, size: SettlementOptions.Size) {
+        for seed in UInt64(1)...6 {
+            for walls in [true, false] {
+                let settlement = SettlementGenerator.generate(SettlementOptions(size: size, layout: layout, hasWalls: walls, hasRiver: seed % 2 == 0, seed: seed))
+                #expect(!settlement.features.isEmpty)
+            }
+        }
+    }
+}
+
+struct TownGeneratorStressTests {
+    @Test(arguments: SettlementOptions.Layout.allCases, SettlementOptions.Size.allCases)
+    func everythingSwitchedOnFinishes(layout: SettlementOptions.Layout, size: SettlementOptions.Size) {
+        for seed in UInt64(1)...4 {
+            let options = SettlementOptions(
+                size: size, layout: layout, hasWalls: true, hasRiver: true, seed: seed,
+                gates: [SettlementGate(bearing: 0.4), SettlementGate(bearing: 2.0), SettlementGate(bearing: 4.4)],
+                square: SquareSpot(east: 0.3, north: -0.2), quarters: Quarter.allCases, landmarks: Landmark.allCases
+            )
+            #expect(!SettlementGenerator.generate(options).features.isEmpty)
+        }
+    }
+}
+
+struct TownGeneratorOutlineStressTests {
+    @Test(arguments: SettlementOptions.Layout.allCases)
+    func anOutlineFinishesWithEveryLayout(layout: SettlementOptions.Layout) {
+        let shapes: [[GridPoint]] = [
+            [GridPoint(easting: 400, northing: 400), GridPoint(easting: 900, northing: 420), GridPoint(easting: 880, northing: 800), GridPoint(easting: 420, northing: 780)],
+            [GridPoint(easting: 400, northing: 400), GridPoint(easting: 1_000, northing: 400), GridPoint(easting: 1_000, northing: 500), GridPoint(easting: 500, northing: 500), GridPoint(easting: 500, northing: 900), GridPoint(easting: 1_000, northing: 900), GridPoint(easting: 1_000, northing: 1_000), GridPoint(easting: 400, northing: 1_000)],
+            [GridPoint(easting: 100, northing: 100), GridPoint(easting: 160, northing: 100), GridPoint(easting: 130, northing: 150)]
+        ]
+        for outline in shapes {
+            let options = SettlementOptions(size: .town, layout: layout, hasWalls: true, hasRiver: true, seed: 3)
+            let extent = SettlementGenerator.extent(for: options, outline: outline)
+            #expect(SettlementGenerator.generate(options, outline: outline, extent: extent).extent > 0)
+        }
+    }
+}
+
+struct TownGeneratorBigOutlineTests {
+    /// An outline drawn round a big area used to make tens of thousands of wards for the planned and radial layouts.
+    @Test(arguments: SettlementOptions.Layout.allCases)
+    func aHugeOutlineIsStillQuick(layout: SettlementOptions.Layout) {
+        let outline = [GridPoint(easting: 1_000, northing: 1_000), GridPoint(easting: 7_000, northing: 1_200), GridPoint(easting: 6_800, northing: 6_500), GridPoint(easting: 1_300, northing: 6_200)]
+        let options = SettlementOptions(size: .town, layout: layout, hasWalls: true, hasRiver: true, seed: 3)
+        let extent = SettlementGenerator.extent(for: options, outline: outline)
+        let started = Date()
+        let settlement = SettlementGenerator.generate(options, outline: outline, extent: extent)
+        #expect(Date().timeIntervalSince(started) < 20, "took \(Date().timeIntervalSince(started)) seconds")
+        #expect(settlement.wards.count <= 500, "\(settlement.wards.count) wards")
+    }
+}
+
+struct TownGeneratorRepeatTests {
+    @Test func manyRunsGiveTheSameSettlement() {
+        let outline = [GridPoint(easting: 893.5483870967728, northing: 997.8494623655861), GridPoint(easting: 1593.5483870967728, northing: 997.8494623655861), GridPoint(easting: 1793.5483870967728, northing: 1447.849462365586), GridPoint(easting: 1193.5483870967728, northing: 1697.849462365586), GridPoint(easting: 893.5483870967728, northing: 1397.849462365586)]
+        let options = SettlementOptions(size: .village, layout: .radial, seed: 15)
+        let extent = SettlementGenerator.extent(for: options, outline: outline)
+        let first = SettlementGenerator.generate(options, outline: outline, extent: extent)
+        var differences = 0
+        var report = ""
+        for _ in 0..<40 {
+            let next = SettlementGenerator.generate(options, outline: outline, extent: extent)
+            if next != first {
+                differences += 1
+                if report.isEmpty {
+                    func counts(_ s: GeneratedSettlement) -> [String: Int] { Dictionary(s.features.map { ($0.placeType, 1) }, uniquingKeysWith: +) }
+                    report = "types \(counts(first)) vs \(counts(next)); wards \(first.wards.count) vs \(next.wards.count); gates \(first.gates == next.gates); square \(first.square == next.square); wall \(first.features(of: "Wall") == next.features(of: "Wall")); roads \(first.features(of: "Road").map(\.name)) vs \(next.features(of: "Road").map(\.name)); districts \(first.features(of: "District").map(\.name)) vs \(next.features(of: "District").map(\.name))"
+                }
+            }
+        }
+        #expect(differences == 0, "\(differences) of 40 runs differed: \(report)")
+    }
+}

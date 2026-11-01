@@ -48,7 +48,9 @@ extension SettlementGenerator.TownMaker {
     ) -> [GeneratedFeature] {
         let built = wards.indices.filter { !wards[$0].isSquare && wards[$0].landmark != .castle }
         let totalArea = built.reduce(0) { $0 + Plane.area(wards[$1].polygon) }
-        let baseLotArea = max(150, min(450, totalArea * 0.7 / Double(max(target, 1))))
+        // Lots are about as big as a plot in a town, but over a very big area (an outline drawn round a county, say) they
+        // grow so that cutting it up doesn't make tens of thousands of lots only to throw nearly all of them away.
+        let baseLotArea = max(150, min(450, totalArea * 0.7 / Double(max(target, 1))), totalArea / Double(max(target, 1) * 4))
 
         var lots: [Lot] = []
         for index in built {

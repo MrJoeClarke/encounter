@@ -68,7 +68,9 @@ extension SettlementGenerator.TownMaker {
             // A harbour needs water to be on.
             if quarter == .harbour && river.isEmpty { continue }
             let count = max(1, Int((Self.share(quarter) * Double(candidates.count)).rounded()))
-            let chosen = free.sorted { (score(quarter, $0), $0) < (score(quarter, $1), $1) }.prefix(min(count, budget - used))
+            // Scored once each, in order, because a score can use the random numbers and a sort asks for it a varying number of times.
+            let scores = Dictionary(uniqueKeysWithValues: free.sorted().map { ($0, score(quarter, $0)) })
+            let chosen = free.sorted { (scores[$0] ?? 0, $0) < (scores[$1] ?? 0, $1) }.prefix(min(count, budget - used))
             for index in chosen {
                 // A harbour ward has to actually be near the river.
                 if quarter == .harbour, water(index) > 0.4 { continue }

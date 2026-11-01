@@ -216,7 +216,8 @@ extension SettlementGenerator {
 
         /// The ward sites, with the main square's first.
         mutating func makeSites() -> [V] {
-            let width = size.wardWidth
+            // A big outline gets bigger wards, not more of them: the work grows with the square of the number.
+            let width = max(size.wardWidth, radius * 0.11)
             var sites = [square]
             switch options.layout {
             case .organic:
@@ -352,7 +353,7 @@ extension SettlementGenerator {
             // Only where a street can leave: a corner of a single ward on the edge has nothing running inward from it.
             let boundaryVertices = Set(edges.filter(\.isBoundary).flatMap { [$0.a, $0.b] }.filter { !neighbours[$0].isEmpty })
             for (g, gate) in gatePoints.enumerated() {
-                guard let start = boundaryVertices.min(by: { vertices[$0].distance(to: gate) < vertices[$1].distance(to: gate) }) else { continue }
+                guard let start = boundaryVertices.sorted().min(by: { vertices[$0].distance(to: gate) < vertices[$1].distance(to: gate) }) else { continue }
                 gatePoints[g] = vertices[start]
                 var distance = [Double](repeating: .infinity, count: vertices.count)
                 var previous = [(vertex: Int, edge: Int)?](repeating: nil, count: vertices.count)
