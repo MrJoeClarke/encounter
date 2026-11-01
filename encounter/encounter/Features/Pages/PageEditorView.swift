@@ -45,6 +45,10 @@ struct PageEditorView: View {
                 EventSection(page: page)
             }
 
+            if page.kind == .character {
+                JourneySection(page: page)
+            }
+
             ForEach(groupedDefinitions, id: \.title) { group in
                 Section {
                     ForEach(group.definitions) { definition in
