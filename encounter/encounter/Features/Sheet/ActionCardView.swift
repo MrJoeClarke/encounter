@@ -44,6 +44,14 @@ struct ActionCardView: View {
         #if os(macOS)
         .frame(minWidth: 460, minHeight: 440)
         #endif
+        .onAppear { startWithConditions() }
+    }
+
+    /// A roll made under a condition starts as it should be made: with advantage or disadvantage if one gives it.
+    private func startWithConditions() {
+        guard let sheet = CharacterSheet(page: page), let card = card(in: sheet),
+              let first = card.rolls.first(where: { $0.allowsAdvantage && $0.defaultMode != .normal }) else { return }
+        mode = first.defaultMode
     }
 
     // MARK: The card
@@ -110,9 +118,17 @@ struct ActionCardView: View {
                 }
                 Spacer()
                 if rollsInApp {
-                    Button("Roll", systemImage: "dice") { perform(roll, sheet: sheet) }
-                        .buttonStyle(.borderedProminent)
+                    if roll.autoFail == nil {
+                        Button("Roll", systemImage: "dice") { perform(roll, sheet: sheet) }
+                            .buttonStyle(.borderedProminent)
+                    }
                 }
+            }
+            if let autoFail = roll.autoFail {
+                Label(autoFail, systemImage: "xmark.circle").font(.callout).foregroundStyle(.red)
+            }
+            ForEach(roll.conditionNotes, id: \.self) { line in
+                Label(line, systemImage: "waveform.path.ecg").font(.caption).foregroundStyle(.orange)
             }
             if let note = roll.note { Text(note).font(.caption).foregroundStyle(.secondary) }
             if let result = results[roll.id] {

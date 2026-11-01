@@ -41,6 +41,7 @@ struct CharacterSheetView: View {
                     layout {
                         VStack(spacing: 16) {
                             hitPoints(sheet)
+                            ConditionsBox(page: page)
                             abilities(sheet)
                             checks(sheet)
                         }
@@ -98,15 +99,15 @@ struct CharacterSheetView: View {
             statTile("Armor Class", sheet.armorClass.map(String.init) ?? "—")
             Button { action = .initiative } label: { statTile("Initiative", bonus(sheet.initiative)) }
                 .buttonStyle(.plain)
-            statTile("Speed", sheet.speed.isEmpty ? "—" : sheet.speed)
+            statTile("Speed", sheet.speed.isEmpty ? "—" : sheet.effectiveSpeed, tint: sheet.speedIsChanged ? .orange : nil)
             statTile("Proficiency", bonus(sheet.proficiencyBonus))
             statTile("Passive Perception", String(sheet.passivePerception))
         }
     }
 
-    private func statTile(_ title: LocalizedStringKey, _ value: String) -> some View {
+    private func statTile(_ title: LocalizedStringKey, _ value: String, tint: Color? = nil) -> some View {
         VStack(spacing: 2) {
-            Text(value).font(.title2.weight(.semibold)).minimumScaleFactor(0.6).lineLimit(1)
+            Text(value).font(.title2.weight(.semibold)).minimumScaleFactor(0.6).lineLimit(1).foregroundStyle(tint ?? .primary)
             Text(title).font(.caption).foregroundStyle(.secondary).lineLimit(1).minimumScaleFactor(0.7)
         }
         .frame(maxWidth: .infinity)
@@ -484,6 +485,30 @@ final class RollLog {
     page.setAttributeText("dnd5e.skillProficiencies", "Performance, Persuasion, Deception")
     page.setAttributeText("dnd5e.skillExpertise", "Performance")
     page.attributes["dnd5e.classFeatures"] = .entries([EntryValue(name: "Jack of All Trades", level: 2, text: "Half your proficiency bonus.")])
+    return CharacterSheetView(page: page)
+        .modelContainer(container)
+        .frame(width: 1000, height: 900)
+}
+
+#Preview("Fighter, under conditions") {
+    let container = try! AppSchema.makeContainer(inMemory: true)
+    let context = container.mainContext
+    let world = World(name: "Preview", system: .dnd5e)
+    world.edition = .srd52
+    context.insert(world)
+    let page = world.addPage(kind: .character, in: context)
+    page.title = "Brannoch"
+    page.characterRole = .playable
+    page.setReference(.library("srd52.class.fighter"), role: LinkRole.characterClass, in: context)
+    page.setAttributeNumber("dnd5e.classLevel", 5)
+    page.setAttributeNumber("dnd5e.hitPoints", 44)
+    page.setAttributeNumber("dnd5e.armorClass", 18)
+    page.setAttributeNumber("dnd5e.proficiencyBonus", 3)
+    page.setAttributeText("dnd5e.speed", "30 feet")
+    page.setAttributeNumber("dnd5e.strength", 17)
+    page.setAttributeText("dnd5e.conditions", "Poisoned, Prone, Restrained")
+    page.setAttributeNumber("dnd5e.exhaustionLevel", 2)
+    page.attributes["dnd5e.equipment"] = .entries([EntryValue(name: "a longsword")])
     return CharacterSheetView(page: page)
         .modelContainer(container)
         .frame(width: 1000, height: 900)

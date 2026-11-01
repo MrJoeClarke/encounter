@@ -389,6 +389,8 @@ struct CharacterSheet {
         page.setAttributeNumber("dnd5e.currentHitPoints", Double(maximumHitPoints))
         page.setAttributeNumber("dnd5e.temporaryHitPoints", 0)
         resetDeathSaves()
+        // A long rest takes away one level of exhaustion.
+        if conditionState.exhaustion > 0 { setExhaustion(conditionState.exhaustion - 1) }
         page.setAttributeText("dnd5e.spellSlotsUsed", "")
         page.setAttributeNumber("dnd5e.hitDiceSpent", Double(max(0, hitDiceSpent - max(1, level / 2))))
     }

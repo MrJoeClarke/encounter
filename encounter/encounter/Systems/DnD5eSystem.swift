@@ -141,6 +141,8 @@ struct DnD5eSystem: RuleSystem {
         .init(key: "dnd5e.currentHitPoints", label: "Current Hit Points", type: .number, appliesTo: [.character], group: "Combat"),
         .init(key: "dnd5e.temporaryHitPoints", label: "Temporary Hit Points", type: .number, appliesTo: [.character], group: "Combat"),
         .init(key: "dnd5e.hitDiceSpent", label: "Hit Dice Spent", type: .number, appliesTo: [.character], group: "Combat"),
+        .init(key: "dnd5e.conditions", label: "Conditions", type: .text, appliesTo: [.character], group: "Combat"),
+        .init(key: "dnd5e.exhaustionLevel", label: "Exhaustion Level", type: .number, appliesTo: [.character], group: "Combat"),
         .init(key: "dnd5e.skillExpertise", label: "Skill Expertise", type: .text, appliesTo: [.character], group: "Proficiencies"),
         .init(key: "dnd5e.deathSaveSuccesses", label: "Death Save Successes", type: .number, appliesTo: [.character], group: "Combat"),
         .init(key: "dnd5e.deathSaveFailures", label: "Death Save Failures", type: .number, appliesTo: [.character], group: "Combat"),

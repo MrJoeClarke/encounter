@@ -17,6 +17,11 @@ struct ActionRoll: Identifiable, Equatable {
     var addedFrom: String
     /// Extra to say about it, such as "Half as much on a successful save".
     var note: String?
+    /// What the character's conditions make of it: advantage or disadvantage to start with, lines to show, and for a
+    /// roll that can't be made, why it is failed.
+    var defaultMode = AdvantageMode.normal
+    var conditionNotes: [String] = []
+    var autoFail: String?
     var id: String { "\(title)|\(dice.text)" }
 
     /// Whether advantage and disadvantage can apply: only to a d20.
@@ -55,6 +60,27 @@ extension CharacterSheet {
         return parts.joined(separator: " · ")
     }
 
+    // MARK: Conditions
+
+    /// Puts what the character's conditions do onto a roll: how it is made, a penalty, and what to say.
+    /// `blocksRoll` is for a roll that is failed without being made, such as a Strength save while paralyzed. A check
+    /// that fails only if it needs a sense is a note instead, since the sheet can't tell.
+    private func applying(_ effect: RollConditionEffect, to roll: ActionRoll, blocksRoll: Bool) -> ActionRoll {
+        var roll = roll
+        var effect = effect
+        roll.defaultMode = effect.mode
+        if blocksRoll { roll.autoFail = effect.autoFail; effect.autoFail = nil }
+        roll.conditionNotes = effect.notes
+        if effect.penalty != 0 { roll.dice = roll.dice.adding(effect.penalty) }
+        return roll
+    }
+
+    /// A line at the top of a card for an action when the character can't take actions.
+    private var cantActNotes: [String] {
+        let names = incapacitatingConditions.map(\.title)
+        return names.isEmpty ? [] : [String(localized: "\(names.joined(separator: ", ")): you can't take actions or reactions.")]
+    }
+
     // MARK: Checks
 
     /// " · half proficiency +1" for a character with Jack of All Trades, or nothing.
@@ -85,8 +111,8 @@ extension CharacterSheet {
     func card(forAbility ability: Ability) -> ActionCard {
         ActionCard(
             title: String(localized: "\(ability.rawValue) check"),
-            rolls: [ActionRoll(kind: .check, title: String(localized: "\(ability.rawValue) check"), dice: DiceExpression.d20.adding(modifier(ability) + halfProficiency),
-                               addedFrom: addedFrom(ability, proficient: false) + halfProficiencyText)]
+            rolls: [applying(checkEffect, to: ActionRoll(kind: .check, title: String(localized: "\(ability.rawValue) check"), dice: DiceExpression.d20.adding(modifier(ability) + halfProficiency),
+                                                         addedFrom: addedFrom(ability, proficient: false) + halfProficiencyText), blocksRoll: false)]
         )
     }
 
@@ -94,7 +120,7 @@ extension CharacterSheet {
         let title = String(localized: "\(save.ability.rawValue) saving throw")
         return ActionCard(
             title: title,
-            rolls: [ActionRoll(kind: .save, title: title, dice: DiceExpression.d20.adding(save.bonus), addedFrom: addedFrom(save.ability, proficient: save.isProficient))]
+            rolls: [applying(saveEffect(save.ability), to: ActionRoll(kind: .save, title: title, dice: DiceExpression.d20.adding(save.bonus), addedFrom: addedFrom(save.ability, proficient: save.isProficient)), blocksRoll: true)]
         )
     }
 
@@ -102,14 +128,14 @@ extension CharacterSheet {
         let title = String(localized: "\(skill.name) check")
         return ActionCard(
             title: title, subtitle: skill.ability.rawValue,
-            rolls: [ActionRoll(kind: .check, title: title, dice: DiceExpression.d20.adding(skill.bonus), addedFrom: skillAddedFrom(skill))]
+            rolls: [applying(checkEffect, to: ActionRoll(kind: .check, title: title, dice: DiceExpression.d20.adding(skill.bonus), addedFrom: skillAddedFrom(skill)), blocksRoll: false)]
         )
     }
 
     var initiativeCard: ActionCard {
         ActionCard(
             title: String(localized: "Initiative"),
-            rolls: [ActionRoll(kind: .check, title: String(localized: "Initiative"), dice: DiceExpression.d20.adding(initiative), addedFrom: addedFrom(.dexterity, proficient: false) + halfProficiencyText)]
+            rolls: [applying(initiativeEffect, to: ActionRoll(kind: .check, title: String(localized: "Initiative"), dice: DiceExpression.d20.adding(initiative), addedFrom: addedFrom(.dexterity, proficient: false) + halfProficiencyText), blocksRoll: false)]
         )
     }
 
@@ -118,9 +144,9 @@ extension CharacterSheet {
     func card(for attack: SheetAttack) -> ActionCard {
         let weapon = attack.weapon
         var rolls = [
-            ActionRoll(kind: .attack, title: String(localized: "Attack roll"), dice: DiceExpression.d20.adding(attack.attackBonus),
+            applying(attackEffect, to: ActionRoll(kind: .attack, title: String(localized: "Attack roll"), dice: DiceExpression.d20.adding(attack.attackBonus),
                        addedFrom: addedFrom(attack.ability, proficient: attack.isProficient),
-                       note: attack.isProficient ? nil : String(localized: "Not proficient, so the proficiency bonus isn't added.")),
+                       note: attack.isProficient ? nil : String(localized: "Not proficient, so the proficiency bonus isn't added.")), blocksRoll: false),
             ActionRoll(kind: .damage, title: String(localized: "Damage"), dice: attack.damage,
                        addedFrom: "\(attack.ability.rawValue) \(signed(modifier(attack.ability)))",
                        note: String(localized: "On a natural 20, roll the damage dice twice.") + (weapon.damageType.isEmpty ? "" : " (\(weapon.damageType))"))
@@ -129,7 +155,7 @@ extension CharacterSheet {
             rolls.append(ActionRoll(kind: .damage, title: String(localized: "Damage, two-handed"), dice: versatile,
                                     addedFrom: "\(attack.ability.rawValue) \(signed(modifier(attack.ability)))"))
         }
-        var notes: [String] = []
+        var notes: [String] = cantActNotes
         if let range = weapon.range { notes.append(range) }
         let others = weapon.properties.filter { $0 != weapon.range && !$0.lowercased().hasPrefix("versatile") }
         if !others.isEmpty { notes.append(others.joined(separator: ", ")) }
@@ -145,14 +171,14 @@ extension CharacterSheet {
         let effect = effect(of: spell)
         let castAt = max(slotLevel ?? spell.level, spell.level)
         var rolls: [ActionRoll] = []
-        var notes: [String] = []
+        var notes: [String] = cantActNotes
         let ability = spellcastingAbility
         let abilityText = ability.map { "\($0.rawValue) \(signed(modifier($0))) · " + String(localized: "proficiency \(signed(proficiencyBonus))") } ?? ""
 
         let projectiles = SheetRules.projectiles(of: effect, spellLevel: spell.level, slotLevel: castAt)
         let noun = effect.extraPerLevel ?? ""
         if effect.isAttack, let bonus = spellAttackBonus {
-            var roll = ActionRoll(kind: .attack, title: String(localized: "Spell attack"), dice: DiceExpression.d20.adding(bonus), addedFrom: abilityText)
+            var roll = applying(attackEffect, to: ActionRoll(kind: .attack, title: String(localized: "Spell attack"), dice: DiceExpression.d20.adding(bonus), addedFrom: abilityText), blocksRoll: false)
             if let projectiles {
                 roll.title = String(localized: "Spell attack, for each \(noun)")
                 roll.note = String(localized: "\(projectiles) \(noun)s: make a separate attack roll for each one.")

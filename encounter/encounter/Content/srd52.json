@@ -1246,6 +1246,141 @@
       ]
     },
     {
+      "key": "srd52.condition.blinded",
+      "kind": "condition",
+      "name": "Blinded",
+      "summary": "While you have the Blinded condition, you experience the following effects.\n\nCan’t See. You can’t see and automatically fail any ability check that requires sight.\n\nAttacks Affected. Attack rolls against you have Advantage, and your attack rolls have Disadvantage.",
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.condition.charmed",
+      "kind": "condition",
+      "name": "Charmed",
+      "summary": "While you have the Charmed condition, you experience the following effects.\n\nCan’t Harm the Charmer. You can’t attack the charmer or target the charmer with damaging abilities or magical effects.\n\nSocial Advantage. The charmer has Advantage on any ability check to interact with you socially.",
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.condition.deafened",
+      "kind": "condition",
+      "name": "Deafened",
+      "summary": "While you have the Deafened condition, you experience the following effect.\n\nCan’t Hear. You can’t hear and automatically fail any ability check that requires hearing.",
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.condition.exhaustion",
+      "kind": "condition",
+      "name": "Exhaustion",
+      "summary": "While you have the Exhaustion condition, you experience the following effects.\n\nExhaustion Levels. This condition is cumulative. Each time you receive it, you gain 1 Exhaustion level. You die if your Exhaustion level is 6.\n\nD20 Tests Affected. When you make a D20 Test, the roll is reduced by 2 times your Exhaustion level.\n\nSpeed Reduced. Your Speed is reduced by a number of feet equal to 5 times your Exhaustion level.\n\nRemoving Exhaustion Levels. Finishing a Long Rest removes 1 of your Exhaustion levels. When your Exhaustion level reaches 0, the condition ends.",
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.condition.frightened",
+      "kind": "condition",
+      "name": "Frightened",
+      "summary": "While you have the Frightened condition, you experience the following effects.\n\nAbility Checks and Attacks Affected. You have Disadvantage on ability checks and attack rolls while the source of fear is within line of sight.\n\nCan’t Approach. You can’t willingly move closer to the source of fear.",
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.condition.grappled",
+      "kind": "condition",
+      "name": "Grappled",
+      "summary": "While you have the Grappled condition, you experience the following effects.\n\nSpeed 0. Your Speed is 0 and can’t increase.\n\nAttacks Affected. You have Disadvantage on attack rolls against any target other than the grappler.\n\nMovable. The grappler can drag or carry you when it moves, but every foot of movement costs it 1 extra foot unless you are Tiny or two or more sizes smaller than it.",
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.condition.incapacitated",
+      "kind": "condition",
+      "name": "Incapacitated",
+      "summary": "While you have the Incapacitated condition, you experience the following effects.\n\nInactive. You can’t take any action, Bonus Action, or Reaction.\n\nNo Concentration. Your Concentration is broken.\n\nSpeechless. You can’t speak.\n\nSurprised. If you’re Incapacitated when you roll Initiative, you have Disadvantage on the roll.",
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.condition.invisible",
+      "kind": "condition",
+      "name": "Invisible",
+      "summary": "While you have the Invisible condition, you experience the following effects.\n\nSurprise. If you’re Invisible when you roll Initiative, you have Advantage on the roll.\n\nConcealed. You aren’t affected by any effect that requires its target to be seen unless the effect’s creator can somehow see you. Any equipment you are wearing or carrying is also concealed.\n\nAttacks Affected. Attack rolls against you have Disadvantage, and your attack rolls have Advantage. If a creature can somehow see you, you don’t gain this benefit against that creature.",
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.condition.paralyzed",
+      "kind": "condition",
+      "name": "Paralyzed",
+      "summary": "While you have the Paralyzed condition, you experience the following effects.\n\nIncapacitated. You have the Incapacitated condition.\n\nSpeed 0. Your Speed is 0 and can’t increase.\n\nSaving Throws Affected. You automatically fail Strength and Dexterity saving throws.\n\nAttacks Affected. Attack rolls against you have Advantage.\n\nAutomatic Critical Hits. Any attack roll that hits you is a Critical Hit if the attacker is within 5 feet of you.",
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.condition.petrified",
+      "kind": "condition",
+      "name": "Petrified",
+      "summary": "While you have the Petrified condition, you experience the following effects.\n\nTurned to Inanimate Substance. You are transformed, along with any nonmagical objects you are wearing and carrying, into a solid inanimate substance (usually stone). Your weight increases by a factor of ten, and you cease aging.\n\nIncapacitated. You have the Incapacitated condition.\n\nSpeed 0. Your Speed is 0 and can’t increase.\n\nAttacks Affected. Attack rolls against you have Advantage.\n\nSaving Throws Affected. You automatically fail Strength and Dexterity saving throws.\n\nResist Damage. You have Resistance to all damage.\n\nPoison Immunity. You have Immunity to the Poisoned condition.",
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.condition.poisoned",
+      "kind": "condition",
+      "name": "Poisoned",
+      "summary": "While you have the Poisoned condition, you experience the following effect.\n\nAbility Checks and Attacks Affected. You have Disadvantage on attack rolls and ability checks.",
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.condition.prone",
+      "kind": "condition",
+      "name": "Prone",
+      "summary": "While you have the Prone condition, you experience the following effects.\n\nRestricted Movement. Your only movement options are to crawl or to spend an amount of movement equal to half your Speed (round down) to right yourself and thereby end the condition. If your Speed is 0, you can’t right yourself.\n\nAttacks Affected. You have Disadvantage on attack rolls. An attack roll against you has Advantage if the attacker is within 5 feet of you. Otherwise, that attack roll has Disadvantage.",
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.condition.restrained",
+      "kind": "condition",
+      "name": "Restrained",
+      "summary": "While you have the Restrained condition, you experience the following effects.\n\nSpeed 0. Your Speed is 0 and can’t increase.\n\nAttacks Affected. Attack rolls against you have Advantage, and your attack rolls have Disadvantage.\n\nSaving Throws Affected. You have Disadvantage on Dexterity saving throws.",
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.condition.stunned",
+      "kind": "condition",
+      "name": "Stunned",
+      "summary": "While you have the Stunned condition, you experience the following effects.\n\nIncapacitated. You have the Incapacitated condition.\n\nSaving Throws Affected. You automatically fail Strength and Dexterity saving throws.\n\nAttacks Affected. Attack rolls against you have Advantage.",
+      "entries": [
+
+      ]
+    },
+    {
+      "key": "srd52.condition.unconscious",
+      "kind": "condition",
+      "name": "Unconscious",
+      "summary": "While you have the Unconscious condition, you experience the following effects.\n\nInert. You have the Incapacitated and Prone conditions, and you drop whatever you’re holding. When this condition ends, you remain Prone.\n\nSpeed 0. Your Speed is 0 and can’t increase.\n\nAttacks Affected. Attack rolls against you have Advantage.\n\nSaving Throws Affected. You automatically fail Strength and Dexterity saving throws.\n\nAutomatic Critical Hits. Any attack roll that hits you is a Critical Hit if the attacker is within 5 feet of you.\n\nUnaware. You’re unaware of your surroundings.",
+      "entries": [
+
+      ]
+    },
+    {
       "key": "srd52.equipment.alchemists-supplies",
       "kind": "equipment",
       "name": "Alchemist’s Supplies",

@@ -177,7 +177,7 @@ struct LibraryTests {
                         #expect(feature.level == nil, "\(entry.key) / \(feature.name) has a level")
                     case .class, .subclass:
                         #expect((1...20).contains(feature.level ?? 0), "\(entry.key) / \(feature.name) needs a level from 1 to 20")
-                    case .skill, .background, .feat, .equipment, .spell:
+                    case .skill, .condition, .background, .feat, .equipment, .spell:
                         break
                     }
                 }

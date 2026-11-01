@@ -684,6 +684,47 @@ func readSkills() {
 
 readSkills()
 
+// MARK: Conditions
+
+let conditionNames = ["Blinded", "Charmed", "Deafened", "Exhaustion", "Frightened", "Grappled", "Incapacitated", "Invisible", "Paralyzed", "Petrified", "Poisoned", "Prone", "Restrained", "Stunned", "Unconscious"]
+
+/// The conditions in the Rules Glossary: each is a heading ending "[Condition]", followed by its effects up to the
+/// next heading, which can be on the next page.
+func readConditions() {
+    var found: [(name: String, text: TextBuilder)] = []
+    var inGlossary = false
+    for index in 0..<document.pageCount {
+        guard let page = document.page(at: index) else { continue }
+        for line in readingOrder(of: page, profile: srd52Profile) {
+            let text = cleanLine(line.text)
+            if case .heading(let level) = line.kind {
+                if text.hasSuffix(" [Condition]") {
+                    inGlossary = true
+                    found.append((String(text.dropLast(" [Condition]".count)), TextBuilder()))
+                } else if level <= 3 {
+                    inGlossary = false
+                    continue
+                } else {
+                    // The next glossary term ends the condition above it.
+                    if inGlossary, !found.isEmpty { inGlossary = false }
+                }
+                continue
+            }
+            if inGlossary, let last = found.last {
+                if case .body = line.kind { last.text.addBody(line) }
+            }
+        }
+    }
+    for condition in found {
+        entries.append(PackEntry(key: "srd52.condition.\(slug(condition.name))", kind: "condition", name: condition.name, parent: nil,
+                                 summary: condition.text.text, attributes: [], features: []))
+    }
+    report.append("Conditions (\(found.count)): " + found.map(\.name).joined(separator: ", "))
+    if found.map(\.name) != conditionNames { review.append("Found conditions \(found.map(\.name)), expected \(conditionNames)") }
+}
+
+readConditions()
+
 // MARK: Equipment
 
 /// The weapons and armor tables, and the tools and adventuring gear, from the Equipment chapter.

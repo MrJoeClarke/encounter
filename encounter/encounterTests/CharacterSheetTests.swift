@@ -766,3 +766,291 @@ struct SheetExtrasTests {
         #expect(!none.hasProjectiles && SheetRules.projectiles(of: none, spellLevel: 3, slotLevel: 5) == nil)
     }
 }
+
+// MARK: Conditions
+
+@MainActor
+struct ConditionTests {
+    private func text(_ condition: Condition, _ edition: LibraryEdition) throws -> String {
+        let entry = try #require(Library.shared.entries(.condition, in: edition).first { $0.name == condition.title })
+        return entry.summary.lowercased().replacingOccurrences(of: "\n", with: " ")
+    }
+
+    // MARK: The library
+
+    @Test func bothEditionsHaveAllFifteenConditionsWithTheirText() throws {
+        for edition in LibraryEdition.allCases {
+            let entries = Library.shared.entries(.condition, in: edition)
+            #expect(Set(entries.map(\.name)) == Set(Condition.allCases.map(\.title)))
+            #expect(entries.count == 15 && entries.allSatisfy { !$0.summary.isEmpty && $0.parent == nil })
+        }
+        #expect(LibraryKind.condition.pageKind == nil && LibraryKind.listKinds.contains(.condition))
+        #expect(Library.shared.listKinds(in: .srd51).contains(.condition))
+    }
+
+    // MARK: The rules line up with the text
+
+    @Test func theEffectsOnRollsMatchWhatTheConditionTextSays() throws {
+        for edition in LibraryEdition.allCases {
+            for condition in [Condition.poisoned] { #expect(try text(condition, edition).contains("disadvantage on attack rolls and ability checks")) }
+            #expect(try text(.frightened, edition).contains("disadvantage on ability checks and attack rolls"))
+            #expect(try text(.prone, edition).contains("disadvantage on attack rolls"))
+            #expect(try text(.restrained, edition).contains("disadvantage on dexterity saving throws"))
+            #expect(try text(.restrained, edition).contains("your attack rolls have disadvantage") || text(.restrained, edition).contains("attack rolls have disadvantage"))
+            #expect(try text(.blinded, edition).contains("attack rolls have disadvantage") && text(.blinded, edition).contains("sight"))
+            #expect(try text(.deafened, edition).contains("hearing"))
+            #expect(try text(.invisible, edition).contains("attack rolls have advantage"))
+            for condition in [Condition.paralyzed, .petrified, .stunned, .unconscious] {
+                #expect(try text(condition, edition).contains("strength and dexterity saving throws"), "\(condition) \(edition)")
+                #expect(try text(condition, edition).contains("incapacitated"), "\(condition) \(edition)")
+                #expect(try text(condition, edition).contains("attack rolls against"), "\(condition) \(edition)")
+            }
+        }
+        #expect(try text(.grappled, .srd52).contains("disadvantage on attack rolls against any target other than the grappler"))
+        #expect(try text(.incapacitated, .srd52).contains("disadvantage on the roll"))
+        #expect(try text(.invisible, .srd52).contains("advantage on the roll"))
+    }
+
+    @Test func theSpeedOfAConditionMatchesItsText() throws {
+        for edition in LibraryEdition.allCases {
+            for condition in ConditionRules.speedIsZero(ConditionState(active: Set(Condition.allCases)), edition: edition) {
+                let words = try text(condition, edition)
+                #expect(words.contains("speed") || words.contains("can’t move"), "\(condition) \(edition)")
+            }
+        }
+        // The 2024 stunned condition doesn't stop movement, and the 2014 one does.
+        #expect(ConditionRules.speed(base: 30, ConditionState(active: [.stunned]), edition: .srd52) == 30)
+        #expect(ConditionRules.speed(base: 30, ConditionState(active: [.stunned]), edition: .srd51) == 0)
+        #expect(!(try text(.stunned, .srd52).contains("speed 0")))
+    }
+
+    @Test func exhaustionMatchesTheTwoEditionsText() throws {
+        let old = try text(.exhaustion, .srd51)
+        for line in ["1 disadvantage on ability checks", "2 speed halved", "3 disadvantage on attack rolls and saving throws", "4 hit point maximum halved", "5 speed reduced to 0", "6 death"] {
+            #expect(old.contains(line))
+        }
+        let new = try text(.exhaustion, .srd52)
+        #expect(new.contains("reduced by 2 times your exhaustion level") && new.contains("5 times your exhaustion level"))
+    }
+
+    // MARK: Rolls
+
+    private func state(_ conditions: Condition..., exhaustion: Int = 0) -> ConditionState {
+        ConditionState(active: Set(conditions), exhaustion: exhaustion)
+    }
+
+    @Test func attackRollsAreMadeWithAdvantageOrDisadvantage() {
+        for edition in LibraryEdition.allCases {
+            #expect(ConditionRules.attack(state(), edition: edition).mode == .normal && ConditionRules.attack(state(), edition: edition).isEmpty)
+            for condition in [Condition.blinded, .frightened, .poisoned, .prone, .restrained] {
+                #expect(ConditionRules.attack(state(condition), edition: edition).mode == .disadvantage, "\(condition)")
+            }
+            #expect(ConditionRules.attack(state(.invisible), edition: edition).mode == .advantage)
+            // Any advantage and any disadvantage cancel, however many there are.
+            let cancelled = ConditionRules.attack(state(.invisible, .poisoned, .prone), edition: edition)
+            #expect(cancelled.mode == .normal && cancelled.advantage == ["Invisible"] && cancelled.disadvantage == ["Poisoned", "Prone"])
+            #expect(cancelled.notes.first?.contains("cancel") == true)
+        }
+        #expect(ConditionRules.attack(state(.grappled), edition: .srd52).mode == .disadvantage)
+        #expect(ConditionRules.attack(state(.grappled), edition: .srd51).mode == .normal)
+    }
+
+    @Test func abilityChecksAreAffectedByFearPoisonAndOldExhaustion() {
+        for edition in LibraryEdition.allCases {
+            #expect(ConditionRules.abilityCheck(state(.poisoned), edition: edition).mode == .disadvantage)
+            #expect(ConditionRules.abilityCheck(state(.frightened), edition: edition).mode == .disadvantage)
+            #expect(ConditionRules.abilityCheck(state(.prone), edition: edition).mode == .normal)
+        }
+        #expect(ConditionRules.abilityCheck(state(exhaustion: 1), edition: .srd51).mode == .disadvantage)
+        #expect(ConditionRules.abilityCheck(state(exhaustion: 1), edition: .srd52).mode == .normal)
+        #expect(ConditionRules.abilityCheck(state(.blinded), edition: .srd51).autoFail?.contains("sight") == true)
+        #expect(ConditionRules.abilityCheck(state(.deafened), edition: .srd52).autoFail?.contains("hearing") == true)
+    }
+
+    @Test func savesAreFailedOrMadeWithDisadvantage() {
+        for edition in LibraryEdition.allCases {
+            for condition in [Condition.paralyzed, .petrified, .stunned, .unconscious] {
+                #expect(ConditionRules.save(.strength, state(condition), edition: edition).autoFail != nil)
+                #expect(ConditionRules.save(.dexterity, state(condition), edition: edition).autoFail != nil)
+                #expect(ConditionRules.save(.wisdom, state(condition), edition: edition).autoFail == nil)
+            }
+            #expect(ConditionRules.save(.dexterity, state(.restrained), edition: edition).mode == .disadvantage)
+            #expect(ConditionRules.save(.strength, state(.restrained), edition: edition).mode == .normal)
+        }
+        #expect(ConditionRules.save(.wisdom, state(exhaustion: 3), edition: .srd51).mode == .disadvantage)
+        #expect(ConditionRules.save(.wisdom, state(exhaustion: 2), edition: .srd51).mode == .normal)
+    }
+
+    @Test func exhaustionInTheNewRulesSubtractsFromEveryD20() {
+        let tired = state(exhaustion: 3)
+        #expect(ConditionRules.attack(tired, edition: .srd52).penalty == -6)
+        #expect(ConditionRules.abilityCheck(tired, edition: .srd52).penalty == -6)
+        #expect(ConditionRules.save(.dexterity, tired, edition: .srd52).penalty == -6)
+        #expect(ConditionRules.attack(tired, edition: .srd52).mode == .normal)
+        #expect(ConditionRules.attack(tired, edition: .srd51).penalty == 0 && ConditionRules.attack(tired, edition: .srd51).mode == .disadvantage)
+    }
+
+    @Test func initiativeFollowsTheNewRulesForInvisibleAndIncapacitated() {
+        #expect(ConditionRules.initiative(state(.invisible), edition: .srd52).mode == .advantage)
+        #expect(ConditionRules.initiative(state(.incapacitated), edition: .srd52).mode == .disadvantage)
+        #expect(ConditionRules.initiative(state(.invisible), edition: .srd51).mode == .normal)
+        #expect(ConditionRules.initiative(state(.poisoned), edition: .srd51).mode == .disadvantage)
+        #expect(ConditionRules.initiative(state(.invisible, .incapacitated), edition: .srd52).mode == .normal)
+    }
+
+    @Test func speedAndHitPointsFollowTheConditions() {
+        #expect(ConditionRules.speed(base: 30, state(.grappled), edition: .srd52) == 0)
+        #expect(ConditionRules.speed(base: 30, state(.prone), edition: .srd52) == 30)
+        #expect(ConditionRules.speed(base: 30, state(exhaustion: 2), edition: .srd51) == 15)
+        #expect(ConditionRules.speed(base: 30, state(exhaustion: 5), edition: .srd51) == 0)
+        #expect(ConditionRules.speed(base: 30, state(exhaustion: 2), edition: .srd52) == 20)
+        #expect(ConditionRules.speed(base: 30, state(exhaustion: 6), edition: .srd52) == 0)
+        #expect(ConditionRules.maximumHitPoints(30, state(exhaustion: 4), edition: .srd51) == 15)
+        #expect(ConditionRules.maximumHitPoints(30, state(exhaustion: 3), edition: .srd51) == 30)
+        #expect(ConditionRules.maximumHitPoints(30, state(exhaustion: 6), edition: .srd52) == 30)
+    }
+
+    @Test func incapacitatingConditionsAreListedAndAttackersGetTheirAdvantage() {
+        #expect(ConditionRules.cantAct(state(.poisoned)).isEmpty)
+        #expect(ConditionRules.cantAct(state(.stunned, .paralyzed, .poisoned)) == [.paralyzed, .stunned])
+        #expect(ConditionRules.againstYou(state(.restrained, .invisible), edition: .srd51).count == 2)
+        #expect(ConditionRules.againstYou(state(.paralyzed), edition: .srd52).contains { $0.contains("critical hit") })
+        #expect(ConditionRules.againstYou(state(.poisoned), edition: .srd52).isEmpty)
+    }
+
+    // MARK: On the sheet
+
+    private func sheet(_ edition: LibraryEdition = .srd51, speed: String = "30 feet") throws -> CharacterSheet {
+        let context = ModelContext(try AppSchema.makeContainer(inMemory: true))
+        let world = World(name: "W", system: .dnd5e)
+        world.edition = edition
+        context.insert(world)
+        let page = world.addPage(kind: .character, in: context)
+        page.setReference(.library("\(edition.rawValue).class.fighter"), role: LinkRole.characterClass, in: context)
+        page.setAttributeNumber("dnd5e.classLevel", 5)
+        page.setAttributeNumber("dnd5e.hitPoints", 40)
+        page.setAttributeNumber("dnd5e.proficiencyBonus", 3)
+        page.setAttributeText("dnd5e.speed", speed)
+        page.setAttributeNumber("dnd5e.strength", 16)
+        page.attributes["dnd5e.equipment"] = .entries([EntryValue(name: "a longsword")])
+        return try #require(CharacterSheet(page: page))
+    }
+
+    @Test func conditionsCanBeAddedAndRemovedAndAreKept() throws {
+        let sheet = try sheet()
+        #expect(sheet.conditionState.isEmpty)
+        sheet.addCondition(.poisoned)
+        sheet.addCondition(.prone)
+        sheet.addCondition(.poisoned)
+        #expect(try #require(CharacterSheet(page: sheet.page)).conditionState.active == [.poisoned, .prone])
+        #expect(sheet.page.attributeText("dnd5e.conditions") == "Poisoned, Prone")
+        sheet.removeCondition(.poisoned)
+        #expect(sheet.conditionState.active == [.prone])
+        sheet.removeCondition(.prone)
+        #expect(sheet.conditionState.isEmpty && sheet.page.attributeText("dnd5e.conditions").isEmpty)
+    }
+
+    @Test func exhaustionHasALevelFromOneToSix() throws {
+        let sheet = try sheet()
+        sheet.addCondition(.exhaustion)
+        #expect(sheet.conditionState.exhaustion == 1 && sheet.conditionState.all.contains(.exhaustion))
+        sheet.setExhaustion(9)
+        #expect(sheet.conditionState.exhaustion == 6)
+        sheet.setExhaustion(0)
+        #expect(sheet.conditionState.isEmpty && sheet.page.attributeNumber("dnd5e.exhaustionLevel") == nil)
+        sheet.setExhaustion(2)
+        sheet.removeCondition(.exhaustion)
+        #expect(sheet.conditionState.exhaustion == 0)
+    }
+
+    @Test func aLongRestTakesAwayOneLevelOfExhaustion() throws {
+        let sheet = try sheet()
+        sheet.setExhaustion(2)
+        sheet.longRest()
+        #expect(sheet.conditionState.exhaustion == 1)
+        sheet.longRest()
+        #expect(sheet.conditionState.exhaustion == 0)
+        sheet.longRest()
+        #expect(sheet.conditionState.exhaustion == 0)
+    }
+
+    @Test func theSheetsSpeedShowsWhatConditionsDoToIt() throws {
+        let sheet = try sheet(.srd51, speed: "30 feet")
+        #expect(sheet.baseSpeed == 30 && sheet.effectiveSpeed == "30 feet" && !sheet.speedIsChanged)
+        sheet.addCondition(.grappled)
+        #expect(sheet.effectiveSpeed == "0 feet" && sheet.speedIsChanged)
+        sheet.removeCondition(.grappled)
+        sheet.setExhaustion(2)
+        #expect(sheet.effectiveSpeed == "15 feet")
+        #expect(try self.sheet(.srd51, speed: "").baseSpeed == nil)
+        #expect(try self.sheet(.srd51, speed: "30 ft., fly 60 ft.").baseSpeed == 30)
+    }
+
+    @Test func theHitPointMaximumIsHalvedAtLevelFourOfOldExhaustion() throws {
+        let sheet = try sheet(.srd51)
+        sheet.setExhaustion(4)
+        #expect(sheet.effectiveMaximumHitPoints == 20 && sheet.maximumHitPoints == 40)
+        #expect(try { let s = try self.sheet(.srd52); s.setExhaustion(4); return s.effectiveMaximumHitPoints }() == 40)
+    }
+
+    @Test func theRulesTextOfAConditionIsFoundInTheLibrary() throws {
+        let sheet = try sheet()
+        #expect(sheet.rulesText(of: .blinded)?.contains("can’t see") == true)
+        #expect(try self.sheet(.srd52).rulesText(of: .blinded)?.contains("Can’t See") == true)
+    }
+
+    // MARK: On the cards
+
+    @Test func aPoisonedWeaponAttackIsMadeWithDisadvantage() throws {
+        let sheet = try sheet()
+        sheet.addCondition(.poisoned)
+        let attack = try #require(sheet.attacks.first)
+        let roll = try #require(sheet.card(for: attack).rolls.first { $0.kind == .attack })
+        #expect(roll.defaultMode == .disadvantage && roll.conditionNotes == ["Disadvantage: Poisoned"] && roll.autoFail == nil)
+        // The damage isn't a d20 and isn't touched.
+        #expect(sheet.card(for: attack).rolls.first { $0.kind == .damage }?.defaultMode == .normal)
+    }
+
+    @Test func aParalyzedCharacterFailsStrengthAndDexteritySavesButNotOthers() throws {
+        let sheet = try sheet()
+        sheet.addCondition(.paralyzed)
+        let strength = try #require(sheet.saves.first { $0.ability == .strength })
+        let wisdom = try #require(sheet.saves.first { $0.ability == .wisdom })
+        #expect(sheet.card(for: strength).rolls[0].autoFail?.contains("Paralyzed") == true)
+        #expect(sheet.card(for: wisdom).rolls[0].autoFail == nil)
+    }
+
+    @Test func aBlindCharactersChecksCarryANoteRatherThanFailing() throws {
+        let sheet = try sheet()
+        sheet.addCondition(.blinded)
+        let roll = try #require(sheet.card(forAbility: .wisdom).rolls.first)
+        #expect(roll.autoFail == nil && roll.conditionNotes.contains { $0.contains("sight") })
+    }
+
+    @Test func exhaustionInTheNewRulesLowersTheNumberOnTheCard() throws {
+        let sheet = try sheet(.srd52)
+        let before = try #require(sheet.card(forAbility: .strength).rolls.first)
+        sheet.setExhaustion(2)
+        let after = try #require(sheet.card(forAbility: .strength).rolls.first)
+        #expect(after.dice.modifier == before.dice.modifier - 4)
+        #expect(after.conditionNotes.contains { $0.contains("reduced by 4") })
+    }
+
+    @Test func anIncapacitatedCharacterIsToldTheyCantActOnAWeaponCard() throws {
+        let sheet = try sheet()
+        sheet.addCondition(.stunned)
+        let card = sheet.card(for: try #require(sheet.attacks.first))
+        #expect(card.notes.contains { $0.contains("can't take actions or reactions") })
+        // A check isn't an action.
+        #expect(!sheet.card(forAbility: .wisdom).notes.contains { $0.contains("can't take actions") })
+    }
+
+    @Test func invisibleAndPronePullAnAttackBothWays() throws {
+        let sheet = try sheet()
+        sheet.addCondition(.invisible)
+        sheet.addCondition(.prone)
+        let attack = try #require(sheet.attacks.first)
+        let roll = try #require(sheet.card(for: attack).rolls.first)
+        #expect(roll.defaultMode == .normal && roll.conditionNotes.first?.contains("cancel") == true)
+    }
+}
