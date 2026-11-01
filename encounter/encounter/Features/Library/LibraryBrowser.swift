@@ -25,11 +25,15 @@ struct LibraryBrowser: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         #else
-        NavigationSplitView {
-            list
-        } detail: {
-            detail
-        }
+        // On iOS the entry opens on top of the list, in the navigation stack the world is already in.
+        list
+            .navigationDestination(item: openKey) { key in
+                if let entry = Library.shared.entry(forKey: key) {
+                    LibraryEntryView(entry: entry, world: world)
+                        .id(entry.key)
+                        .environment(navigation)
+                }
+            }
         #endif
     }
 
@@ -52,6 +56,12 @@ struct LibraryBrowser: View {
         )
     }
 
+    /// The entry that is open, which on iOS is the screen on top of the list. It is the entry itself, even a
+    /// subrace, where `selection` names the parent that the list highlights.
+    private var openKey: Binding<String?> {
+        Binding(get: { navigation.selectedLibraryKey }, set: { navigation.selectedLibraryKey = $0 })
+    }
+
     @ViewBuilder
     private var list: some View {
         let entries = entries
@@ -63,10 +73,10 @@ struct LibraryBrowser: View {
                     description: Text("The \(String(localized: world.edition.title)) library has no entries of this kind.")
                 )
             } else {
-                List(selection: selection) {
+                ChoosableList(choice: selection) {
                     ForEach(entries) { entry in
                         LibraryRow(entry: entry)
-                            .tag(entry.key)
+                            .choosable(entry.key, in: selection)
                     }
                 }
             }

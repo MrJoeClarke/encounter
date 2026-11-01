@@ -24,11 +24,13 @@ struct CampaignsBrowser: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         #else
-        NavigationSplitView {
-            CampaignsListView(world: world, selection: selectedCampaign)
-        } detail: {
-            detail
-        }
+        // On iOS the campaign opens on top of the list, in the navigation stack the world is already in.
+        CampaignsListView(world: world, selection: selectedCampaign)
+            .navigationDestination(item: selectedCampaign) { campaign in
+                CampaignDetailView(campaign: campaign)
+                    .id(campaign.id)
+                    .environment(navigation)
+            }
         #endif
     }
 
@@ -75,7 +77,7 @@ struct CampaignsListView: View {
                         .buttonStyle(.borderedProminent)
                 }
             } else {
-                List(selection: $selection) {
+                ChoosableList(choice: $selection) {
                     ForEach(campaigns) { campaign in
                         Label {
                             VStack(alignment: .leading, spacing: 2) {
@@ -87,7 +89,7 @@ struct CampaignsListView: View {
                         } icon: {
                             Image(systemName: "flag.fill")
                         }
-                        .tag(campaign)
+                        .choosable(campaign, in: $selection)
                         .contextMenu {
                             Button("Delete…", systemImage: "trash", role: .destructive) { campaignToDelete = campaign }
                         }

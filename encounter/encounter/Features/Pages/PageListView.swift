@@ -47,14 +47,14 @@ struct PageListView: View {
                         .buttonStyle(.borderedProminent)
                 }
             } else {
-                List(selection: $selection) {
+                ChoosableList(choice: $selection) {
                     ForEach(rows) { row in
                         let page = row.page
                         HStack(spacing: 4) {
                             if kind == .place { disclosure(for: row) }
                             PageRow(page: page)
                         }
-                            .tag(page)
+                            .choosable(page, in: $selection)
                             .contextMenu {
                                 if !page.isWorldRoot {
                                     Button("Delete…", systemImage: "trash", role: .destructive) { pageToDelete = page }
