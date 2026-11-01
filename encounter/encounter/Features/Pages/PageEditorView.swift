@@ -37,6 +37,10 @@ struct PageEditorView: View {
                 }
             }
 
+            if page.kind == .character {
+                LevelUpSection(page: page)
+            }
+
             if page.kind == .place {
                 PlaceHierarchySection(page: page)
             }

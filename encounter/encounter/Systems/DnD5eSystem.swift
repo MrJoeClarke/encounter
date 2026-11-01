@@ -68,6 +68,15 @@ struct DnD5eSystem: RuleSystem {
         .init(key: "dnd5e.hitDie", label: "Hit Die", type: .choice(hitDice), appliesTo: [.characterClass], group: "D&D 5e"),
         .init(key: "dnd5e.primaryAbility", label: "Primary Ability", type: .text, appliesTo: [.characterClass], group: "D&D 5e"),
         .init(key: "dnd5e.savingThrows", label: "Saving Throws", type: .text, appliesTo: [.characterClass], group: "D&D 5e"),
+        // The class table, as comma-separated numbers for each level from 1 to 20 (slots: nine numbers for each level,
+        // with a semicolon between levels). Levelling up reads them.
+        .init(key: "dnd5e.asiLevels", label: "Ability Score Improvement Levels", type: .text, appliesTo: [.characterClass], group: "Class Table"),
+        .init(key: "dnd5e.cantripsKnownByLevel", label: "Cantrips Known", type: .text, appliesTo: [.characterClass], group: "Class Table"),
+        .init(key: "dnd5e.spellsKnownByLevel", label: "Spells Known", type: .text, appliesTo: [.characterClass], group: "Class Table"),
+        .init(key: "dnd5e.preparedSpellsByLevel", label: "Prepared Spells", type: .text, appliesTo: [.characterClass], group: "Class Table"),
+        .init(key: "dnd5e.spellSlotsByLevel", label: "Spell Slots", type: .text, appliesTo: [.characterClass], group: "Class Table"),
+        .init(key: "dnd5e.pactSlotsByLevel", label: "Pact Slots (number, level)", type: .text, appliesTo: [.characterClass], group: "Class Table"),
+        .init(key: "dnd5e.invocationsKnownByLevel", label: "Invocations Known", type: .text, appliesTo: [.characterClass], group: "Class Table"),
         .init(key: "dnd5e.armorProficiencies", label: "Armor Proficiencies", type: .text, appliesTo: [.characterClass], group: "D&D 5e"),
         .init(key: "dnd5e.weaponProficiencies", label: "Weapon Proficiencies", type: .text, appliesTo: [.characterClass], group: "D&D 5e"),
         .init(key: "dnd5e.toolProficiencies", label: "Tool Proficiencies", type: .text, appliesTo: [.characterClass], group: "D&D 5e"),
@@ -103,6 +112,8 @@ struct DnD5eSystem: RuleSystem {
         .init(key: "dnd5e.classFeatures", label: "Class Features", type: .entries(showsLevel: true), appliesTo: [.character], group: "Features"),
         .init(key: "dnd5e.equipment", label: "Equipment", type: .entries(showsLevel: false), appliesTo: [.character], group: "Equipment"),
         .init(key: "dnd5e.spells", label: "Spells", type: .entries(showsLevel: false), appliesTo: [.character], group: "Spells"),
+        .init(key: "dnd5e.spellSlots", label: "Spell Slots", type: .text, appliesTo: [.character], group: "Spells"),
+        .init(key: "dnd5e.feats", label: "Feats", type: .entries(showsLevel: true), appliesTo: [.character], group: "Features"),
 
         // Spells
         .init(key: "dnd5e.spellLevel", label: "Level", type: .number, appliesTo: [.spell], group: "D&D 5e"),
