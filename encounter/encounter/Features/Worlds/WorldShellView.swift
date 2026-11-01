@@ -25,6 +25,7 @@ struct WorldShellView: View {
 
     @State private var navigation = WorldNavigation()
     @Environment(LinkRouter.self) private var linkRouter
+    @Environment(\.horizontalSizeClass) private var sizeClass
 
     private var isSearching: Bool {
         !navigation.searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -36,13 +37,18 @@ struct WorldShellView: View {
 
     /// On iOS, whether the screen chosen from the menu is open on top of it.
     @State private var isShowingDetail = false
+    /// Beside the screen, whether the menu is showing. Where it slides over the screen, choosing a row closes it.
+    @State private var columnVisibility = NavigationSplitViewVisibility.automatic
 
     var body: some View {
         layout
             .searchable(text: $navigation.searchText, prompt: "Search \(world.name)")
             .environment(navigation)
             // Something opened from elsewhere (a link, a pin, a search result) shows its screen on a phone too.
-            .onChange(of: navigation.selection) { isShowingDetail = true }
+            .onChange(of: navigation.selection) {
+                isShowingDetail = true
+                columnVisibility = .automatic
+            }
             .onChange(of: navigation.selectedPage) { if navigation.selectedPage != nil { isShowingDetail = true } }
             .onChange(of: navigation.selectedMap) { if navigation.selectedMap != nil { isShowingDetail = true } }
             .onChange(of: navigation.selectedCampaign) { if navigation.selectedCampaign != nil { isShowingDetail = true } }
@@ -58,35 +64,39 @@ struct WorldShellView: View {
             }
     }
 
-    /// A Mac shows the menu beside the screen it chose. A phone shows the menu, and the screen it chose is pushed on
-    /// top of it, in the navigation stack the world list already provides. (A split view inside that stack would
-    /// not navigate on a phone.)
+    /// With room (a Mac, or an iPad at regular width) the menu sits beside the screen it chose. On a phone, or a
+    /// narrow iPad window, the menu is shown and the screen it chose is pushed on top of it, in the navigation
+    /// stack the world list already provides. (A split view inside that stack would not navigate when collapsed.)
     @ViewBuilder
     private var layout: some View {
-        #if os(macOS)
-        NavigationSplitView {
-            sidebar
-                .navigationTitle(world.name)
-        } detail: {
-            if isSearching {
-                SearchResultsView(world: world)
-            } else {
-                screen
-            }
-        }
-        #else
-        Group {
-            if isSearching {
-                SearchResultsView(world: world)
-            } else {
+        if showsSideBySide(sizeClass) {
+            NavigationSplitView(columnVisibility: $columnVisibility) {
                 sidebar
                     .navigationTitle(world.name)
+            } detail: {
+                if isSearching {
+                    SearchResultsView(world: world)
+                } else {
+                    screen
+                }
             }
+            #if os(iOS)
+            // In a narrow iPad window the menu slides over the screen rather than squeezing it.
+            .navigationSplitViewStyle(.prominentDetail)
+            #endif
+        } else {
+            Group {
+                if isSearching {
+                    SearchResultsView(world: world)
+                } else {
+                    sidebar
+                        .navigationTitle(world.name)
+                }
+            }
+            // The screen is presented by the world list's stack, so it doesn't see what is set on this view. It
+            // needs the navigation passed on to it.
+            .navigationDestination(isPresented: $isShowingDetail) { screen.environment(navigation) }
         }
-        // The screen is presented by the world list's stack, so it doesn't see what is set on this view. It needs
-        // the navigation passed on to it.
-        .navigationDestination(isPresented: $isShowingDetail) { screen.environment(navigation) }
-        #endif
     }
 
     /// The screen the menu has chosen.
@@ -110,15 +120,15 @@ struct WorldShellView: View {
         }
     }
 
-    /// The menu. On a Mac a row is selected, which highlights it. On iOS the rows are buttons, and the list has no
-    /// selection, so a phone starts on the menu rather than on the screen the selection would open.
+    /// The menu. Beside the screen a row is selected, which highlights it. Otherwise the rows are buttons and the
+    /// list has no selection, so a phone starts on the menu rather than on the screen the selection would open.
     @ViewBuilder
     private var sidebar: some View {
-        #if os(macOS)
-        List(selection: sidebarSelection) { sidebarRows }
-        #else
-        List { sidebarRows }
-        #endif
+        if showsSideBySide(sizeClass) {
+            List(selection: sidebarSelection) { sidebarRows }
+        } else {
+            List { sidebarRows }
+        }
     }
 
     @ViewBuilder
@@ -143,35 +153,35 @@ struct WorldShellView: View {
         }
     }
 
-    /// One row of the menu. On a Mac it is a selectable row. On iOS it is a button that opens its screen, so
-    /// choosing a row works even if it is already the current one, which a phone's list wouldn't report.
+    /// One row of the menu. Beside the screen it is a selectable row. Otherwise it is a button that opens its
+    /// screen, so choosing a row works even if it is already the current one, which a phone's list wouldn't report.
     @ViewBuilder
     private func row(_ item: WorldSidebarItem, _ title: LocalizedStringResource, systemImage: String, badge: Int = 0) -> some View {
-        #if os(iOS)
-        Button {
-            navigation.choose(item)
-            isShowingDetail = true
-        } label: {
+        if showsSideBySide(sizeClass) {
             Label {
                 Text(title)
             } icon: {
                 Image(systemName: systemImage)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .contentShape(Rectangle())
+            .badge(badge)
+            .tag(item)
+        } else {
+            Button {
+                navigation.choose(item)
+                isShowingDetail = true
+            } label: {
+                Label {
+                    Text(title)
+                } icon: {
+                    Image(systemName: systemImage)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .badge(badge)
+            .listRowBackground(navigation.selection == item ? Color.accentColor.opacity(0.18) : nil)
         }
-        .buttonStyle(.plain)
-        .badge(badge)
-        .listRowBackground(navigation.selection == item ? Color.accentColor.opacity(0.18) : nil)
-        #else
-        Label {
-            Text(title)
-        } icon: {
-            Image(systemName: systemImage)
-        }
-        .badge(badge)
-        .tag(item)
-        #endif
     }
 
     /// The list reports nil selection on some clicks (notably on macOS). Something is always selected, so ignore those.

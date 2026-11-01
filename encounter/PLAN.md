@@ -207,7 +207,8 @@ protocol RuleSystem {
 
 ### 5.4a Navigation on iOS and macOS
 - **macOS** shows the world's menu beside the screen it chose (`NavigationSplitView`), and each list beside its editor (`HSplitView`).
-- **iOS** (iPhone and iPad) uses a single navigation stack, the one the world list already has. The world's menu is a list of buttons that push the chosen screen. A list pushes its editor on top of it. Something opened from elsewhere (a link, a pin, a search result) pushes its screen too. A split view inside that stack didn't navigate on a phone, so it isn't used. An iPad therefore gets the same push navigation rather than side-by-side panes, which could be revisited.
+- **iPad at regular width** (and an iPad window wide enough) is laid out like the Mac: the menu beside the screen, and each list beside its editor (a fixed-width list and a divider, since `HSplitView` is macOS only). In a narrow window the menu slides over the screen and closes when a row is chosen.
+- **iPhone and narrow iPad windows** (compact width) use a single navigation stack, the one the world list already has. The world's menu is a list of buttons that push the chosen screen, and a list pushes its editor on top of it. Something opened from elsewhere (a link, a pin, a search result) pushes its screen too. A split view inside that stack doesn't navigate when collapsed, so it isn't used there.
 - Screens pushed this way don't inherit what was set inside the world screen, so `WorldNavigation` is passed to each one explicitly.
 
 ### 5.6 D&D 5e content library

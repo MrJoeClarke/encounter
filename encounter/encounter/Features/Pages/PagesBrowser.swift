@@ -18,26 +18,24 @@ struct PagesBrowser: View {
 
     @Environment(WorldNavigation.self) private var navigation
 
+    @Environment(\.horizontalSizeClass) private var sizeClass
+
     var body: some View {
-        #if os(macOS)
-        HSplitView {
-            PageListView(world: world, kind: kind, selection: selectedPage)
-                .frame(minWidth: 240, idealWidth: 300, maxWidth: 420, maxHeight: .infinity)
-                .layoutPriority(-1)
-            detail
-                .frame(minWidth: 360, idealWidth: 800, maxWidth: .infinity, maxHeight: .infinity)
-                .layoutPriority(1)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        #else
-        // On iOS the page opens on top of the list, in the navigation stack the world is already in.
-        PageListView(world: world, kind: kind, selection: selectedPage)
-            .navigationDestination(item: selectedPage) { page in
-                PageEditorView(page: page)
-                    .id(page.id)
-                    .environment(navigation)
+        if showsSideBySide(sizeClass) {
+            ListDetailSplit {
+                PageListView(world: world, kind: kind, selection: selectedPage)
+            } detail: {
+                detail
             }
-        #endif
+        } else {
+            // The page opens on top of the list, in the navigation stack the world is already in.
+            PageListView(world: world, kind: kind, selection: selectedPage)
+                .navigationDestination(item: selectedPage) { page in
+                    PageEditorView(page: page)
+                        .id(page.id)
+                        .environment(navigation)
+                }
+        }
     }
 
     private var selectedPage: Binding<Page?> {

@@ -5,32 +5,84 @@
 
 import SwiftUI
 
-/// A list in which one row can be chosen. On a Mac the choice is the list's selection, which highlights the row.
-/// On iOS rows react to a tap instead, because a phone's list reports its selection only in some layouts, and
-/// the screen it opens is pushed by whoever reads the choice.
-struct ChoosableList<Choice: Hashable, Content: View>: View {
-    @Binding var choice: Choice?
-    @ViewBuilder var content: () -> Content
+/// Whether screens show a list beside what it chose. A Mac always does, and so does an iPad with room for it
+/// (regular width). Otherwise, a phone or a narrow iPad window, the chosen screen is pushed on top of the list.
+func showsSideBySide(_ sizeClass: UserInterfaceSizeClass?) -> Bool {
+    #if os(macOS)
+    true
+    #else
+    sizeClass == .regular
+    #endif
+}
+
+/// A list beside the screen for what it chose, where `showsSideBySide` allows.
+struct ListDetailSplit<List: View, Detail: View>: View {
+    @ViewBuilder var list: () -> List
+    @ViewBuilder var detail: () -> Detail
 
     var body: some View {
         #if os(macOS)
-        List(selection: $choice, content: content)
+        HSplitView {
+            list()
+                .frame(minWidth: 240, idealWidth: 300, maxWidth: 420, maxHeight: .infinity)
+                .layoutPriority(-1)
+            detail()
+                .frame(minWidth: 360, idealWidth: 800, maxWidth: .infinity, maxHeight: .infinity)
+                .layoutPriority(1)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         #else
-        List(content: content)
+        HStack(spacing: 0) {
+            list()
+                .frame(width: 300)
+                .frame(maxHeight: .infinity)
+            Divider()
+            detail()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
         #endif
     }
 }
 
+/// A list in which one row can be chosen. Side by side with what it chose, the choice is the list's selection,
+/// which highlights the row. Otherwise rows react to a tap instead, because a phone's list reports its selection
+/// only in some layouts, and the screen it opens is pushed by whoever reads the choice.
+struct ChoosableList<Choice: Hashable, Content: View>: View {
+    @Binding var choice: Choice?
+    @ViewBuilder var content: () -> Content
+
+    @Environment(\.horizontalSizeClass) private var sizeClass
+
+    var body: some View {
+        if showsSideBySide(sizeClass) {
+            List(selection: $choice, content: content)
+        } else {
+            List(content: content)
+        }
+    }
+}
+
+private struct Choosable<Choice: Hashable>: ViewModifier {
+    let value: Choice
+    @Binding var choice: Choice?
+
+    @Environment(\.horizontalSizeClass) private var sizeClass
+
+    func body(content: Content) -> some View {
+        if showsSideBySide(sizeClass) {
+            content.tag(value)
+        } else {
+            content
+                .contentShape(Rectangle())
+                .onTapGesture { choice = value }
+                .accessibilityAddTraits(.isButton)
+        }
+    }
+}
+
 extension View {
-    /// Makes a row of a `ChoosableList` choosable: tagged on a Mac, tappable on iOS.
-    @ViewBuilder
+    /// Makes a row of a `ChoosableList` choosable: tagged where the list is selectable, tappable otherwise.
     func choosable<Choice: Hashable>(_ value: Choice, in choice: Binding<Choice?>) -> some View {
-        #if os(macOS)
-        tag(value)
-        #else
-        contentShape(Rectangle())
-            .onTapGesture { choice.wrappedValue = value }
-            .accessibilityAddTraits(.isButton)
-        #endif
+        modifier(Choosable(value: value, choice: choice))
     }
 }

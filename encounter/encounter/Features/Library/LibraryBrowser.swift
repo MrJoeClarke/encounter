@@ -13,28 +13,22 @@ struct LibraryBrowser: View {
 
     @Environment(WorldNavigation.self) private var navigation
 
+    @Environment(\.horizontalSizeClass) private var sizeClass
+
     var body: some View {
-        #if os(macOS)
-        HSplitView {
+        if showsSideBySide(sizeClass) {
+            ListDetailSplit { list } detail: { detail }
+        } else {
+            // The entry opens on top of the list, in the navigation stack the world is already in.
             list
-                .frame(minWidth: 240, idealWidth: 300, maxWidth: 420, maxHeight: .infinity)
-                .layoutPriority(-1)
-            detail
-                .frame(minWidth: 360, idealWidth: 800, maxWidth: .infinity, maxHeight: .infinity)
-                .layoutPriority(1)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        #else
-        // On iOS the entry opens on top of the list, in the navigation stack the world is already in.
-        list
-            .navigationDestination(item: openKey) { key in
-                if let entry = Library.shared.entry(forKey: key) {
-                    LibraryEntryView(entry: entry, world: world)
-                        .id(entry.key)
-                        .environment(navigation)
+                .navigationDestination(item: openKey) { key in
+                    if let entry = Library.shared.entry(forKey: key) {
+                        LibraryEntryView(entry: entry, world: world)
+                            .id(entry.key)
+                            .environment(navigation)
+                    }
                 }
-            }
-        #endif
+        }
     }
 
     private var title: LocalizedStringResource {
