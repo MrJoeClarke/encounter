@@ -129,7 +129,7 @@ struct MapTileTests {
         let overlay = MapTileOverlay(source: redMap())
         #expect(overlay.canReplaceMapContent)
         #expect(overlay.minimumZ == 0)
-        #expect(overlay.maximumZ == WebMercator.zoom(forMetresPerPixel: 1_000))
+        #expect(overlay.maximumZ == WebMercator.zoom(forMetresPerPixel: 1_000) + MapTileSource.overzoom)
         #expect(overlay.tileSize == CGSize(width: 512, height: 512))
     }
 }

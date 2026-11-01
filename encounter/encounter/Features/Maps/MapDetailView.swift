@@ -214,8 +214,8 @@ struct MapDetailView: View {
 
     /// Places with an outline, which MapKit draws as shapes.
     private var shapes: [PlaceShape] {
-        places.compactMap { page in
-            guard page !== map.place, case .polygon(let corners)? = page.geometry else { return nil }
+        map.visiblePlaces(among: places).compactMap { page in
+            guard case .polygon(let corners)? = page.geometry else { return nil }
             return PlaceShape(page: page, corners: corners)
         }
     }
@@ -250,7 +250,7 @@ struct MapDetailView: View {
     /// The places that are on this map, wherever it is.
     private var pins: [PlacePin] {
         guard map.isCalibrated else { return [] }
-        return places.filter { $0 !== map.place }.compactMap { page in
+        return map.visiblePlaces(among: places).compactMap { page in
             map.pixel(of: page).map { PlacePin(page: page, pixelX: $0.x, pixelY: $0.y, isMovable: page.isPoint) }
         }
     }

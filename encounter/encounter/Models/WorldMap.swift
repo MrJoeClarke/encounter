@@ -90,6 +90,20 @@ extension WorldMap {
         return .placed
     }
 
+    /// The places to show on this map: those with a position here, except any inside another place that is shown, so
+    /// a settlement hides the buildings in it, and they are shown on the settlement's own map instead. A place whose
+    /// parent isn't on this map isn't hidden by it. The map's own place isn't shown, and doesn't hide what is in it.
+    func visiblePlaces(among places: [Page]) -> [Page] {
+        func isOnMap(_ page: Page) -> Bool {
+            guard page !== place, !page.isDeleted, let geometry = page.geometry else { return false }
+            if case .polygon = geometry { return true }
+            return pixel(of: page) != nil
+        }
+        let shown = places.filter(isOnMap)
+        let shownIDs = Set(shown.map(\.id))
+        return shown.filter { page in !page.ancestors.contains { shownIDs.contains($0.id) } }
+    }
+
     /// Where a place is on this map's image, or nil if the map isn't calibrated, the place has no position, or
     /// the place is off the edge of the image.
     func pixel(of page: Page) -> (x: Double, y: Double)? {
