@@ -142,3 +142,10 @@ struct MenuCommandTests {
         #expect(AppCommands.shortcutKinds.count + 4 == 9, "keys 1 to 4 go to the screens, 5 to 9 to the kinds")
     }
 }
+
+struct EmptyStateTests {
+    @Test func everyKindOfPageSaysWhatItIsFor() {
+        for kind in PageKind.allCases { #expect(!String(localized: kind.emptyDescription).isEmpty, "\(kind)") }
+        #expect(Set(PageKind.allCases.map { String(localized: $0.emptyDescription) }).count == PageKind.allCases.count)
+    }
+}

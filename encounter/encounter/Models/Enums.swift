@@ -72,6 +72,23 @@ enum PageKind: String, Codable, CaseIterable, Identifiable {
         }
     }
 
+    /// What a list of this kind says when it has no pages, to say what the kind is for.
+    var emptyDescription: LocalizedStringResource {
+        switch self {
+        case .character: "The people, creatures and monsters of your world."
+        case .place: "Towns, buildings, ruins and the land itself. Places can sit inside other places."
+        case .event: "Things that happened, and when. Characters who took part get a journey through them."
+        case .item: "Weapons, treasures, tools and anything else a character can hold."
+        case .organisation: "Guilds, kingdoms, families and any other group."
+        case .race: "The peoples your characters can come from."
+        case .characterClass: "The callings your characters can follow. Copy one from the Library, or make your own."
+        case .background: "What a character did before the story began."
+        case .feat: "Special talents a character can learn."
+        case .spell: "Magic your characters can cast."
+        case .contentEntry: "Cards and other entries from the Library, or ones you make yourself."
+        }
+    }
+
     /// Kinds that only appear in a world's sidebar when its rule system uses them, or when the world already
     /// has pages of that kind, so a world on "None" doesn't show an empty Classes category.
     var isConditional: Bool {

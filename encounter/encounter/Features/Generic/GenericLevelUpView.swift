@@ -4,6 +4,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 /// The place in a character's page to level up, for a system that describes levelling as data.
 struct GenericLevelUpSection: View {
@@ -186,4 +187,9 @@ struct GenericLevelUpView: View {
         guard let rule else { return }
         result = Advancement.levelUp(page, rule: rule, formulas: system.formulas, system: system, picks: picks, required: requiredSelections)
     }
+}
+
+#Preview("Daggerheart level up") {
+    let data = GenericPreviewData.make()
+    return Group { if let data { GenericLevelUpView(page: data.character) {}.modelContainer(data.container) } }
 }

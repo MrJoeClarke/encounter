@@ -41,10 +41,13 @@ struct PageListView: View {
                         Image(systemName: kind.systemImage)
                     }
                 } description: {
-                    Text("Nothing here yet.")
+                    Text(kind.emptyDescription)
                 } actions: {
                     Button("New \(String(localized: kind.singularTitle))", action: addPage)
                         .buttonStyle(.borderedProminent)
+                    if canBuildCharacter {
+                        Button("Build Character…") { isBuildingCharacter = true }
+                    }
                 }
             } else {
                 ChoosableList(choice: $selection) {

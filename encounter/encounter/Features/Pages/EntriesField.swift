@@ -31,8 +31,17 @@ struct EntriesField: View {
                 }
             }
         }
-        Button(showsLevel ? "Add Feature" : "Add Trait", systemImage: "plus") {
+        Button(addTitle, systemImage: "plus") {
             setEntries(current + [EntryValue()])
+        }
+    }
+
+    /// "Add Feature" and "Add Trait" for a class and a race, and otherwise the name of the list, such as "Add to Experiences".
+    private var addTitle: LocalizedStringResource {
+        switch definition.key {
+        case CoreAttributes.featuresKey: "Add Feature"
+        case CoreAttributes.traitsKey: "Add Trait"
+        default: "Add to \(definition.label)"
         }
     }
 

@@ -4,6 +4,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 /// Rolls a check by the system's own roll model and says what it came to: every die, what is added, and how the result reads.
 struct GenericRollSheet: View {
@@ -38,7 +39,15 @@ struct GenericRollSheet: View {
                         if hasDifficulty { Stepper("Difficulty \(difficulty)", value: $difficulty, in: 1...40) }
                         ForEach(conditions.notes, id: \.self) { Text($0).font(.callout).foregroundStyle(.orange) }
                     }
-                    Section { Button("Roll", systemImage: "dice") { rollNow(model) }.buttonStyle(.borderedProminent) }
+                    Section {
+                        Button { rollNow(model) } label: {
+                            Label("Roll", systemImage: "dice").frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.large)
+                        .listRowBackground(Color.clear)
+                        .listRowInsets(EdgeInsets())
+                    }
                     if let result { resultSection(result, model: model) }
                 } else {
                     ContentUnavailableView("No Dice", systemImage: "dice", description: Text("This system has no roll model."))
@@ -108,5 +117,15 @@ struct GenericRollSheet: View {
         else if let meets = result.meetsTarget { parts.append(meets ? String(localized: "Success") : String(localized: "Failure")) }
         if !result.isCritical, let higher = result.higherDie { parts.append(String(localized: "with \(higher)")) }
         return parts.isEmpty ? String(localized: "Rolled") : parts.joined(separator: " ")
+    }
+}
+
+#Preview("Daggerheart roll") {
+    let data = GenericPreviewData.make()
+    return Group {
+        if let data {
+            GenericRollSheet(page: data.character, system: RuleSystems.system(forKey: "daggerheart"), label: "Agility", modifier: 2, roll: "check")
+                .modelContainer(data.container)
+        }
     }
 }

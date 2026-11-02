@@ -240,3 +240,8 @@ struct GenericCharacterBuilderView: View {
 private extension Array {
     subscript(safe index: Int) -> Element? { indices.contains(index) ? self[index] : nil }
 }
+
+#Preview("Daggerheart builder") {
+    let data = GenericPreviewData.make()
+    return Group { if let data { GenericCharacterBuilderView(world: data.world) { _ in }.modelContainer(data.container) } }
+}

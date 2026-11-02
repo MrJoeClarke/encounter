@@ -4,6 +4,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 /// Takes a rest that offers moves: choose the moves, then see what they gave back.
 struct GenericRestSheet: View {
@@ -61,4 +62,10 @@ struct GenericRestSheet: View {
         .frame(minWidth: 420, minHeight: 380)
         #endif
     }
+}
+
+#Preview("Daggerheart short rest") {
+    let data = GenericPreviewData.make()
+    let rest = RuleSystems.system(forKey: "daggerheart").rests.first
+    return Group { if let data, let rest { GenericRestSheet(page: data.character, rest: rest).modelContainer(data.container) } }
 }

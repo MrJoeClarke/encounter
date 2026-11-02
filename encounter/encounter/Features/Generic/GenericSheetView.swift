@@ -14,6 +14,7 @@ struct GenericSheetView: View {
     @State private var rolling: RollRequest?
     @State private var isLevellingUp = false
     @State private var restMessage: String?
+    @Environment(\.dynamicTypeSize) private var typeSize
     @State private var restWithMoves: RestDefinition?
 
     private struct RollRequest: Identifiable {
@@ -63,19 +64,26 @@ struct GenericSheetView: View {
 
     private var level: Int? { system.advancement.map { Advancement.level(of: page, rule: $0) } }
 
+    /// Side by side, or stacked when the text is large and would otherwise break in the middle of words.
+    private var adaptive: AnyLayout {
+        typeSize.isAccessibilitySize ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8)) : AnyLayout(HStackLayout(alignment: .firstTextBaseline))
+    }
+
     private var header: some View {
-        HStack(alignment: .firstTextBaseline) {
+        adaptive {
             VStack(alignment: .leading) {
                 Text(page.title.isEmpty ? String(localized: "Untitled") : page.title).font(.largeTitle.weight(.semibold))
                 Text([page.summary, level.map { String(localized: "Level \($0)") }].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · "))
                     .foregroundStyle(.secondary)
             }
-            Spacer()
-            Menu("Rest", systemImage: "bed.double") {
-                ForEach(system.rests) { rest in Button(rest.name) { takeRest(rest) } }
-            }
-            if let rule = system.advancement, Advancement.canLevelUp(page, rule: rule) {
-                Button("Level Up", systemImage: "arrow.up.circle") { isLevellingUp = true }
+            if !typeSize.isAccessibilitySize { Spacer() }
+            HStack {
+                Menu("Rest", systemImage: "bed.double") {
+                    ForEach(system.rests) { rest in Button(rest.name) { takeRest(rest) } }
+                }
+                if let rule = system.advancement, Advancement.canLevelUp(page, rule: rule) {
+                    Button("Level Up", systemImage: "arrow.up.circle") { isLevellingUp = true }
+                }
             }
         }
     }
@@ -85,13 +93,19 @@ struct GenericSheetView: View {
         VStack(alignment: .leading, spacing: 8) {
             ForEach(system.worldResources) { resource in
                 let value = SheetEngine.worldValue(resource, world: world, system: system)
-                HStack {
-                    Text(resource.name).font(.headline)
-                    Text("shared by the whole table").font(.caption).foregroundStyle(.secondary)
-                    Spacer()
-                    Text("\(value.current)\(value.maximum.map { " of \($0)" } ?? "")").monospacedDigit().foregroundStyle(.secondary)
-                    Button { SheetEngine.adjustWorld(resource.id, by: -1, on: world, system: system) } label: { Image(systemName: "minus.circle") }
-                    Button { SheetEngine.adjustWorld(resource.id, by: 1, on: world, system: system) } label: { Image(systemName: "plus.circle") }
+                adaptive {
+                    VStack(alignment: .leading) {
+                        Text(resource.name).font(.headline)
+                        Text("shared by the whole table").font(.caption).foregroundStyle(.secondary)
+                    }
+                    if !typeSize.isAccessibilitySize { Spacer() }
+                    HStack {
+                        Text("\(value.current)\(value.maximum.map { " of \($0)" } ?? "")").monospacedDigit().foregroundStyle(.secondary)
+                        Button { SheetEngine.adjustWorld(resource.id, by: -1, on: world, system: system) } label: { Image(systemName: "minus.circle") }
+                            .accessibilityLabel("Spend one \(resource.name)")
+                        Button { SheetEngine.adjustWorld(resource.id, by: 1, on: world, system: system) } label: { Image(systemName: "plus.circle") }
+                            .accessibilityLabel("Add one \(resource.name)")
+                    }
                 }
                 .buttonStyle(.borderless)
             }
@@ -119,24 +133,38 @@ struct GenericSheetView: View {
     private func rowView(_ row: SheetRowValue) -> some View {
         switch row.value {
         case .number(let number):
-            LabeledContent(row.row.label, value: number.formatted())
+            HStack {
+                Text(row.row.label)
+                Spacer()
+                Text(number.formatted()).monospacedDigit().foregroundStyle(.secondary)
+            }
+            .accessibilityElement(children: .combine)
         case .check(let modifier, let roll):
             Button { rolling = RollRequest(label: row.row.label, modifier: modifier, roll: roll) } label: {
                 HStack {
                     Text(row.row.label)
                     Spacer()
                     Text(Self.signed(modifier)).monospacedDigit().foregroundStyle(.tint)
-                    Image(systemName: "dice").foregroundStyle(.secondary)
+                    Image(systemName: "dice").foregroundStyle(.secondary).accessibilityHidden(true)
                 }
                 .contentShape(Rectangle())
             }
+            .accessibilityLabel("\(row.row.label), \(Self.signed(modifier))")
+            .accessibilityHint("Rolls a check")
             .buttonStyle(.plain)
         case .resource(let current, let maximum):
             if case .resource(let id) = row.row.kind, let resource = system.resources.first(where: { $0.id == id }) {
                 resourceRow(resource, label: row.row.label, current: current, maximum: maximum)
             }
         case .text(let text):
-            if !text.isEmpty { LabeledContent(row.row.label, value: text) }
+            if !text.isEmpty {
+                HStack(alignment: .firstTextBaseline) {
+                    Text(row.row.label)
+                    Spacer()
+                    Text(text).foregroundStyle(.secondary).multilineTextAlignment(.trailing)
+                }
+                .accessibilityElement(children: .combine)
+            }
         case .entries(let entries):
             if entries.isEmpty {
                 Text("None yet. Add them in the page.").font(.callout).foregroundStyle(.secondary)
@@ -156,7 +184,8 @@ struct GenericSheetView: View {
     private func resourceRow(_ resource: ResourceDefinition, label: String, current: Int, maximum: Int?) -> some View {
         let marksSpent = resource.storage == .spent
         let filled = marksSpent ? (maximum ?? 0) - current : current
-        return HStack {
+        let summary = marksSpent ? "\(filled) marked of \(maximum ?? 0)" : "\(current)\(maximum.map { " of \($0)" } ?? "")"
+        return adaptive {
             VStack(alignment: .leading, spacing: 4) {
                 Text(label)
                 if let maximum, maximum > 0 {
@@ -167,15 +196,20 @@ struct GenericSheetView: View {
                                 .frame(width: 12, height: 12)
                         }
                     }
+                    .accessibilityHidden(true)
                 }
             }
-            Spacer()
-            Text(marksSpent ? "\(filled) marked of \(maximum ?? 0)" : "\(current)\(maximum.map { " of \($0)" } ?? "")")
-                .font(.callout).foregroundStyle(.secondary).monospacedDigit()
-            // A spent resource is marked by using some of what remains, and a remaining one is spent the same way.
-            Button { SheetEngine.adjust(resource.id, by: marksSpent ? 1 : -1, on: page, system: system) } label: { Image(systemName: "minus.circle") }
-            Button { SheetEngine.adjust(resource.id, by: marksSpent ? -1 : 1, on: page, system: system) } label: { Image(systemName: "plus.circle") }
+            if !typeSize.isAccessibilitySize { Spacer() }
+            HStack {
+                Text(summary).font(.callout).foregroundStyle(.secondary).monospacedDigit()
+                // A spent resource is marked by using some of what remains, and a remaining one is spent the same way.
+                Button { SheetEngine.adjust(resource.id, by: marksSpent ? 1 : -1, on: page, system: system) } label: { Image(systemName: "minus.circle") }
+                    .accessibilityLabel(marksSpent ? "Clear one \(label)" : "Spend one \(label)")
+                Button { SheetEngine.adjust(resource.id, by: marksSpent ? -1 : 1, on: page, system: system) } label: { Image(systemName: "plus.circle") }
+                    .accessibilityLabel(marksSpent ? "Mark one \(label)" : "Gain one \(label)")
+            }
         }
+        .accessibilityElement(children: .contain)
         .buttonStyle(.borderless)
     }
 
@@ -234,4 +268,12 @@ extension GenericConditionsBox {
         let ids = Set(page.attributeText("\(system.key).conditions").split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) })
         return ConditionEngine.effect(on: roll, active: Dictionary(uniqueKeysWithValues: ids.map { ($0, 1) }), definitions: system.conditions, formulas: system.formulas)
     }
+}
+
+#Preview("Daggerheart sheet") {
+    let data = GenericPreviewData.make()
+    return Group { if let data { GenericSheetView(page: data.character).modelContainer(data.container) } }
+        #if os(macOS)
+        .frame(width: 900, height: 900)
+        #endif
 }
