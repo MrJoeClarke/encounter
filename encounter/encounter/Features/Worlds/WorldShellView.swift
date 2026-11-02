@@ -13,7 +13,7 @@ enum WorldSidebarItem: Hashable {
     case worldMap
     case timeline
     case campaigns
-    case library(LibraryKind)
+    case library(LibraryList)
 }
 
 /// The working area for one world: a sidebar (home page, page kinds and the library) and, beside it, the
@@ -32,7 +32,7 @@ struct WorldShellView: View {
     }
 
     private var hasLibrary: Bool {
-        RuleSystems.system(for: world.system).hasContentLibrary
+        world.rules.contains(.library)
     }
 
     /// On iOS, whether the screen chosen from the menu is open on top of it.
@@ -114,9 +114,9 @@ struct WorldShellView: View {
             WorldTimelineView(world: world)
         case .campaigns:
             CampaignsBrowser(world: world)
-        case .library(let kind):
-            LibraryBrowser(world: world, kind: kind)
-                .id(kind)
+        case .library(let list):
+            LibraryBrowser(world: world, list: list)
+                .id(list)
         }
     }
 
@@ -146,8 +146,8 @@ struct WorldShellView: View {
 
         if hasLibrary {
             Section("Library") {
-                ForEach(Library.shared.listKinds(in: world.edition), id: \.self) { kind in
-                    row(.library(kind), kind.listTitle(in: world.edition), systemImage: kind.systemImage)
+                ForEach(Library.shared.lists(in: world.edition), id: \.self) { list in
+                    row(.library(list), Library.shared.title(of: list, in: world.edition), systemImage: Library.shared.systemImage(of: list, in: world.edition))
                 }
             }
         }

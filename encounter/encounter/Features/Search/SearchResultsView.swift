@@ -30,7 +30,7 @@ struct SearchResultsView: View {
                 ForEach(world.visibleKinds) { kind in
                     Text(kind.title).tag(SearchScope.kind(kind))
                 }
-                if RuleSystems.system(for: world.system).hasContentLibrary {
+                if world.rules.contains(.library) {
                     Text("Library").tag(SearchScope.library)
                 }
             }

@@ -177,7 +177,7 @@ struct LibraryTests {
                         #expect(feature.level == nil, "\(entry.key) / \(feature.name) has a level")
                     case .class, .subclass:
                         #expect((1...20).contains(feature.level ?? 0), "\(entry.key) / \(feature.name) needs a level from 1 to 20")
-                    case .skill, .condition, .background, .feat, .equipment, .spell:
+                    case .skill, .condition, .background, .feat, .equipment, .spell, .entry:
                         break
                     }
                 }
@@ -540,7 +540,7 @@ struct LibraryTests {
         let dnd = World(name: "D&D", system: .dnd5e)
         context.insert(dnd)
         #expect(dnd.visibleKinds.contains(.characterClass))
-        #expect(dnd.visibleKinds == PageKind.allCases)
+        #expect(dnd.visibleKinds == PageKind.allCases.filter { $0 != .contentEntry })
     }
 
     @Test func aWorldWithClassPagesKeepsShowingThemWhateverTheSystem() throws {
@@ -613,12 +613,12 @@ struct LibraryTests {
         let champion = try #require(library.entry(forKey: "srd51.subclass.champion"))
 
         navigation.openLibraryEntry(hill)
-        #expect(navigation.selection == .library(.race))
+        #expect(navigation.selection == .library(LibraryList(.race)))
         #expect(navigation.selectedLibraryKey == "srd51.race.hill-dwarf")
 
         // A subclass is listed under Classes.
         navigation.openLibraryEntry(champion)
-        #expect(navigation.selection == .library(.class))
+        #expect(navigation.selection == .library(LibraryList(.class)))
         #expect(navigation.selectedLibraryKey == "srd51.subclass.champion")
     }
 
@@ -629,7 +629,7 @@ struct LibraryTests {
         let navigation = WorldNavigation()
         navigation.openLibraryEntry(LibraryEntry(key: "srd51.race.elf", kind: .race, name: "Elf"))
 
-        navigation.choose(.library(.class))
+        navigation.choose(.library(LibraryList(.class)))
         #expect(navigation.selectedLibraryKey == nil)
 
         navigation.openLibraryEntry(LibraryEntry(key: "srd51.race.elf", kind: .race, name: "Elf"))
@@ -771,7 +771,7 @@ struct LibraryTests {
         router.activate(world: world, navigation: navigation)
 
         #expect(router.open(Mention.url(forLibraryKey: "srd51.class.fighter")))
-        #expect(navigation.selection == .library(.class))
+        #expect(navigation.selection == .library(LibraryList(.class)))
         #expect(navigation.selectedLibraryKey == "srd51.class.fighter")
         #expect(!router.open(Mention.url(forLibraryKey: "srd51.class.nobody")))
     }
@@ -861,7 +861,7 @@ struct LibraryTests {
 
         let navigation = WorldNavigation()
         navigation.openLibraryEntry(athletics)
-        #expect(navigation.selection == .library(.skill))
+        #expect(navigation.selection == .library(LibraryList(.skill)))
         #expect(navigation.selectedLibraryKey == "srd51.skill.athletics")
     }
 

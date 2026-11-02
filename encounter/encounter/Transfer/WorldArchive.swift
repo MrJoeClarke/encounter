@@ -40,6 +40,8 @@ nonisolated struct WorldRecord: Codable, Sendable {
     /// The root place, at the top of the place hierarchy. Optional, because older files don't have one, and a
     /// root place is made on import.
     var rootPlaceID: UUID?
+    /// The version of the system the world was last set up under. Optional, because older files don't have it.
+    var systemVersion: Int?
 }
 
 nonisolated struct CalendarRecord: Codable, Sendable {

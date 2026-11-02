@@ -20,7 +20,7 @@ struct PageEditorView: View {
         var id: String { rawValue }
     }
 
-    private var hasSheet: Bool { page.kind == .character && page.world?.system == .dnd5e }
+    private var hasSheet: Bool { page.kind == .character && page.world?.rules.contains(.sheet) == true }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -66,7 +66,7 @@ struct PageEditorView: View {
                 }
             }
 
-            if page.kind == .character {
+            if page.kind == .character, page.world?.rules.contains(.advancement) == true {
                 LevelUpSection(page: page)
             }
 
@@ -136,8 +136,8 @@ struct PageEditorView: View {
     /// Attributes for this page's kind under its world's rule system, sectioned by group heading in definition order.
     private var groupedDefinitions: [DefinitionGroup] {
         var groups: [DefinitionGroup] = []
-        let system = page.world?.system ?? .none
-        for definition in RuleSystems.definitions(for: page.kind, system: system) {
+        let systemKey = page.world?.systemRaw ?? RuleSystemID.none.rawValue
+        for definition in RuleSystems.definitions(for: page.kind, systemKey: systemKey) {
             let title = String(localized: definition.group)
             if let index = groups.firstIndex(where: { $0.title == title }) {
                 groups[index] = DefinitionGroup(

@@ -17,6 +17,8 @@ enum PageKind: String, Codable, CaseIterable, Identifiable {
     case background
     case feat
     case spell
+    /// An entry of a kind a rule system defines in its content packs, such as a domain card. Its `core.entryKind` says which.
+    case contentEntry = "entry"
 
     var id: String { rawValue }
 
@@ -33,6 +35,7 @@ enum PageKind: String, Codable, CaseIterable, Identifiable {
         case .background: "Backgrounds"
         case .feat: "Feats"
         case .spell: "Spells"
+        case .contentEntry: "Entries"
         }
     }
 
@@ -49,6 +52,7 @@ enum PageKind: String, Codable, CaseIterable, Identifiable {
         case .background: "Background"
         case .feat: "Feat"
         case .spell: "Spell"
+        case .contentEntry: "Entry"
         }
     }
 
@@ -64,6 +68,7 @@ enum PageKind: String, Codable, CaseIterable, Identifiable {
         case .background: "book.closed.fill"
         case .feat: "medal.fill"
         case .spell: "wand.and.stars"
+        case .contentEntry: "doc.text.fill"
         }
     }
 
@@ -71,7 +76,7 @@ enum PageKind: String, Codable, CaseIterable, Identifiable {
     /// has pages of that kind, so a world on "None" doesn't show an empty Classes category.
     var isConditional: Bool {
         switch self {
-        case .characterClass, .background, .feat, .spell: true
+        case .characterClass, .background, .feat, .spell, .contentEntry: true
         default: false
         }
     }

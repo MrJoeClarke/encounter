@@ -13,7 +13,7 @@ struct NewWorldSheet: View {
 
     @State private var name = ""
     @State private var summary = ""
-    @State private var system = RuleSystemID.none
+    @State private var systemKey = RuleSystemID.none.rawValue
 
     var body: some View {
         NavigationStack {
@@ -24,9 +24,9 @@ struct NewWorldSheet: View {
                         .lineLimit(2...5)
                 }
                 Section {
-                    Picker("Rule System", selection: $system) {
-                        ForEach(RuleSystemID.allCases) { system in
-                            Text(system.title).tag(system)
+                    Picker("Rule System", selection: $systemKey) {
+                        ForEach(RuleSystems.choices) { system in
+                            Text(system.title).tag(system.key)
                         }
                     }
                 } footer: {
@@ -58,7 +58,8 @@ struct NewWorldSheet: View {
     }
 
     private func create() {
-        let world = World(name: trimmedName, summary: summary, system: system)
+        let world = World(name: trimmedName, summary: summary)
+        world.choose(systemKey: systemKey)
         modelContext.insert(world)
         // Every world has a place at the top of its hierarchy, named after it, whose map is the world map.
         world.ensureRootPlace(in: modelContext)

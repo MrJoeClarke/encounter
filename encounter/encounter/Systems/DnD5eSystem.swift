@@ -10,7 +10,125 @@ struct DnD5eSystem: RuleSystem {
     let id = RuleSystemID.dnd5e
 
     var additionalPageKinds: Set<PageKind> { [.characterClass, .background, .feat, .spell] }
-    var hasContentLibrary: Bool { true }
+    var modules: RuleModules { [.library, .characterCreation, .advancement, .sheet, .conditions] }
+
+    var rollModel: RollModel? { .d20 }
+    var formulas: FormulaSet { Self.formulaSet }
+
+    /// How D&D works out its numbers. Inputs are `score` (an ability score), `level`, `proficiencyMultiplier` (0, a half, 1 or 2
+    /// for how well a skill is known) and, for the others, the names of the formulas they use.
+    static let formulaSet = FormulaSet([
+        "abilityModifier": "floor((score - 10) / 2)",
+        "proficiencyBonus": "2 + floor((max(level, 1) - 1) / 4)",
+        "spellSaveDC": "8 + proficiencyBonus + abilityModifier",
+        "spellAttackBonus": "proficiencyBonus + abilityModifier",
+        "skillBonus": "abilityModifier + floor(proficiencyBonus * proficiencyMultiplier)",
+    ])
+
+    var conditions: [ConditionDefinition] { Self.conditionList }
+    var sheetLayout: SheetLayout? { Self.layout }
+
+    /// The part of D&D's sheet that is only numbers from the page and formulas. The sheet screen still draws the rest (skills,
+    /// attacks, spells, action cards) from `CharacterSheet`.
+    static let layout = SheetLayout(sections: [
+        SheetSection(id: "hitPoints", title: "Hit Points", rows: [
+            SheetRow(id: "hitPoints", label: "Hit Points", kind: .resource("hitPoints")),
+            SheetRow(id: "temporaryHitPoints", label: "Temporary Hit Points", kind: .resource("temporaryHitPoints")),
+        ]),
+        SheetSection(id: "abilities", title: "Abilities", rows: Ability.allCases.map {
+            SheetRow(id: $0.attributeKey, label: $0.rawValue, kind: .stat(formula: "abilityModifier", inputs: ["score": $0.attributeKey]))
+        } + [SheetRow(id: "proficiencyBonus", label: "Proficiency Bonus", kind: .stat(formula: "proficiencyBonus", inputs: [:]))]),
+    ])
+
+
+    /// What D&D's conditions do to the character's own rolls, for both editions: the input `edition2024` is 1 for the 2024
+    /// rules and 0 for the 2014 rules, and exhaustion has levels. Movement and hit points are still worked out in code.
+    static let conditionList: [ConditionDefinition] = {
+        let attack: Set<String> = ["attack"]
+        let d20Penalty = ConditionEffectRule.Effect.penalty(formula: "-2 * level", reason: "Exhaustion")
+        let senses = { (name: String, sense: String) in
+            ConditionEffectRule(["check"], .autoFail("\(name): automatically fails a check that needs \(sense)"))
+        }
+        let cantMoveSaves = { (name: String) in
+            [ConditionEffectRule(["save.strength", "save.dexterity"], .autoFail("\(name): automatically fails Strength and Dexterity saving throws"))]
+        }
+        return [
+            ConditionDefinition("blinded", "Blinded", effects: [.init(attack, .disadvantage), senses("Blinded", "sight")]),
+            ConditionDefinition("charmed", "Charmed"),
+            ConditionDefinition("deafened", "Deafened", effects: [senses("Deafened", "hearing")]),
+            ConditionDefinition("exhaustion", "Exhaustion", hasLevels: true, effects: [
+                .init(attack, .disadvantage, when: "(1 - edition2024) * max(0, min(1, level - 2))"),
+                .init(["check", "initiative"], .disadvantage, when: "(1 - edition2024) * min(1, level)"),
+                .init(["save"], .disadvantage, when: "(1 - edition2024) * max(0, min(1, level - 2))"),
+                .init(["attack", "check", "save", "initiative"], d20Penalty, when: "edition2024"),
+            ]),
+            ConditionDefinition("frightened", "Frightened", effects: [.init(attack, .disadvantage), .init(["check", "initiative"], .disadvantage)]),
+            ConditionDefinition("grappled", "Grappled", effects: [.init(attack, .disadvantage, when: "edition2024")]),
+            ConditionDefinition("incapacitated", "Incapacitated", effects: [.init(["initiative"], .disadvantage, when: "edition2024")]),
+            ConditionDefinition("invisible", "Invisible", effects: [.init(attack, .advantage), .init(["initiative"], .advantage, when: "edition2024")]),
+            ConditionDefinition("paralyzed", "Paralyzed", effects: cantMoveSaves("Paralyzed")),
+            ConditionDefinition("petrified", "Petrified", effects: cantMoveSaves("Petrified")),
+            ConditionDefinition("poisoned", "Poisoned", effects: [.init(attack, .disadvantage), .init(["check", "initiative"], .disadvantage)]),
+            ConditionDefinition("prone", "Prone", effects: [.init(attack, .disadvantage)]),
+            ConditionDefinition("restrained", "Restrained", effects: [.init(attack, .disadvantage), .init(["save.dexterity"], .disadvantage)]),
+            ConditionDefinition("stunned", "Stunned", effects: cantMoveSaves("Stunned")),
+            ConditionDefinition("unconscious", "Unconscious", effects: cantMoveSaves("Unconscious")),
+        ]
+    }()
+
+    var rests: [RestDefinition] { Self.restList }
+    var resources: [ResourceDefinition] { Self.resourceList }
+
+    var creationFlow: CreationFlow? { Self.flow }
+    var advancement: AdvancementRule? { Self.advancementRule }
+
+    /// The steps D&D's builder shares with any system: who the character is, what they come from, and their scores. The builder
+    /// adds D&D's own steps (skills, tools, equipment, spells) between these, and still makes the character itself.
+    static let flow = CreationFlow(
+        steps: [
+            CreationStep(id: "concept", title: "Concept", kind: .concept),
+            CreationStep(id: LinkRole.race, title: "Race", kind: .choose(list: LibraryList(.race), isRequired: true)),
+            CreationStep(id: LinkRole.characterClass, title: "Class", kind: .choose(list: LibraryList(.class), isRequired: true)),
+            CreationStep(id: LinkRole.background, title: "Background", kind: .choose(list: LibraryList(.background), isRequired: true)),
+            CreationStep(id: "abilities", title: "Abilities", kind: .numbers(NumberRule(
+                entries: Ability.allCases.map { .init(key: $0.attributeKey, label: $0.rawValue, variable: $0.rawValue.lowercased()) },
+                method: .assignFrom(CharacterRules.standardArray)
+            ))),
+            CreationStep(id: "review", title: "Review", kind: .review),
+        ],
+        derived: [("dnd5e.proficiencyBonus", "proficiencyBonus")],
+        levelKey: "dnd5e.classLevel"
+    )
+
+    /// Levelling beyond this (hit points, features, spells) is in `LevelUp`; the proficiency bonus is the part that is only a
+    /// formula.
+    static let advancementRule = AdvancementRule(
+        levelKey: "dnd5e.classLevel", maxLevel: 20,
+        gains: [.init(key: "dnd5e.proficiencyBonus", formula: "proficiencyBonus")]
+    )
+
+    static let restList = [RestDefinition(id: "short", name: "Short Rest"), RestDefinition(id: "long", name: "Long Rest")]
+
+    /// What a rest gives back. Inputs are `level`, the numbers on the page, and `usesPactMagic` (1 or 0). A long rest also takes away a level
+    /// of exhaustion, which belongs to the conditions.
+    static let resourceList = [
+        ResourceDefinition(
+            id: "hitPoints", name: "Hit Points", key: "dnd5e.currentHitPoints", storage: .remaining, maximum: "dnd5e.hitPoints",
+            restoredBy: ["long": .full]
+        ),
+        ResourceDefinition(id: "temporaryHitPoints", name: "Temporary Hit Points", key: "dnd5e.temporaryHitPoints", storage: .remaining, restoredBy: ["long": .empty]),
+        ResourceDefinition(id: "deathSaveSuccesses", name: "Death Save Successes", key: "dnd5e.deathSaveSuccesses", storage: .spent, maximum: "3", restoredBy: ["long": .full]),
+        ResourceDefinition(id: "deathSaveFailures", name: "Death Save Failures", key: "dnd5e.deathSaveFailures", storage: .spent, maximum: "3", restoredBy: ["long": .full]),
+        // A warlock's slots come back on a short rest, but other casters' don't.
+        ResourceDefinition(
+            id: "spellSlots", name: "Spell Slots", key: "dnd5e.spellSlotsUsed", storage: .spentList,
+            restoredBy: ["long": .full, "short": .full(when: "usesPactMagic")]
+        ),
+        ResourceDefinition(
+            id: "hitDice", name: "Hit Dice", key: "dnd5e.hitDiceSpent", storage: .spent, maximum: "level",
+            restoredBy: ["long": .formula("max(1, floor(level / 2))")]
+        ),
+    ]
 
     static let hitDice = ["d6", "d8", "d10", "d12"]
 

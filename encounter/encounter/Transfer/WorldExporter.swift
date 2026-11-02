@@ -92,7 +92,8 @@ enum WorldExporter {
                 },
                 images: imageRecords(for: world, files: &files),
                 edition: world.editionRaw,
-                rootPlaceID: world.rootPlaceID
+                rootPlaceID: world.rootPlaceID,
+                systemVersion: world.systemVersion > 0 ? world.systemVersion : nil
             ),
             campaigns: campaignRecords,
             pages: pageRecords,

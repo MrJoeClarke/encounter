@@ -96,7 +96,7 @@ struct PageListView: View {
 
     /// A character list in a world with a content library can also build a character from it.
     private var canBuildCharacter: Bool {
-        kind == .character && RuleSystems.system(for: world.system).hasContentLibrary
+        kind == .character && world.rules.contains(.characterCreation)
     }
 
     @ToolbarContentBuilder

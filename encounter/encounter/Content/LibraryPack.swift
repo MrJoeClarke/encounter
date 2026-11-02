@@ -60,6 +60,8 @@ nonisolated enum LibraryKind: String, Codable, Sendable, CaseIterable {
     case feat
     case equipment
     case spell
+    /// An entry of a kind the pack defines itself (see `LibraryPack.entryKinds`), named by the entry's `subKind`.
+    case entry
 
     /// The kind of page a custom version becomes. Subclasses don't have a page kind of their own: they're
     /// copied as part of their class. Skills are fixed rules data, with no custom version. Equipment becomes an
@@ -72,6 +74,7 @@ nonisolated enum LibraryKind: String, Codable, Sendable, CaseIterable {
         case .feat: .feat
         case .equipment: .item
         case .spell: .spell
+        case .entry: .contentEntry
         case .subclass, .skill, .condition: nil
         }
     }
@@ -94,6 +97,7 @@ nonisolated enum LibraryKind: String, Codable, Sendable, CaseIterable {
         case .feat: "medal"
         case .equipment: "backpack"
         case .spell: "wand.and.stars"
+        case .entry: "doc.text"
         }
     }
 
@@ -108,6 +112,7 @@ nonisolated enum LibraryKind: String, Codable, Sendable, CaseIterable {
         case .feat: "Feats"
         case .equipment: "Equipment"
         case .spell: "Spells"
+        case .entry: "Entries"
         }
     }
 }
@@ -125,11 +130,13 @@ nonisolated struct LibraryEntry: Decodable, Identifiable, Hashable, Sendable {
     var attributes: [String: AttributeValue]
     /// Traits (races) or features (classes), in order.
     var entries: [EntryValue]
+    /// For an entry of kind `.entry`, which of the pack's `entryKinds` it is, such as "daggerheart.domainCard".
+    var subKind: String?
 
     var id: String { key }
 
     private enum CodingKeys: String, CodingKey {
-        case key, kind, name, parent, summary, attributes, entries
+        case key, kind, name, parent, summary, attributes, entries, subKind
     }
 
     init(from decoder: any Decoder) throws {
@@ -142,6 +149,7 @@ nonisolated struct LibraryEntry: Decodable, Identifiable, Hashable, Sendable {
         attributes = (try container.decodeIfPresent([String: PackAttributeValue].self, forKey: .attributes) ?? [:])
             .mapValues(\.value)
         entries = try container.decodeIfPresent([EntryValue].self, forKey: .entries) ?? []
+        subKind = try container.decodeIfPresent(String.self, forKey: .subKind)
     }
 
     init(
@@ -151,7 +159,8 @@ nonisolated struct LibraryEntry: Decodable, Identifiable, Hashable, Sendable {
         parent: String? = nil,
         summary: String = "",
         attributes: [String: AttributeValue] = [:],
-        entries: [EntryValue] = []
+        entries: [EntryValue] = [],
+        subKind: String? = nil
     ) {
         self.key = key
         self.kind = kind
@@ -160,6 +169,7 @@ nonisolated struct LibraryEntry: Decodable, Identifiable, Hashable, Sendable {
         self.summary = summary
         self.attributes = attributes
         self.entries = entries
+        self.subKind = subKind
     }
 }
 
@@ -183,6 +193,50 @@ private nonisolated struct PackAttributeValue: Decodable {
     }
 }
 
+/// A kind of entry a pack defines, such as Domain Cards, so a system needn't have a page kind or a code path for each.
+nonisolated struct EntryKindDefinition: Decodable, Equatable, Identifiable, Sendable {
+    /// Permanent, and begins with the system, such as "daggerheart.domainCard".
+    var id: String
+    /// The heading of its list, such as "Domain Cards".
+    var title: String
+    /// What one is called, such as "Domain Card".
+    var singularTitle: String
+    var systemImage: String
+
+    init(id: String, title: String, singularTitle: String, systemImage: String = "doc.text") {
+        self.id = id
+        self.title = title
+        self.singularTitle = singularTitle
+        self.systemImage = systemImage
+    }
+
+    private enum CodingKeys: String, CodingKey { case id, title, singularTitle, systemImage }
+
+    init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(String.self, forKey: .id)
+        title = try container.decode(String.self, forKey: .title)
+        singularTitle = try container.decodeIfPresent(String.self, forKey: .singularTitle) ?? title
+        systemImage = try container.decodeIfPresent(String.self, forKey: .systemImage) ?? "doc.text"
+    }
+}
+
+/// A list in the Library: one of the kinds, or, for `.entry`, one of the pack's own kinds of entry.
+nonisolated struct LibraryList: Hashable, Sendable {
+    var kind: LibraryKind
+    var subKind: String?
+
+    init(_ kind: LibraryKind, subKind: String? = nil) {
+        self.kind = kind
+        self.subKind = subKind
+    }
+
+    /// The list an entry appears in.
+    init(of entry: LibraryEntry) {
+        self.init(entry.kind.listKind, subKind: entry.kind == .entry ? entry.subKind : nil)
+    }
+}
+
 /// A bundled content pack: the entries for one edition, with the attribution its licence requires.
 nonisolated struct LibraryPack: Decodable, Sendable {
     /// The highest `formatVersion` this app can read.
@@ -195,9 +249,11 @@ nonisolated struct LibraryPack: Decodable, Sendable {
     /// The statement the licence requires wherever the content is shown.
     var attribution: String
     var entries: [LibraryEntry]
+    /// The kinds of entry the pack defines for itself.
+    var entryKinds: [EntryKindDefinition]
 
     private enum CodingKeys: String, CodingKey {
-        case formatVersion, id, name, edition, attribution, entries
+        case formatVersion, id, name, edition, attribution, entries, entryKinds
     }
 
     init(from decoder: any Decoder) throws {
@@ -209,15 +265,17 @@ nonisolated struct LibraryPack: Decodable, Sendable {
         attribution = try container.decode(String.self, forKey: .attribution)
         // An entry of a kind this app doesn't know is skipped, so a newer pack still loads.
         entries = try container.decode([FailableEntry].self, forKey: .entries).compactMap(\.entry)
+        entryKinds = try container.decodeIfPresent([EntryKindDefinition].self, forKey: .entryKinds) ?? []
     }
 
-    init(formatVersion: Int = LibraryPack.supportedFormatVersion, id: String, name: String, edition: String, attribution: String, entries: [LibraryEntry]) {
+    init(formatVersion: Int = LibraryPack.supportedFormatVersion, id: String, name: String, edition: String, attribution: String, entries: [LibraryEntry], entryKinds: [EntryKindDefinition] = []) {
         self.formatVersion = formatVersion
         self.id = id
         self.name = name
         self.edition = edition
         self.attribution = attribution
         self.entries = entries
+        self.entryKinds = entryKinds
     }
 
     /// Decodes an entry, or nil if it can't be read.

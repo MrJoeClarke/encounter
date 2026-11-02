@@ -157,7 +157,7 @@ private struct WorldRow: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(world.name.isEmpty ? String(localized: "Untitled World") : world.name)
                     .font(.headline)
-                Text(world.system.title)
+                Text(world.systemTitle)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }

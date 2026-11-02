@@ -50,7 +50,7 @@ final class WorldNavigation {
 
     /// Shows the library entry: switches the sidebar to its list and selects it.
     func openLibraryEntry(_ entry: LibraryEntry) {
-        selection = .library(entry.kind.listKind)
+        selection = .library(LibraryList(of: entry))
         selectedLibraryKey = entry.key
         selectedPage = nil
         searchText = ""

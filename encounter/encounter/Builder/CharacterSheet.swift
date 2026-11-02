@@ -141,14 +141,16 @@ struct CharacterSheet {
             guard case .text(let abilityName)? = entry.attributes["dnd5e.ability"], let ability = Ability(name: abilityName) else { return nil }
             let key = entry.name.lowercased()
             let level: SkillProficiency = proficient.contains(key) ? (expert.contains(key) ? .expertise : .proficient) : (hasJackOfAllTrades ? .half : .none)
-            let added: Int
-            switch level {
-            case .none: added = 0
-            case .half: added = halfProficiency
-            case .proficient: added = proficiencyBonus
-            case .expertise: added = proficiencyBonus * 2
+            let multiplier: Double = switch level {
+            case .none: 0
+            case .half: 0.5
+            case .proficient: 1
+            case .expertise: 2
             }
-            return SheetSkill(name: entry.name, ability: ability, proficiency: level, bonus: modifier(ability) + added)
+            let bonus = DnD5eSystem.formulaSet.integer("skillBonus", [
+                "score": Double(scores[ability] ?? 10), "proficiencyBonus": Double(proficiencyBonus), "proficiencyMultiplier": multiplier,
+            ]) ?? 0
+            return SheetSkill(name: entry.name, ability: ability, proficiency: level, bonus: bonus)
         }
         // The library lists them by ability; a sheet lists them by name.
         .sorted { $0.name < $1.name }
@@ -379,20 +381,28 @@ struct CharacterSheet {
 
     // MARK: Rests
 
-    func shortRest() {
-        // Pact magic comes back on a short rest.
-        if usesPactMagic { page.setAttributeText("dnd5e.spellSlotsUsed", "") }
+    /// Gives back what a kind of rest gives back, as the rule system says (see `DnD5eSystem.resourceList`).
+    private func rest(_ id: String) {
+        let formulas = DnD5eSystem.formulaSet
+        let inputs: [String: Double] = ["level": Double(level), "dnd5e.hitPoints": Double(maximumHitPoints), "usesPactMagic": usesPactMagic ? 1 : 0]
+        for resource in DnD5eSystem.resourceList {
+            if let text = ResourceRules.textAfter(rest: id, resource: resource, formulas: formulas, inputs: inputs) {
+                page.setAttributeText(resource.key, text)
+            } else if let value = ResourceRules.valueAfter(
+                rest: id, resource: resource, current: page.attributeNumber(resource.key), formulas: formulas, inputs: inputs
+            ) {
+                page.setAttributeNumber(resource.key, value)
+            }
+        }
     }
+
+    func shortRest() { rest("short") }
 
     /// Everything comes back, and half the hit dice (at least one).
     func longRest() {
-        page.setAttributeNumber("dnd5e.currentHitPoints", Double(maximumHitPoints))
-        page.setAttributeNumber("dnd5e.temporaryHitPoints", 0)
-        resetDeathSaves()
+        rest("long")
         // A long rest takes away one level of exhaustion.
         if conditionState.exhaustion > 0 { setExhaustion(conditionState.exhaustion - 1) }
-        page.setAttributeText("dnd5e.spellSlotsUsed", "")
-        page.setAttributeNumber("dnd5e.hitDiceSpent", Double(max(0, hitDiceSpent - max(1, level / 2))))
     }
 }
 
