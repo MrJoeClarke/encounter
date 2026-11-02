@@ -67,6 +67,34 @@ final class Library {
         LibraryKind.listKinds.filter { !topLevelEntries($0, in: edition).isEmpty }
     }
 
+    /// The lists to show in the Library for an edition: the kinds that have entries, then the pack's own kinds of entry.
+    func lists(in edition: LibraryEdition) -> [LibraryList] {
+        let kinds = listKinds(in: edition).filter { $0 != .entry }.map { LibraryList($0) }
+        let own = (pack(for: edition)?.entryKinds ?? []).map { LibraryList(.entry, subKind: $0.id) }
+        return kinds + own.filter { !topLevelEntries(in: $0, edition: edition).isEmpty }
+    }
+
+    /// The entries of a list that don't belong to another entry.
+    func topLevelEntries(in list: LibraryList, edition: LibraryEdition) -> [LibraryEntry] {
+        entries(list.kind, in: edition).filter { $0.parent == nil && (list.kind != .entry || $0.subKind == list.subKind) }
+    }
+
+    /// The pack's definition of one of its own kinds of entry.
+    func entryKind(_ id: String?, in edition: LibraryEdition) -> EntryKindDefinition? {
+        guard let id else { return nil }
+        return pack(for: edition)?.entryKinds.first { $0.id == id }
+    }
+
+    func title(of list: LibraryList, in edition: LibraryEdition) -> LocalizedStringResource {
+        if list.kind == .entry, let definition = entryKind(list.subKind, in: edition) { return "\(definition.title)" }
+        return list.kind.listTitle(in: edition)
+    }
+
+    func systemImage(of list: LibraryList, in edition: LibraryEdition) -> String {
+        if list.kind == .entry, let definition = entryKind(list.subKind, in: edition) { return definition.systemImage }
+        return list.kind.systemImage
+    }
+
     /// The subraces of a race or subclasses of a class.
     func children(of entry: LibraryEntry, in edition: LibraryEdition) -> [LibraryEntry] {
         (pack(for: edition)?.entries ?? [])
@@ -156,6 +184,10 @@ extension Library {
         case .background, .feat, .equipment, .spell:
             attributes = entry.attributes
             entries = entry.entries
+        case .entry:
+            attributes = entry.attributes
+            entries = entry.entries
+            if let subKind = entry.subKind { attributes[CoreAttributes.entryKindKey] = .text(subKind) }
         case .subclass, .skill, .condition:
             return nil
         }
@@ -181,7 +213,7 @@ extension Library {
     private func entriesKey(for kind: PageKind) -> String {
         switch kind {
         case .characterClass: CoreAttributes.featuresKey
-        case .background, .feat, .item: CoreAttributes.detailsKey
+        case .background, .feat, .item, .contentEntry: CoreAttributes.detailsKey
         default: CoreAttributes.traitsKey
         }
     }
@@ -202,6 +234,9 @@ extension LibraryEntry {
         case .feat: return "Feat"
         case .equipment: return "Equipment"
         case .spell: return "Spell"
+        case .entry:
+            let definition = Library.shared.entryKind(subKind, in: edition)
+            return definition.map { "\($0.singularTitle)" } ?? "Entry"
         }
     }
 }

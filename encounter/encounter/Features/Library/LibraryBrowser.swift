@@ -9,7 +9,7 @@ import SwiftData
 /// The library's races or classes for the world's edition: the list beside the selected entry.
 struct LibraryBrowser: View {
     let world: World
-    let kind: LibraryKind
+    let list: LibraryList
 
     @Environment(WorldNavigation.self) private var navigation
 
@@ -17,10 +17,10 @@ struct LibraryBrowser: View {
 
     var body: some View {
         if showsSideBySide(sizeClass) {
-            ListDetailSplit { list } detail: { detail }
+            ListDetailSplit { listView } detail: { detail }
         } else {
             // The entry opens on top of the list, in the navigation stack the world is already in.
-            list
+            listView
                 .navigationDestination(item: openKey) { key in
                     if let entry = Library.shared.entry(forKey: key) {
                         LibraryEntryView(entry: entry, world: world)
@@ -32,11 +32,11 @@ struct LibraryBrowser: View {
     }
 
     private var title: LocalizedStringResource {
-        kind.listTitle(in: world.edition)
+        Library.shared.title(of: list, in: world.edition)
     }
 
     private var entries: [LibraryEntry] {
-        Library.shared.topLevelEntries(kind, in: world.edition)
+        Library.shared.topLevelEntries(in: list, edition: world.edition)
     }
 
     /// A subrace or subclass is opened from its parent's page, so the list highlights the parent.
@@ -57,7 +57,7 @@ struct LibraryBrowser: View {
     }
 
     @ViewBuilder
-    private var list: some View {
+    private var listView: some View {
         let entries = entries
         Group {
             if entries.isEmpty {
@@ -98,7 +98,7 @@ private struct LibraryRow: View {
 
     var body: some View {
         HStack(spacing: 10) {
-            Image(systemName: entry.kind.systemImage)
+            Image(systemName: Library.shared.systemImage(of: LibraryList(of: entry), in: LibraryEdition(key: entry.key) ?? .default))
                 .foregroundStyle(.secondary)
                 .frame(width: iconSize, height: iconSize)
                 .background(.quaternary, in: RoundedRectangle(cornerRadius: 6))
@@ -129,6 +129,7 @@ private struct LibraryRow: View {
         case .feat: parts = [text("dnd5e.featCategory"), text("dnd5e.featPrerequisite")]
         case .equipment: parts = [text("dnd5e.equipmentCategory"), text("dnd5e.cost")]
         case .spell: parts = [entry.spellHeadline, text("dnd5e.spellClasses")]
+        case .entry: parts = []
         }
         let joined = parts.compactMap { $0 }.joined(separator: " · ")
         return joined.isEmpty ? nil : joined

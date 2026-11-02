@@ -44,6 +44,8 @@ enum CoreAttributes {
     static let featuresKey = "core.features"
     /// The named parts of a background or feat, such as a feat's benefits.
     static let detailsKey = "core.details"
+    /// Which of its system's kinds of entry a content entry is, such as "daggerheart.domainCard".
+    static let entryKindKey = "core.entryKind"
 
     static let all: [AttributeDefinition] = [
         // Characters
@@ -77,7 +79,8 @@ enum CoreAttributes {
 
         // Classes
         .init(key: featuresKey, label: "Features", type: .entries(showsLevel: true), appliesTo: [.characterClass], group: "Features"),
-        .init(key: detailsKey, label: "Details", type: .entries(showsLevel: false), appliesTo: [.background, .feat, .item], group: "Details"),
+        .init(key: detailsKey, label: "Details", type: .entries(showsLevel: false), appliesTo: [.background, .feat, .item, .contentEntry], group: "Details"),
+        .init(key: entryKindKey, label: "Kind", type: .text, appliesTo: [.contentEntry], group: "Details"),
     ]
 
     static func definitions(for kind: PageKind) -> [AttributeDefinition] {
