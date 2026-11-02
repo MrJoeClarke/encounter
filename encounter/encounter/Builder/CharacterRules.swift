@@ -31,7 +31,7 @@ nonisolated enum CharacterRules {
 
     /// The modifier for a score: 10 or 11 is 0, and it moves by 1 for every 2 points.
     static func modifier(for score: Int) -> Int {
-        Int((Double(score - 10) / 2).rounded(.down))
+        DnD5eSystem.formulaSet.integer("abilityModifier", ["score": Double(score)]) ?? 0
     }
 
     static func modifierText(for score: Int) -> String {
@@ -72,7 +72,7 @@ nonisolated enum CharacterRules {
 
     /// A level's proficiency bonus: 2 at level 1, rising by 1 every four levels.
     static func proficiencyBonus(atLevel level: Int) -> Int {
-        2 + (max(level, 1) - 1) / 4
+        DnD5eSystem.formulaSet.integer("proficiencyBonus", ["level": Double(level)]) ?? 2
     }
 
     /// Hit points at level 1: the most the hit die can roll, plus the Constitution modifier (at least 1).

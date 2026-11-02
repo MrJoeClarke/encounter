@@ -12,6 +12,19 @@ struct DnD5eSystem: RuleSystem {
     var additionalPageKinds: Set<PageKind> { [.characterClass, .background, .feat, .spell] }
     var modules: RuleModules { [.library, .characterCreation, .advancement, .sheet, .conditions] }
 
+    var rollModel: RollModel? { .d20 }
+    var formulas: FormulaSet { Self.formulaSet }
+
+    /// How D&D works out its numbers. Inputs are `score` (an ability score), `level`, `proficiencyMultiplier` (0, a half, 1 or 2
+    /// for how well a skill is known) and, for the others, the names of the formulas they use.
+    static let formulaSet = FormulaSet([
+        "abilityModifier": "floor((score - 10) / 2)",
+        "proficiencyBonus": "2 + floor((max(level, 1) - 1) / 4)",
+        "spellSaveDC": "8 + proficiencyBonus + abilityModifier",
+        "spellAttackBonus": "proficiencyBonus + abilityModifier",
+        "skillBonus": "abilityModifier + floor(proficiencyBonus * proficiencyMultiplier)",
+    ])
+
     static let hitDice = ["d6", "d8", "d10", "d12"]
 
     static let sizes = ["Tiny", "Small", "Medium", "Large", "Huge", "Gargantuan"]

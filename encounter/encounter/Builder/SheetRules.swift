@@ -21,11 +21,11 @@ nonisolated enum SheetRules {
     }
 
     static func spellSaveDC(proficiencyBonus: Int, abilityScore: Int) -> Int {
-        8 + proficiencyBonus + CharacterRules.modifier(for: abilityScore)
+        DnD5eSystem.formulaSet.integer("spellSaveDC", ["proficiencyBonus": Double(proficiencyBonus), "score": Double(abilityScore)]) ?? 8
     }
 
     static func spellAttackBonus(proficiencyBonus: Int, abilityScore: Int) -> Int {
-        proficiencyBonus + CharacterRules.modifier(for: abilityScore)
+        DnD5eSystem.formulaSet.integer("spellAttackBonus", ["proficiencyBonus": Double(proficiencyBonus), "score": Double(abilityScore)]) ?? 0
     }
 
     // MARK: Weapons

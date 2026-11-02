@@ -141,14 +141,16 @@ struct CharacterSheet {
             guard case .text(let abilityName)? = entry.attributes["dnd5e.ability"], let ability = Ability(name: abilityName) else { return nil }
             let key = entry.name.lowercased()
             let level: SkillProficiency = proficient.contains(key) ? (expert.contains(key) ? .expertise : .proficient) : (hasJackOfAllTrades ? .half : .none)
-            let added: Int
-            switch level {
-            case .none: added = 0
-            case .half: added = halfProficiency
-            case .proficient: added = proficiencyBonus
-            case .expertise: added = proficiencyBonus * 2
+            let multiplier: Double = switch level {
+            case .none: 0
+            case .half: 0.5
+            case .proficient: 1
+            case .expertise: 2
             }
-            return SheetSkill(name: entry.name, ability: ability, proficiency: level, bonus: modifier(ability) + added)
+            let bonus = DnD5eSystem.formulaSet.integer("skillBonus", [
+                "score": Double(scores[ability] ?? 10), "proficiencyBonus": Double(proficiencyBonus), "proficiencyMultiplier": multiplier,
+            ]) ?? 0
+            return SheetSkill(name: entry.name, ability: ability, proficiency: level, bonus: bonus)
         }
         // The library lists them by ability; a sheet lists them by name.
         .sorted { $0.name < $1.name }

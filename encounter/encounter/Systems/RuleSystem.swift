@@ -33,11 +33,17 @@ protocol RuleSystem {
     var additionalPageKinds: Set<PageKind> { get }
     /// The modules the system has.
     var modules: RuleModules { get }
+    /// How the system's checks are rolled and read, if it has any.
+    var rollModel: RollModel? { get }
+    /// How the system works out its numbers, by name.
+    var formulas: FormulaSet { get }
 }
 
 extension RuleSystem {
     var additionalPageKinds: Set<PageKind> { [] }
     var modules: RuleModules { [] }
+    var rollModel: RollModel? { nil }
+    var formulas: FormulaSet { FormulaSet([:]) }
 
     /// Whether the system comes with a bundled content library (races, classes and so on).
     var hasContentLibrary: Bool { modules.contains(.library) }
