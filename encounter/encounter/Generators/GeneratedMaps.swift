@@ -51,6 +51,10 @@ extension Page {
 }
 
 extension Page {
+    /// Whether a settlement can be made of this place. A building is already as small as a settlement gets, so it can only
+    /// have scenes.
+    var canHaveSettlementMap: Bool { attributeText("core.placeType") != "Building" }
+
     /// The outline the creator drew for this place on the map above, if it has one.
     var drawnOutline: [GridPoint]? {
         if case .polygon(let corners)? = geometry { corners } else { nil }
@@ -94,8 +98,104 @@ extension World {
         _ generated: GeneratedSettlement, plan: (extent: Double, outline: [GridPoint]?), for place: Page, options: SettlementOptions,
         in context: ModelContext, progress: ((Int, Int) -> Void)?
     ) async -> GeneratedMapSummary? {
+        let name = place.title.isEmpty ? String(localized: "Settlement Map") : String(localized: "\(place.title) Map")
+        return await applyGenerated(
+            generated.features, extent: plan.extent, mapName: name, for: place, in: context, mapKind: .settlement, progress: progress,
+            remember: { $0.settlementOptions = options }
+        )
+    }
+
+    /// Makes the world map from options, as a vector map of the world with a place for the sea, each realm, the forests and
+    /// mountains, the rivers and roads, and each settlement. The settlements already on the map are built around, unless
+    /// the options say otherwise. Made again, it replaces the places the last run made, except any that have been edited.
+    ///
+    /// Like a settlement, the layout is worked out away from the main actor and the places are made a few at a time.
+    @MainActor
+    @discardableResult
+    func generateWorld(
+        options: WorldOptions, in context: ModelContext, progress: ((_ made: Int, _ total: Int) -> Void)? = nil
+    ) async -> GeneratedMapSummary? {
+        guard let root = rootPlace else { return nil }
+        let fixed = fixedSettlements(excludingUneditedFrom: worldMap)
+        guard let generated = await WorldGenerator.generateInBackground(options, fixed: fixed), !Task.isCancelled else { return nil }
+        return await applyGenerated(
+            generated.features, extent: generated.extent, mapName: String(localized: "\(name) Map"), for: root, in: context, mapKind: .world, progress: progress,
+            remember: { $0.worldOptions = options }
+        )
+    }
+
+    /// Makes the scene map of a place, as a vector map on a grid of 5-foot squares with a place for each room, corridor, door
+    /// and staircase. The place needs a position, which the map is centred on. Made again, it replaces the places the last run
+    /// made, except any that have been edited.
+    @MainActor
+    @discardableResult
+    func generateScene(
+        for place: Page, options: SceneOptions, in context: ModelContext, progress: ((_ made: Int, _ total: Int) -> Void)? = nil
+    ) async -> GeneratedMapSummary? {
+        guard place.kind == .place, !place.isWorldRoot, place.geometry != nil else { return nil }
+        let plan = World.scenePlan(for: place, options: options)
+        var effective = SceneGenerator.clamped(options)
+        effective.squares = plan.squares
+        guard let generated = await SceneGenerator.generateInBackground(effective, outline: plan.outline), !Task.isCancelled else { return nil }
+        let name = place.title.isEmpty ? String(localized: "Scene Map") : String(localized: "\(place.title) Scene")
+        return await applyGenerated(
+            generated.features, extent: generated.extent, mapName: name, for: place, in: context,
+            mapKind: .scene, metresPerPixel: SceneOptions.squareMetres / Double(SceneOptions.pixelsPerSquare), progress: progress,
+            remember: { map in
+                map.sceneOptions = options
+                map.gridColumns = plan.squares
+                map.gridRows = plan.squares
+            }
+        )
+    }
+
+    /// How big a scene is, and the shape it fills. A building with an outline fills it, and the outline sets the size: the
+    /// map is made big enough to hold it, centred on the place, and the outline is given in metres from the map's
+    /// south-west corner. Anything else is the size in the options.
+    @MainActor
+    static func scenePlan(for place: Page, options: SceneOptions) -> (squares: Int, outline: [GridPoint]?) {
+        let options = SceneGenerator.clamped(options)
+        guard options.kind == .building, options.fitOutline, let drawn = place.drawnOutline, drawn.count >= 3, let centre = place.geometry?.centre
+        else { return (options.squares, nil) }
+        let squares = SceneGenerator.squares(for: options, outline: drawn, centre: centre)
+        let pixels = squares * SceneOptions.pixelsPerSquare
+        let metresPerPixel = SceneOptions.squareMetres / Double(SceneOptions.pixelsPerSquare)
+        guard let calibration = vectorCalibration(for: place, size: pixels, metresPerPixel: metresPerPixel) else { return (squares, nil) }
+        let corner = calibration.gridPoint(atX: 0, y: Double(pixels))
+        // A building too big for the biggest scene is shrunk to fit it.
+        let half = drawn.map { max(abs($0.easting - centre.easting), abs($0.northing - centre.northing)) }.max() ?? 0
+        let room = Double(squares - 4) * SceneOptions.squareMetres / 2
+        let scale = half > room && half > 0 ? room / half : 1
+        let local = drawn.map {
+            GridPoint(
+                easting: (centre.easting - corner.easting) + ($0.easting - centre.easting) * scale,
+                northing: (centre.northing - corner.northing) + ($0.northing - centre.northing) * scale
+            )
+        }
+        return (squares, local)
+    }
+
+    /// The settlements already on the world map that a new world is built around: the pins on it, other than ones the
+    /// last generation made and nothing has been done to, since those are about to be replaced.
+    @MainActor
+    func fixedSettlements(excludingUneditedFrom map: WorldMap?) -> [FixedSettlement] {
+        (pages ?? []).compactMap { page -> FixedSettlement? in
+            guard page.kind == .place, !page.isDeleted, !page.isWorldRoot, page.attributeText("core.placeType") == "Settlement",
+                  case .point(let position)? = page.geometry else { return nil }
+            if let map, page.wasGenerated(by: map), page.isUneditedGeneration { return nil }
+            return FixedSettlement(name: page.title, kind: .town, position: position)
+        }
+    }
+
+    /// Makes places for what a generator made, on a vector map of the place: the map it made before if there is one, with
+    /// the places from the last run replaced except any that have been edited, linked or written about.
+    @MainActor
+    private func applyGenerated(
+        _ features: [GeneratedFeature], extent: Double, mapName: String, for place: Page, in context: ModelContext,
+        mapKind: MapKind, metresPerPixel: Double = 1, progress: ((Int, Int) -> Void)?, remember: (WorldMap) -> Void
+    ) async -> GeneratedMapSummary? {
         var summary: GeneratedMapSummary
-        if let existing = (maps ?? []).first(where: { $0.place === place && $0.isVector && $0.generatorData != nil && !$0.isDeleted }) {
+        if let existing = (maps ?? []).first(where: { $0.place === place && $0.kind == mapKind && $0.isVector && $0.generatorData != nil && !$0.isDeleted }) {
             summary = GeneratedMapSummary(map: existing)
             for page in pages ?? [] where page.wasGenerated(by: existing) && !page.isDeleted {
                 if page.isUneditedGeneration {
@@ -105,22 +205,21 @@ extension World {
                     summary.kept += 1
                 }
             }
-            existing.resizeVector(extentMetres: plan.extent, for: place)
+            existing.resizeVector(extentMetres: extent, for: place, metresPerPixel: metresPerPixel)
         } else {
-            let name = place.title.isEmpty ? String(localized: "Settlement Map") : String(localized: "\(place.title) Map")
-            guard let map = addVectorMap(named: name, for: place, extentMetres: plan.extent, in: context) else { return nil }
+            guard let map = addVectorMap(named: mapName, for: place, extentMetres: extent, kind: mapKind, metresPerPixel: metresPerPixel, in: context) else { return nil }
             summary = GeneratedMapSummary(map: map)
         }
-        summary.map.settlementOptions = options
+        remember(summary.map)
 
         // The generator works in metres from the map's south-west corner.
         guard let calibration = summary.map.calibration else { return nil }
         let corner = calibration.gridPoint(atX: 0, y: Double(summary.map.pixelHeight))
         func world(_ point: GridPoint) -> GridPoint { GridPoint(easting: corner.easting + point.easting, northing: corner.northing + point.northing) }
 
-        let total = generated.features.count
+        let total = features.count
         progress?(0, total)
-        for (index, feature) in generated.features.enumerated() {
+        for (index, feature) in features.enumerated() {
             let page = addPage(kind: .place, in: context)
             page.title = feature.name
             page.summary = feature.summary
@@ -128,8 +227,9 @@ extension World {
             switch feature.shape {
             case .polygon(let points): page.geometry = .polygon(points.map(world))
             case .line(let points): page.geometry = .line(points.map(world))
+            case .point(let point): page.geometry = .point(world(point))
             }
-            // Everything is a part of the settlement. The creator chose this parent in effect, so a place the
+            // Everything is a part of the place the map is of. The creator chose this parent in effect, so a place the
             // outlines happen to enclose doesn't take another.
             page.parent = place
             page.parentSource = .manual
@@ -150,16 +250,28 @@ extension World {
 extension WorldMap {
     /// The options a generated settlement map was made from, kept so it can be made again.
     var settlementOptions: SettlementOptions? {
-        get { generatorData.flatMap { try? JSONDecoder().decode(SettlementOptions.self, from: $0) } }
+        get { isWorldMap || kind == .scene ? nil : generatorData.flatMap { try? JSONDecoder().decode(SettlementOptions.self, from: $0) } }
+        set { generatorData = newValue.flatMap { try? JSONEncoder().encode($0) } }
+    }
+
+    /// The options a generated world map was made from, kept so it can be made again.
+    var worldOptions: WorldOptions? {
+        get { isWorldMap ? generatorData.flatMap { try? JSONDecoder().decode(WorldOptions.self, from: $0) } : nil }
+        set { generatorData = newValue.flatMap { try? JSONEncoder().encode($0) } }
+    }
+
+    /// The options a generated scene map was made from, kept so it can be made again.
+    var sceneOptions: SceneOptions? {
+        get { !isWorldMap && kind == .scene ? generatorData.flatMap { try? JSONDecoder().decode(SceneOptions.self, from: $0) } : nil }
         set { generatorData = newValue.flatMap { try? JSONEncoder().encode($0) } }
     }
 
     /// Changes the size of a vector map, keeping it centred on its place as far as the plane allows.
     @MainActor
-    func resizeVector(extentMetres: Double, for place: Page) {
-        let size = Int(extentMetres.rounded())
+    func resizeVector(extentMetres: Double, for place: Page, metresPerPixel: Double = 1) {
+        let size = Int((extentMetres / metresPerPixel).rounded())
         pixelWidth = size
         pixelHeight = size
-        calibration = World.vectorCalibration(for: place, size: size)
+        calibration = World.vectorCalibration(for: place, size: size, metresPerPixel: metresPerPixel)
     }
 }

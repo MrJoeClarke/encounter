@@ -26,7 +26,7 @@ struct GenerateSettlementSheet: View {
     private var usesOutline: Bool { place.drawnOutline != nil }
 
     private var existing: WorldMap? {
-        (place.world?.maps ?? []).first { $0.place === place && $0.isVector && $0.generatorData != nil && !$0.isDeleted }
+        (place.world?.maps ?? []).first { $0.place === place && $0.kind == .settlement && $0.isVector && $0.generatorData != nil && !$0.isDeleted }
     }
 
     var body: some View {
@@ -264,7 +264,10 @@ struct PreviewFrame {
         for ward in settlement.wards { xs += ward.map(\.easting); ys += ward.map(\.northing) }
         if xs.isEmpty {
             for feature in settlement.features {
-                switch feature.shape { case .polygon(let p), .line(let p): xs += p.map(\.easting); ys += p.map(\.northing) }
+                switch feature.shape {
+                case .polygon(let p), .line(let p): xs += p.map(\.easting); ys += p.map(\.northing)
+                case .point(let p): xs.append(p.easting); ys.append(p.northing)
+                }
             }
         }
         let margin = ((xs.max() ?? 0) - (xs.min() ?? 0)) * 0.18
@@ -325,6 +328,8 @@ struct SettlementPreview: View {
                         path.move(to: point(first))
                         for p in points.dropFirst() { path.addLine(to: point(p)) }
                         context.stroke(path, with: .color(Color(style: style.stroke)), style: StrokeStyle(lineWidth: max(style.lineWidth * 0.6, 0.8), lineCap: .round, lineJoin: .round))
+                    case .point:
+                        continue
                     }
                 }
                 // The main square and the gates.

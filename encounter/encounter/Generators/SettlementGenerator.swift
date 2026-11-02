@@ -229,6 +229,7 @@ nonisolated struct GeneratedFeature: Equatable, Sendable {
     enum Shape: Equatable, Sendable {
         case polygon([GridPoint])
         case line([GridPoint])
+        case point(GridPoint)
     }
 
     var name: String
@@ -236,6 +237,8 @@ nonisolated struct GeneratedFeature: Equatable, Sendable {
     var placeType: String
     var summary: String
     var shape: Shape
+    /// What sort of one it is, where the type isn't enough: a city, town or village, or which realm a region is.
+    var kind = ""
 }
 
 nonisolated struct GeneratedSettlement: Equatable, Sendable {

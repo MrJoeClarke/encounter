@@ -21,6 +21,15 @@ struct AddMapControls: View {
     @State private var failedImportCount = 0
     @State private var isAddingVectorMap = false
     @State private var isGeneratingSettlement = false
+    @State private var isGeneratingWorld = false
+    @State private var isGeneratingScene = false
+
+    /// A world can be generated when it has no map, or only a map that was generated.
+    private var canGenerateWorld: Bool {
+        guard place.isWorldRoot else { return false }
+        let maps = place.sortedMaps
+        return maps.isEmpty || maps.allSatisfy { $0.isVector && $0.generatorData != nil }
+    }
 
     var body: some View {
         HStack {
@@ -30,7 +39,13 @@ struct AddMapControls: View {
             }
             Button("Blank Vector Map…", systemImage: "scribble.variable") { isAddingVectorMap = true }
             if !place.isWorldRoot {
-                Button("Generate Settlement…", systemImage: "building.2") { isGeneratingSettlement = true }
+                // A building is already as small as a settlement gets, so it only has scenes.
+                if place.canHaveSettlementMap {
+                    Button("Generate Settlement…", systemImage: "building.2") { isGeneratingSettlement = true }
+                }
+                Button("Generate Scene…", systemImage: "square.grid.3x3") { isGeneratingScene = true }
+            } else if canGenerateWorld {
+                Button("Generate World…", systemImage: "globe.europe.africa") { isGeneratingWorld = true }
             }
             if isImporting {
                 ProgressView().controlSize(.small)
@@ -40,6 +55,20 @@ struct AddMapControls: View {
             GenerateSettlementSheet(place: place) { map in
                 isGeneratingSettlement = false
                 if let map { navigation.openMap(map) }
+            }
+        }
+        .sheet(isPresented: $isGeneratingScene) {
+            GenerateSceneSheet(place: place) { map in
+                isGeneratingScene = false
+                if let map { navigation.openMap(map) }
+            }
+        }
+        .sheet(isPresented: $isGeneratingWorld) {
+            if let world = place.world {
+                GenerateWorldSheet(world: world) { map in
+                    isGeneratingWorld = false
+                    if let map { navigation.openMap(map) }
+                }
             }
         }
         .sheet(isPresented: $isAddingVectorMap) {
