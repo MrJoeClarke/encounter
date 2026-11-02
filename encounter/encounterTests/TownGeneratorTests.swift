@@ -550,3 +550,40 @@ struct PlanarFaceTests {
         #expect(Plane.cut(l, through: V(x: 500, y: 20), direction: V(x: 0, y: 1)) == nil)
     }
 }
+
+struct VenueAndLandmarkPlacementTests {
+    private func polygon(_ feature: GeneratedFeature) -> [V] {
+        switch feature.shape { case .polygon(let p), .line(let p): p.map { V(x: $0.easting, y: $0.northing) } }
+    }
+
+    private func nearestStreet(_ points: [V], in settlement: GeneratedSettlement) -> Double {
+        let lines = (settlement.features(of: "Road") + settlement.features(of: "Street")).map(polygon)
+        return points.map { corner in lines.map { SettlementGenerator.distance(from: corner, toPolyline: $0) }.min() ?? .infinity }.min() ?? .infinity
+    }
+
+    @Test(arguments: SettlementOptions.Layout.allCases)
+    func innsAndMerchantsFaceAStreet(layout: SettlementOptions.Layout) {
+        for seed in UInt64(1)...4 {
+            let settlement = SettlementGenerator.generate(SettlementOptions(size: .city, layout: layout, seed: seed))
+            for venue in settlement.features(of: "Building") {
+                let gap = nearestStreet(polygon(venue), in: settlement)
+                #expect(gap < 8, "\(layout) seed \(seed): \(venue.name) is \(gap) metres from the nearest street")
+            }
+        }
+    }
+
+    @Test func landmarksAreMuchBiggerThanInnsAndShopsAndAlsoFaceAStreet() {
+        for seed in UInt64(1)...4 {
+            let settlement = SettlementGenerator.generate(SettlementOptions(
+                size: .city, seed: seed, landmarks: [.university, .infirmary, .library, .guildhall, .cathedral]
+            ))
+            let biggestVenue = settlement.features(of: "Building").map { Plane.area(polygon($0)) }.max() ?? 0
+            for landmark in settlement.features(of: "Landmark") {
+                let area = Plane.area(polygon(landmark))
+                #expect(area > biggestVenue * 3, "seed \(seed): \(landmark.name) is \(area) square metres against a venue of \(biggestVenue)")
+                let gap = nearestStreet(polygon(landmark), in: settlement)
+                #expect(gap < 12, "seed \(seed): \(landmark.name) is \(gap) metres from a street")
+            }
+        }
+    }
+}

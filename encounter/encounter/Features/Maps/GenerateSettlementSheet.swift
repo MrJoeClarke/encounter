@@ -78,8 +78,6 @@ struct GenerateSettlementSheet: View {
                     }
                     Toggle("Wall", isOn: $options.hasWalls)
                     Toggle("River", isOn: $options.hasRiver)
-                    Toggle("Inns and Taverns", isOn: $options.inns)
-                    Toggle("Merchants", isOn: $options.merchants)
                     LabeledContent("Seed") {
                         HStack {
                             TextField("Seed", value: $options.seed, format: .number.grouping(.never))
@@ -92,7 +90,7 @@ struct GenerateSettlementSheet: View {
                 } header: {
                     Text("Settlement")
                 } footer: {
-                    Text("The same seed and choices always make the same settlement. A number of inns and merchants to suit its size are spread round it. Other buildings are for you to add.")
+                    Text("The same seed and choices always make the same settlement.")
                 }
                 Section {
                     Text("Tap the edge of the preview to add a gate, tap a gate to take it away, and tap inside to move the main square.")
@@ -154,6 +152,14 @@ struct GenerateSettlementSheet: View {
                     Text("Landmarks")
                 } footer: {
                     Text("A castle takes a whole ward. The others take the ground they need in a ward that suits them.")
+                }
+                Section {
+                    Toggle("Inns and Taverns", isOn: $options.inns)
+                    Toggle("Merchants", isOn: $options.merchants)
+                } header: {
+                    Text("Inns and Merchants")
+                } footer: {
+                    Text("A number to suit the size, facing the streets and spread round the settlement. Other buildings are for you to add.")
                 }
                 if place.geometry == nil {
                     Section {
