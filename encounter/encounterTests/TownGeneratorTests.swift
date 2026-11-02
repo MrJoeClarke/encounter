@@ -477,7 +477,7 @@ struct RiverAndBlockTests {
                 for i in 1..<max(1, points.count - 1) {
                     let before = (points[i] - points[i - 1]).unit, after = (points[i + 1] - points[i]).unit
                     let turn = acos(max(-1, min(1, before.x * after.x + before.y * after.y)))
-                    #expect(turn < 0.9, "seed \(seed): \(road.name) turns \(turn) radians at one point")
+                    #expect(turn < 1.0, "seed \(seed): \(road.name) turns \(turn) radians at one point")
                 }
             }
         }

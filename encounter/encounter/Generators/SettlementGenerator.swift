@@ -130,13 +130,14 @@ nonisolated struct SettlementOptions: Codable, Equatable, Sendable {
             }
         }
 
-        /// About how wide a ward is, in metres.
+        /// About how wide a ward is, in metres. A block is the same size in a town and a city; a city is just more of them.
+        /// (A hamlet and a village are too small to hold blocks that big.)
         var wardWidth: Double {
             switch self {
             case .hamlet: 45
             case .village: 60
             case .town: 85
-            case .city: 110
+            case .city: 85
             }
         }
 
