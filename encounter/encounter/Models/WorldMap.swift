@@ -127,29 +127,33 @@ extension World {
     /// its place, as far as the edge of the plane allows.
     @MainActor
     @discardableResult
-    func addVectorMap(named name: String, for place: Page, extentMetres: Double, in context: ModelContext) -> WorldMap? {
-        guard extentMetres.isFinite, extentMetres >= 10 else { return nil }
-        let size = Int(extentMetres.rounded())
-        let map = WorldMap(name: name, kind: place.isWorldRoot ? .world : .settlement)
+    func addVectorMap(
+        named name: String, for place: Page, extentMetres: Double, kind: MapKind? = nil, metresPerPixel: Double = 1, in context: ModelContext
+    ) -> WorldMap? {
+        guard extentMetres.isFinite, extentMetres >= 10, metresPerPixel > 0 else { return nil }
+        let size = Int((extentMetres / metresPerPixel).rounded())
+        let map = WorldMap(name: name, kind: kind ?? (place.isWorldRoot ? .world : .settlement))
         map.isVector = true
         map.pixelWidth = size
         map.pixelHeight = size
-        map.calibration = Self.vectorCalibration(for: place, size: size)
+        map.calibration = Self.vectorCalibration(for: place, size: size, metresPerPixel: metresPerPixel)
         context.insert(map)
         map.world = self
         map.place = place
         return map
     }
 
-    /// How a vector map of `size` metres lines up with the plane: the world map from the south-west corner, and any other
-    /// centred on its place as far as the edge of the plane allows.
+    /// How a vector map of `size` pixels lines up with the plane: the world map from the south-west corner, and any other
+    /// centred on its place as far as the edge of the plane allows. A pixel is a metre unless a finer scale is asked for,
+    /// as a scene map does so that its squares come out exact.
     @MainActor
-    static func vectorCalibration(for place: Page, size: Int) -> MapCalibration? {
+    static func vectorCalibration(for place: Page, size: Int, metresPerPixel: Double = 1) -> MapCalibration? {
         var origin = GridPoint(easting: 0, northing: 0)
+        let across = Double(size) * metresPerPixel
         if !place.isWorldRoot, let centre = place.geometry?.centre {
-            origin = GridPoint(easting: max(0, centre.easting - Double(size) / 2), northing: max(0, centre.northing - Double(size) / 2))
+            origin = GridPoint(easting: max(0, centre.easting - across / 2), northing: max(0, centre.northing - across / 2))
         }
-        return MapCalibration(anchoringPixel: (0, Double(size)), at: origin, metresPerPixel: 1)
+        return MapCalibration(anchoringPixel: (0, Double(size)), at: origin, metresPerPixel: metresPerPixel)
     }
 
     /// Adds a map of a place, from image data kept at full size so no detail is lost. The map of the root place is

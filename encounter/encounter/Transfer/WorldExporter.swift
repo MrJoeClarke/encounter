@@ -70,7 +70,8 @@ enum WorldExporter {
                     isVector: map.isVector ? true : nil,
                     extentMetres: map.isVector ? map.pixelWidth : nil,
                     settlementOptions: map.settlementOptions,
-                    worldOptions: map.worldOptions
+                    worldOptions: map.worldOptions,
+                    sceneOptions: map.sceneOptions
                 )
             }
 

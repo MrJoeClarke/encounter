@@ -33,7 +33,7 @@ nonisolated struct PlaceStyle: Equatable, Sendable {
     )
 
     /// The place types the map knows how to draw, with the order they are listed in.
-    static let types = ["Region", "Settlement", "District", "Building", "Wilderness", "Water", "Forest", "Mountains", "River", "Road", "Street", "Wall", "Square", "Garden", "Landmark", "Point of Interest"]
+    static let types = ["Region", "Settlement", "District", "Building", "Wilderness", "Water", "Forest", "Mountains", "River", "Road", "Street", "Wall", "Square", "Garden", "Landmark", "Point of Interest", "Room", "Corridor", "Cave", "Rock", "Door", "Stairs", "Stall", "Tree", "Clearing"]
 
     static func style(forPlaceType type: String?) -> PlaceStyle {
         switch type {
@@ -67,6 +67,23 @@ nonisolated struct PlaceStyle: Equatable, Sendable {
             PlaceStyle(fill: StyleColor(red: 0.85, green: 0.65, blue: 0.2, alpha: 0.9), stroke: StyleColor(red: 0.5, green: 0.35, blue: 0.05), lineWidth: 1.5, drawOrder: 31)
         case "Wall":
             PlaceStyle(fill: nil, stroke: StyleColor(red: 0.4, green: 0.4, blue: 0.43), lineWidth: 4, drawOrder: 42)
+        // A scene's floors, drawn with a heavy dark outline that stands for the walls round them.
+        case "Corridor":
+            PlaceStyle(fill: StyleColor(red: 0.72, green: 0.68, blue: 0.6, alpha: 0.95), stroke: StyleColor(red: 0.1, green: 0.1, blue: 0.12), lineWidth: 3, drawOrder: 26)
+        case "Room":
+            PlaceStyle(fill: StyleColor(red: 0.78, green: 0.74, blue: 0.66, alpha: 0.95), stroke: StyleColor(red: 0.1, green: 0.1, blue: 0.12), lineWidth: 3, drawOrder: 27)
+        case "Cave":
+            PlaceStyle(fill: StyleColor(red: 0.6, green: 0.55, blue: 0.48, alpha: 0.95), stroke: StyleColor(red: 0.1, green: 0.1, blue: 0.12), lineWidth: 3, drawOrder: 27)
+        case "Rock":
+            PlaceStyle(fill: StyleColor(red: 0.22, green: 0.21, blue: 0.22, alpha: 1), stroke: StyleColor(red: 0.1, green: 0.1, blue: 0.12), lineWidth: 2, drawOrder: 28)
+        case "Clearing":
+            PlaceStyle(fill: StyleColor(red: 0.55, green: 0.75, blue: 0.4, alpha: 0.9), stroke: StyleColor(red: 0.3, green: 0.5, blue: 0.2), lineWidth: 1.5, drawOrder: 25)
+        case "Tree":
+            PlaceStyle(fill: StyleColor(red: 0.12, green: 0.4, blue: 0.18, alpha: 0.95), stroke: StyleColor(red: 0.06, green: 0.25, blue: 0.1), lineWidth: 1.5, drawOrder: 29)
+        case "Stall":
+            PlaceStyle(fill: StyleColor(red: 0.8, green: 0.55, blue: 0.25, alpha: 0.95), stroke: StyleColor(red: 0.35, green: 0.22, blue: 0.1), lineWidth: 1.5, drawOrder: 33)
+        case "Door", "Stairs":
+            PlaceStyle(fill: StyleColor(red: 0.55, green: 0.38, blue: 0.2, alpha: 0.9), stroke: StyleColor(red: 0.3, green: 0.2, blue: 0.1), lineWidth: 2, drawOrder: 35)
         default:
             .plain
         }

@@ -143,6 +143,8 @@ enum WorldImporter {
                     map.settlementOptions = options
                 } else if let options = record.worldOptions {
                     map.worldOptions = options
+                } else if let options = record.sceneOptions {
+                    map.sceneOptions = options
                 }
             }
             map.calibration = record.calibration

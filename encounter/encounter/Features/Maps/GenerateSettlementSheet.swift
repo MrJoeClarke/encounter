@@ -26,7 +26,7 @@ struct GenerateSettlementSheet: View {
     private var usesOutline: Bool { place.drawnOutline != nil }
 
     private var existing: WorldMap? {
-        (place.world?.maps ?? []).first { $0.place === place && $0.isVector && $0.generatorData != nil && !$0.isDeleted }
+        (place.world?.maps ?? []).first { $0.place === place && $0.kind == .settlement && $0.isVector && $0.generatorData != nil && !$0.isDeleted }
     }
 
     var body: some View {

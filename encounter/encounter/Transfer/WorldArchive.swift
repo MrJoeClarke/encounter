@@ -125,4 +125,6 @@ nonisolated struct MapRecord: Codable, Sendable {
     var settlementOptions: SettlementOptions?
     /// What a world map was generated from.
     var worldOptions: WorldOptions?
+    /// What a scene map was generated from.
+    var sceneOptions: SceneOptions?
 }
