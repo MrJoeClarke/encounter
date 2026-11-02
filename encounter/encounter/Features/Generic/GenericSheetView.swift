@@ -41,6 +41,11 @@ struct GenericSheetView: View {
                 }
                 .padding()
             }
+            // The Character menu can take a rest or level up.
+            .focusedSceneValue(\.sheetActions, SheetActions(
+                rests: system.rests.map { rest in SheetActions.Rest(name: rest.name) { takeRest(rest) } },
+                levelUp: system.advancement.flatMap { Advancement.canLevelUp(page, rule: $0) ? { isLevellingUp = true } : nil }
+            ))
             .sheet(item: $rolling) { request in
                 GenericRollSheet(page: page, system: system, label: request.label, modifier: request.modifier, roll: request.roll)
             }

@@ -123,3 +123,22 @@ struct NavigationHistoryTests {
         #expect(busy.backStack.count <= 100)
     }
 }
+
+@MainActor
+struct MenuCommandTests {
+    @Test func newPageMakesTheKindBeingShownOrACharacter() throws {
+        let navigation = WorldNavigation()
+        #expect(navigation.newPageKind == .character)
+        navigation.choose(.kind(.place))
+        #expect(navigation.newPageKind == .place)
+        navigation.choose(.timeline)
+        #expect(navigation.newPageKind == .character)
+        navigation.choose(.library(LibraryList(.race)))
+        #expect(navigation.newPageKind == .character)
+    }
+
+    @Test func theGoMenuHasFiveShortcutKindsOnNumbersFiveToNine() {
+        #expect(AppCommands.shortcutKinds == [.character, .place, .event, .item, .organisation])
+        #expect(AppCommands.shortcutKinds.count + 4 == 9, "keys 1 to 4 go to the screens, 5 to 9 to the kinds")
+    }
+}

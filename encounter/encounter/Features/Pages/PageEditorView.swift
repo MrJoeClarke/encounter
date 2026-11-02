@@ -7,18 +7,18 @@ import SwiftUI
 import SwiftData
 
 /// Edits a page: header, character role, attributes, tags and notes.
+/// A character can be looked at as its page, or as a sheet to play from.
+enum PageEditorMode: String, CaseIterable, Identifiable {
+    case page, sheet
+    var id: String { rawValue }
+}
+
 struct PageEditorView: View {
     @Bindable var page: Page
 
     @State private var newTag = ""
     @FocusState private var titleIsFocused: Bool
-    @State private var mode = Mode.page
-
-    /// A D&D character can be looked at as its page, or as a sheet to play from.
-    private enum Mode: String, CaseIterable, Identifiable {
-        case page, sheet
-        var id: String { rawValue }
-    }
+    @State private var mode = PageEditorMode.page
 
     private var hasSheet: Bool { page.kind == .character && page.world?.rules.contains(.sheet) == true }
 
@@ -26,8 +26,8 @@ struct PageEditorView: View {
         VStack(spacing: 0) {
             if hasSheet {
                 Picker("View", selection: $mode) {
-                    Text("Page").tag(Mode.page)
-                    Text("Sheet").tag(Mode.sheet)
+                    Text("Page").tag(PageEditorMode.page)
+                    Text("Sheet").tag(PageEditorMode.sheet)
                 }
                 .pickerStyle(.segmented)
                 .labelsHidden()
@@ -44,6 +44,8 @@ struct PageEditorView: View {
                 form
             }
         }
+        // The Character menu switches between the page and the sheet.
+        .focusedSceneValue(\.pageMode, hasSheet ? $mode : nil)
     }
 
     private var form: some View {

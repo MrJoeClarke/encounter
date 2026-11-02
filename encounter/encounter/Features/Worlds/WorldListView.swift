@@ -42,6 +42,7 @@ struct WorldListView: View {
                 }
             }
             .navigationTitle("Worlds")
+            .focusedSceneValue(\.worldListActions, WorldListActions(newWorld: { isCreatingWorld = true }, importWorld: { isChoosingImportFile = true }))
             .navigationDestination(for: World.self) { world in
                 WorldShellView(world: world, onDelete: delete)
             }

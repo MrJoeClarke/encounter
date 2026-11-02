@@ -34,5 +34,6 @@ struct encounterApp: App {
                 .task { World.ensureRootPlaces(in: modelContainer.mainContext) }
         }
         .modelContainer(modelContainer)
+        .commands { AppCommands() }
     }
 }

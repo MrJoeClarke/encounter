@@ -71,6 +71,11 @@ final class WorldNavigation {
         selectedCampaign = nil
     }
 
+    /// The kind of page New Page makes: the kind being shown, or a character if the screen shows no kind.
+    var newPageKind: PageKind {
+        if case .kind(let kind) = selection { kind } else { .character }
+    }
+
     // MARK: Back and forward
 
     /// Where the user is in the world: enough to come back to it.

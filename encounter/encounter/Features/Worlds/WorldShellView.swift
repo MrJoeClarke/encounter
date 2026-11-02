@@ -25,6 +25,7 @@ struct WorldShellView: View {
 
     @State private var navigation = WorldNavigation()
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
     @Environment(LinkRouter.self) private var linkRouter
     @Environment(\.horizontalSizeClass) private var sizeClass
 
@@ -54,21 +55,24 @@ struct WorldShellView: View {
             .onChange(of: navigation.selectedMap) { if navigation.selectedMap != nil { isShowingDetail = true } }
             .onChange(of: navigation.selectedCampaign) { if navigation.selectedCampaign != nil { isShowingDetail = true } }
             .onChange(of: navigation.selectedLibraryKey) { if navigation.selectedLibraryKey != nil { isShowingDetail = true } }
+            // What the menus can do in this world: go back and forward and between screens, and make a page.
+            .focusedSceneValue(\.worldNavigation, navigation)
+            .focusedSceneValue(\.worldActions, WorldActions(newPageTitle: String(localized: "New \(String(localized: navigation.newPageKind.singularTitle))")) {
+                navigation.open(world.addPage(kind: navigation.newPageKind, in: modelContext))
+            })
             // Where the user has been, so Back and Forward can return to it.
             .onChange(of: navigation.place) { old, new in navigation.record(from: old, to: new) }
-            // Beside the screen, Back and Forward move through what was open in the world. They never leave the world:
-            // "All Worlds" at the top of the menu does that.
+            // Beside the screen, Back and Forward (also in the Go menu, with their shortcuts) move through what was open in the
+            // world. They never leave the world: "All Worlds" at the top of the menu does that.
             .navigationBarBackButtonHidden(showsSideBySide(sizeClass))
             .toolbar {
                 if showsSideBySide(sizeClass) {
                     ToolbarItemGroup(placement: .navigation) {
                         Button("Back", systemImage: "chevron.backward") { navigation.goBack() }
                             .disabled(!navigation.canGoBack)
-                            .keyboardShortcut("[", modifiers: .command)
                             .help("Go back to what was open before")
                         Button("Forward", systemImage: "chevron.forward") { navigation.goForward() }
                             .disabled(!navigation.canGoForward)
-                            .keyboardShortcut("]", modifiers: .command)
                             .help("Go forward again")
                     }
                 }

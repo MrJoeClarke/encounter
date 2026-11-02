@@ -56,6 +56,11 @@ struct CharacterSheetView: View {
                 }
                 .padding()
             }
+            // The Character menu can take a rest.
+            .focusedSceneValue(\.sheetActions, SheetActions(
+                rests: [SheetActions.Rest(name: String(localized: "Short Rest")) { sheet.shortRest() }, SheetActions.Rest(name: String(localized: "Long Rest")) { sheet.longRest() }],
+                levelUp: nil
+            ))
             .sheet(item: $action) { selected in
                 ActionCardView(page: page, action: selected, rollsInApp: rollsInApp, log: log) { action = nil }
             }
