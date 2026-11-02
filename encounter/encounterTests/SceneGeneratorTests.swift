@@ -256,7 +256,11 @@ struct SceneGeneratorTests {
             #expect(rooms.count >= 4, "seed \(seed): \(rooms.count) rooms")
             // Between them the rooms and the hall fill nearly all of the building, which rectangles alone didn't.
             let filled = (rooms + halls).map { Plane.area(points($0)) }.reduce(0, +)
-            #expect(filled > Plane.area(round) * 0.85 && filled < Plane.area(round) * 1.02, "seed \(seed): the rooms fill \(filled / Plane.area(round))")
+            #expect(filled > Plane.area(round) * 0.88 && filled < Plane.area(round) * 1.005, "seed \(seed): the rooms fill \(filled / Plane.area(round))")
+            // The walls come from the outline itself, not from the grid: its own corners are corners of the rooms.
+            let corners = (rooms + halls).flatMap(points)
+            let used = round.filter { corner in corners.contains { $0.distance(to: corner) < 1e-6 } }.count
+            #expect(Double(used) > Double(round.count) * 0.6, "seed \(seed): only \(used) of \(round.count) corners of the outline are corners of rooms")
             // Rooms at the wall are not rectangles: their outer side follows the curve.
             #expect(rooms.contains { points($0).count > 4 }, "seed \(seed): every room is a rectangle")
             #expect(rooms.allSatisfy { points($0).allSatisfy { SettlementGenerator.contains(round, $0 + (Plane.centroid(round) - $0) * 0.001) || Plane.distanceToEdge($0, round) < 0.5 * square } })

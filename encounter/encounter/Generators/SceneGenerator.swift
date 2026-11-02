@@ -200,6 +200,8 @@ nonisolated struct SceneMaker {
     /// Which rooms are joined by a corridor or a door.
     var links: [(Int, Int)] = []
     var features: [GeneratedFeature] = []
+    /// The true shape of each room, when the building is not a rectangle, so doors can be put exactly on its wall.
+    var wallShapes: [[GridPoint]]?
 
     init(options: SceneOptions, outline: [GridPoint]?) {
         self.options = options
@@ -257,7 +259,26 @@ nonisolated struct SceneMaker {
         return number
     }
 
+    /// A door's place moved onto the wall of its room as it really is, if the room has been given the shape of the building.
+    private func onWall(_ x: Double, _ y: Double, room: Int) -> (Double, Double) {
+        guard let shapes = wallShapes, shapes.indices.contains(room), shapes[room].count >= 3 else { return (x, y) }
+        let target = V(x: x * SceneOptions.squareMetres, y: y * SceneOptions.squareMetres)
+        let corners = shapes[room].map { V(x: $0.easting, y: $0.northing) }
+        var best = target
+        var bestDistance = Double.infinity
+        for i in corners.indices {
+            let a = corners[i], b = corners[(i + 1) % corners.count]
+            let ab = b - a
+            let lengthSquared = ab.x * ab.x + ab.y * ab.y
+            let t = lengthSquared > 0 ? min(1, max(0, ((target.x - a.x) * ab.x + (target.y - a.y) * ab.y) / lengthSquared)) : 0
+            let q = V(x: a.x + ab.x * t, y: a.y + ab.y * t)
+            if q.distance(to: target) < bestDistance { bestDistance = q.distance(to: target); best = q }
+        }
+        return (best.x / SceneOptions.squareMetres, best.y / SceneOptions.squareMetres)
+    }
+
     private mutating func addDoor(at x: Double, _ y: Double, into room: Int, number: [Int], secret: Bool) {
+        let (x, y) = onWall(x, y, room: room)
         let name = secret ? names.named(String(localized: "Secret door")) : names.named(String(localized: "Door"))
         let summary = secret
             ? String(localized: "A secret door into Room \(number[room]), hidden in the wall.")
@@ -655,6 +676,7 @@ nonisolated struct SceneMaker {
         // In a building that isn't a rectangle, each room (and the hall) is carried on out to the outline, so that the
         // rooms take the true shape of the building, curved or slanted walls and all.
         let reaching = extendedShapes(hall: hall)
+        wallShapes = reaching?.rooms
         let number = addRooms(shapes: reaching?.rooms)
 
         var halls: [[GridPoint]] = reaching?.halls ?? []
@@ -717,38 +739,39 @@ nonisolated struct SceneMaker {
     }
 
     /// The rooms and hall carried on out to the outline: each takes the ground nearest it, up to three squares beyond its
-    /// rectangle, as far as the building goes. Worked out on a finer grid (four to a square) so that curves come out
-    /// smooth. Nil if the building has no outline, or the shapes can't be made.
+    /// rectangle, as far as the building goes. The grid (four to a square) only settles which room each bit of ground belongs
+    /// to. The walls then come from the true outline, not from the grid: along the outside of the building a room's edge is
+    /// the outline's own points, and between two rooms the wall is a single line that both share, so the rooms fit together
+    /// with no gaps. Nil if the building has no outline.
     private func extendedShapes(hall: [Bool]) -> (rooms: [[GridPoint]], halls: [[GridPoint]])? {
         guard let outline, outline.count >= 3 else { return nil }
         let fine = 4
         let m = n * fine
-        let corners = outline.map { V(x: $0.easting / SceneOptions.squareMetres * Double(fine), y: $0.northing / SceneOptions.squareMetres * Double(fine)) }
+        let ring = outline.map { V(x: $0.easting / SceneOptions.squareMetres * Double(fine), y: $0.northing / SceneOptions.squareMetres * Double(fine)) }
+        var inside = [Bool](repeating: false, count: m * m)
+        for y in 0..<m { for x in 0..<m { inside[y * m + x] = SettlementGenerator.contains(ring, V(x: Double(x) + 0.5, y: Double(y) + 0.5)) } }
         var owner = [Int](repeating: -1, count: m * m)
         let hallOwner = rooms.count
-        // Only ground that is really inside the outline, so a room's corner never pokes out through a curved wall.
-        func isInside(_ x: Int, _ y: Int) -> Bool { SettlementGenerator.contains(corners, V(x: Double(x) + 0.5, y: Double(y) + 0.5)) }
         for (index, room) in rooms.enumerated() {
-            for y in (room.y * fine)..<(room.maxY * fine) { for x in (room.x * fine)..<(room.maxX * fine) where isInside(x, y) { owner[y * m + x] = index } }
+            for y in (room.y * fine)..<(room.maxY * fine) { for x in (room.x * fine)..<(room.maxX * fine) where inside[y * m + x] { owner[y * m + x] = index } }
         }
         for c in hall.indices where hall[c] {
             for dy in 0..<fine {
                 for dx in 0..<fine {
                     let x = (c % n) * fine + dx, y = (c / n) * fine + dy
-                    if isInside(x, y) { owner[y * m + x] = hallOwner }
+                    if inside[y * m + x] { owner[y * m + x] = hallOwner }
                 }
             }
         }
         // The ground that is left, taken by whichever room or hall is nearest, a ring at a time.
-        let reach = 3 * fine
         var frontier = owner.indices.filter { owner[$0] >= 0 }
-        for _ in 0..<reach {
+        for _ in 0..<(3 * fine) {
             var next: [Int] = []
             for cell in frontier {
                 let x = cell % m, y = cell / m
                 for (nx, ny) in [(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)] where nx >= 0 && ny >= 0 && nx < m && ny < m {
                     let target = ny * m + nx
-                    guard owner[target] < 0, SettlementGenerator.contains(corners, V(x: Double(nx) + 0.5, y: Double(ny) + 0.5)) else { continue }
+                    guard owner[target] < 0, inside[target] else { continue }
                     owner[target] = owner[cell]
                     next.append(target)
                 }
@@ -756,26 +779,129 @@ nonisolated struct SceneMaker {
             frontier = next
             if frontier.isEmpty { break }
         }
-        var roomShapes: [[GridPoint]] = []
-        var hallShapes: [[GridPoint]] = []
+
+        // What is across a wall: the outside of the building, ground nobody has taken, or another room.
+        let outsideKey = -1, emptyKey = -2
+        func key(_ x: Int, _ y: Int) -> Int {
+            guard x >= 0, y >= 0, x < m, y < m, inside[y * m + x] else { return outsideKey }
+            return owner[y * m + x] < 0 ? emptyKey : owner[y * m + x]
+        }
+        func touchesOutside(_ v: V) -> Bool {
+            let x = Int(v.x), y = Int(v.y)
+            return key(x - 1, y - 1) == outsideKey || key(x, y - 1) == outsideKey || key(x - 1, y) == outsideKey || key(x, y) == outsideKey
+        }
+        /// The nearest point on the outline, and which of its sides that is on.
+        func nearestOnOutline(_ p: V) -> (point: V, side: Int, t: Double) {
+            var best = (point: ring[0], side: 0, t: 0.0)
+            var bestDistance = Double.infinity
+            for i in ring.indices {
+                let a = ring[i], b = ring[(i + 1) % ring.count]
+                let ab = b - a
+                let lengthSquared = ab.x * ab.x + ab.y * ab.y
+                let t = lengthSquared > 0 ? min(1, max(0, ((p.x - a.x) * ab.x + (p.y - a.y) * ab.y) / lengthSquared)) : 0
+                let q = V(x: a.x + ab.x * t, y: a.y + ab.y * t)
+                if q.distance(to: p) < bestDistance { bestDistance = q.distance(to: p); best = (q, i, t) }
+            }
+            return best
+        }
+        /// A corner of the grid, moved onto the outline if it is on the edge of the building. Everything that meets there moves
+        /// the same way, so the rooms still meet.
+        func snapped(_ v: V) -> V { touchesOutside(v) ? nearestOnOutline(v).point : v }
+        /// The way along the outline from one point on it to another, going the way that follows the edge of the ground
+        /// in `near`.
+        func arc(from start: V, to end: V, near run: [V]) -> [V] {
+            let a = nearestOnOutline(start), b = nearestOnOutline(end)
+            func path(forward: Bool) -> [V] {
+                var points = [a.point]
+                var side = a.side
+                var first = true
+                while side != b.side || (first && (forward ? b.t < a.t : b.t > a.t)) {
+                    first = false
+                    if forward { side = (side + 1) % ring.count; points.append(ring[side]) } else { points.append(ring[side]); side = (side + ring.count - 1) % ring.count }
+                    if points.count > ring.count + 2 { break }
+                }
+                points.append(b.point)
+                return points
+            }
+            func length(_ p: [V]) -> Double { zip(p, p.dropFirst()).map { $0.distance(to: $1) }.reduce(0, +) }
+            func middle(_ p: [V]) -> V {
+                var half = length(p) / 2
+                for (u, v) in zip(p, p.dropFirst()) {
+                    let l = u.distance(to: v)
+                    if half <= l, l > 0 { return V(x: u.x + (v.x - u.x) * half / l, y: u.y + (v.y - u.y) * half / l) }
+                    half -= l
+                }
+                return p.last ?? start
+            }
+            let centre = V(x: run.map(\.x).reduce(0, +) / Double(max(run.count, 1)), y: run.map(\.y).reduce(0, +) / Double(max(run.count, 1)))
+            let forward = path(forward: true), backward = path(forward: false)
+            return middle(forward).distance(to: centre) <= middle(backward).distance(to: centre) ? forward : backward
+        }
+        func ordered(_ a: V, _ b: V) -> Bool { (a.x, a.y) <= (b.x, b.y) }
+
         func shapes(for who: Int) -> [[GridPoint]] {
             var mask = [Bool](repeating: false, count: m * m)
             for i in owner.indices where owner[i] == who { mask[i] = true }
             var result: [[GridPoint]] = []
             for loop in Contours.loops(mask: mask, width: m, height: m) where Plane.signedArea(loop) >= Double(fine * fine) {
-                let simple = Contours.simplify(closed: loop, tolerance: 0.8)
-                let points = simple.map { point(min(max($0.x / Double(fine), 0), Double(n)), min(max($0.y / Double(fine), 0), Double(n))) }
+                // What is across each step of the loop.
+                let count = loop.count
+                var across = [Int](repeating: 0, count: count)
+                for i in 0..<count {
+                    let p = loop[i], q = loop[(i + 1) % count]
+                    let x = Int(p.x), y = Int(p.y)
+                    switch (Int(q.x) - x, Int(q.y) - y) {
+                    case (1, 0): across[i] = key(x, y - 1)
+                    case (0, 1): across[i] = key(x, y)
+                    case (-1, 0): across[i] = key(x - 1, y)
+                    default: across[i] = key(x - 1, y - 1)
+                    }
+                }
+                // Start at a place where what is across changes, so no run is cut in two.
+                guard let startAt = (0..<count).first(where: { across[$0] != across[($0 + count - 1) % count] }) else {
+                    // The whole edge is one thing.
+                    let points = (across[0] == outsideKey ? ring : loop).map { GridPoint(easting: $0.x / Double(fine) * SceneOptions.squareMetres, northing: $0.y / Double(fine) * SceneOptions.squareMetres) }
+                    if PlaceGeometry.polygon(points).isValid { result.append(points) }
+                    continue
+                }
+                var polygon: [V] = []
+                var i = 0
+                while i < count {
+                    let from = (startAt + i) % count
+                    var length = 1
+                    while i + length < count, across[(startAt + i + length) % count] == across[from] { length += 1 }
+                    var run: [V] = (0...length).map { loop[(from + $0) % count] }
+                    let startPoint = snapped(run[0]), endPoint = snapped(run[length])
+                    var points: [V]
+                    if across[from] == outsideKey {
+                        points = arc(from: startPoint, to: endPoint, near: run)
+                    } else {
+                        // A wall inside the building, simplified the same way whichever room it is looked at from.
+                        run[0] = startPoint
+                        run[length] = endPoint
+                        let flip = !ordered(run[0], run[length])
+                        let canonical = flip ? Array(run.reversed()) : run
+                        let simple = Contours.simplify(open: canonical, tolerance: 0.8)
+                        points = flip ? Array(simple.reversed()) : simple
+                    }
+                    polygon += points.dropLast()
+                    i += length
+                }
+                var cleaned: [V] = []
+                for p in polygon where cleaned.last.map({ $0.distance(to: p) > 1e-9 }) ?? true { cleaned.append(p) }
+                if let first = cleaned.first, let last = cleaned.last, cleaned.count > 1, first.distance(to: last) < 1e-9 { cleaned.removeLast() }
+                let points = cleaned.map { point(min(max($0.x / Double(fine), 0), Double(n)), min(max($0.y / Double(fine), 0), Double(n))) }
                 if PlaceGeometry.polygon(points).isValid { result.append(points) }
             }
             return result
         }
+        var roomShapes: [[GridPoint]] = []
         for index in rooms.indices {
             // The biggest piece, which is the room; a room never comes out as two.
             let best = shapes(for: index).max { Plane.area($0.map { V(x: $0.easting, y: $0.northing) }) < Plane.area($1.map { V(x: $0.easting, y: $0.northing) }) }
             roomShapes.append(best ?? polygon(rooms[index]))
         }
-        hallShapes = shapes(for: hallOwner)
-        return (roomShapes, hallShapes)
+        return (roomShapes, shapes(for: hallOwner))
     }
 
     /// The pieces of a mask that have at least `atLeast` squares.
