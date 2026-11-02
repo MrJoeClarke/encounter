@@ -174,6 +174,7 @@ private struct WorldRow: View {
                 .clipShape(RoundedRectangle(cornerRadius: 8))
         } else {
             Image(systemName: "globe.europe.africa")
+                .accessibilityHidden(true)
                 .foregroundStyle(.secondary)
                 .frame(width: thumbnailSize, height: thumbnailSize)
                 .background(.quaternary, in: RoundedRectangle(cornerRadius: 8))

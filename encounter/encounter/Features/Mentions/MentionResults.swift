@@ -135,6 +135,7 @@ private struct MentionResultRow: View {
 
     private func icon(_ name: String) -> some View {
         Image(systemName: name)
+    .accessibilityHidden(true)
             .foregroundStyle(.secondary)
             .frame(width: 28, height: 28)
             .background(.quaternary, in: RoundedRectangle(cornerRadius: 5))

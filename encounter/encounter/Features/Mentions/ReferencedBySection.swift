@@ -22,6 +22,7 @@ struct ReferencedBySection: View {
                     } label: {
                         HStack(spacing: 10) {
                             Image(systemName: backlink.source.kind.systemImage)
+                                .accessibilityHidden(true)
                                 .foregroundStyle(.secondary)
                                 .frame(width: 24)
                             VStack(alignment: .leading, spacing: 1) {

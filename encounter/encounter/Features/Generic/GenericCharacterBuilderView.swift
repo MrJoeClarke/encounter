@@ -99,10 +99,11 @@ struct GenericCharacterBuilderView: View {
                             }
                         }
                         Spacer()
-                        if option.choice == selected?.choice { Image(systemName: "checkmark").foregroundStyle(.tint) }
+                        if option.choice == selected?.choice { Image(systemName: "checkmark").foregroundStyle(.tint).accessibilityHidden(true) }
                     }
                 }
                 .buttonStyle(.plain)
+                .accessibilityAddTraits(option.choice == selected?.choice ? .isSelected : [])
             }
         } footer: {
             if !isRequired { Text("You can leave this empty.") }
@@ -134,10 +135,11 @@ struct GenericCharacterBuilderView: View {
                             if !option.summary.isEmpty { Text(option.summary).font(.subheadline).foregroundStyle(.secondary).lineLimit(3) }
                         }
                         Spacer()
-                        if let key = option.libraryKey, picked.contains(key) { Image(systemName: "checkmark").foregroundStyle(.tint) }
+                        if let key = option.libraryKey, picked.contains(key) { Image(systemName: "checkmark").foregroundStyle(.tint).accessibilityHidden(true) }
                     }
                 }
                 .buttonStyle(.plain)
+                .accessibilityAddTraits(option.libraryKey.map(picked.contains) == true ? .isSelected : [])
             }
         } footer: {
             Text("\(picked.count) of \(count) picked.")

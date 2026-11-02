@@ -100,6 +100,7 @@ private struct LibraryRow: View {
     var body: some View {
         HStack(spacing: 10) {
             Image(systemName: Library.shared.systemImage(of: LibraryList(of: entry), in: LibraryEdition(key: entry.key) ?? .default))
+                .accessibilityHidden(true)
                 .foregroundStyle(.secondary)
                 .frame(width: iconSize, height: iconSize)
                 .background(.quaternary, in: RoundedRectangle(cornerRadius: 6))

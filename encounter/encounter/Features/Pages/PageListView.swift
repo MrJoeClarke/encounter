@@ -217,6 +217,7 @@ private struct PageRow: View {
                 .clipShape(RoundedRectangle(cornerRadius: 6))
         } else {
             Image(systemName: page.kind.systemImage)
+    .accessibilityHidden(true)
                 .foregroundStyle(.secondary)
                 .frame(width: thumbnailSize, height: thumbnailSize)
                 .background(.quaternary, in: RoundedRectangle(cornerRadius: 6))

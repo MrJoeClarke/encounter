@@ -118,6 +118,7 @@ struct ImagesSection<Owner: ImageOwner & Observable>: View {
                 .overlay(alignment: .topLeading) {
                     if image.isDefault {
                         Image(systemName: "star.fill")
+                            .accessibilityLabel("Default image")
                             .font(.caption)
                             .padding(5)
                             .background(.thinMaterial, in: Circle())

@@ -19,18 +19,30 @@ struct PageEditorView: View {
     @State private var newTag = ""
     @FocusState private var titleIsFocused: Bool
     @State private var mode = PageEditorMode.page
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     private var hasSheet: Bool { page.kind == .character && page.world?.rules.contains(.sheet) == true }
 
     var body: some View {
         VStack(spacing: 0) {
             if hasSheet {
-                Picker("View", selection: $mode) {
-                    Text("Page").tag(PageEditorMode.page)
-                    Text("Sheet").tag(PageEditorMode.sheet)
+                // Segments don't wrap, so at the largest text sizes a menu takes their place rather than running off the screen.
+                Group {
+                    if typeSize.isAccessibilitySize {
+                        Picker("View", selection: $mode) {
+                            Text("Page").tag(PageEditorMode.page)
+                            Text("Sheet").tag(PageEditorMode.sheet)
+                        }
+                        .pickerStyle(.menu)
+                    } else {
+                        Picker("View", selection: $mode) {
+                            Text("Page").tag(PageEditorMode.page)
+                            Text("Sheet").tag(PageEditorMode.sheet)
+                        }
+                        .pickerStyle(.segmented)
+                        .labelsHidden()
+                    }
                 }
-                .pickerStyle(.segmented)
-                .labelsHidden()
                 .padding([.horizontal, .top])
                 .padding(.bottom, 8)
             }

@@ -140,11 +140,12 @@ private struct SourcePicker: View {
                             Text(source.sourceTitle).font(.caption).foregroundStyle(.secondary)
                         }
                         Spacer()
-                        if source.choice == selection { Image(systemName: "checkmark").foregroundStyle(.tint) }
+                        if source.choice == selection { Image(systemName: "checkmark").foregroundStyle(.tint).accessibilityHidden(true) }
                     }
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+                .accessibilityAddTraits(source.choice == selection ? .isSelected : [])
             }
         }
     }

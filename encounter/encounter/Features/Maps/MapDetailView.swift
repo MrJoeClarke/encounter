@@ -170,6 +170,7 @@ struct MapDetailView: View {
                     }
                     if page !== chain.last {
                         Image(systemName: "chevron.right")
+                            .accessibilityHidden(true)
                             .font(.caption2)
                             .foregroundStyle(.secondary)
                     }
@@ -241,6 +242,7 @@ struct MapDetailView: View {
     private func selectedPlaceBar(_ page: Page) -> some View {
         HStack {
             Image(systemName: page.kind.systemImage)
+    .accessibilityHidden(true)
             Text(page.title.isEmpty ? String(localized: "Untitled") : page.title)
                 .font(.headline)
             Spacer()

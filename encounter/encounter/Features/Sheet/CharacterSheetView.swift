@@ -201,6 +201,7 @@ struct CharacterSheetView: View {
                     Image(systemName: index < count ? "circle.fill" : "circle").foregroundStyle(tint)
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel(index < count ? "Clear mark \(index + 1)" : "Mark \(index + 1)")
             }
         }
     }
@@ -264,6 +265,7 @@ struct CharacterSheetView: View {
             Button(action: cycle) { Image(systemName: symbol) }
                 .buttonStyle(.plain)
                 .help(help)
+                .accessibilityLabel(help)
             Button(action: open) {
                 HStack {
                     Text(title)
@@ -334,7 +336,7 @@ struct CharacterSheetView: View {
                                 Text(spell.name)
                                 if spell.isRitual { Text("ritual").font(.caption).foregroundStyle(.secondary) }
                                 Spacer()
-                                Image(systemName: "chevron.right").font(.caption).foregroundStyle(.tertiary)
+                                Image(systemName: "chevron.right").font(.caption).foregroundStyle(.tertiary).accessibilityHidden(true)
                             }
                             .contentShape(Rectangle())
                         }

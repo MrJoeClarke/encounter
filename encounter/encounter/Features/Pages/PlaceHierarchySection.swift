@@ -88,6 +88,7 @@ struct PlaceHierarchySection: View {
                     }
                     .buttonStyle(.borderless)
                     Image(systemName: "chevron.right")
+                        .accessibilityHidden(true)
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                 }
