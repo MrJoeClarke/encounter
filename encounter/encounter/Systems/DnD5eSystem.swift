@@ -28,6 +28,34 @@ struct DnD5eSystem: RuleSystem {
     var rests: [RestDefinition] { Self.restList }
     var resources: [ResourceDefinition] { Self.resourceList }
 
+    var creationFlow: CreationFlow? { Self.flow }
+    var advancement: AdvancementRule? { Self.advancementRule }
+
+    /// The steps D&D's builder shares with any system: who the character is, what they come from, and their scores. The builder
+    /// adds D&D's own steps (skills, tools, equipment, spells) between these, and still makes the character itself.
+    static let flow = CreationFlow(
+        steps: [
+            CreationStep(id: "concept", title: "Concept", kind: .concept),
+            CreationStep(id: LinkRole.race, title: "Race", kind: .choose(list: LibraryList(.race), isRequired: true)),
+            CreationStep(id: LinkRole.characterClass, title: "Class", kind: .choose(list: LibraryList(.class), isRequired: true)),
+            CreationStep(id: LinkRole.background, title: "Background", kind: .choose(list: LibraryList(.background), isRequired: true)),
+            CreationStep(id: "abilities", title: "Abilities", kind: .numbers(NumberRule(
+                entries: Ability.allCases.map { .init(key: $0.attributeKey, label: $0.rawValue, variable: $0.rawValue.lowercased()) },
+                method: .assignFrom(CharacterRules.standardArray)
+            ))),
+            CreationStep(id: "review", title: "Review", kind: .review),
+        ],
+        derived: [("dnd5e.proficiencyBonus", "proficiencyBonus")],
+        levelKey: "dnd5e.classLevel"
+    )
+
+    /// Levelling beyond this (hit points, features, spells) is in `LevelUp`; the proficiency bonus is the part that is only a
+    /// formula.
+    static let advancementRule = AdvancementRule(
+        levelKey: "dnd5e.classLevel", maxLevel: 20,
+        gains: [.init(key: "dnd5e.proficiencyBonus", formula: "proficiencyBonus")]
+    )
+
     static let restList = [RestDefinition(id: "short", name: "Short Rest"), RestDefinition(id: "long", name: "Long Rest")]
 
     /// What a rest gives back. Inputs are `level`, `maxHitPoints` and `usesPactMagic` (1 or 0). A long rest also takes away a level

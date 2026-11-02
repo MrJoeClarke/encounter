@@ -41,6 +41,10 @@ protocol RuleSystem {
     var rests: [RestDefinition] { get }
     /// What a character has that goes down and up in play, and how each kind of rest gives it back.
     var resources: [ResourceDefinition] { get }
+    /// How a character is made, if the system has a guided flow for it.
+    var creationFlow: CreationFlow? { get }
+    /// How a character gains levels, if the system has them.
+    var advancement: AdvancementRule? { get }
 }
 
 extension RuleSystem {
@@ -50,6 +54,8 @@ extension RuleSystem {
     var formulas: FormulaSet { FormulaSet([:]) }
     var rests: [RestDefinition] { [] }
     var resources: [ResourceDefinition] { [] }
+    var creationFlow: CreationFlow? { nil }
+    var advancement: AdvancementRule? { nil }
 
     /// Whether the system comes with a bundled content library (races, classes and so on).
     var hasContentLibrary: Bool { modules.contains(.library) }
