@@ -139,7 +139,11 @@ enum WorldImporter {
                 map.isVector = true
                 map.pixelWidth = extent
                 map.pixelHeight = extent
-                map.settlementOptions = record.settlementOptions
+                if let options = record.settlementOptions {
+                    map.settlementOptions = options
+                } else if let options = record.worldOptions {
+                    map.worldOptions = options
+                }
             }
             map.calibration = record.calibration
             map.gridColumns = record.gridColumns ?? 0

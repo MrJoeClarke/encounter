@@ -123,4 +123,6 @@ nonisolated struct MapRecord: Codable, Sendable {
     var extentMetres: Int?
     /// What a settlement map was generated from, so it can be generated again.
     var settlementOptions: SettlementOptions?
+    /// What a world map was generated from.
+    var worldOptions: WorldOptions?
 }

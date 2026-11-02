@@ -21,7 +21,7 @@ struct TownGeneratorTests {
     }
 
     private func points(_ feature: GeneratedFeature) -> [GridPoint] {
-        switch feature.shape { case .polygon(let p), .line(let p): p }
+        switch feature.shape { case .polygon(let p), .line(let p): p; case .point(let p): [p] }
     }
 
     private func v(_ p: GridPoint) -> V { V(x: p.easting, y: p.northing) }
@@ -295,7 +295,7 @@ struct TownGeneratorTests {
         for layout in SettlementOptions.Layout.allCases {
             let settlement = make(.city, layout: layout, river: true, seed: 13, landmarks: Landmark.allCases)
             for feature in settlement.features {
-                let shape: PlaceGeometry = { if case .polygon(let p) = feature.shape { .polygon(p) } else { .line(points(feature)) } }()
+                let shape: PlaceGeometry = { switch feature.shape { case .polygon(let p): .polygon(p); case .line(let p): .line(p); case .point(let p): .point(p) } }()
                 #expect(shape.isValid, "\(layout) \(feature.name) (\(feature.placeType)) is not valid")
                 #expect(points(feature).allSatisfy { (0...settlement.extent).contains($0.easting) && (0...settlement.extent).contains($0.northing) })
             }
@@ -387,7 +387,7 @@ struct RiverAndBlockTests {
     }
 
     private func line(_ feature: GeneratedFeature) -> [V] {
-        switch feature.shape { case .polygon(let p), .line(let p): p.map { V(x: $0.easting, y: $0.northing) } }
+        switch feature.shape { case .polygon(let p), .line(let p): p.map { V(x: $0.easting, y: $0.northing) }; case .point(let p): [V(x: p.easting, y: p.northing)] }
     }
 
     /// Where lines cross the river, counting each place once.
@@ -456,7 +456,7 @@ struct RiverAndBlockTests {
                 func find(_ k: String) -> String { var k = k; while let next = parent[k], next != k { k = next }; return k }
                 func union(_ a: String, _ b: String) { parent[a] = parent[a] ?? a; parent[b] = parent[b] ?? b; parent[find(a)] = find(b) }
                 for feature in settlement.features(of: "Road") + settlement.features(of: "Street") + settlement.features(of: "Square") {
-                    let points: [GridPoint] = { switch feature.shape { case .polygon(let p), .line(let p): p } }()
+                    let points: [GridPoint] = { switch feature.shape { case .polygon(let p), .line(let p): p; case .point(let p): [p] } }()
                     for (a, b) in zip(points, points.dropFirst()) { union(key(a), key(b)) }
                 }
                 let square = line(settlement.features(of: "Square")[0])
@@ -553,7 +553,7 @@ struct PlanarFaceTests {
 
 struct VenueAndLandmarkPlacementTests {
     private func polygon(_ feature: GeneratedFeature) -> [V] {
-        switch feature.shape { case .polygon(let p), .line(let p): p.map { V(x: $0.easting, y: $0.northing) } }
+        switch feature.shape { case .polygon(let p), .line(let p): p.map { V(x: $0.easting, y: $0.northing) }; case .point(let p): [V(x: p.easting, y: p.northing)] }
     }
 
     private func nearestStreet(_ points: [V], in settlement: GeneratedSettlement) -> Double {

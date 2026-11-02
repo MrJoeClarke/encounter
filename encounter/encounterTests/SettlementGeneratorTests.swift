@@ -18,11 +18,12 @@ struct SettlementGeneratorTests {
         switch feature.shape {
         case .polygon(let points): .polygon(points)
         case .line(let points): .line(points)
+        case .point(let point): .point(point)
         }
     }
 
     private func points(_ feature: GeneratedFeature) -> [GridPoint] {
-        switch feature.shape { case .polygon(let p), .line(let p): p }
+        switch feature.shape { case .polygon(let p), .line(let p): p; case .point(let p): [p] }
     }
 
     @Test func theSameSeedGivesTheSameSettlementAndAnotherSeedGivesAnother() {
@@ -371,7 +372,7 @@ struct SettlementOutlineTests {
         let settlement = SettlementGenerator.generate(options, outline: crescent, extent: extent)
         #expect(settlement.features(of: "Building").count > 0)
         let broken = settlement.features.filter { feature in
-            switch feature.shape { case .polygon(let q): !PlaceGeometry.polygon(q).isValid; case .line(let q): !PlaceGeometry.line(q).isValid }
+            switch feature.shape { case .polygon(let q): !PlaceGeometry.polygon(q).isValid; case .line(let q): !PlaceGeometry.line(q).isValid; case .point(let q): !PlaceGeometry.point(q).isValid }
         }.map { "\($0.placeType) \($0.name)" }
         #expect(broken.isEmpty, "\(broken)")
         #expect(settlement.features(of: "Building").allSatisfy { inside(crescent, $0) })

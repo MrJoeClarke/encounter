@@ -100,3 +100,35 @@ extension NameBank {
         }
     }
 }
+
+extension NameBank {
+    private static let placeStarts = ["Ald", "Bram", "Cas", "Dun", "Elm", "Fen", "Gar", "Hal", "Iron", "Kes", "Lin", "Mar", "Nor", "Oak", "Pen", "Ros", "Stan", "Tarn", "Wick", "Yar", "Ash", "Black", "Cold", "Dray", "East", "Free", "Grey", "High", "King", "Long", "Mill", "New", "Over", "Red", "Salt", "Thorn", "Under", "West", "White", "Wolf"]
+    private static let placeEnds = ["ford", "ton", "bury", "ham", "wick", "stead", "mouth", "bridge", "field", "haven", "gate", "worth", "dale", "ley", "chester", "by", "thorpe", "minster", "port", "holt"]
+    private static let realmNames = ["Aldermere", "Brightmarch", "Carrow", "Dunmore", "Eastmark", "Fenwald", "Greymoor", "Hollin", "Ironvale", "Kestrel", "Lorrain", "Marrowe", "Norland", "Oakenfell", "Penhallow", "Rivermark", "Stormvale", "Thornmere", "Valdry", "Westerlund", "Yarrowdale", "Ashgrove", "Blackwater", "Corvane"]
+    private static let titles = ["Kingdom", "Realm", "Duchy", "Principality", "Dominion"]
+    private static let woodNames = ["Old", "Dark", "Whispering", "Elder", "Silent", "Deep", "Green", "Grey", "Ancient", "Hollow"]
+    private static let peakNames = ["Grey", "Iron", "White", "Broken", "Storm", "Black", "High", "Frost", "Red", "Shattered"]
+    private static let seaNames = ["Grey", "Northern", "Narrow", "Stormy", "Silver", "Western", "Pale", "Salt", "Great"]
+
+    /// A name for a city, town or village, such as "Aldford" or "Thornbury".
+    mutating func settlement(using random: inout SeededRandom) -> String {
+        unique { (Self.placeStarts.randomElement(using: &random) ?? "Hal") + (Self.placeEnds.randomElement(using: &random) ?? "ford") }
+    }
+
+    /// A name for a realm, such as "Kingdom of Carrow".
+    mutating func realm(using random: inout SeededRandom) -> String {
+        unique { "\(Self.titles.randomElement(using: &random) ?? "Kingdom") of \(Self.realmNames.randomElement(using: &random) ?? "Carrow")" }
+    }
+
+    mutating func forest(using random: inout SeededRandom) -> String {
+        unique { "The \(Self.woodNames.randomElement(using: &random) ?? "Old") Forest" }
+    }
+
+    mutating func mountains(using random: inout SeededRandom) -> String {
+        unique { "The \(Self.peakNames.randomElement(using: &random) ?? "Grey") Mountains" }
+    }
+
+    mutating func sea(using random: inout SeededRandom) -> String {
+        unique { "The \(Self.seaNames.randomElement(using: &random) ?? "Grey") Sea" }
+    }
+}
