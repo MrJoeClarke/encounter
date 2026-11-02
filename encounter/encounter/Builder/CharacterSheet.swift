@@ -384,7 +384,7 @@ struct CharacterSheet {
     /// Gives back what a kind of rest gives back, as the rule system says (see `DnD5eSystem.resourceList`).
     private func rest(_ id: String) {
         let formulas = DnD5eSystem.formulaSet
-        let inputs: [String: Double] = ["level": Double(level), "maxHitPoints": Double(maximumHitPoints), "usesPactMagic": usesPactMagic ? 1 : 0]
+        let inputs: [String: Double] = ["level": Double(level), "dnd5e.hitPoints": Double(maximumHitPoints), "usesPactMagic": usesPactMagic ? 1 : 0]
         for resource in DnD5eSystem.resourceList {
             if let text = ResourceRules.textAfter(rest: id, resource: resource, formulas: formulas, inputs: inputs) {
                 page.setAttributeText(resource.key, text)

@@ -45,6 +45,10 @@ protocol RuleSystem {
     var creationFlow: CreationFlow? { get }
     /// How a character gains levels, if the system has them.
     var advancement: AdvancementRule? { get }
+    /// The conditions a character can be under, and what they do to its rolls.
+    var conditions: [ConditionDefinition] { get }
+    /// How a character's sheet is laid out, if the system has one.
+    var sheetLayout: SheetLayout? { get }
 }
 
 extension RuleSystem {
@@ -56,6 +60,8 @@ extension RuleSystem {
     var resources: [ResourceDefinition] { [] }
     var creationFlow: CreationFlow? { nil }
     var advancement: AdvancementRule? { nil }
+    var conditions: [ConditionDefinition] { [] }
+    var sheetLayout: SheetLayout? { nil }
 
     /// Whether the system comes with a bundled content library (races, classes and so on).
     var hasContentLibrary: Bool { modules.contains(.library) }

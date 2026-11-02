@@ -6,7 +6,7 @@
 import Foundation
 
 /// A sum written as text, such as "floor((score - 10) / 2)", so a rule system can say how its numbers are worked out as data
-/// rather than code. It has numbers, names, + − * / and brackets, and the functions floor, ceil, round, abs, min and max.
+/// rather than code. It has numbers, names (which can have dots, so "dnd5e.strength" is a name), + − * / and brackets, and the functions floor, ceil, round, abs, min and max.
 nonisolated struct Formula: Equatable, Sendable {
     fileprivate indirect enum Node: Equatable, Sendable {
         case number(Double)
@@ -107,7 +107,7 @@ private nonisolated struct FormulaParser {
                 index = end
             } else if character.isLetter || character == "_" {
                 var end = index
-                while end < text.endIndex, text[end].isLetter || text[end].isNumber || text[end] == "_" { end = text.index(after: end) }
+                while end < text.endIndex, text[end].isLetter || text[end].isNumber || text[end] == "_" || text[end] == "." { end = text.index(after: end) }
                 tokens.append(.name(String(text[index..<end])))
                 index = end
             } else if "+-*/(),".contains(character) {

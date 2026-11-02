@@ -25,6 +25,57 @@ struct DnD5eSystem: RuleSystem {
         "skillBonus": "abilityModifier + floor(proficiencyBonus * proficiencyMultiplier)",
     ])
 
+    var conditions: [ConditionDefinition] { Self.conditionList }
+    var sheetLayout: SheetLayout? { Self.layout }
+
+    /// The part of D&D's sheet that is only numbers from the page and formulas. The sheet screen still draws the rest (skills,
+    /// attacks, spells, action cards) from `CharacterSheet`.
+    static let layout = SheetLayout(sections: [
+        SheetSection(id: "hitPoints", title: "Hit Points", rows: [
+            SheetRow(id: "hitPoints", label: "Hit Points", kind: .resource("hitPoints")),
+            SheetRow(id: "temporaryHitPoints", label: "Temporary Hit Points", kind: .resource("temporaryHitPoints")),
+        ]),
+        SheetSection(id: "abilities", title: "Abilities", rows: Ability.allCases.map {
+            SheetRow(id: $0.attributeKey, label: $0.rawValue, kind: .stat(formula: "abilityModifier", inputs: ["score": $0.attributeKey]))
+        } + [SheetRow(id: "proficiencyBonus", label: "Proficiency Bonus", kind: .stat(formula: "proficiencyBonus", inputs: [:]))]),
+    ])
+
+
+    /// What D&D's conditions do to the character's own rolls, for both editions: the input `edition2024` is 1 for the 2024
+    /// rules and 0 for the 2014 rules, and exhaustion has levels. Movement and hit points are still worked out in code.
+    static let conditionList: [ConditionDefinition] = {
+        let attack: Set<String> = ["attack"]
+        let d20Penalty = ConditionEffectRule.Effect.penalty(formula: "-2 * level", reason: "Exhaustion")
+        let senses = { (name: String, sense: String) in
+            ConditionEffectRule(["check"], .autoFail("\(name): automatically fails a check that needs \(sense)"))
+        }
+        let cantMoveSaves = { (name: String) in
+            [ConditionEffectRule(["save.strength", "save.dexterity"], .autoFail("\(name): automatically fails Strength and Dexterity saving throws"))]
+        }
+        return [
+            ConditionDefinition("blinded", "Blinded", effects: [.init(attack, .disadvantage), senses("Blinded", "sight")]),
+            ConditionDefinition("charmed", "Charmed"),
+            ConditionDefinition("deafened", "Deafened", effects: [senses("Deafened", "hearing")]),
+            ConditionDefinition("exhaustion", "Exhaustion", hasLevels: true, effects: [
+                .init(attack, .disadvantage, when: "(1 - edition2024) * max(0, min(1, level - 2))"),
+                .init(["check", "initiative"], .disadvantage, when: "(1 - edition2024) * min(1, level)"),
+                .init(["save"], .disadvantage, when: "(1 - edition2024) * max(0, min(1, level - 2))"),
+                .init(["attack", "check", "save", "initiative"], d20Penalty, when: "edition2024"),
+            ]),
+            ConditionDefinition("frightened", "Frightened", effects: [.init(attack, .disadvantage), .init(["check", "initiative"], .disadvantage)]),
+            ConditionDefinition("grappled", "Grappled", effects: [.init(attack, .disadvantage, when: "edition2024")]),
+            ConditionDefinition("incapacitated", "Incapacitated", effects: [.init(["initiative"], .disadvantage, when: "edition2024")]),
+            ConditionDefinition("invisible", "Invisible", effects: [.init(attack, .advantage), .init(["initiative"], .advantage, when: "edition2024")]),
+            ConditionDefinition("paralyzed", "Paralyzed", effects: cantMoveSaves("Paralyzed")),
+            ConditionDefinition("petrified", "Petrified", effects: cantMoveSaves("Petrified")),
+            ConditionDefinition("poisoned", "Poisoned", effects: [.init(attack, .disadvantage), .init(["check", "initiative"], .disadvantage)]),
+            ConditionDefinition("prone", "Prone", effects: [.init(attack, .disadvantage)]),
+            ConditionDefinition("restrained", "Restrained", effects: [.init(attack, .disadvantage), .init(["save.dexterity"], .disadvantage)]),
+            ConditionDefinition("stunned", "Stunned", effects: cantMoveSaves("Stunned")),
+            ConditionDefinition("unconscious", "Unconscious", effects: cantMoveSaves("Unconscious")),
+        ]
+    }()
+
     var rests: [RestDefinition] { Self.restList }
     var resources: [ResourceDefinition] { Self.resourceList }
 
@@ -58,11 +109,11 @@ struct DnD5eSystem: RuleSystem {
 
     static let restList = [RestDefinition(id: "short", name: "Short Rest"), RestDefinition(id: "long", name: "Long Rest")]
 
-    /// What a rest gives back. Inputs are `level`, `maxHitPoints` and `usesPactMagic` (1 or 0). A long rest also takes away a level
+    /// What a rest gives back. Inputs are `level`, the numbers on the page, and `usesPactMagic` (1 or 0). A long rest also takes away a level
     /// of exhaustion, which belongs to the conditions.
     static let resourceList = [
         ResourceDefinition(
-            id: "hitPoints", name: "Hit Points", key: "dnd5e.currentHitPoints", storage: .remaining, maximum: "maxHitPoints",
+            id: "hitPoints", name: "Hit Points", key: "dnd5e.currentHitPoints", storage: .remaining, maximum: "dnd5e.hitPoints",
             restoredBy: ["long": .full]
         ),
         ResourceDefinition(id: "temporaryHitPoints", name: "Temporary Hit Points", key: "dnd5e.temporaryHitPoints", storage: .remaining, restoredBy: ["long": .empty]),
