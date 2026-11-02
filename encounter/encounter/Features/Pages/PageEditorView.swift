@@ -136,8 +136,8 @@ struct PageEditorView: View {
     /// Attributes for this page's kind under its world's rule system, sectioned by group heading in definition order.
     private var groupedDefinitions: [DefinitionGroup] {
         var groups: [DefinitionGroup] = []
-        let system = page.world?.system ?? .none
-        for definition in RuleSystems.definitions(for: page.kind, system: system) {
+        let systemKey = page.world?.systemRaw ?? RuleSystemID.none.rawValue
+        for definition in RuleSystems.definitions(for: page.kind, systemKey: systemKey) {
             let title = String(localized: definition.group)
             if let index = groups.firstIndex(where: { $0.title == title }) {
                 groups[index] = DefinitionGroup(

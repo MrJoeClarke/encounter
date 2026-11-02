@@ -13,6 +13,8 @@ nonisolated struct SystemDefinition: Decodable, Sendable {
     static let supportedFormatVersion = 1
 
     var formatVersion: Int
+    /// Raised by the author when the system's rules change, so worlds made under an older one can say so.
+    var version: Int
     /// Permanent, and begins with the author's own name, such as "made.up".
     var id: String
     var name: String
@@ -28,12 +30,13 @@ nonisolated struct SystemDefinition: Decodable, Sendable {
     var sheet: SheetLayout?
 
     private enum CodingKeys: String, CodingKey {
-        case formatVersion, id, name, modules, attributes, rollModel, formulas, rests, resources, creation, advancement, conditions, sheet
+        case formatVersion, version, id, name, modules, attributes, rollModel, formulas, rests, resources, creation, advancement, conditions, sheet
     }
 
     init(from decoder: any Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         formatVersion = try c.decode(Int.self, forKey: .formatVersion)
+        version = max(1, try c.decodeIfPresent(Int.self, forKey: .version) ?? 1)
         id = try c.decode(String.self, forKey: .id)
         name = try c.decode(String.self, forKey: .name)
         modules = try c.decodeIfPresent([String].self, forKey: .modules) ?? []
@@ -163,6 +166,7 @@ struct DataRuleSystem: RuleSystem {
     let id = RuleSystemID.none
 
     var key: String { definition.id }
+    var version: Int { definition.version }
 
     var attributes: [AttributeDefinition] { definition.attributes.compactMap(\.definition) }
 

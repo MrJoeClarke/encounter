@@ -34,9 +34,13 @@ struct WorldHomeView: View {
             }
 
             Section {
-                Picker("Rule System", selection: $world.system) {
-                    ForEach(RuleSystemID.allCases) { system in
-                        Text(system.title).tag(system)
+                Picker("Rule System", selection: Binding(get: { world.systemRaw }, set: { world.choose(systemKey: $0) })) {
+                    ForEach(RuleSystems.choices) { system in
+                        Text(system.title).tag(system.key)
+                    }
+                    // A system the app doesn't have stays chosen, so the world keeps it.
+                    if !RuleSystems.isKnown(world.systemRaw) {
+                        Text(world.systemTitle).tag(world.systemRaw)
                     }
                 }
             } footer: {

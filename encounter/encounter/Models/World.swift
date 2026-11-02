@@ -13,6 +13,8 @@ final class World {
     var name: String = ""
     var summary: String = ""
     var systemRaw: String = RuleSystemID.none.rawValue
+    /// The version of the system the world was last set up or imported under. 0 if never recorded.
+    var systemVersion: Int = 0
     /// Which edition of the content library the world uses. Only matters for systems that have a library.
     var editionRaw: String = LibraryEdition.default.rawValue
     var createdAt: Date = Date()
@@ -38,6 +40,7 @@ final class World {
         self.name = name
         self.summary = summary
         self.systemRaw = system.rawValue
+        self.systemVersion = RuleSystems.system(for: system).version
         self.calendar = CalendarDefinition()
     }
 
@@ -54,7 +57,7 @@ final class World {
     /// The page kinds shown in the sidebar: every kind, except conditional ones (such as Classes) unless the
     /// rule system uses them or the world already has pages of that kind. Pages are never hidden.
     var visibleKinds: [PageKind] {
-        let systemKinds = RuleSystems.system(for: system).additionalPageKinds
+        let systemKinds = RuleSystems.system(forKey: systemRaw).additionalPageKinds
         let usedKinds = Set((pages ?? []).map(\.kind))
         return PageKind.allCases.filter { kind in
             !kind.isConditional || systemKinds.contains(kind) || usedKinds.contains(kind)

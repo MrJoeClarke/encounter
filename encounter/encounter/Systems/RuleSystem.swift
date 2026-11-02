@@ -27,6 +27,10 @@ struct RuleModules: OptionSet, Sendable {
 /// how it is played.
 protocol RuleSystem {
     var id: RuleSystemID { get }
+    /// What a world stores to say it uses this system. For the systems the app names it is the `RuleSystemID`'s raw value.
+    var key: String { get }
+    /// Raised when the system's rules change in a way a world made under an older one should know about.
+    var version: Int { get }
     /// Attributes this system adds. A definition whose key matches a core attribute replaces it.
     var attributes: [AttributeDefinition] { get }
     /// Page kinds that always appear in the sidebar of a world using this system, such as Classes.
@@ -52,6 +56,8 @@ protocol RuleSystem {
 }
 
 extension RuleSystem {
+    var key: String { id.rawValue }
+    var version: Int { 1 }
     var additionalPageKinds: Set<PageKind> { [] }
     var modules: RuleModules { [] }
     var rollModel: RollModel? { nil }
@@ -73,6 +79,79 @@ struct NoRuleSystem: RuleSystem {
     let attributes: [AttributeDefinition] = []
 }
 
+/// A system a world can choose.
+struct SystemChoice: Identifiable, Hashable {
+    let key: String
+    let title: String
+    var id: String { key }
+}
+
+/// The systems read from files, by key. The ones that ship with the app are loaded from its bundle the first time they are
+/// asked for; others can be added.
+final class SystemRegistry: @unchecked Sendable {
+    static let shared = SystemRegistry()
+
+    private var systems: [String: DataRuleSystem] = [:]
+    private var hasLoadedBundle = false
+    private let lock = NSLock()
+
+    /// A registry that holds only what is added to it, for tests.
+    init(loadsBundle: Bool = true) {
+        hasLoadedBundle = !loadsBundle
+    }
+
+    /// Adds a system, replacing one with the same key. A system can't take the key of one the app names.
+    @discardableResult
+    func register(_ system: DataRuleSystem) -> Bool {
+        guard RuleSystemID(rawValue: system.key) == nil else { return false }
+        lock.lock()
+        defer { lock.unlock() }
+        loadBundleIfNeeded()
+        systems[system.key] = system
+        return true
+    }
+
+    func system(forKey key: String) -> DataRuleSystem? {
+        lock.lock()
+        defer { lock.unlock() }
+        loadBundleIfNeeded()
+        return systems[key]
+    }
+
+    var all: [DataRuleSystem] {
+        lock.lock()
+        defer { lock.unlock() }
+        loadBundleIfNeeded()
+        return systems.values.sorted { $0.definition.name.localizedStandardCompare($1.definition.name) == .orderedAscending }
+    }
+
+    /// Systems that ship with the app are files named `*.system.json` in its bundle.
+    private func loadBundleIfNeeded() {
+        guard !hasLoadedBundle else { return }
+        hasLoadedBundle = true
+        let urls = Bundle(for: RegistryBundleToken.self).urls(forResourcesWithExtension: "json", subdirectory: nil) ?? []
+        for url in urls where url.lastPathComponent.hasSuffix(".system.json") {
+            if let data = try? Data(contentsOf: url), let system = DataRuleSystem(data: data), RuleSystemID(rawValue: system.key) == nil {
+                systems[system.key] = system
+            }
+        }
+    }
+}
+
+private final class RegistryBundleToken {}
+
+/// How a world's recorded system compares with what this app has.
+enum SystemStatus: Equatable {
+    /// The world's system, at the version the world was last used with.
+    case current
+    /// The system has been updated since the world was last used with it.
+    case updated(from: Int, to: Int)
+    /// The world was made with a newer version of the system than this app has.
+    case newerThanApp(world: Int, app: Int)
+    /// The app doesn't have this system. The world keeps its choice and its data, and shows only the core attributes.
+    case unknown
+}
+
 enum RuleSystems {
     static func system(for id: RuleSystemID) -> any RuleSystem {
         switch id {
@@ -81,12 +160,52 @@ enum RuleSystems {
         }
     }
 
+    /// The system a world's stored key names. A key the app doesn't know gives no system, and is never changed.
+    static func system(forKey key: String) -> any RuleSystem {
+        if let id = RuleSystemID(rawValue: key) { return system(for: id) }
+        return SystemRegistry.shared.system(forKey: key) ?? NoRuleSystem()
+    }
+
+    /// Whether the app has the system.
+    static func isKnown(_ key: String) -> Bool {
+        RuleSystemID(rawValue: key) != nil || SystemRegistry.shared.system(forKey: key) != nil
+    }
+
+    /// The systems a world can choose: those the app names, then those read from files.
+    static var choices: [SystemChoice] {
+        RuleSystemID.allCases.map { SystemChoice(key: $0.rawValue, title: String(localized: $0.title)) }
+            + SystemRegistry.shared.all.map { SystemChoice(key: $0.key, title: $0.definition.name) }
+    }
+
+    /// What to call a stored system key: its name, or the key itself if the app doesn't know it.
+    static func title(forKey key: String) -> String {
+        choices.first { $0.key == key }?.title ?? key
+    }
+
+    /// Compares the version a world recorded with the one the app has. A world that recorded none counts as current.
+    static func status(key: String, recordedVersion: Int?) -> SystemStatus {
+        guard isKnown(key) else { return .unknown }
+        let app = system(forKey: key).version
+        guard let recorded = recordedVersion, recorded > 0 else { return .current }
+        if recorded > app { return .newerThanApp(world: recorded, app: app) }
+        return recorded < app ? .updated(from: recorded, to: app) : .current
+    }
+
+    /// The attributes for a page kind under a rule system, by the key a world stores.
+    static func definitions(for kind: PageKind, systemKey key: String) -> [AttributeDefinition] {
+        definitions(for: kind, rules: system(forKey: key))
+    }
+
     /// The attributes for a page kind under a rule system: the core attributes, with any the system
     /// overrides replaced in place, followed by the system's additions.
     /// Values for attributes not listed here stay stored on the page, so switching systems loses nothing.
     static func definitions(for kind: PageKind, system id: RuleSystemID) -> [AttributeDefinition] {
+        definitions(for: kind, rules: system(for: id))
+    }
+
+    private static func definitions(for kind: PageKind, rules: any RuleSystem) -> [AttributeDefinition] {
         var result = CoreAttributes.definitions(for: kind)
-        for definition in system(for: id).attributes where definition.appliesTo.contains(kind) {
+        for definition in rules.attributes where definition.appliesTo.contains(kind) {
             if let index = result.firstIndex(where: { $0.key == definition.key }) {
                 result[index] = definition
             } else {
