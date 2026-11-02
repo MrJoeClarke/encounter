@@ -135,6 +135,12 @@ enum WorldImporter {
                     summary.skippedImages += 1
                 }
             }
+            if record.isVector == true, let extent = record.extentMetres {
+                map.isVector = true
+                map.pixelWidth = extent
+                map.pixelHeight = extent
+                map.settlementOptions = record.settlementOptions
+            }
             map.calibration = record.calibration
             map.gridColumns = record.gridColumns ?? 0
             map.gridRows = record.gridRows ?? 0

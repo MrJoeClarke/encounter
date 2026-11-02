@@ -56,6 +56,8 @@ nonisolated final class MapTileSource: @unchecked Sendable {
 
     /// The PNG for one tile. Tiles the image doesn't touch are the plain background.
     func tile(zoom: Int, x: Int, y: Int) -> Data? {
+        // A map with no picture is the plain background everywhere.
+        if imageData.isEmpty { return emptyTileData() }
         let area = WebMercator.bounds(zoom: zoom, x: x, y: y)
         let covered = bounds
         guard area.maxEasting > covered.minEasting, area.minEasting < covered.maxEasting,

@@ -20,12 +20,15 @@ nonisolated struct GridPoint: Codable, Hashable, Sendable {
     }
 }
 
-/// Where a place is: a single point (a tavern, a landmark) or the outline of an area (a settlement, a region).
+/// Where a place is: a single point (a tavern, a landmark), the outline of an area (a settlement, a region), or a
+/// line (a road, a river).
 /// All the spatial questions live here as plain maths, so they can be tested without any storage.
 nonisolated enum PlaceGeometry: Codable, Hashable, Sendable {
     case point(GridPoint)
     /// The corners in order, either way round. The last corner joins back to the first.
     case polygon([GridPoint])
+    /// The points of a line in order, such as a road or a river. It can bend and cross itself, but it has a length.
+    case line([GridPoint])
 
     /// Points on an edge count as inside, within this many metres.
     private static let tolerance = 1e-9
@@ -43,6 +46,8 @@ nonisolated enum PlaceGeometry: Codable, Hashable, Sendable {
                 && corners.allSatisfy(\.isValid)
                 && area > 0
                 && Self.isSimple(corners)
+        case .line(let points):
+            points.count >= 2 && points.allSatisfy(\.isValid) && length > 0
         }
     }
 
@@ -54,11 +59,30 @@ nonisolated enum PlaceGeometry: Codable, Hashable, Sendable {
         return abs(Self.signedArea(corners))
     }
 
-    /// The point itself, or a polygon's centre of area (its corner average if it has no area).
+    /// Metres along a line. A point or an area has none.
+    var length: Double {
+        guard case .line(let points) = self else { return 0 }
+        return zip(points, points.dropFirst()).reduce(0) { $0 + $1.0.distance(to: $1.1) }
+    }
+
+    /// The point itself, a polygon's centre of area (its corner average if it has no area), or the point half way
+    /// along a line, which is on the line even when it bends.
     var centre: GridPoint {
         switch self {
         case .point(let point):
             return point
+        case .line(let points):
+            guard let first = points.first else { return GridPoint(easting: 0, northing: 0) }
+            var remaining = length / 2
+            for (a, b) in zip(points, points.dropFirst()) {
+                let segment = a.distance(to: b)
+                if remaining <= segment, segment > 0 {
+                    let t = remaining / segment
+                    return GridPoint(easting: a.easting + (b.easting - a.easting) * t, northing: a.northing + (b.northing - a.northing) * t)
+                }
+                remaining -= segment
+            }
+            return points.last ?? first
         case .polygon(let corners):
             guard !corners.isEmpty else { return GridPoint(easting: 0, northing: 0) }
             let signed = Self.signedArea(corners)
@@ -117,7 +141,36 @@ nonisolated enum PlaceGeometry: Codable, Hashable, Sendable {
                 for (c, d) in Self.edges(of: outer) where Self.properlyCross(a, b, c, d) { return false }
             }
             return true
+        case .line(let points):
+            // A line is held if every bend and every stretch between bends is inside, and it never leaves and comes back.
+            guard points.count >= 2, points.allSatisfy({ contains($0) }) else { return false }
+            for (a, b) in zip(points, points.dropFirst()) {
+                let middle = GridPoint(easting: (a.easting + b.easting) / 2, northing: (a.northing + b.northing) / 2)
+                if !contains(middle) { return false }
+                for (c, d) in Self.edges(of: outer) where Self.properlyCross(a, b, c, d) { return false }
+            }
+            return true
         }
+    }
+
+    // MARK: Lines
+
+    /// The shortest distance in metres from a position to a line, or to the point itself. Nil for an area.
+    func distance(toPoint point: GridPoint) -> Double? {
+        switch self {
+        case .point(let own): return own.distance(to: point)
+        case .polygon: return nil
+        case .line(let points):
+            return zip(points, points.dropFirst()).map { Self.distance(from: point, toSegment: $0.0, $0.1) }.min()
+        }
+    }
+
+    private static func distance(from p: GridPoint, toSegment a: GridPoint, _ b: GridPoint) -> Double {
+        let dx = b.easting - a.easting, dy = b.northing - a.northing
+        let lengthSquared = dx * dx + dy * dy
+        guard lengthSquared > 0 else { return p.distance(to: a) }
+        let t = max(0, min(1, ((p.easting - a.easting) * dx + (p.northing - a.northing) * dy) / lengthSquared))
+        return p.distance(to: GridPoint(easting: a.easting + t * dx, northing: a.northing + t * dy))
     }
 
     // MARK: Geometry helpers
