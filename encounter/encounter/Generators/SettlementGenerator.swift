@@ -130,16 +130,6 @@ nonisolated struct SettlementOptions: Codable, Equatable, Sendable {
             }
         }
 
-        /// How many buildings to aim for.
-        var buildingTarget: Int {
-            switch self {
-            case .hamlet: 12
-            case .village: 45
-            case .town: 200
-            case .city: 600
-            }
-        }
-
         /// About how wide a ward is, in metres.
         var wardWidth: Double {
             switch self {
@@ -193,10 +183,14 @@ nonisolated struct SettlementOptions: Codable, Equatable, Sendable {
     var quarters: [Quarter]?
     /// The major buildings to put in.
     var landmarks: [Landmark] = []
+    /// Whether to put in inns and taverns, and merchants, a number suited to the size, spread round the settlement.
+    var inns = true
+    var merchants = true
 
     init(
         size: Size = .village, layout: Layout = .organic, hasWalls: Bool = false, hasRiver: Bool = false, seed: UInt64 = 1,
-        gates: [SettlementGate] = [], square: SquareSpot? = nil, quarters: [Quarter]? = nil, landmarks: [Landmark] = []
+        gates: [SettlementGate] = [], square: SquareSpot? = nil, quarters: [Quarter]? = nil, landmarks: [Landmark] = [],
+        inns: Bool = true, merchants: Bool = true
     ) {
         self.size = size
         self.layout = layout
@@ -207,6 +201,8 @@ nonisolated struct SettlementOptions: Codable, Equatable, Sendable {
         self.square = square
         self.quarters = quarters
         self.landmarks = landmarks
+        self.inns = inns
+        self.merchants = merchants
     }
 
     // Options saved before the later choices existed still open, with those left to the generator.
@@ -221,10 +217,12 @@ nonisolated struct SettlementOptions: Codable, Equatable, Sendable {
         square = try container.decodeIfPresent(SquareSpot.self, forKey: .square)
         quarters = try container.decodeIfPresent([Quarter].self, forKey: .quarters)
         landmarks = try container.decodeIfPresent([Landmark].self, forKey: .landmarks) ?? []
+        inns = try container.decodeIfPresent(Bool.self, forKey: .inns) ?? true
+        merchants = try container.decodeIfPresent(Bool.self, forKey: .merchants) ?? true
     }
 }
 
-/// One thing a generator made: an area, a line or a building. Its shape is in metres from the south-west corner of the
+/// One thing a generator made: an area, a line, or a building. Its shape is in metres from the south-west corner of the
 /// map, and it becomes a place when applied.
 nonisolated struct GeneratedFeature: Equatable, Sendable {
     enum Shape: Equatable, Sendable {

@@ -57,8 +57,9 @@ struct GenerateSettlementSheet: View {
                         }
                         .listRowInsets(EdgeInsets())
                     if let preview {
-                        let buildings = preview.features(of: "Building").count
-                        Text("^[\(buildings) building](inflect: true), ^[\(preview.features(of: "Road").count) street](inflect: true), about \(Int(preview.extent)) metres across")
+                        let quarters = preview.features(of: "District").count + preview.features(of: "Garden").count
+                        let streets = preview.features(of: "Road").count + preview.features(of: "Street").count
+                        Text("^[\(streets) street](inflect: true), ^[\(quarters) quarter](inflect: true), ^[\(preview.features(of: "Landmark").count) landmark](inflect: true), about \(Int(preview.extent)) metres across")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -77,6 +78,8 @@ struct GenerateSettlementSheet: View {
                     }
                     Toggle("Wall", isOn: $options.hasWalls)
                     Toggle("River", isOn: $options.hasRiver)
+                    Toggle("Inns and Taverns", isOn: $options.inns)
+                    Toggle("Merchants", isOn: $options.merchants)
                     LabeledContent("Seed") {
                         HStack {
                             TextField("Seed", value: $options.seed, format: .number.grouping(.never))
@@ -89,7 +92,7 @@ struct GenerateSettlementSheet: View {
                 } header: {
                     Text("Settlement")
                 } footer: {
-                    Text("The same seed and choices always make the same settlement.")
+                    Text("The same seed and choices always make the same settlement. A number of inns and merchants to suit its size are spread round it. Other buildings are for you to add.")
                 }
                 Section {
                     Text("Tap the edge of the preview to add a gate, tap a gate to take it away, and tap inside to move the main square.")

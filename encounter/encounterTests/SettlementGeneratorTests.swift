@@ -45,14 +45,44 @@ struct SettlementGeneratorTests {
         }
     }
 
-    @Test func eachSizeMakesAboutAsManyBuildingsAsItAimsFor() {
+    @Test func eachSizeGetsTheInnsAndMerchantsMeantForIt() {
         for size in SettlementOptions.Size.allCases {
             for layout in SettlementOptions.Layout.allCases {
-                let count = make(size, layout: layout).features(of: "Building").count
-                #expect(count >= size.buildingTarget * 5 / 10, "\(size) \(layout) made only \(count) of \(size.buildingTarget)")
-                // Gatehouses are buildings too, but only with a wall, so without one there are no more than the aim.
-                #expect(count <= size.buildingTarget)
+                let wanted = SettlementGenerator.TownMaker.venueCounts(for: size)
+                let venues = make(size, layout: layout).features(of: "Building")
+                let inns = venues.filter { $0.summary.hasPrefix("An inn") }.count
+                #expect(inns >= (wanted.inns + 1) / 2 && inns <= wanted.inns, "\(size) \(layout) made \(inns) inns of \(wanted.inns)")
+                // The merchants are the rest, since a settlement without a wall has no gatehouses.
+                #expect(venues.count - inns >= (wanted.merchants + 1) / 2 && venues.count - inns <= wanted.merchants, "\(size) \(layout) made \(venues.count - inns) merchants of \(wanted.merchants)")
             }
+        }
+    }
+
+    @Test func innsAndMerchantsCanBeLeftOut() {
+        func venues(inns: Bool, merchants: Bool) -> [GeneratedFeature] {
+            SettlementGenerator.generate(SettlementOptions(size: .town, seed: 21, inns: inns, merchants: merchants)).features(of: "Building")
+        }
+        #expect(venues(inns: true, merchants: true).contains { $0.summary.hasPrefix("An inn") })
+        let innsOnly = venues(inns: true, merchants: false)
+        #expect(!innsOnly.isEmpty && innsOnly.allSatisfy { $0.summary.hasPrefix("An inn") })
+        let merchantsOnly = venues(inns: false, merchants: true)
+        #expect(!merchantsOnly.isEmpty && merchantsOnly.allSatisfy { !$0.summary.hasPrefix("An inn") })
+        #expect(venues(inns: false, merchants: false).isEmpty)
+        // A wall's gatehouses are not inns or merchants, and stay.
+        let walled = SettlementGenerator.generate(SettlementOptions(size: .town, hasWalls: true, seed: 21, inns: false, merchants: false))
+        #expect(walled.features(of: "Building").count == walled.gates.count)
+    }
+
+    @Test func venuesAreSpreadRoundTheSettlement() {
+        // Neither all in one place nor on top of each other.
+        for layout in SettlementOptions.Layout.allCases {
+            let town = SettlementGenerator.generate(SettlementOptions(size: .city, layout: layout, seed: 6))
+            let centres = town.features(of: "Building").map { Plane.centroid(points($0).map { SettlementGenerator.V(x: $0.easting, y: $0.northing) }) }
+            var nearest = Double.infinity
+            for (i, a) in centres.enumerated() { for b in centres[(i + 1)...] { nearest = min(nearest, a.distance(to: b)) } }
+            #expect(nearest > 12, "\(layout): two venues are \(nearest) metres apart")
+            let quadrants = Set(centres.map { ($0.x > town.centre.easting ? 1 : 0) + ($0.y > town.centre.northing ? 2 : 0) })
+            #expect(quadrants.count >= 3, "\(layout): venues are in only \(quadrants.count) quarters of the compass")
         }
     }
 
@@ -101,15 +131,12 @@ struct SettlementGeneratorTests {
         }
     }
 
-    @Test func aSettlementHasItsSpecialBuildings() {
+    @Test func aSettlementMakesOnlyTheBuildingsItWasAskedFor() {
         let town = make(.town, seed: 21)
         let summaries = town.features(of: "Building").map(\.summary)
         #expect(summaries.contains { $0.hasPrefix("An inn and tavern") })
-        #expect(summaries.contains { $0.hasPrefix("A smithy") })
-        #expect(summaries.contains { $0.hasPrefix("A chapel") })
-        #expect(summaries.contains { $0.hasPrefix("The hall where") })
-        #expect(summaries.contains { $0.hasPrefix("A house") })
-        #expect(!make(.hamlet).features(of: "Building").map(\.summary).contains { $0.hasPrefix("The hall where") })
+        #expect(summaries.contains { !$0.hasPrefix("An inn") })
+        #expect(!summaries.contains { $0.hasPrefix("A house") || $0.hasPrefix("A chapel") || $0.hasPrefix("A smithy") || $0.hasPrefix("The hall") })
         #expect(town.features(of: "Building").allSatisfy { $0.summary.contains(" on ") })
     }
 
@@ -288,12 +315,12 @@ struct SettlementOutlineTests {
         return corners.allSatisfy { SettlementGenerator.contains(polygon, SettlementGenerator.V(x: $0.easting, y: $0.northing)) }
     }
 
-    @Test func everyBuildingStandsInsideTheOutline() {
+    @Test func everyVenueStandsInsideTheOutline() {
         let options = SettlementOptions(size: .village, layout: .planned, seed: 5)
         let extent = SettlementGenerator.extent(for: options, outline: block)
         let settlement = SettlementGenerator.generate(options, outline: block, extent: extent)
         let buildings = settlement.features(of: "Building")
-        #expect(buildings.count > 20 && buildings.allSatisfy { inside(block, $0) })
+        #expect(buildings.count > 5 && buildings.allSatisfy { inside(block, $0) })
         #expect(settlement.extent == extent)
     }
 
@@ -488,6 +515,7 @@ struct BackgroundGenerationTests {
         }
         _ = try #require(await world.generateSettlement(for: town, options: SettlementOptions(size: .city, seed: 4), in: context))
         ticker.cancel()
-        #expect(turns > 5)
+        // There are fewer places to make now, so fewer batches, but the screen still gets a turn between them.
+        #expect(turns >= 3)
     }
 }

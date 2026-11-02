@@ -16,6 +16,12 @@ extension SettlementGenerator.TownMaker {
         }
     }
 
+    /// How big a quarter has to be to be worth making: about a ward and a half, and not less than 5,000 square metres.
+    var minimumQuarterArea: Double {
+        let width = max(size.wardWidth, radius * 0.11)
+        return max(5_000, width * width * 1.5)
+    }
+
     /// How much of the settlement's wards each kind of quarter takes.
     private static func share(_ quarter: Quarter) -> Double {
         switch quarter {
@@ -130,6 +136,8 @@ extension SettlementGenerator.TownMaker {
                 outline = wards[biggest].polygon
             }
             guard outline.count >= 3 else { continue }
+            // A quarter too small to make anything of is left as ordinary ground.
+            guard Plane.area(outline) >= minimumQuarterArea else { continue }
             let quarter = wards[start].quarter
             let name = names.named(quarter?.districtName ?? String(localized: "Old Town"))
             for index in component { nameOfWard[index] = name }

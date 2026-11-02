@@ -196,31 +196,20 @@ struct TownGeneratorTests {
         #expect(wealthyCloser >= 10, "the wealthy were nearer the square in only \(wealthyCloser) of 12 cities")
     }
 
-    @Test func buildingsTakeTheirCharacterFromTheirQuarter() {
-        let slum = make(.city, seed: 3, quarters: [.slum]).features(of: "Building").map(\.summary)
-        #expect(slum.contains { $0.hasPrefix("A crowded tenement") })
-        let wealthy = make(.city, seed: 3, quarters: [.wealthy]).features(of: "Building").map(\.summary)
-        #expect(wealthy.contains { $0.hasPrefix("A fine house") })
-        let military = make(.city, seed: 3, quarters: [.military]).features(of: "Building").map(\.summary)
-        #expect(military.contains { $0.hasPrefix("Barracks") })
-        #expect(!make(.city, seed: 3, quarters: []).features(of: "Building").map(\.summary).contains { $0.hasPrefix("A crowded tenement") })
+    @Test func venuesSayWhichQuarterTheyAreIn() {
+        let settlement = make(.city, seed: 9, quarters: [.craft, .merchant])
+        #expect(settlement.features(of: "Building").contains { $0.summary.contains(", in the ") })
     }
 
-    @Test func buildingsSayWhichQuarterTheyAreIn() {
-        let settlement = make(.town, seed: 9, quarters: [.craft, .merchant])
-        #expect(settlement.features(of: "Building").contains { $0.summary.contains(", in the Craft Quarter") })
-    }
-
-    @Test func slumsAreCrowdedAndTheWealthyHaveRoom() {
-        func averageArea(_ quarter: Quarter) -> Double {
-            let settlement = make(.city, seed: 3, quarters: [quarter])
-            let districts = settlement.features(of: "District") + settlement.features(of: "Garden")
-            guard let district = districts.first(where: { $0.name == quarter.districtName }) else { return 0 }
-            let outline = points(district).map(v)
-            let inside = settlement.features(of: "Building").filter { feature in SettlementGenerator.contains(outline, Plane.centroid(points(feature).map(v))) }
-            return inside.map { Plane.area(points($0).map(v)) }.reduce(0, +) / Double(max(inside.count, 1))
-        }
-        #expect(averageArea(.wealthy) > averageArea(.slum))
+    @Test func aQuarterTooSmallToMatterIsLeftOut() {
+        // Every quarter that is made is at least the least size, and there is more than one made in a city.
+        let settlement = make(.city, seed: 4)
+        let areas = (settlement.features(of: "District") + settlement.features(of: "Garden")).map { Plane.area(points($0).map(v)) }
+        #expect(areas.count >= 3)
+        #expect(areas.allSatisfy { $0 >= 5_000 }, "a quarter is only \(areas.min() ?? 0) square metres")
+        // A village's wards are small, so it makes far fewer than it has wards.
+        let village = make(.village, seed: 4)
+        #expect(village.features(of: "District").count < village.wards.count / 3)
     }
 
     @Test func districtsAreValidShapesInsideTheWall() {
@@ -291,7 +280,7 @@ struct TownGeneratorTests {
     @Test func theNewChoicesSurviveBeingSavedAndOldOptionsStillOpen() throws {
         let options = SettlementOptions(
             size: .town, layout: .radial, hasWalls: true, hasRiver: true, seed: 5,
-            gates: [SettlementGate(bearing: 1.2)], square: SquareSpot(east: 0.2, north: -0.1), quarters: [.craft, .slum], landmarks: [.cathedral, .arena]
+            gates: [SettlementGate(bearing: 1.2)], square: SquareSpot(east: 0.2, north: -0.1), quarters: [.craft, .slum], landmarks: [.cathedral, .arena], inns: false, merchants: true
         )
         let decoded = try JSONDecoder().decode(SettlementOptions.self, from: JSONEncoder().encode(options))
         #expect(decoded == options)
@@ -299,6 +288,7 @@ struct TownGeneratorTests {
         let opened = try JSONDecoder().decode(SettlementOptions.self, from: Data(old.utf8))
         #expect(opened.size == .city && opened.layout == .planned && opened.hasWalls && opened.seed == 9)
         #expect(opened.gates.isEmpty && opened.square == nil && opened.quarters == nil && opened.landmarks.isEmpty)
+        #expect(opened.inns && opened.merchants)
     }
 
     @Test func everyShapeIsStillValidWithEverythingSwitchedOn() {

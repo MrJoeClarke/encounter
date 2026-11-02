@@ -10,8 +10,6 @@ extension SettlementGenerator.TownMaker {
     struct Lot {
         var footprint: [V]
         var centre: V
-        /// Lower is better: nearer the square, with some chance in it.
-        var desirability: Double
         var ward: Int
     }
 
@@ -28,34 +26,32 @@ extension SettlementGenerator.TownMaker {
         return subdivide(pieces.left, lotArea: lotArea, depth: depth + 1) + subdivide(pieces.right, lotArea: lotArea, depth: depth + 1)
     }
 
-    /// How big a plot is in a quarter, compared with an ordinary one: the wealthy have room, and the poor are crowded.
-    static func lotScale(_ quarter: Quarter?) -> Double {
-        switch quarter {
-        case .wealthy: 2.0
-        case .slum: 0.6
-        case .military: 1.6
-        case .scholars: 1.3
-        case .temple: 1.2
-        case .gardens: 1.5
-        default: 1
+    /// How many inns and how many merchants a settlement of a size has.
+    static func venueCounts(for size: SettlementOptions.Size) -> (inns: Int, merchants: Int) {
+        switch size {
+        case .hamlet: (1, 1)
+        case .village: (2, 4)
+        case .town: (4, 10)
+        case .city: (8, 22)
         }
     }
 
-    /// Cuts every ward but the square into plots, picks the best of them, and puts a named building on each. A ward with a
-    /// castle in it, and anything inside a landmark's grounds, is left alone.
-    mutating func makeBuildings(
+    /// The inns and the merchants, if they are wanted. The generator makes no other buildings: the people running the
+    /// game place the rest. Inns go by the square and the gates, where travellers come, and then spread out; merchants
+    /// gather by the square and in the merchant and craft quarters, and spread out from there.
+    mutating func makeVenues(
         streets: [SettlementGenerator.TownMaker.Street], districts: [Int: String], reserved: [[V]]
     ) -> [GeneratedFeature] {
-        let built = wards.indices.filter { !wards[$0].isSquare && wards[$0].landmark != .castle }
-        let totalArea = built.reduce(0) { $0 + Plane.area(wards[$1].polygon) }
-        // Lots are about as big as a plot in a town, but over a very big area (an outline drawn round a county, say) they
-        // grow so that cutting it up doesn't make tens of thousands of lots only to throw nearly all of them away.
-        let baseLotArea = max(150, min(450, totalArea * 0.7 / Double(max(target, 1))), totalArea / Double(max(target, 1) * 4))
+        guard options.inns || options.merchants else { return [] }
+        let wanted = Self.venueCounts(for: size)
 
+        // Somewhere each could stand: a plot in a ward that is not the square or a castle's. Over a very big area (an
+        // outline drawn round a county, say) the plots are bigger, so there are never tens of thousands to go through.
+        let builtArea = wards.indices.filter { !wards[$0].isSquare && wards[$0].landmark != .castle }.reduce(0) { $0 + Plane.area(wards[$1].polygon) }
+        let lotArea = max(320, builtArea / 2_500)
         var lots: [Lot] = []
-        for index in built {
+        for index in wards.indices where !wards[index].isSquare && wards[index].landmark != .castle {
             let ward = wards[index]
-            // Set back from the streets round it: more from a main street or the wall than from a side street.
             let distances: [Double] = ward.vertexIDs.indices.map { i in
                 let a = ward.vertexIDs[i], b = ward.vertexIDs[(i + 1) % ward.vertexIDs.count]
                 guard let edge = edgeIndex[edgeKey(a, b)] else { return 3 }
@@ -63,126 +59,84 @@ extension SettlementGenerator.TownMaker {
             }
             let inner = Plane.inset(ward.polygon, distances: distances)
             guard inner.count >= 3 else { continue }
-            for plot in subdivide(inner, lotArea: baseLotArea * Self.lotScale(ward.quarter)) {
-                let footprint = Plane.inset(plot, by: 1)
-                guard footprint.count >= 3, Plane.area(footprint) >= 28 else { continue }
+            for plot in subdivide(inner, lotArea: lotArea) {
+                var footprint = Plane.inset(plot, by: 1)
+                guard footprint.count >= 3, Plane.area(footprint) >= 40 else { continue }
                 let middle = Plane.centroid(footprint)
-                // Not a sliver: there has to be room to stand in.
-                guard Plane.distanceToEdge(middle, footprint) >= 1.8 else { continue }
+                // A building is never bigger than a large hall, however big the plot is.
+                let footprintArea = Plane.area(footprint)
+                if footprintArea > 700 {
+                    let shrink = (700 / footprintArea).squareRoot()
+                    footprint = footprint.map { V(x: middle.x + ($0.x - middle.x) * shrink, y: middle.y + ($0.y - middle.y) * shrink) }
+                }
+                guard Plane.distanceToEdge(middle, footprint) >= 2.5 else { continue }
                 // Not on the river, where only a bridge would be.
                 guard river.isEmpty || footprint.allSatisfy({ SettlementGenerator.distance(from: $0, toPolyline: river) >= 7 }) else { continue }
                 // Not in the grounds of a landmark.
                 guard !reserved.contains(where: { Plane.contains($0, middle) }) else { continue }
-                // Gardens are mostly open.
-                if ward.quarter == .gardens, !random.chance(0.2) { continue }
-                lots.append(Lot(footprint: footprint, centre: middle, desirability: middle.distance(to: square) / radius + random.value(in: -0.2...0.2), ward: index))
+                lots.append(Lot(footprint: footprint, centre: middle, ward: index))
             }
         }
-        lots.sort { $0.desirability < $1.desirability }
-        let chosen = Array(lots.prefix(min(target, 900)))
-        return nameBuildings(chosen, streets: streets, districts: districts)
-    }
+        guard !lots.isEmpty else { return [] }
 
-    enum Role { case house, shop, tavern, smithy, chapel, hall, workshop, warehouse, manor, hovel, barracks, scholar }
-
-    /// What a building in a quarter is likely to be, with its odds. `t` is how far it is from the square, 0 to 1.
-
-    static func roleWeights(in quarter: Quarter?, t: Double) -> [(Role, Double)] {
-        switch quarter {
-        case .wealthy: [(.manor, 0.6), (.house, 0.3), (.shop, 0.1)]
-        case .merchant: [(.shop, 0.5), (.warehouse, 0.2), (.house, 0.15), (.tavern, 0.15)]
-        case .craft: [(.workshop, 0.5), (.house, 0.3), (.warehouse, 0.15), (.shop, 0.05)]
-        case .slum: [(.hovel, 0.8), (.house, 0.15), (.tavern, 0.05)]
-        case .temple: [(.house, 0.7), (.chapel, 0.1), (.shop, 0.2)]
-        case .military: [(.barracks, 0.5), (.house, 0.2), (.workshop, 0.15), (.warehouse, 0.15)]
-        case .gardens: [(.house, 1)]
-        case .harbour: [(.warehouse, 0.4), (.tavern, 0.15), (.shop, 0.2), (.house, 0.25)]
-        case .scholars: [(.scholar, 0.5), (.house, 0.3), (.shop, 0.1), (.workshop, 0.1)]
-        case nil:
-            t < 0.4
-                ? [(.shop, 0.45), (.house, 0.35), (.tavern, 0.06), (.workshop, 0.12), (.warehouse, 0.02)]
-                : [(.house, 0.72), (.shop, 0.1), (.workshop, 0.13), (.tavern, 0.01), (.warehouse, 0.04)]
-        }
-    }
-
-    /// Gives each building a role by the quarter it is in and how near the square it is, and a name that goes with it.
-    mutating func nameBuildings(_ lots: [Lot], streets: [SettlementGenerator.TownMaker.Street], districts: [Int: String]) -> [GeneratedFeature] {
-        // Nearest the square first: the special buildings take the best spots.
-        let byDistance = lots.indices.sorted { lots[$0].centre.distance(to: square) < lots[$1].centre.distance(to: square) }
-        var roles = [Role](repeating: .house, count: lots.count)
         var taken = Set<Int>()
-        /// Gives a role to the best-placed lot that qualifies, or if none does, the lot at a rank by distance from the square.
-        func assign(_ role: Role, preferring quarter: Quarter? = nil, fallbackRank rank: Int) {
-            if let quarter, let index = byDistance.first(where: { !taken.contains($0) && wards[lots[$0].ward].quarter == quarter }) {
-                roles[index] = role
-                taken.insert(index)
-                return
-            }
-            var rank = rank
-            while rank < byDistance.count, taken.contains(byDistance[rank]) { rank += 1 }
-            guard rank < byDistance.count else { return }
-            roles[byDistance[rank]] = role
-            taken.insert(byDistance[rank])
+        var placed: [V] = []
+        /// Takes the lot nearest a point that is still free and not within `gap` of one taken.
+        func nearest(to point: V, gap: Double, where allowed: (Lot) -> Bool = { _ in true }) -> Int? {
+            let choice = lots.indices
+                .filter { index in !taken.contains(index) && allowed(lots[index]) && placed.allSatisfy { $0.distance(to: lots[index].centre) >= gap } }
+                .min { lots[$0].centre.distance(to: point) < lots[$1].centre.distance(to: point) }
+            if let choice { taken.insert(choice); placed.append(lots[choice].centre) }
+            return choice
         }
-        if size != .hamlet { assign(.hall, fallbackRank: 0) }
-        assign(.tavern, fallbackRank: 1)
-        assign(.chapel, preferring: .temple, fallbackRank: 3)
-        // The smith works with the craftsmen, or out towards the edge.
-        assign(.smithy, preferring: .craft, fallbackRank: Int(Double(byDistance.count) * random.value(in: 0.5...0.9)))
-        for index in lots.indices where !taken.contains(index) {
-            let t = lots[index].centre.distance(to: square) / radius
-            roles[index] = random.pick(Self.roleWeights(in: wards[lots[index].ward].quarter, t: t))
+        /// Takes the lot farthest from every one taken so far, so they spread out.
+        func spreadOut(where allowed: (Lot) -> Bool) -> Int? {
+            func clearance(_ lot: Lot) -> Double { placed.map { $0.distance(to: lot.centre) }.min() ?? lot.centre.distance(to: square) }
+            let choice = lots.indices
+                .filter { !taken.contains($0) && allowed(lots[$0]) }
+                .max { (clearance(lots[$0]), -$0) < (clearance(lots[$1]), -$1) }
+            if let choice { taken.insert(choice); placed.append(lots[choice].centre) }
+            return choice
         }
 
-        var houseNumbers: [String: Int] = [:]
+        var inns: [Int] = [], merchants: [Int] = []
+        if options.inns {
+            // One by the square, then one by each gate while there are some left, then the rest spread round.
+            if let lot = nearest(to: square, gap: 0) { inns.append(lot) }
+            for gate in gatePoints where inns.count < wanted.inns - (wanted.inns > 3 ? 1 : 0) {
+                if let lot = nearest(to: gate, gap: 30) { inns.append(lot) }
+            }
+            while inns.count < wanted.inns, let lot = spreadOut(where: { _ in true }) { inns.append(lot) }
+        }
+        if options.merchants {
+            // A third by the square, then the rest spread round, in the quarters that trade where there are any.
+            let trading: (Lot) -> Bool = { [wards] lot in wards[lot.ward].quarter.map { [.merchant, .craft, .harbour].contains($0) } ?? true }
+            while merchants.count < max(1, wanted.merchants / 3), let lot = nearest(to: square, gap: 25, where: trading) { merchants.append(lot) }
+            while merchants.count < wanted.merchants {
+                guard let lot = spreadOut(where: trading) ?? spreadOut(where: { _ in true }) else { break }
+                merchants.append(lot)
+            }
+        }
+
         var features: [GeneratedFeature] = []
-        for index in lots.indices {
-            let lot = lots[index]
-            // The street it faces is the nearest one.
+        func description(of lot: Lot, _ kind: String) -> String {
             let street = streets.min { SettlementGenerator.distance(from: lot.centre, toPolyline: $0.points) < SettlementGenerator.distance(from: lot.centre, toPolyline: $1.points) }?.name ?? String(localized: "the square")
             let district = districts[lot.ward].map { String(localized: ", in the \($0)") } ?? ""
-            let name: String, kind: String
-            func numbered(_ label: String) -> String {
-                houseNumbers[street, default: 0] += 1
-                return names.named("\(houseNumbers[street] ?? 1) \(street)")
-            }
-            switch roles[index] {
-            case .house:
-                name = numbered(street)
-                kind = String(localized: "A house")
-            case .hovel:
-                name = numbered(street)
-                kind = String(localized: "A crowded tenement")
-            case .scholar:
-                name = numbered(street)
-                kind = String(localized: "A scholar’s house")
-            case .manor:
-                name = names.manor(using: &random)
-                kind = String(localized: "A fine house with grounds")
-            case .barracks:
-                name = names.named(String(localized: "Barracks"))
-                kind = String(localized: "Barracks for the garrison")
-            case .shop, .workshop:
-                let shop = names.shop(using: &random)
-                name = shop.name
-                kind = shop.summary
-            case .tavern:
-                name = names.inn(using: &random)
-                kind = String(localized: "An inn and tavern")
-            case .smithy:
-                name = names.forge(using: &random)
-                kind = String(localized: "A smithy")
-            case .chapel:
-                name = names.chapel(using: &random)
-                kind = String(localized: "A chapel")
-            case .hall:
-                name = names.named(size == .village ? String(localized: "Village Hall") : String(localized: "Town Hall"))
-                kind = String(localized: "The hall where the settlement is governed")
-            case .warehouse:
-                name = names.named(String(localized: "Warehouse on \(street)"))
-                kind = String(localized: "A warehouse")
-            }
-            features.append(GeneratedFeature(name: name, placeType: "Building", summary: "\(kind) on \(street)\(district).", shape: .polygon(lot.footprint.map(\.grid))))
+            return "\(kind) on \(street)\(district)."
+        }
+        for index in inns {
+            let lot = lots[index]
+            features.append(GeneratedFeature(
+                name: names.inn(using: &random), placeType: "Building",
+                summary: description(of: lot, String(localized: "An inn and tavern")), shape: .polygon(lot.footprint.map(\.grid))
+            ))
+        }
+        for index in merchants {
+            let lot = lots[index]
+            let shop = names.shop(using: &random)
+            features.append(GeneratedFeature(
+                name: shop.name, placeType: "Building", summary: description(of: lot, shop.summary), shape: .polygon(lot.footprint.map(\.grid))
+            ))
         }
         return features
     }

@@ -15,7 +15,6 @@ extension SettlementGenerator {
         let extent: Double
         /// The size the layout is made at: the options' own, or the one nearest an outline's size.
         let size: SettlementOptions.Size
-        let target: Int
         let centre: V
         let radius: Double
         let hasOutline: Bool
@@ -73,9 +72,6 @@ extension SettlementGenerator {
                 let shape = PlaceGeometry.polygon(outline)
                 let measured = (shape.area / .pi).squareRoot()
                 size = SettlementOptions.Size.nearest(toRadius: measured)
-                // A bigger area than the size's own has proportionally more buildings, within reason.
-                let scale = max(0.4, min(4, shape.area / (.pi * size.radius * size.radius)))
-                target = min(Int(Double(size.buildingTarget) * scale), 900)
                 extent = given ?? SettlementGenerator.extent(for: options, outline: outline)
                 radius = measured
                 centre = Self.interiorPoint(of: points, near: V(x: shape.centre.easting, y: shape.centre.northing))
@@ -83,7 +79,6 @@ extension SettlementGenerator {
                 hasOutline = true
             } else {
                 size = options.size
-                target = options.size.buildingTarget
                 extent = given ?? options.size.extent
                 radius = options.size.radius
                 centre = V(x: extent / 2, y: extent / 2)
@@ -136,7 +131,7 @@ extension SettlementGenerator {
             features += districts.features
             let landmarks = placeLandmarks()
             features += landmarks.features
-            features += makeBuildings(streets: streets, districts: districts.nameOfWard, reserved: landmarks.reserved)
+            features += makeVenues(streets: streets, districts: districts.nameOfWard, reserved: landmarks.reserved)
             return GeneratedSettlement(
                 options: options, extent: extent, features: features,
                 wards: wards.map { $0.polygon.map(\.grid) }, square: square.grid, gates: gatePoints.map(\.grid),
