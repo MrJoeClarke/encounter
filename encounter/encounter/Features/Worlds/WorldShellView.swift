@@ -24,6 +24,7 @@ struct WorldShellView: View {
     let onDelete: (World) -> Void
 
     @State private var navigation = WorldNavigation()
+    @Environment(\.dismiss) private var dismiss
     @Environment(LinkRouter.self) private var linkRouter
     @Environment(\.horizontalSizeClass) private var sizeClass
 
@@ -53,6 +54,25 @@ struct WorldShellView: View {
             .onChange(of: navigation.selectedMap) { if navigation.selectedMap != nil { isShowingDetail = true } }
             .onChange(of: navigation.selectedCampaign) { if navigation.selectedCampaign != nil { isShowingDetail = true } }
             .onChange(of: navigation.selectedLibraryKey) { if navigation.selectedLibraryKey != nil { isShowingDetail = true } }
+            // Where the user has been, so Back and Forward can return to it.
+            .onChange(of: navigation.place) { old, new in navigation.record(from: old, to: new) }
+            // Beside the screen, Back and Forward move through what was open in the world. They never leave the world:
+            // "All Worlds" at the top of the menu does that.
+            .navigationBarBackButtonHidden(showsSideBySide(sizeClass))
+            .toolbar {
+                if showsSideBySide(sizeClass) {
+                    ToolbarItemGroup(placement: .navigation) {
+                        Button("Back", systemImage: "chevron.backward") { navigation.goBack() }
+                            .disabled(!navigation.canGoBack)
+                            .keyboardShortcut("[", modifiers: .command)
+                            .help("Go back to what was open before")
+                        Button("Forward", systemImage: "chevron.forward") { navigation.goForward() }
+                            .disabled(!navigation.canGoForward)
+                            .keyboardShortcut("]", modifiers: .command)
+                            .help("Go forward again")
+                    }
+                }
+            }
             // Mention links that arrive from the system are opened in the world that's showing.
             .onAppear { linkRouter.activate(world: world, navigation: navigation) }
             .onDisappear { linkRouter.deactivate(navigation: navigation) }
@@ -126,6 +146,18 @@ struct WorldShellView: View {
     private var sidebar: some View {
         if showsSideBySide(sizeClass) {
             List(selection: sidebarSelection) { sidebarRows }
+                // Above the list, not in it, so it is never one of its rows: it is where the user leaves the world.
+                .safeAreaInset(edge: .top, spacing: 0) {
+                    Button { dismiss() } label: {
+                        Label("All Worlds", systemImage: "chevron.backward")
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityHint("Leaves this world and shows every world")
+                }
         } else {
             List { sidebarRows }
         }
