@@ -60,6 +60,12 @@ protocol RuleSystem {
     /// Whether the system is shown by the generic creation, level-up and sheet screens, which read it as data, rather than by
     /// screens written for it.
     var usesGenericScreens: Bool { get }
+    /// The line shown under an entry's name in a library list, for entries whose pack gives no `detail` of its own.
+    func libraryDetail(for entry: LibraryEntry) -> String?
+    /// Labels for attributes that only library entries have, which no page editor labels.
+    var libraryAttributeLabels: [String: String] { get }
+    /// The numbers a score attribute (`AttributeType.abilityScore`) can take.
+    var scoreRange: ClosedRange<Int> { get }
 }
 
 extension RuleSystem {
@@ -78,6 +84,9 @@ extension RuleSystem {
     var sheetLayout: SheetLayout? { nil }
     var libraryEditions: [LibraryEdition] { [] }
     var usesGenericScreens: Bool { false }
+    func libraryDetail(for entry: LibraryEntry) -> String? { entry.detail }
+    var libraryAttributeLabels: [String: String] { [:] }
+    var scoreRange: ClosedRange<Int> { 1...30 }
 
     /// Whether the system comes with a bundled content library (races, classes and so on).
     var hasContentLibrary: Bool { modules.contains(.library) }

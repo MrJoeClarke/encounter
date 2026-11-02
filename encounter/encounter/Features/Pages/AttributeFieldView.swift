@@ -38,12 +38,12 @@ struct AttributeFieldView: View {
                     #if os(iOS)
                     .keyboardType(.numberPad)
                     #endif
-                    if let score = page.attributeNumber(definition.key) {
-                        Text(DnD5eSystem.abilityModifierText(for: Int(score)))
+                    if let score = page.attributeNumber(definition.key), let modifier = scoreModifierText(Int(score)) {
+                        Text(modifier)
                             .monospacedDigit()
                             .foregroundStyle(.secondary)
                             .frame(minWidth: 36, alignment: .trailing)
-                            .accessibilityLabel("Modifier \(DnD5eSystem.abilityModifierText(for: Int(score)))")
+                            .accessibilityLabel("Modifier \(modifier)")
                     }
                 }
             } label: {
@@ -93,12 +93,20 @@ struct AttributeFieldView: View {
         )
     }
 
+    private var system: any RuleSystem { RuleSystems.system(forKey: page.world?.systemRaw ?? "") }
+
+    /// "+2" or "−1": what a score gives, by the system's own "abilityModifier" formula. Nil if the system has none.
+    private func scoreModifierText(_ score: Int) -> String? {
+        guard let modifier = system.formulas.integer("abilityModifier", ["score": Double(score)]) else { return nil }
+        return modifier >= 0 ? "+\(modifier)" : "−\(-modifier)"
+    }
+
     /// Whole numbers only, kept within the ability score range.
     private var abilityScoreBinding: Binding<Double?> {
         Binding(
             get: { page.attributeNumber(definition.key) },
             set: { newValue in
-                let range = DnD5eSystem.abilityScoreRange
+                let range = system.scoreRange
                 let score = newValue.map { min(max(Int($0.rounded()), range.lowerBound), range.upperBound) }
                 page.setAttributeNumber(definition.key, score.map(Double.init))
             }
