@@ -381,20 +381,28 @@ struct CharacterSheet {
 
     // MARK: Rests
 
-    func shortRest() {
-        // Pact magic comes back on a short rest.
-        if usesPactMagic { page.setAttributeText("dnd5e.spellSlotsUsed", "") }
+    /// Gives back what a kind of rest gives back, as the rule system says (see `DnD5eSystem.resourceList`).
+    private func rest(_ id: String) {
+        let formulas = DnD5eSystem.formulaSet
+        let inputs: [String: Double] = ["level": Double(level), "maxHitPoints": Double(maximumHitPoints), "usesPactMagic": usesPactMagic ? 1 : 0]
+        for resource in DnD5eSystem.resourceList {
+            if let text = ResourceRules.textAfter(rest: id, resource: resource, formulas: formulas, inputs: inputs) {
+                page.setAttributeText(resource.key, text)
+            } else if let value = ResourceRules.valueAfter(
+                rest: id, resource: resource, current: page.attributeNumber(resource.key), formulas: formulas, inputs: inputs
+            ) {
+                page.setAttributeNumber(resource.key, value)
+            }
+        }
     }
+
+    func shortRest() { rest("short") }
 
     /// Everything comes back, and half the hit dice (at least one).
     func longRest() {
-        page.setAttributeNumber("dnd5e.currentHitPoints", Double(maximumHitPoints))
-        page.setAttributeNumber("dnd5e.temporaryHitPoints", 0)
-        resetDeathSaves()
+        rest("long")
         // A long rest takes away one level of exhaustion.
         if conditionState.exhaustion > 0 { setExhaustion(conditionState.exhaustion - 1) }
-        page.setAttributeText("dnd5e.spellSlotsUsed", "")
-        page.setAttributeNumber("dnd5e.hitDiceSpent", Double(max(0, hitDiceSpent - max(1, level / 2))))
     }
 }
 

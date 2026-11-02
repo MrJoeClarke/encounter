@@ -141,3 +141,56 @@ struct CheckRollerTests {
         }
     }
 }
+
+struct ResourceRulesTests {
+    private let formulas = FormulaSet([:])
+
+    private func after(_ rest: String, _ resource: ResourceDefinition, _ current: Double?, _ inputs: [String: Double] = [:]) -> Double? {
+        ResourceRules.valueAfter(rest: rest, resource: resource, current: current, formulas: formulas, inputs: inputs)
+    }
+
+    @Test func remainingResourcesRiseToTheMaximumAndNoFurther() {
+        let hope = ResourceDefinition(
+            id: "hope", name: "Hope", key: "x.hope", storage: .remaining, maximum: "6",
+            restoredBy: ["short": .formula("1"), "long": .full, "never": .empty]
+        )
+        #expect(after("short", hope, 2) == 3)
+        #expect(after("short", hope, 6) == 6)
+        #expect(after("long", hope, 1) == 6)
+        #expect(after("never", hope, 4) == 0)
+        #expect(after("other", hope, 4) == nil)
+        // No value yet counts as the maximum.
+        #expect(after("short", hope, nil) == 6)
+    }
+
+    @Test func spentResourcesFallToNone() {
+        let dice = ResourceDefinition(id: "dice", name: "Dice", key: "x.dice", storage: .spent, maximum: "level", restoredBy: ["long": .formula("max(1, floor(level / 2))"), "short": .full])
+        #expect(after("long", dice, 5, ["level": 8]) == 1)
+        #expect(after("long", dice, 2, ["level": 8]) == 0)
+        #expect(after("long", dice, 3, ["level": 3]) == 2)
+        #expect(after("short", dice, 5, ["level": 8]) == 0)
+    }
+
+    @Test func aConditionStopsARestRestoringAnything() {
+        let slots = ResourceDefinition(id: "slots", name: "Slots", key: "x.slots", storage: .spentList, restoredBy: ["short": .full(when: "pact")])
+        #expect(ResourceRules.textAfter(rest: "short", resource: slots, formulas: formulas, inputs: ["pact": 1]) == "")
+        #expect(ResourceRules.textAfter(rest: "short", resource: slots, formulas: formulas, inputs: ["pact": 0]) == nil)
+        #expect(ResourceRules.textAfter(rest: "long", resource: slots, formulas: formulas, inputs: ["pact": 1]) == nil)
+    }
+
+    @Test func maximumsCanUseTheSystemsFormulas() {
+        let set = FormulaSet(["tier": "1 + floor((level - 1) / 4)"])
+        let stress = ResourceDefinition(id: "stress", name: "Stress", key: "x.stress", storage: .spent, restoredBy: ["short": .formula("tier + 1")])
+        #expect(ResourceRules.valueAfter(rest: "short", resource: stress, current: 5, formulas: set, inputs: ["level": 6]) == 2)
+    }
+
+    @Test func dndResourcesAreAllOnTheKeysTheSheetAlreadyUses() {
+        let keys = Set(DnD5eSystem.resourceList.map(\.key))
+        #expect(keys == ["dnd5e.currentHitPoints", "dnd5e.temporaryHitPoints", "dnd5e.deathSaveSuccesses", "dnd5e.deathSaveFailures", "dnd5e.spellSlotsUsed", "dnd5e.hitDiceSpent"])
+        #expect(DnD5eSystem().rests.map(\.id) == ["short", "long"])
+        for resource in DnD5eSystem.resourceList {
+            for restId in resource.restoredBy.keys { #expect(DnD5eSystem.restList.contains { $0.id == restId }) }
+        }
+        #expect(NoRuleSystem().resources.isEmpty && NoRuleSystem().rests.isEmpty)
+    }
+}

@@ -37,6 +37,10 @@ protocol RuleSystem {
     var rollModel: RollModel? { get }
     /// How the system works out its numbers, by name.
     var formulas: FormulaSet { get }
+    /// The kinds of rest the system has.
+    var rests: [RestDefinition] { get }
+    /// What a character has that goes down and up in play, and how each kind of rest gives it back.
+    var resources: [ResourceDefinition] { get }
 }
 
 extension RuleSystem {
@@ -44,6 +48,8 @@ extension RuleSystem {
     var modules: RuleModules { [] }
     var rollModel: RollModel? { nil }
     var formulas: FormulaSet { FormulaSet([:]) }
+    var rests: [RestDefinition] { [] }
+    var resources: [ResourceDefinition] { [] }
 
     /// Whether the system comes with a bundled content library (races, classes and so on).
     var hasContentLibrary: Bool { modules.contains(.library) }

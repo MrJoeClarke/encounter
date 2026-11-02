@@ -25,6 +25,32 @@ struct DnD5eSystem: RuleSystem {
         "skillBonus": "abilityModifier + floor(proficiencyBonus * proficiencyMultiplier)",
     ])
 
+    var rests: [RestDefinition] { Self.restList }
+    var resources: [ResourceDefinition] { Self.resourceList }
+
+    static let restList = [RestDefinition(id: "short", name: "Short Rest"), RestDefinition(id: "long", name: "Long Rest")]
+
+    /// What a rest gives back. Inputs are `level`, `maxHitPoints` and `usesPactMagic` (1 or 0). A long rest also takes away a level
+    /// of exhaustion, which belongs to the conditions.
+    static let resourceList = [
+        ResourceDefinition(
+            id: "hitPoints", name: "Hit Points", key: "dnd5e.currentHitPoints", storage: .remaining, maximum: "maxHitPoints",
+            restoredBy: ["long": .full]
+        ),
+        ResourceDefinition(id: "temporaryHitPoints", name: "Temporary Hit Points", key: "dnd5e.temporaryHitPoints", storage: .remaining, restoredBy: ["long": .empty]),
+        ResourceDefinition(id: "deathSaveSuccesses", name: "Death Save Successes", key: "dnd5e.deathSaveSuccesses", storage: .spent, maximum: "3", restoredBy: ["long": .full]),
+        ResourceDefinition(id: "deathSaveFailures", name: "Death Save Failures", key: "dnd5e.deathSaveFailures", storage: .spent, maximum: "3", restoredBy: ["long": .full]),
+        // A warlock's slots come back on a short rest, but other casters' don't.
+        ResourceDefinition(
+            id: "spellSlots", name: "Spell Slots", key: "dnd5e.spellSlotsUsed", storage: .spentList,
+            restoredBy: ["long": .full, "short": .full(when: "usesPactMagic")]
+        ),
+        ResourceDefinition(
+            id: "hitDice", name: "Hit Dice", key: "dnd5e.hitDiceSpent", storage: .spent, maximum: "level",
+            restoredBy: ["long": .formula("max(1, floor(level / 2))")]
+        ),
+    ]
+
     static let hitDice = ["d6", "d8", "d10", "d12"]
 
     static let sizes = ["Tiny", "Small", "Medium", "Large", "Huge", "Gargantuan"]
