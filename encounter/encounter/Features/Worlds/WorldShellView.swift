@@ -32,7 +32,7 @@ struct WorldShellView: View {
     }
 
     private var hasLibrary: Bool {
-        RuleSystems.system(for: world.system).hasContentLibrary
+        world.rules.contains(.library)
     }
 
     /// On iOS, whether the screen chosen from the menu is open on top of it.

@@ -20,7 +20,7 @@ struct PageEditorView: View {
         var id: String { rawValue }
     }
 
-    private var hasSheet: Bool { page.kind == .character && page.world?.system == .dnd5e }
+    private var hasSheet: Bool { page.kind == .character && page.world?.rules.contains(.sheet) == true }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -66,7 +66,7 @@ struct PageEditorView: View {
                 }
             }
 
-            if page.kind == .character {
+            if page.kind == .character, page.world?.rules.contains(.advancement) == true {
                 LevelUpSection(page: page)
             }
 

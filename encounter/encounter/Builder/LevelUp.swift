@@ -36,7 +36,7 @@ struct LevelUpContext {
 
     /// The feats that can be taken in place of an ability increase. The 2024 rules give an Epic Boon at level 19.
     var featOptions: [LibraryEntry] {
-        guard RuleSystems.system(for: world.system).hasContentLibrary else { return [] }
+        guard world.rules.contains(.advancement) else { return [] }
         let taken = Set(takenFeatNames)
         return Library.shared.entries(.feat, in: world.edition).filter { feat in
             guard !taken.contains(feat.name), feat.name != "Ability Score Improvement" else { return false }

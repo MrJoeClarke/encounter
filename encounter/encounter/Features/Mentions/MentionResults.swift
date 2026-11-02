@@ -48,7 +48,7 @@ struct MentionResults: View {
         descriptor.fetchLimit = limit
         _pages = Query(descriptor)
 
-        if RuleSystems.system(for: world.system).hasContentLibrary, !search.isEmpty || showsWhenEmpty {
+        if world.rules.contains(.library), !search.isEmpty || showsWhenEmpty {
             libraryEntries = Library.shared.mentionableEntries(matching: search, in: world.edition, limit: limit)
         } else {
             libraryEntries = []

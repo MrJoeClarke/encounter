@@ -84,7 +84,7 @@ struct ContentReferenceField: View {
 
     /// Library entries to offer: only for worlds whose rule system has a library, in the world's edition.
     private var availableLibraryEntries: [LibraryEntry] {
-        guard let libraryKind, let world = page.world, RuleSystems.system(for: world.system).hasContentLibrary else {
+        guard let libraryKind, let world = page.world, world.rules.contains(.library) else {
             return []
         }
         // Races and classes only: a subclass is picked in a field of its own, once the class is chosen.

@@ -41,7 +41,7 @@ struct CharacterSheetView: View {
                     layout {
                         VStack(spacing: 16) {
                             hitPoints(sheet)
-                            ConditionsBox(page: page)
+                            if page.world?.rules.contains(.conditions) == true { ConditionsBox(page: page) }
                             abilities(sheet)
                             checks(sheet)
                         }

@@ -10,7 +10,7 @@ struct DnD5eSystem: RuleSystem {
     let id = RuleSystemID.dnd5e
 
     var additionalPageKinds: Set<PageKind> { [.characterClass, .background, .feat, .spell] }
-    var hasContentLibrary: Bool { true }
+    var modules: RuleModules { [.library, .characterCreation, .advancement, .sheet, .conditions] }
 
     static let hitDice = ["d6", "d8", "d10", "d12"]
 

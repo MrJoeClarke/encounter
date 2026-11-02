@@ -72,7 +72,7 @@ enum WorldSearch {
         if scope != .library {
             hits += pageHits(words: words, phrase: words.joined(separator: " "), in: world, scope: scope, context: context)
         }
-        if scope == .all || scope == .library, RuleSystems.system(for: world.system).hasContentLibrary {
+        if scope == .all || scope == .library, world.rules.contains(.library) {
             hits += libraryHits(words: words, phrase: words.joined(separator: " "), edition: world.edition)
         }
         return hits.sorted {

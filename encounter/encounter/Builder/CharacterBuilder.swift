@@ -25,7 +25,7 @@ enum CharacterContent {
     /// entries are listed: a subrace or subclass is chosen after its parent.
     private static func sources(_ kind: LibraryKind, pageKind: PageKind, in world: World) -> [ContentSource] {
         var result: [ContentSource] = []
-        if RuleSystems.system(for: world.system).hasContentLibrary {
+        if world.rules.contains(.characterCreation) {
             result += Library.shared.topLevelEntries(kind, in: world.edition).map { source(for: $0) }
         }
         let pages = (world.pages ?? []).filter { $0.kind == pageKind }.sorted { $0.title.localizedStandardCompare($1.title) == .orderedAscending }
@@ -76,7 +76,7 @@ enum CharacterContent {
     /// The tools of each kind a character can choose from. In the 2014 rules each is an entry of the library, and in the
     /// 2024 rules musical instruments and gaming sets are variants listed in one entry.
     static func toolOptions(in world: World) -> [ToolCategory: [String]] {
-        guard RuleSystems.system(for: world.system).hasContentLibrary else { return [:] }
+        guard world.rules.contains(.characterCreation) else { return [:] }
         var options: [ToolCategory: [String]] = [:]
         for entry in Library.shared.entries(.equipment, in: world.edition) {
             guard case .text(let category)? = entry.attributes["dnd5e.equipmentCategory"],
