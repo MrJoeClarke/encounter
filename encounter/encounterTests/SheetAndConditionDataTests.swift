@@ -129,7 +129,7 @@ struct SheetAndConditionDataTests {
         var random = SeededRandom(seed: 7)
         let definitions = DnD5eSystem().conditions
         #expect(definitions.map(\.id) == Condition.allCases.map(\.rawValue))
-        for edition in LibraryEdition.allCases {
+        for edition in LibraryEdition.dnd {
             for sample in 0..<250 {
                 var state = ConditionState()
                 for condition in Condition.allCases where condition != .exhaustion && Bool.random(using: &random) && sample % 3 != 0 { state.active.insert(condition) }

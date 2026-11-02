@@ -88,7 +88,7 @@ struct CharacterBuilderTests {
 
     @Test func everyClassAndBackgroundHasSkillsTheBuilderUnderstands() {
         let skillNames = Set(Library.shared.entries(.skill, in: .srd52).map(\.name))
-        for edition in LibraryEdition.allCases {
+        for edition in LibraryEdition.dnd {
             for entry in Library.shared.topLevelEntries(.class, in: edition) {
                 guard case .text(let text)? = entry.attributes["dnd5e.skillChoices"] else { Issue.record("\(entry.name) has no skills"); continue }
                 let choice = SkillChoice.parse(text)
@@ -129,7 +129,7 @@ struct CharacterBuilderTests {
         guard case .text(let acolyteText)? = acolyte51.attributes["dnd5e.backgroundEquipment"] else { Issue.record("no equipment"); return }
         #expect(EquipmentGroup.parse(acolyteText).count == 1 && !EquipmentGroup.parse(acolyteText)[0].isChoice)
 
-        for edition in LibraryEdition.allCases {
+        for edition in LibraryEdition.dnd {
             for entry in Library.shared.topLevelEntries(.class, in: edition) {
                 guard case .text(let text)? = entry.attributes["dnd5e.startingEquipment"] else { continue }
                 #expect(!EquipmentGroup.parse(text).isEmpty, "\(entry.name) in \(edition)")
@@ -424,7 +424,7 @@ struct CharacterBuilderTests {
 
     @Test func toolOptionsComeFromTheLibraryInBothEditions() {
         let context = ModelContext(try! AppSchema.makeContainer(inMemory: true))
-        for edition in LibraryEdition.allCases {
+        for edition in LibraryEdition.dnd {
             let world = makeWorld(edition, in: context)
             let options = CharacterContent.toolOptions(in: world)
             #expect(options[.artisan]?.count ?? 0 >= 17, "\(edition)")
@@ -563,7 +563,7 @@ struct EquipmentItemsTests {
     }
 
     @Test func everyStartingPackageInTheLibrarySplitsIntoSeveralItemsOrOne() {
-        for edition in LibraryEdition.allCases {
+        for edition in LibraryEdition.dnd {
             let texts = (Library.shared.topLevelEntries(.class, in: edition) + Library.shared.entries(.background, in: edition)).flatMap { entry -> [String] in
                 let key = entry.kind == .class ? "dnd5e.startingEquipment" : "dnd5e.backgroundEquipment"
                 guard case .text(let text)? = entry.attributes[key] else { return [] }
@@ -591,7 +591,7 @@ struct ToolProficiencyTests {
     }
 
     @Test func everyToolTextInTheLibraryIsUnderstood() {
-        for edition in LibraryEdition.allCases {
+        for edition in LibraryEdition.dnd {
             for entry in Library.shared.topLevelEntries(.class, in: edition) + Library.shared.entries(.background, in: edition) {
                 for key in ["dnd5e.toolProficiencies", "dnd5e.backgroundTools"] {
                     guard case .text(let text)? = entry.attributes[key] else { continue }

@@ -11,6 +11,8 @@ nonisolated struct RollModel: Equatable, Sendable {
     struct Die: Equatable, Sendable {
         var name: String
         var sides: Int
+        /// A resource the roller gains when this die shows the higher number, such as Hope.
+        var gains: String? = nil
     }
 
     /// What advantage and disadvantage do.

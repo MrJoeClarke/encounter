@@ -15,11 +15,11 @@ private func corrupt(_ decoder: any Decoder, _ message: String) -> DecodingError
 // MARK: Rolls
 
 nonisolated extension RollModel.Die: Decodable {
-    private enum CodingKeys: String, CodingKey { case name, sides }
+    private enum CodingKeys: String, CodingKey { case name, sides, gains }
 
     init(from decoder: any Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
-        self.init(name: try c.decode(String.self, forKey: .name), sides: try c.decode(Int.self, forKey: .sides))
+        self.init(name: try c.decode(String.self, forKey: .name), sides: try c.decode(Int.self, forKey: .sides), gains: try c.decodeIfPresent(String.self, forKey: .gains))
         guard sides >= 2 else { throw corrupt(decoder, "A die needs at least 2 sides.") }
     }
 }
@@ -192,14 +192,28 @@ nonisolated extension AdvancementRule.Gain: Decodable {
     }
 }
 
+nonisolated extension AdvancementRule.Choice: Decodable {
+    private enum CodingKeys: String, CodingKey { case id, title, cost, gains }
+
+    init(from decoder: any Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        let id = try c.decode(String.self, forKey: .id)
+        self.init(
+            id: id, title: try c.decodeIfPresent(String.self, forKey: .title) ?? id, cost: try c.decodeIfPresent(Int.self, forKey: .cost) ?? 1,
+            gains: try c.decode([AdvancementRule.Gain].self, forKey: .gains)
+        )
+    }
+}
+
 nonisolated extension AdvancementRule: Decodable {
-    private enum CodingKeys: String, CodingKey { case levelKey, maxLevel, gains }
+    private enum CodingKeys: String, CodingKey { case levelKey, maxLevel, gains, choices, choicePoints }
 
     init(from decoder: any Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         self.init(
             levelKey: try c.decode(String.self, forKey: .levelKey), maxLevel: try c.decode(Int.self, forKey: .maxLevel),
-            gains: try c.decodeIfPresent([Gain].self, forKey: .gains) ?? []
+            gains: try c.decodeIfPresent([Gain].self, forKey: .gains) ?? [], choices: try c.decodeIfPresent([Choice].self, forKey: .choices) ?? [],
+            choicePoints: try c.decodeIfPresent(Int.self, forKey: .choicePoints) ?? 0
         )
     }
 }

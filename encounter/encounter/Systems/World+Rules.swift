@@ -15,7 +15,11 @@ extension World {
     /// Chooses a system by key and records its version.
     func choose(systemKey key: String) {
         systemRaw = key
-        systemVersion = RuleSystems.system(forKey: key).version
+        let system = RuleSystems.system(forKey: key)
+        systemVersion = system.version
+        // A system's library is its own, so the world moves to an edition the system has.
+        let editions = system.libraryEditions
+        if let first = editions.first, !editions.contains(edition) { edition = first }
     }
 
     /// How the system the world recorded compares with what the app has.

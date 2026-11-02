@@ -72,9 +72,11 @@ nonisolated struct ResourceDefinition: Equatable, Identifiable, Sendable {
 
 nonisolated enum ResourceRules {
     /// What a resource's stored value becomes after a rest, or nil if the rest leaves it alone. `current` is the stored value
-    /// (nil if the page has none yet); `formulas` and `inputs` are what the maximum and the amounts are worked out from.
+    /// (nil if the page has none yet); `formulas` and `inputs` are what the maximum and the amounts are worked out from, and `dice`
+    /// rolls any dice in an amount (an amount with dice that can't be rolled gives nil).
     static func valueAfter(
-        rest: String, resource: ResourceDefinition, current: Double?, formulas: FormulaSet, inputs: [String: Double]
+        rest: String, resource: ResourceDefinition, current: Double?, formulas: FormulaSet, inputs: [String: Double],
+        dice: ((_ count: Int, _ sides: Int) -> Double)? = nil
     ) -> Double? {
         guard resource.storage != .spentList, let restoration = resource.restoredBy[rest] else { return nil }
         if let condition = restoration.condition {
@@ -89,7 +91,7 @@ nonisolated enum ResourceRules {
         case (.empty, _): return nil
         case (.full, _): return 0
         case (.formula(let text), _):
-            guard let amount = Formula(text)?.evaluate({ formulas.value($0, inputs) }) else { return nil }
+            guard let amount = Formula(text)?.evaluate({ formulas.value($0, inputs) }, dice: dice) else { return nil }
             if resource.storage == .remaining {
                 let raised = stored + amount
                 return maximum.map { min($0, raised) } ?? raised

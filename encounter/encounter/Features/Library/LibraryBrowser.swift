@@ -116,6 +116,7 @@ private struct LibraryRow: View {
 
     /// For a class, its hit die and primary ability; for a race or species, its size and speed.
     private var detail: String? {
+        if let line = entry.detail, !line.isEmpty { return line }
         func text(_ key: String) -> String? {
             if case .text(let value)? = entry.attributes[key], !value.isEmpty { value } else { nil }
         }

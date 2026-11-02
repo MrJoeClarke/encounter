@@ -1,0 +1,147 @@
+{
+  "formatVersion": 1,
+  "version": 1,
+  "id": "daggerheart",
+  "name": "Daggerheart",
+  "modules": ["library", "characterCreation", "advancement", "sheet", "conditions"],
+  "pageKinds": ["class", "entry"],
+  "libraryEditions": ["daggerheart"],
+
+  "attributes": [
+    {"key": "daggerheart.level", "label": "Level", "type": "number", "appliesTo": ["character"], "group": "Character"},
+    {"key": "daggerheart.agility", "label": "Agility", "type": "number", "appliesTo": ["character"], "group": "Traits"},
+    {"key": "daggerheart.strength", "label": "Strength", "type": "number", "appliesTo": ["character"], "group": "Traits"},
+    {"key": "daggerheart.finesse", "label": "Finesse", "type": "number", "appliesTo": ["character"], "group": "Traits"},
+    {"key": "daggerheart.instinct", "label": "Instinct", "type": "number", "appliesTo": ["character"], "group": "Traits"},
+    {"key": "daggerheart.presence", "label": "Presence", "type": "number", "appliesTo": ["character"], "group": "Traits"},
+    {"key": "daggerheart.knowledge", "label": "Knowledge", "type": "number", "appliesTo": ["character"], "group": "Traits"},
+    {"key": "daggerheart.evasion", "label": "Evasion", "type": "number", "appliesTo": ["character", "class"], "group": "Defences"},
+    {"key": "daggerheart.armorScore", "label": "Armor Score", "type": "number", "appliesTo": ["character"], "group": "Defences"},
+    {"key": "daggerheart.armorMajorBase", "label": "Armor Major Threshold", "type": "number", "appliesTo": ["character"], "group": "Defences"},
+    {"key": "daggerheart.armorSevereBase", "label": "Armor Severe Threshold", "type": "number", "appliesTo": ["character"], "group": "Defences"},
+    {"key": "daggerheart.proficiency", "label": "Proficiency", "type": "number", "appliesTo": ["character"], "group": "Character"},
+    {"key": "daggerheart.hitPointSlots", "label": "Hit Point Slots", "type": "number", "appliesTo": ["character"], "group": "Resources"},
+    {"key": "daggerheart.hitPointsMarked", "label": "Hit Points Marked", "type": "number", "appliesTo": ["character"], "group": "Resources"},
+    {"key": "daggerheart.stressSlots", "label": "Stress Slots", "type": "number", "appliesTo": ["character"], "group": "Resources"},
+    {"key": "daggerheart.stressMarked", "label": "Stress Marked", "type": "number", "appliesTo": ["character"], "group": "Resources"},
+    {"key": "daggerheart.armorMarked", "label": "Armor Slots Marked", "type": "number", "appliesTo": ["character"], "group": "Resources"},
+    {"key": "daggerheart.hope", "label": "Hope", "type": "number", "appliesTo": ["character"], "group": "Resources"},
+    {"key": "daggerheart.experiences", "label": "Experiences", "type": "entries", "appliesTo": ["character"], "group": "Experiences"},
+    {"key": "daggerheart.domainCards", "label": "Domain Cards", "type": "entries", "appliesTo": ["character"], "group": "Domain Cards"},
+    {"key": "daggerheart.hitPoints", "label": "Starting Hit Points", "type": "number", "appliesTo": ["class"], "group": "Class"},
+    {"key": "daggerheart.domains", "label": "Domains", "type": "text", "appliesTo": ["class"], "group": "Class"},
+    {"key": "daggerheart.startingItems", "label": "Starting Items", "type": "text", "appliesTo": ["class"], "group": "Class"},
+    {"key": "daggerheart.domain", "label": "Domain", "type": "text", "appliesTo": ["entry"], "group": "Card"},
+    {"key": "daggerheart.cardLevel", "label": "Card Level", "type": "number", "appliesTo": ["entry"], "group": "Card"},
+    {"key": "daggerheart.recall", "label": "Recall Cost", "type": "number", "appliesTo": ["entry"], "group": "Card"},
+    {"key": "daggerheart.cardType", "label": "Card Type", "type": "text", "appliesTo": ["entry"], "group": "Card"}
+  ],
+
+  "rollModel": {
+    "dice": [{"name": "Hope", "sides": 12, "gains": "hope"}, {"name": "Fear", "sides": 12}],
+    "advantage": {"type": "bonusDie", "sides": 6},
+    "critical": "matchingDice",
+    "criticalAlwaysMeetsTarget": true
+  },
+
+  "formulas": {
+    "tier": "1 + ceil((level - 1) / 3)",
+    "majorThreshold": "daggerheart.armorMajorBase + level",
+    "severeThreshold": "daggerheart.armorSevereBase + level"
+  },
+
+  "rests": [
+    {"id": "short", "name": "Short Rest"},
+    {"id": "long", "name": "Long Rest"}
+  ],
+
+  "resources": [
+    {"id": "hp", "name": "Hit Points", "key": "daggerheart.hitPointsMarked", "storage": "spent", "maximum": "daggerheart.hitPointSlots",
+     "restoredBy": {"short": {"formula": "1d4 + tier"}, "long": "full"}},
+    {"id": "stress", "name": "Stress", "key": "daggerheart.stressMarked", "storage": "spent", "maximum": "daggerheart.stressSlots",
+     "restoredBy": {"short": {"formula": "1d4 + tier"}, "long": "full"}},
+    {"id": "armor", "name": "Armor Slots", "key": "daggerheart.armorMarked", "storage": "spent", "maximum": "daggerheart.armorScore",
+     "restoredBy": {"short": {"formula": "1d4 + tier"}, "long": "full"}},
+    {"id": "hope", "name": "Hope", "key": "daggerheart.hope", "storage": "remaining", "maximum": "6", "startsAt": 2}
+  ],
+
+  "creation": {
+    "levelKey": "daggerheart.level",
+    "steps": [
+      {"id": "concept", "title": "Concept", "type": "concept"},
+      {"id": "class", "title": "Class", "type": "choose", "list": {"kind": "class"}},
+      {"id": "ancestry", "title": "Ancestry", "type": "choose", "list": {"kind": "race"}},
+      {"id": "community", "title": "Community", "type": "choose", "list": {"kind": "entry", "subKind": "daggerheart.community"}},
+      {"id": "traits", "title": "Traits", "type": "numbers", "assignFrom": [2, 1, 1, 0, 0, -1], "entries": [
+        {"key": "daggerheart.agility", "label": "Agility", "variable": "agility"},
+        {"key": "daggerheart.strength", "label": "Strength", "variable": "strength"},
+        {"key": "daggerheart.finesse", "label": "Finesse", "variable": "finesse"},
+        {"key": "daggerheart.instinct", "label": "Instinct", "variable": "instinct"},
+        {"key": "daggerheart.presence", "label": "Presence", "variable": "presence"},
+        {"key": "daggerheart.knowledge", "label": "Knowledge", "variable": "knowledge"}
+      ]},
+      {"id": "review", "title": "Review", "type": "review"}
+    ],
+    "derived": {
+      "daggerheart.hitPointSlots": "class_hitPoints",
+      "daggerheart.evasion": "class_evasion",
+      "daggerheart.stressSlots": "6",
+      "daggerheart.hope": "2",
+      "daggerheart.proficiency": "1",
+      "daggerheart.armorScore": "3",
+      "daggerheart.armorMajorBase": "5",
+      "daggerheart.armorSevereBase": "11"
+    }
+  },
+
+  "advancement": {
+    "levelKey": "daggerheart.level",
+    "maxLevel": 10,
+    "gains": [
+      {"key": "daggerheart.proficiency", "formula": "current + max(0, 1 - abs(level - 2)) + max(0, 1 - abs(level - 5)) + max(0, 1 - abs(level - 8))"}
+    ],
+    "choicePoints": 2,
+    "choices": [
+      {"id": "hitPoint", "title": "Add a Hit Point slot", "cost": 1, "gains": [{"key": "daggerheart.hitPointSlots", "formula": "current + 1"}]},
+      {"id": "stress", "title": "Add a Stress slot", "cost": 1, "gains": [{"key": "daggerheart.stressSlots", "formula": "current + 1"}]},
+      {"id": "evasion", "title": "Increase Evasion by 1", "cost": 1, "gains": [{"key": "daggerheart.evasion", "formula": "current + 1"}]},
+      {"id": "proficiency", "title": "Increase Proficiency by 1", "cost": 2, "gains": [{"key": "daggerheart.proficiency", "formula": "current + 1"}]}
+    ]
+  },
+
+  "conditions": [
+    {"id": "hidden", "name": "Hidden"},
+    {"id": "restrained", "name": "Restrained"},
+    {"id": "vulnerable", "name": "Vulnerable"}
+  ],
+
+  "sheet": {"sections": [
+    {"id": "vitals", "title": "Vitals", "rows": [
+      {"id": "hp", "label": "Hit Points", "type": "resource", "resource": "hp"},
+      {"id": "stress", "label": "Stress", "type": "resource", "resource": "stress"},
+      {"id": "hope", "label": "Hope", "type": "resource", "resource": "hope"},
+      {"id": "armor", "label": "Armor Slots", "type": "resource", "resource": "armor"}
+    ]},
+    {"id": "defences", "title": "Defences", "rows": [
+      {"id": "evasion", "label": "Evasion", "type": "stat", "formula": "daggerheart.evasion"},
+      {"id": "major", "label": "Major Threshold", "type": "stat", "formula": "majorThreshold"},
+      {"id": "severe", "label": "Severe Threshold", "type": "stat", "formula": "severeThreshold"},
+      {"id": "proficiency", "label": "Proficiency", "type": "stat", "formula": "daggerheart.proficiency"},
+      {"id": "tier", "label": "Tier", "type": "stat", "formula": "tier"}
+    ]},
+    {"id": "traits", "title": "Traits", "rows": [
+      {"id": "agility", "label": "Agility", "type": "check", "formula": "x", "inputs": {"x": "daggerheart.agility"}},
+      {"id": "strength", "label": "Strength", "type": "check", "formula": "x", "inputs": {"x": "daggerheart.strength"}},
+      {"id": "finesse", "label": "Finesse", "type": "check", "formula": "x", "inputs": {"x": "daggerheart.finesse"}},
+      {"id": "instinct", "label": "Instinct", "type": "check", "formula": "x", "inputs": {"x": "daggerheart.instinct"}},
+      {"id": "presence", "label": "Presence", "type": "check", "formula": "x", "inputs": {"x": "daggerheart.presence"}},
+      {"id": "knowledge", "label": "Knowledge", "type": "check", "formula": "x", "inputs": {"x": "daggerheart.knowledge"}}
+    ]},
+    {"id": "experiences", "title": "Experiences", "rows": [
+      {"id": "experiences", "label": "Experiences", "type": "entries", "key": "daggerheart.experiences"}
+    ]},
+    {"id": "cards", "title": "Domain Cards", "rows": [
+      {"id": "domainCards", "label": "Domain Cards", "type": "entries", "key": "daggerheart.domainCards"}
+    ]}
+  ]}
+}

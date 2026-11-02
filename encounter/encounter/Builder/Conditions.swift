@@ -172,7 +172,7 @@ nonisolated enum ConditionRules {
         guard state.exhaustion > 0 else { return base }
         switch edition {
         case .srd51: return state.exhaustion >= 5 ? 0 : state.exhaustion >= 2 ? base / 2 : base
-        case .srd52: return max(0, base - 5 * state.exhaustion)
+        case .srd52, .daggerheart: return max(0, base - 5 * state.exhaustion)
         }
     }
 

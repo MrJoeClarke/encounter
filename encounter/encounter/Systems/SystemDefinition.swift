@@ -19,6 +19,10 @@ nonisolated struct SystemDefinition: Decodable, Sendable {
     var id: String
     var name: String
     var modules: [String]
+    /// Page kinds that always appear in the sidebar of a world using the system, by raw name ("class", "entry").
+    var pageKinds: [String]
+    /// The library editions (pack ids) worlds of the system can use, the first being the one they start on.
+    var libraryEditions: [String]
     var attributes: [AttributeSpec]
     var rollModel: RollModel?
     var formulas: [String: String]
@@ -30,7 +34,7 @@ nonisolated struct SystemDefinition: Decodable, Sendable {
     var sheet: SheetLayout?
 
     private enum CodingKeys: String, CodingKey {
-        case formatVersion, version, id, name, modules, attributes, rollModel, formulas, rests, resources, creation, advancement, conditions, sheet
+        case formatVersion, version, id, name, modules, pageKinds, libraryEditions, attributes, rollModel, formulas, rests, resources, creation, advancement, conditions, sheet
     }
 
     init(from decoder: any Decoder) throws {
@@ -40,6 +44,8 @@ nonisolated struct SystemDefinition: Decodable, Sendable {
         id = try c.decode(String.self, forKey: .id)
         name = try c.decode(String.self, forKey: .name)
         modules = try c.decodeIfPresent([String].self, forKey: .modules) ?? []
+        pageKinds = try c.decodeIfPresent([String].self, forKey: .pageKinds) ?? []
+        libraryEditions = try c.decodeIfPresent([String].self, forKey: .libraryEditions) ?? []
         attributes = try c.decodeIfPresent([AttributeSpec].self, forKey: .attributes) ?? []
         rollModel = try c.decodeIfPresent(RollModel.self, forKey: .rollModel)
         formulas = try c.decodeIfPresent([String: String].self, forKey: .formulas) ?? [:]
@@ -75,6 +81,8 @@ nonisolated struct SystemDefinition: Decodable, Sendable {
 
         if id.isEmpty { found.append("The system has no id.") }
         for module in modules where Self.moduleNames[module] == nil { found.append("“\(module)” is not a module.") }
+        for kind in pageKinds where PageKind(rawValue: kind) == nil { found.append("“\(kind)” is not a kind of page.") }
+        for edition in libraryEditions where LibraryEdition(rawValue: edition) == nil { found.append("“\(edition)” is not a library this app has.") }
         for attribute in attributes where attribute.definition == nil { found.append("Attribute \(attribute.key) has an unknown type or page kind.") }
         for (name, text) in formulas { formula(text, "Formula \(name)") }
 
@@ -121,7 +129,7 @@ nonisolated struct SystemDefinition: Decodable, Sendable {
 nonisolated struct AttributeSpec: Decodable, Sendable {
     var key: String
     var label: String
-    /// "text", "number", "bool" or "choice".
+    /// "text", "number", "bool", "choice" or "entries" (a list of named parts).
     var type: String
     var options: [String]
     /// Page kinds, by their raw names ("character", "item", and so on).
@@ -148,6 +156,7 @@ nonisolated struct AttributeSpec: Decodable, Sendable {
         case "number": attributeType = .number
         case "bool": attributeType = .bool
         case "choice": attributeType = .choice(options)
+        case "entries": attributeType = .entries(showsLevel: false)
         default: return nil
         }
         let kinds = appliesTo.compactMap { PageKind(rawValue: $0) }
@@ -176,6 +185,10 @@ struct DataRuleSystem: RuleSystem {
         }
     }
 
+    var additionalPageKinds: Set<PageKind> { Set(definition.pageKinds.compactMap { PageKind(rawValue: $0) }) }
+    var libraryEditions: [LibraryEdition] { definition.libraryEditions.compactMap { LibraryEdition(rawValue: $0) } }
+    /// A system read from a file is shown by the generic screens.
+    var usesGenericScreens: Bool { true }
     var rollModel: RollModel? { definition.rollModel }
     var formulas: FormulaSet { FormulaSet(definition.formulas) }
     var rests: [RestDefinition] { definition.rests }

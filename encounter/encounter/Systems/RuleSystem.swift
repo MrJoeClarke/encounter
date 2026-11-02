@@ -53,6 +53,11 @@ protocol RuleSystem {
     var conditions: [ConditionDefinition] { get }
     /// How a character's sheet is laid out, if the system has one.
     var sheetLayout: SheetLayout? { get }
+    /// The library editions the system's worlds can use, the first being the one a world starts on. Empty if it has no library.
+    var libraryEditions: [LibraryEdition] { get }
+    /// Whether the system is shown by the generic creation, level-up and sheet screens, which read it as data, rather than by
+    /// screens written for it.
+    var usesGenericScreens: Bool { get }
 }
 
 extension RuleSystem {
@@ -68,6 +73,8 @@ extension RuleSystem {
     var advancement: AdvancementRule? { nil }
     var conditions: [ConditionDefinition] { [] }
     var sheetLayout: SheetLayout? { nil }
+    var libraryEditions: [LibraryEdition] { [] }
+    var usesGenericScreens: Bool { false }
 
     /// Whether the system comes with a bundled content library (races, classes and so on).
     var hasContentLibrary: Bool { modules.contains(.library) }
