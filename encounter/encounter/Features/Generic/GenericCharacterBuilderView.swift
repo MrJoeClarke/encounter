@@ -54,8 +54,26 @@ struct GenericCharacterBuilderView: View {
                 TextField("Summary", text: Binding(get: { model.draft.summary }, set: { model.draft.summary = $0 }), axis: .vertical)
                     .lineLimit(1...4)
             }
-        case .choose(_, let isRequired):
+        case .choose(_, let isRequired), .chooseChild(_, let isRequired):
             chooseContent(model, step: step, isRequired: isRequired)
+        case .names(let count, _, let valueText):
+            Section {
+                ForEach(0..<count, id: \.self) { index in
+                    TextField("\(step.title) \(index + 1)", text: Binding(
+                        get: { model.draft.names[step.id]?[safe: index] ?? "" },
+                        set: { value in
+                            var names = model.draft.names[step.id] ?? Array(repeating: "", count: count)
+                            while names.count < count { names.append("") }
+                            names[index] = value
+                            model.draft.names[step.id] = names
+                        }
+                    ))
+                }
+            } footer: {
+                Text(valueText.isEmpty ? "Name \(count)." : "Name \(count). Each starts at \(valueText).")
+            }
+        case .pickEntries(_, let count, _, _):
+            pickContent(model, step: step, count: count)
         case .numbers(let rule):
             numbersContent(model, step: step, rule: rule)
         case .review:
@@ -103,6 +121,30 @@ struct GenericCharacterBuilderView: View {
     }
 
     @ViewBuilder
+    private func pickContent(_ model: GenericBuilderModel, step: CreationStep, count: Int) -> some View {
+        let options = model.options(for: step)
+        let picked = Set(model.draft.picks[step.id] ?? [])
+        Section {
+            if options.isEmpty { Text("Choose the earlier steps first.").foregroundStyle(.secondary) }
+            ForEach(options) { option in
+                Button { model.togglePick(option, for: step) } label: {
+                    HStack(alignment: .firstTextBaseline) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(option.name).foregroundStyle(.primary)
+                            if !option.summary.isEmpty { Text(option.summary).font(.subheadline).foregroundStyle(.secondary).lineLimit(3) }
+                        }
+                        Spacer()
+                        if let key = option.libraryKey, picked.contains(key) { Image(systemName: "checkmark").foregroundStyle(.tint) }
+                    }
+                }
+                .buttonStyle(.plain)
+            }
+        } footer: {
+            Text("\(picked.count) of \(count) picked.")
+        }
+    }
+
+    @ViewBuilder
     private func numbersContent(_ model: GenericBuilderModel, step: CreationStep, rule: NumberRule) -> some View {
         Section {
             ForEach(rule.entries, id: \.key) { entry in
@@ -130,12 +172,21 @@ struct GenericCharacterBuilderView: View {
         Section("Character") {
             LabeledContent("Name", value: model.draft.name.isEmpty ? "—" : model.draft.name)
             ForEach(model.flow.steps) { step in
-                if case .choose = step.kind {
-                    LabeledContent(step.title, value: model.selected(for: step)?.name ?? "—")
+                switch step.kind {
+                case .choose, .chooseChild: LabeledContent(step.title, value: model.selected(for: step)?.name ?? "—")
+                default: EmptyView()
                 }
             }
         }
         ForEach(model.flow.steps) { step in
+            if case .names = step.kind {
+                Section(step.title) { ForEach((model.draft.names[step.id] ?? []).filter { !$0.isEmpty }, id: \.self) { Text($0) } }
+            }
+            if case .pickEntries(_, _, _, _) = step.kind {
+                Section(step.title) {
+                    ForEach(model.draft.picks[step.id] ?? [], id: \.self) { key in Text(Library.shared.entry(forKey: key)?.name ?? key) }
+                }
+            }
             if case .numbers(let rule) = step.kind {
                 Section(step.title) {
                     ForEach(rule.entries, id: \.key) { entry in
@@ -184,4 +235,8 @@ struct GenericCharacterBuilderView: View {
         .padding()
         .background(.bar)
     }
+}
+
+private extension Array {
+    subscript(safe index: Int) -> Element? { indices.contains(index) ? self[index] : nil }
 }

@@ -28,13 +28,15 @@ nonisolated struct SystemDefinition: Decodable, Sendable {
     var formulas: [String: String]
     var rests: [RestDefinition]
     var resources: [ResourceDefinition]
+    /// Resources the whole world shares, such as the GM's Fear, kept on the world rather than on a character.
+    var worldResources: [ResourceDefinition]
     var creation: CreationFlow?
     var advancement: AdvancementRule?
     var conditions: [ConditionDefinition]
     var sheet: SheetLayout?
 
     private enum CodingKeys: String, CodingKey {
-        case formatVersion, version, id, name, modules, pageKinds, libraryEditions, attributes, rollModel, formulas, rests, resources, creation, advancement, conditions, sheet
+        case formatVersion, version, id, name, modules, pageKinds, libraryEditions, attributes, rollModel, formulas, rests, resources, worldResources, creation, advancement, conditions, sheet
     }
 
     init(from decoder: any Decoder) throws {
@@ -51,6 +53,7 @@ nonisolated struct SystemDefinition: Decodable, Sendable {
         formulas = try c.decodeIfPresent([String: String].self, forKey: .formulas) ?? [:]
         rests = try c.decodeIfPresent([RestDefinition].self, forKey: .rests) ?? []
         resources = try c.decodeIfPresent([ResourceDefinition].self, forKey: .resources) ?? []
+        worldResources = try c.decodeIfPresent([ResourceDefinition].self, forKey: .worldResources) ?? []
         creation = try c.decodeIfPresent(CreationFlow.self, forKey: .creation)
         advancement = try c.decodeIfPresent(AdvancementRule.self, forKey: .advancement)
         conditions = try c.decodeIfPresent([ConditionDefinition].self, forKey: .conditions) ?? []
@@ -97,6 +100,15 @@ nonisolated struct SystemDefinition: Decodable, Sendable {
                 if let condition = restoration.condition { formula(condition, "Resource \(resource.id) on \(rest) condition") }
             }
         }
+        for rest in rests {
+            unique(rest.moves.map(\.id), "moves of \(rest.id)")
+            for move in rest.moves {
+                for effect in move.effects {
+                    if !resources.contains(where: { $0.id == effect.resource }) { found.append("Move \(move.id) restores resource “\(effect.resource)”, which does not exist.") }
+                    if case .formula(let text) = effect.restoration.amount { formula(text, "Move \(move.id)") }
+                }
+            }
+        }
         for condition in conditions {
             for rule in condition.effects {
                 if let when = rule.when { formula(when, "Condition \(condition.id)") }
@@ -107,9 +119,36 @@ nonisolated struct SystemDefinition: Decodable, Sendable {
             unique(creation.steps.map(\.id), "creation steps")
             for (key, text) in creation.derived { formula(text, "Starting value \(key)") }
         }
+        if let creation {
+            for (index, step) in creation.steps.enumerated() {
+                switch step.kind {
+                case .chooseChild(let parent, _):
+                    if !creation.steps[..<index].contains(where: { $0.id == parent }) { found.append("Step \(step.id) picks a child of “\(parent)”, which is not an earlier step.") }
+                case .pickEntries(_, _, _, let filter):
+                    for rule in filter.atMost { formula(rule.formula, "Step \(step.id) filter") }
+                    for rule in filter.within where !creation.steps[..<index].contains(where: { $0.id == rule.step }) {
+                        found.append("Step \(step.id) filters by “\(rule.step)”, which is not an earlier step.")
+                    }
+                default: break
+                }
+            }
+        }
         if let advancement {
             for gain in advancement.gains { formula(gain.formula, "Gain \(gain.key)") }
+            unique((advancement.choices + advancement.required).map(\.id), "level-up choices")
+            for choice in advancement.choices + advancement.required {
+                for gain in choice.gains { formula(gain.formula, "Choice \(choice.id) gain \(gain.key)") }
+                if case .libraryEntry(_, _, let filter)? = choice.target { for rule in filter.atMost { formula(rule.formula, "Choice \(choice.id) filter") } }
+            }
         }
+        if let rollModel {
+            for die in rollModel.dice {
+                if let gains = die.gains, !resources.contains(where: { $0.id == gains }), !worldResources.contains(where: { $0.id == gains }) {
+                    found.append("Die \(die.name) gives “\(gains)”, which is not a resource.")
+                }
+            }
+        }
+        for resource in worldResources { if let maximum = resource.maximum { formula(maximum, "World resource \(resource.id) maximum") } }
         if let sheet {
             unique(sheet.sections.flatMap { $0.rows.map(\.id) }, "sheet rows")
             for row in sheet.sections.flatMap(\.rows) {
@@ -193,6 +232,7 @@ struct DataRuleSystem: RuleSystem {
     var formulas: FormulaSet { FormulaSet(definition.formulas) }
     var rests: [RestDefinition] { definition.rests }
     var resources: [ResourceDefinition] { definition.resources }
+    var worldResources: [ResourceDefinition] { definition.worldResources }
     var creationFlow: CreationFlow? { definition.creation }
     var advancement: AdvancementRule? { definition.advancement }
     var conditions: [ConditionDefinition] { definition.conditions }

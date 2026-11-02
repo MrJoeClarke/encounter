@@ -45,6 +45,8 @@ protocol RuleSystem {
     var rests: [RestDefinition] { get }
     /// What a character has that goes down and up in play, and how each kind of rest gives it back.
     var resources: [ResourceDefinition] { get }
+    /// Resources the whole world shares, kept on the world, such as the GM's Fear.
+    var worldResources: [ResourceDefinition] { get }
     /// How a character is made, if the system has a guided flow for it.
     var creationFlow: CreationFlow? { get }
     /// How a character gains levels, if the system has them.
@@ -69,6 +71,7 @@ extension RuleSystem {
     var formulas: FormulaSet { FormulaSet([:]) }
     var rests: [RestDefinition] { [] }
     var resources: [ResourceDefinition] { [] }
+    var worldResources: [ResourceDefinition] { [] }
     var creationFlow: CreationFlow? { nil }
     var advancement: AdvancementRule? { nil }
     var conditions: [ConditionDefinition] { [] }

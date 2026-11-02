@@ -15,6 +15,8 @@ final class World {
     var systemRaw: String = RuleSystemID.none.rawValue
     /// The version of the system the world was last set up or imported under. 0 if never recorded.
     var systemVersion: Int = 0
+    /// Numbers the world's system keeps for the whole world, such as the GM's Fear, as JSON text. See `systemState`.
+    var systemStateRaw: String = ""
     /// Which edition of the content library the world uses. Only matters for systems that have a library.
     var editionRaw: String = LibraryEdition.default.rawValue
     var createdAt: Date = Date()

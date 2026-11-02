@@ -21,16 +21,45 @@ struct DaggerheartTests {
 
     private func makeCharacter(in world: World, context: ModelContext, className: String = "Bard") throws -> Page {
         let model = try #require(GenericBuilderModel(world: world))
-        func pick(_ stepID: String, _ name: String) throws {
-            let step = try #require(model.flow.steps.first { $0.id == stepID })
-            let option = try #require(model.options(for: step).first { $0.name == name }, "\(name) is on offer")
+        func step(_ id: String) throws -> CreationStep { try #require(model.flow.steps.first { $0.id == id }) }
+        func pick(_ stepID: String, _ name: String? = nil) throws {
+            let step = try step(stepID)
+            let options = model.options(for: step)
+            let option = try #require(name.map { name in options.first { $0.name == name } } ?? options.first, "\(name ?? "something") is on offer for \(stepID)")
             model.choose(option, for: step)
         }
         model.draft.name = "Ash"
         try pick("class", className)
         try pick("ancestry", "Human")
         try pick("community", "Wanderborne")
+        try pick("subclass")
+        model.draft.names["experiences"] = ["Blacksmith", "Wanderer"]
+        let cards = try step("domainCards")
+        for option in model.options(for: cards).prefix(2) { model.togglePick(option, for: cards) }
         return try #require(model.create(in: context))
+    }
+
+    /// Takes the next level with the first of what each pick offers.
+    @discardableResult
+    private func levelUp(_ page: Page, picks: [String], selections: [String: [String]] = [:]) throws -> LevelUpResult {
+        let system = RuleSystems.system(forKey: "daggerheart")
+        let rule = try #require(system.advancement)
+        let level = Advancement.level(of: page, rule: rule) + 1
+        var required: [String: [String]] = [:]
+        for choice in rule.required(onLevel: level) {
+            switch choice.target {
+            case .libraryEntry(let list, let key, let filter)?:
+                required[choice.id] = Advancement.options(list: list, filter: filter, key: key, for: page, level: level, system: system).prefix(1).map(\.key)
+            case .newEntry?: required[choice.id] = ["Experience \(level)"]
+            default: break
+            }
+        }
+        var counts: [String: Int] = [:]
+        let leveled = picks.map { id -> LevelUpPick in
+            counts[id, default: 0] += 1
+            return LevelUpPick(id: id, selections: selections["\(id)#\(counts[id]! - 1)"] ?? selections[id] ?? [])
+        }
+        return try #require(Advancement.levelUp(page, rule: rule, formulas: system.formulas, system: system, picks: leveled, required: required))
     }
 
     @Test func theSystemShipsWithTheAppAndIsValid() throws {
@@ -41,7 +70,7 @@ struct DaggerheartTests {
         #expect(system.additionalPageKinds == [.characterClass, .contentEntry])
         #expect(RuleSystems.choices.contains { $0.key == "daggerheart" && $0.title == "Daggerheart" })
         let model = try #require(system.rollModel)
-        #expect(model.dice.map(\.name) == ["Hope", "Fear"] && model.dice[0].gains == "hope" && model.dice[1].gains == nil)
+        #expect(model.dice.map(\.name) == ["Hope", "Fear"] && model.dice[0].gains == "hope" && model.dice[1].gains == "fear")
         #expect(model.critical == .matchingDice && model.criticalAlwaysMeetsTarget && model.advantage == .bonusDie(sides: 6))
         #expect(system.resources.map(\.id) == ["hp", "stress", "armor", "hope"])
         #expect(DnD5eSystem().usesGenericScreens == false)
@@ -65,6 +94,9 @@ struct DaggerheartTests {
         let cards = pack.entries.filter { $0.subKind == "daggerheart.domainCard" }
         #expect(cards.count == 210 && cards.allSatisfy { if case .number(let level)? = $0.attributes["daggerheart.cardLevel"] { (1...10).contains(level) } else { false } })
         #expect(pack.entries.filter { $0.subKind == "daggerheart.community" }.count == 15)
+        // The Witch's subclasses are called Hedge and Moon in the SRD, and tables are plain lines.
+        #expect(Library.shared.children(of: try #require(Library.shared.entry(forKey: "daggerheart.class.witch")), in: .daggerheart).map(\.name) == ["Hedge", "Moon"])
+        #expect(!pack.entries.contains { $0.summary.contains("|") || $0.entries.contains { $0.text.contains("|") } })
         // The text is plain: no markdown left over.
         #expect(!pack.entries.contains { $0.summary.contains("**") || $0.entries.contains { $0.text.contains("**") } })
         let lists = Library.shared.lists(in: .daggerheart)
@@ -108,9 +140,9 @@ struct DaggerheartTests {
     @Test func theBuilderNeedsEachChoiceAndSwapsTraits() throws {
         let (world, _) = try makeWorld()
         let model = try #require(GenericBuilderModel(world: world))
-        #expect(model.flow.steps.map(\.id) == ["concept", "class", "ancestry", "community", "traits", "review"])
-        #expect(!model.plan.isReady && model.plan.problems.count == 4)
-        guard case .numbers(let rule) = model.flow.steps[4].kind else { Issue.record("traits step"); return }
+        #expect(model.flow.steps.map(\.id) == ["concept", "class", "ancestry", "community", "subclass", "traits", "experiences", "domainCards", "review"])
+        #expect(!model.plan.isReady && model.plan.problems.count == 7)
+        guard case .numbers(let rule) = model.flow.steps[5].kind else { Issue.record("traits step"); return }
         let before = rule.entries.map { model.draft.numbers[$0.key] ?? 99 }
         #expect(before.sorted() == [-1, 0, 0, 1, 1, 2])
         model.assign(-1, to: "daggerheart.agility", in: rule)
@@ -141,23 +173,76 @@ struct DaggerheartTests {
         #expect(SheetEngine.adjust("hope", by: -10, on: page, system: system) == 0)
     }
 
-    @Test func aShortRestRollsItsDiceAndALongRestClearsEverything() throws {
+    @Test func aRestOffersMovesThatRollTheirDice() throws {
         let (world, context) = try makeWorld()
         let page = try makeCharacter(in: world, context: context)
         let system = RuleSystems.system(forKey: "daggerheart")
+        let short = try #require(system.rests.first { $0.id == "short" })
+        let long = try #require(system.rests.first { $0.id == "long" })
+        #expect(short.movesToChoose == 2 && short.moves.count == 5 && long.moves.count == 6)
         page.setAttributeNumber("daggerheart.hitPointsMarked", 5)
         page.setAttributeNumber("daggerheart.stressMarked", 4)
-        let inputs = SheetEngine.inputs(for: page, advancement: system.advancement)
-        let hp = try #require(system.resources.first { $0.id == "hp" })
-        // 1d4 + tier, with the die showing 3 and the tier 1.
-        #expect(ResourceRules.valueAfter(rest: "short", resource: hp, current: 5, formulas: system.formulas, inputs: inputs, dice: { _, _ in 3 }) == 1)
-        #expect(ResourceRules.valueAfter(rest: "short", resource: hp, current: 5, formulas: system.formulas, inputs: inputs) == nil, "dice that can't be rolled give nothing")
-        #expect(ResourceRules.valueAfter(rest: "long", resource: hp, current: 5, formulas: system.formulas, inputs: inputs) == 0)
-        let hope = try #require(system.resources.first { $0.id == "hope" })
-        #expect(ResourceRules.valueAfter(rest: "long", resource: hope, current: 1, formulas: system.formulas, inputs: inputs) == nil, "Hope is not restored by resting")
+        page.setAttributeNumber("daggerheart.hope", 1)
+
+        // The moves must be a valid choice of exactly two.
+        #expect(RestEngine.take(short, moves: ["tendWounds"], on: page, system: system, dice: { _, _ in 3 }) == nil)
+        #expect(RestEngine.take(short, moves: ["tendWounds", "nonsense"], on: page, system: system, dice: { _, _ in 3 }) == nil)
+        #expect(page.attributeNumber("daggerheart.hitPointsMarked") == 5)
+        // 1d4 + tier with the die showing 3 and the tier 1, taking two moves, and the same move may be taken twice.
+        let lines = try #require(RestEngine.take(short, moves: ["tendWounds", "clearStress"], on: page, system: system, dice: { _, _ in 3 }))
+        #expect(page.attributeNumber("daggerheart.hitPointsMarked") == 1 && page.attributeNumber("daggerheart.stressMarked") == 0)
+        #expect(lines.contains("Hit Points: −4") && lines.contains("Stress: −4"))
+        _ = RestEngine.take(short, moves: ["tendWounds", "tendWounds"], on: page, system: system, dice: { _, _ in 3 })
+        #expect(page.attributeNumber("daggerheart.hitPointsMarked") == 0, "never below none marked")
+        // Dice that can't be rolled change nothing.
+        page.setAttributeNumber("daggerheart.hitPointsMarked", 3)
+        _ = RestEngine.take(short, moves: ["tendWounds", "tendWounds"], on: page, system: system, dice: nil)
+        #expect(page.attributeNumber("daggerheart.hitPointsMarked") == 3)
+        // A long rest clears everything of a kind, and Preparing gives Hope, more with the party.
+        _ = RestEngine.take(long, moves: ["tendAllWounds", "prepareParty"], on: page, system: system, dice: nil)
+        #expect(page.attributeNumber("daggerheart.hitPointsMarked") == 0 && page.attributeNumber("daggerheart.hope") == 3)
+        _ = RestEngine.take(long, moves: ["prepareParty", "prepareParty"], on: page, system: system, dice: nil)
+        #expect(page.attributeNumber("daggerheart.hope") == 6, "Hope stops at its most")
     }
 
-    @Test func levellingTakesTheTierGainsAndTwoChoices() throws {
+    @Test func aNewCharacterHasItsFeaturesExperiencesCardsAndSubclass() throws {
+        let (world, context) = try makeWorld()
+        let page = try makeCharacter(in: world, context: context)
+        let system = RuleSystems.system(forKey: "daggerheart")
+        guard case .entries(let experiences)? = page.attributes["daggerheart.experiences"], case .entries(let cards)? = page.attributes["daggerheart.domainCards"],
+              case .entries(let features)? = page.attributes["daggerheart.features"] else { Issue.record("lists"); return }
+        #expect(experiences.map(\.name) == ["Blacksmith", "Wanderer"] && experiences.allSatisfy { $0.text == "+2" })
+        #expect(cards.count == 2 && cards.allSatisfy { !$0.name.isEmpty })
+        // The cards are of the class's domains and no higher than level 1.
+        for card in cards {
+            let entry = try #require(Library.shared.entries(.entry, in: .daggerheart).first { $0.name == card.name })
+            guard case .text(let domain)? = entry.attributes["daggerheart.domain"], case .number(let level)? = entry.attributes["daggerheart.cardLevel"] else { Issue.record("card"); continue }
+            #expect(["Grace", "Codex"].contains(domain) && level == 1)
+        }
+        // Features come from the class (with its Hope feature), the ancestry, the community, and the subclass's foundation only.
+        #expect(features.contains { $0.name.hasPrefix("Bard: Hope Feature") } && features.contains { $0.name.hasPrefix("Human:") } && features.contains { $0.name.hasPrefix("Wanderborne:") })
+        let subclass = try #require(page.libraryKey(role: "subclass").flatMap { Library.shared.entry(forKey: $0) })
+        #expect(features.contains { $0.name.hasPrefix("\(subclass.name):") } && features.allSatisfy { ($0.level ?? 1) <= 1 })
+        #expect(subclass.parent == "daggerheart.class.bard")
+        _ = system
+    }
+
+    @Test func aSubclassCanOnlyBeOneOfTheClassesOwn() throws {
+        let (world, _) = try makeWorld()
+        let model = try #require(GenericBuilderModel(world: world))
+        let classStep = try #require(model.flow.steps.first { $0.id == "class" })
+        let subclassStep = try #require(model.flow.steps.first { $0.id == "subclass" })
+        #expect(model.options(for: subclassStep).isEmpty, "no class yet")
+        model.choose(try #require(model.options(for: classStep).first { $0.name == "Wizard" }), for: classStep)
+        let wizards = model.options(for: subclassStep).map(\.name)
+        #expect(wizards.sorted() == ["School of Knowledge", "School of War"])
+        model.choose(try #require(model.options(for: subclassStep).first), for: subclassStep)
+        model.choose(try #require(model.options(for: classStep).first { $0.name == "Bard" }), for: classStep)
+        #expect(model.draft.choices["subclass"] == nil, "changing class clears the subclass")
+        #expect(Set(model.options(for: subclassStep).map(\.name)) == ["Troubadour", "Wordsmith"])
+    }
+
+    @Test func levellingTakesTheTierGainsTheFreeCardAndTwoChoices() throws {
         let (world, context) = try makeWorld()
         let page = try makeCharacter(in: world, context: context)
         let system = RuleSystems.system(forKey: "daggerheart")
@@ -165,21 +250,97 @@ struct DaggerheartTests {
         let slots = page.attributeNumber("daggerheart.hitPointSlots") ?? 0
         let evasion = page.attributeNumber("daggerheart.evasion") ?? 0
 
-        #expect(Advancement.levelUp(page, rule: rule, formulas: system.formulas) == nil, "the choices must use the points")
-        #expect(Advancement.levelUp(page, rule: rule, formulas: system.formulas, picks: ["proficiency", "evasion"]) == nil)
+        #expect(Advancement.levelUp(page, rule: rule, formulas: system.formulas, system: system, picks: []) == nil, "the choices must use the points")
+        #expect(Advancement.levelUp(page, rule: rule, formulas: system.formulas, system: system, picks: [LevelUpPick(id: "proficiency"), LevelUpPick(id: "evasion")]) == nil)
+        #expect(Advancement.levelUp(page, rule: rule, formulas: system.formulas, system: system, picks: [LevelUpPick(id: "hitPoint"), LevelUpPick(id: "evasion")]) == nil, "a new card and a new Experience must be said")
         #expect(page.attributeNumber("daggerheart.level") == 1)
-        #expect(Advancement.levelUp(page, rule: rule, formulas: system.formulas, picks: ["hitPoint", "evasion"]) != nil)
+
+        let result = try levelUp(page, picks: ["hitPoint", "evasion"])
         #expect(page.attributeNumber("daggerheart.level") == 2 && page.attributeNumber("daggerheart.hitPointSlots") == slots + 1)
         #expect(page.attributeNumber("daggerheart.evasion") == evasion + 1 && page.attributeNumber("daggerheart.proficiency") == 2, "level 2 is a tier achievement")
-        #expect(Advancement.levelUp(page, rule: rule, formulas: system.formulas, picks: ["proficiency"]) != nil)
+        #expect(result.notes.contains { $0.hasPrefix("New domain card:") } && result.notes.contains("New Experience: Experience 2 +2"))
+        guard case .entries(let cards)? = page.attributes["daggerheart.domainCards"], case .entries(let experiences)? = page.attributes["daggerheart.experiences"] else { Issue.record("lists"); return }
+        #expect(cards.count == 3 && experiences.count == 3)
+        try levelUp(page, picks: ["proficiency"])
         #expect(page.attributeNumber("daggerheart.proficiency") == 3)
-        // Tiers and thresholds follow the level.
         let values = Dictionary(uniqueKeysWithValues: SheetEngine.build(system.sheetLayout!, for: page, system: system).flatMap(\.rows).map { ($0.id, $0.value) })
         #expect(values["tier"] == .number(2) && values["major"] == .number(8) && values["severe"] == .number(14))
         // Up to level 10 and no further.
-        for _ in 4...10 { #expect(Advancement.levelUp(page, rule: rule, formulas: system.formulas, picks: ["stress", "stress"]) != nil) }
+        for _ in 4...10 { try levelUp(page, picks: ["stress", "stress"]) }
         #expect(page.attributeNumber("daggerheart.level") == 10 && !Advancement.canLevelUp(page, rule: rule))
         #expect(page.attributeNumber("daggerheart.proficiency") == 5, "+1 at levels 2, 5 and 8, and the extra level 3 pick")
+    }
+
+    @Test func traitsRaisedOnLevellingAreMarkedUntilTheNextTier() throws {
+        let (world, context) = try makeWorld()
+        let page = try makeCharacter(in: world, context: context)
+        let system = RuleSystems.system(forKey: "daggerheart")
+        let rule = try #require(system.advancement)
+        let agility = page.attributeNumber("daggerheart.agility") ?? 0
+        let strength = page.attributeNumber("daggerheart.strength") ?? 0
+
+        try levelUp(page, picks: ["traits", "hitPoint"], selections: ["traits#0": ["daggerheart.agility", "daggerheart.strength"]])
+        #expect(page.attributeNumber("daggerheart.agility") == agility + 1 && page.attributeNumber("daggerheart.strength") == strength + 1)
+        #expect(page.attributeText("daggerheart.markedTraits") == "daggerheart.agility, daggerheart.strength")
+        // Marked traits can't be raised again, nor the same one twice, and the pick must name two.
+        let open = Advancement.openAttributes(keys: ["daggerheart.agility", "daggerheart.strength", "daggerheart.finesse"], marks: "daggerheart.markedTraits", on: page)
+        #expect(open == ["daggerheart.finesse"])
+        let again = LevelUpPick(id: "traits", selections: ["daggerheart.agility", "daggerheart.finesse"])
+        let choice = try #require(rule.choices.first { $0.id == "traits" })
+        #expect(!Advancement.isComplete(again, choice: choice, on: page, level: 3, system: system))
+        #expect(!Advancement.isComplete(LevelUpPick(id: "traits", selections: ["daggerheart.finesse", "daggerheart.finesse"]), choice: choice, on: page, level: 3, system: system))
+        #expect(Advancement.isComplete(LevelUpPick(id: "traits", selections: ["daggerheart.finesse", "daggerheart.instinct"]), choice: choice, on: page, level: 3, system: system), "two traits that are still open can be raised")
+        // The marks come off at the next tier, level 5.
+        try levelUp(page, picks: ["stress", "stress"])
+        try levelUp(page, picks: ["stress", "stress"])
+        #expect(page.attributeText("daggerheart.markedTraits") == "daggerheart.agility, daggerheart.strength")
+        try levelUp(page, picks: ["stress", "stress"])
+        #expect(page.attributeNumber("daggerheart.level") == 5 && page.attributeText("daggerheart.markedTraits").isEmpty)
+    }
+
+    @Test func experiencesAndSubclassCardsAreRaisedAndTaken() throws {
+        let (world, context) = try makeWorld()
+        let page = try makeCharacter(in: world, context: context)
+        let subclass = try #require(page.libraryKey(role: "subclass").flatMap { Library.shared.entry(forKey: $0) })
+
+        let result = try levelUp(page, picks: ["experiences", "subclass"], selections: ["experiences#0": ["Blacksmith", "Wanderer"]])
+        guard case .entries(let experiences)? = page.attributes["daggerheart.experiences"], case .entries(let features)? = page.attributes["daggerheart.features"] else { Issue.record("lists"); return }
+        #expect(experiences.prefix(2).map(\.text) == ["+3", "+3"] && experiences.last?.text == "+2")
+        #expect(result.notes.contains("Blacksmith +2 → +3"))
+        let specialization = subclass.entries.filter { $0.level == 2 }.map { "\(subclass.name): \($0.name)" }
+        #expect(!specialization.isEmpty && specialization.allSatisfy { name in features.contains { $0.name == name } })
+        #expect(features.contains { $0.level == 2 } && !features.contains { $0.level == 3 })
+        // The next card is the mastery, and after that there is nothing to take.
+        try levelUp(page, picks: ["subclass", "stress"])
+        #expect(features.count < ({ if case .entries(let all)? = page.attributes["daggerheart.features"] { all.count } else { 0 } })())
+        let system = RuleSystems.system(forKey: "daggerheart")
+        #expect(Advancement.nextSubclassFeatures(role: "subclass", key: "daggerheart.features", on: page).isEmpty)
+        let pick = LevelUpPick(id: "subclass")
+        #expect(!Advancement.isComplete(pick, choice: try #require(system.advancement?.choices.first { $0.id == "subclass" }), on: page, level: 4, system: system))
+        // An experience that isn't there can't be raised.
+        let bogus = LevelUpPick(id: "experiences", selections: ["Nobody", "Wanderer"])
+        #expect(!Advancement.isComplete(bogus, choice: try #require(system.advancement?.choices.first { $0.id == "experiences" }), on: page, level: 4, system: system))
+    }
+
+    @Test func fearBelongsToTheWholeWorld() async throws {
+        let (world, context) = try makeWorld()
+        let page = try makeCharacter(in: world, context: context)
+        let system = RuleSystems.system(forKey: "daggerheart")
+        let fear = try #require(system.worldResources.first { $0.id == "fear" })
+        #expect(SheetEngine.worldValue(fear, world: world, system: system) == (0, 12))
+        #expect(SheetEngine.adjustWorld("fear", by: 3, on: world, system: system) == 3)
+        #expect(SheetEngine.adjustWorld("fear", by: -9, on: world, system: system) == 0)
+        #expect(SheetEngine.adjustWorld("fear", by: 99, on: world, system: system) == 12)
+        #expect(SheetEngine.adjustWorld("nothing", by: 1, on: world, system: system) == nil)
+        // A second character in the same world sees the same Fear, and the rolled Fear die gives it.
+        let other = world.addPage(kind: .character, in: context)
+        #expect(other.world === page.world && world.systemState["fear"] == 12)
+        let model = try #require(system.rollModel)
+        #expect(model.dice[1].gains == "fear" && system.worldResources.contains { $0.id == model.dice[1].gains })
+        // It is kept with the world through export and import.
+        let contents = try WorldPackage.contents(of: WorldPackage.fileWrapper(for: WorldExporter.makeContents(of: world)))
+        let (imported, _) = await WorldImporter.importWorld(contents, into: ModelContext(try AppSchema.makeContainer(inMemory: true)))
+        #expect(imported.systemState == ["fear": 12])
     }
 
     @Test func aDualityRollIsReadByHopeAndFear() throws {
@@ -204,4 +365,19 @@ struct DaggerheartTests {
         #expect(Formula("0d6") == nil && Formula("1d1") == nil && Formula("d") != nil, "a bare d is just a name")
         #expect(Formula("1d4 + tier")?.variables == ["tier"])
     }
+
+    @Test func theSystemFileCatchesMistakesInTheNewParts() throws {
+        let url = try #require(Bundle(for: SystemRegistry.self).url(forResource: "daggerheart.system", withExtension: "json"))
+        let original = try String(contentsOf: url, encoding: .utf8)
+        func problems(_ edit: (String) -> String) -> [String] {
+            SystemDefinition.decode(from: Data(edit(original).utf8))?.problems ?? ["unreadable"]
+        }
+        #expect(problems { $0 }.isEmpty)
+        #expect(problems { $0.replacingOccurrences(of: "\"of\": \"class\"", with: "\"of\": \"nothing\"") }.contains { $0.contains("not an earlier step") })
+        #expect(problems { $0.replacingOccurrences(of: "\"resource\": \"stress\"", with: "\"resource\": \"luck\"") }.contains { $0.contains("luck") })
+        #expect(problems { $0.replacingOccurrences(of: "\"gains\": \"fear\"", with: "\"gains\": \"doom\"") }.contains { $0.contains("not a resource") })
+        #expect(problems { $0.replacingOccurrences(of: "\"formula\": \"level\"", with: "\"formula\": \"level +\"") }.contains { $0.contains("filter") })
+        #expect(problems { $0.replacingOccurrences(of: "\"type\": \"newEntry\"", with: "\"type\": \"somethingElse\"") } == ["unreadable"])
+    }
 }
+

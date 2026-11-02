@@ -42,6 +42,8 @@ nonisolated struct WorldRecord: Codable, Sendable {
     var rootPlaceID: UUID?
     /// The version of the system the world was last set up under. Optional, because older files don't have it.
     var systemVersion: Int?
+    /// What the system keeps for the whole world. Optional, because older files don't have it.
+    var systemState: [String: Double]?
 }
 
 nonisolated struct CalendarRecord: Codable, Sendable {

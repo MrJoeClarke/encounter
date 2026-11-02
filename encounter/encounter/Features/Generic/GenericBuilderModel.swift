@@ -25,6 +25,9 @@ final class GenericBuilderModel {
         self.world = world
         self.system = system
         self.flow = flow
+        for step in flow.steps {
+            if case .names(let count, _, _) = step.kind { draft.names[step.id] = Array(repeating: "", count: count) }
+        }
         // Each numbers step starts with its numbers given out in order, or its lowest number.
         for case .numbers(let rule) in flow.steps.map(\.kind) {
             for (index, entry) in rule.entries.enumerated() {
@@ -44,11 +47,31 @@ final class GenericBuilderModel {
 
     var plan: CreationPlan { CreationEngine.plan(draft, flow: flow, formulas: system.formulas, in: world) }
 
-    func options(for step: CreationStep) -> [ContentSource] { CreationEngine.options(for: step, in: world) }
+    func options(for step: CreationStep) -> [ContentSource] {
+        CreationEngine.options(for: step, in: world, draft: draft, formulas: system.formulas, level: flow.startingLevel)
+    }
+
+    /// Picks or unpicks an entry at a picking step, never holding more than the step asks for.
+    func togglePick(_ source: ContentSource, for step: CreationStep) {
+        guard case .pickEntries(_, let count, _, _) = step.kind, let key = source.libraryKey else { return }
+        var picked = draft.picks[step.id] ?? []
+        if let index = picked.firstIndex(of: key) { picked.remove(at: index) } else if picked.count < count { picked.append(key) }
+        draft.picks[step.id] = picked
+    }
 
     func selected(for step: CreationStep) -> ContentSource? { CharacterContent.resolve(draft.choices[step.id], in: world) }
 
-    func choose(_ source: ContentSource, for step: CreationStep) { draft.choices[step.id] = source.choice }
+    func choose(_ source: ContentSource, for step: CreationStep) {
+        draft.choices[step.id] = source.choice
+        // What was picked from this choice's children or entries no longer fits.
+        for later in flow.steps {
+            switch later.kind {
+            case .chooseChild(let parent, _) where parent == step.id: draft.choices[later.id] = nil
+            case .pickEntries: draft.picks[later.id] = []
+            default: break
+            }
+        }
+    }
 
     func clear(_ step: CreationStep) { draft.choices[step.id] = nil }
 

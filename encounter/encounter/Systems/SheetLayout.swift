@@ -122,6 +122,26 @@ enum SheetEngine {
         }
     }
 
+    /// What is left of a resource the whole world shares, and its most.
+    static func worldValue(_ resource: ResourceDefinition, world: World, system: any RuleSystem) -> (current: Int, maximum: Int?) {
+        let maximum = maximum(of: resource, system: system, inputs: [:])
+        let stored = world.systemState[resource.key] ?? resource.startsAt ?? 0
+        let value = Int(stored)
+        return (max(0, maximum.map { min($0, value) } ?? value), maximum)
+    }
+
+    /// Spends or gains some of a world resource, between none and its most. Returns what is left, or nil if the system has no such resource.
+    @discardableResult
+    static func adjustWorld(_ resourceID: String, by amount: Int, on world: World, system: any RuleSystem) -> Int? {
+        guard let resource = system.worldResources.first(where: { $0.id == resourceID }) else { return nil }
+        let now = worldValue(resource, world: world, system: system)
+        let left = max(0, now.maximum.map { min($0, now.current + amount) } ?? now.current + amount)
+        var state = world.systemState
+        state[resource.key] = Double(left)
+        world.systemState = state
+        return left
+    }
+
     /// Spends (negative) or gains (positive) some of a resource and keeps it between none and its most. Returns what is left.
     @discardableResult
     static func adjust(_ resourceID: String, by amount: Int, on page: Page, system: any RuleSystem) -> Int? {

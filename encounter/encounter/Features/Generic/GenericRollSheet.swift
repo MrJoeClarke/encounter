@@ -83,13 +83,20 @@ struct GenericRollSheet: View {
             LabeledContent("Total", value: result.total.formatted())
             Text(summary(result, model: model)).font(.headline)
             // The die that showed more can give the roller something back, such as a Hope.
-            if let name = result.higherDie, let die = model.dice.first(where: { $0.name == name }), let resource = die.gains,
-               let definition = system.resources.first(where: { $0.id == resource }) {
-                Button(gained ? "\(definition.name) gained" : "Gain 1 \(definition.name)", systemImage: "plus.circle") {
-                    SheetEngine.adjust(resource, by: 1, on: page, system: system)
-                    gained = true
+            if let name = result.higherDie, let die = model.dice.first(where: { $0.name == name }), let resource = die.gains {
+                if let definition = system.resources.first(where: { $0.id == resource }) {
+                    Button(gained ? "\(definition.name) gained" : "Gain 1 \(definition.name)", systemImage: "plus.circle") {
+                        SheetEngine.adjust(resource, by: 1, on: page, system: system)
+                        gained = true
+                    }
+                    .disabled(gained)
+                } else if let definition = system.worldResources.first(where: { $0.id == resource }), let world = page.world {
+                    Button(gained ? "\(definition.name) gained" : "The GM gains 1 \(definition.name)", systemImage: "plus.circle") {
+                        SheetEngine.adjustWorld(resource, by: 1, on: world, system: system)
+                        gained = true
+                    }
+                    .disabled(gained)
                 }
-                .disabled(gained)
             }
         }
     }

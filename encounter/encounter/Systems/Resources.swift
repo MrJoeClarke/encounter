@@ -9,6 +9,37 @@ import Foundation
 nonisolated struct RestDefinition: Equatable, Identifiable, Sendable {
     var id: String
     var name: String
+    /// Moves a character chooses from when they take the rest, each giving back some resources. Empty if the rest simply gives
+    /// back what each resource says it does.
+    var moves: [RestMove] = []
+    /// How many moves a character chooses (the same one can be chosen more than once).
+    var movesToChoose = 0
+
+    init(id: String, name: String, moves: [RestMove] = [], movesToChoose: Int = 0) {
+        self.id = id
+        self.name = name
+        self.moves = moves
+        self.movesToChoose = movesToChoose
+    }
+
+    /// Whether the picks are a valid choice of moves for the rest.
+    func isValid(picks: [String]) -> Bool {
+        guard !moves.isEmpty else { return picks.isEmpty }
+        return picks.count == movesToChoose && picks.allSatisfy { id in moves.contains { $0.id == id } }
+    }
+}
+
+/// One of the moves a rest offers, such as clearing Stress.
+nonisolated struct RestMove: Equatable, Identifiable, Sendable {
+    struct Effect: Equatable, Sendable {
+        /// The id of the resource it gives back.
+        var resource: String
+        var restoration: Restoration
+    }
+
+    var id: String
+    var title: String
+    var effects: [Effect]
 }
 
 /// How a rest gives back a resource.

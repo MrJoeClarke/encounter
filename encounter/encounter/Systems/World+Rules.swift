@@ -22,6 +22,12 @@ extension World {
         if let first = editions.first, !editions.contains(edition) { edition = first }
     }
 
+    /// What the system keeps for the whole world, by key.
+    var systemState: [String: Double] {
+        get { (try? JSONDecoder().decode([String: Double].self, from: Data(systemStateRaw.utf8))) ?? [:] }
+        set { systemStateRaw = newValue.isEmpty ? "" : (try? JSONEncoder().encode(newValue)).flatMap { String(data: $0, encoding: .utf8) } ?? "" }
+    }
+
     /// How the system the world recorded compares with what the app has.
     var systemStatus: SystemStatus { RuleSystems.status(key: systemRaw, recordedVersion: systemVersion) }
 }

@@ -14,6 +14,7 @@ struct GenericSheetView: View {
     @State private var rolling: RollRequest?
     @State private var isLevellingUp = false
     @State private var restMessage: String?
+    @State private var restWithMoves: RestDefinition?
 
     private struct RollRequest: Identifiable {
         let id = UUID()
@@ -30,6 +31,7 @@ struct GenericSheetView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     header
+                    if let world = page.world, !system.worldResources.isEmpty { worldResources(world) }
                     ForEach(sections) { section in
                         card(section)
                     }
@@ -43,6 +45,7 @@ struct GenericSheetView: View {
                 GenericRollSheet(page: page, system: system, label: request.label, modifier: request.modifier, roll: request.roll)
             }
             .sheet(isPresented: $isLevellingUp) { GenericLevelUpView(page: page) { isLevellingUp = false } }
+            .sheet(item: $restWithMoves) { rest in GenericRestSheet(page: page, rest: rest) }
             .alert("Rest", isPresented: Binding(get: { restMessage != nil }, set: { if !$0 { restMessage = nil } })) {
                 Button("OK") {}
             } message: { Text(restMessage ?? "") }
@@ -70,6 +73,27 @@ struct GenericSheetView: View {
                 Button("Level Up", systemImage: "arrow.up.circle") { isLevellingUp = true }
             }
         }
+    }
+
+    /// What the whole world shares, such as the GM's Fear.
+    private func worldResources(_ world: World) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            ForEach(system.worldResources) { resource in
+                let value = SheetEngine.worldValue(resource, world: world, system: system)
+                HStack {
+                    Text(resource.name).font(.headline)
+                    Text("shared by the whole table").font(.caption).foregroundStyle(.secondary)
+                    Spacer()
+                    Text("\(value.current)\(value.maximum.map { " of \($0)" } ?? "")").monospacedDigit().foregroundStyle(.secondary)
+                    Button { SheetEngine.adjustWorld(resource.id, by: -1, on: world, system: system) } label: { Image(systemName: "minus.circle") }
+                    Button { SheetEngine.adjustWorld(resource.id, by: 1, on: world, system: system) } label: { Image(systemName: "plus.circle") }
+                }
+                .buttonStyle(.borderless)
+            }
+        }
+        .padding()
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 12))
     }
 
     // MARK: Rows
@@ -154,19 +178,10 @@ struct GenericSheetView: View {
 
     // MARK: Resting
 
-    /// Gives back what a kind of rest gives back, as the system says, rolling any dice in the amounts.
+    /// Takes a rest: a rest with moves asks which, and one without gives back what the resources say.
     private func takeRest(_ rest: RestDefinition) {
-        let inputs = SheetEngine.inputs(for: page, advancement: system.advancement)
-        var lines: [String] = []
-        for resource in system.resources {
-            let before = page.attributeNumber(resource.key)
-            guard let value = ResourceRules.valueAfter(
-                rest: rest.id, resource: resource, current: before, formulas: system.formulas, inputs: inputs, dice: Self.rollDice
-            ) else { continue }
-            page.setAttributeNumber(resource.key, value)
-            let change = Int(value - (before ?? 0))
-            if change != 0 { lines.append("\(resource.name): \(change > 0 ? "+" : "−")\(abs(change))") }
-        }
+        if !rest.moves.isEmpty { restWithMoves = rest; return }
+        let lines = RestEngine.take(rest, moves: [], on: page, system: system, dice: Self.rollDice) ?? []
         restMessage = lines.isEmpty ? String(localized: "Nothing to restore.") : "\(rest.name)\n" + lines.joined(separator: "\n")
     }
 

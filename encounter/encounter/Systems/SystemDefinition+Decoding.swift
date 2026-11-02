@@ -61,12 +61,35 @@ nonisolated extension RollModel: Decodable {
 
 // MARK: Rests and resources
 
-nonisolated extension RestDefinition: Decodable {
-    private enum CodingKeys: String, CodingKey { case id, name }
+nonisolated extension RestMove.Effect: Decodable {
+    private enum CodingKeys: String, CodingKey { case resource, restoration }
 
     init(from decoder: any Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
-        self.init(id: try c.decode(String.self, forKey: .id), name: try c.decode(String.self, forKey: .name))
+        self.init(resource: try c.decode(String.self, forKey: .resource), restoration: try c.decode(Restoration.self, forKey: .restoration))
+    }
+}
+
+nonisolated extension RestMove: Decodable {
+    private enum CodingKeys: String, CodingKey { case id, title, effects }
+
+    init(from decoder: any Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        let id = try c.decode(String.self, forKey: .id)
+        self.init(id: id, title: try c.decodeIfPresent(String.self, forKey: .title) ?? id, effects: try c.decodeIfPresent([Effect].self, forKey: .effects) ?? [])
+    }
+}
+
+nonisolated extension RestDefinition: Decodable {
+    private enum CodingKeys: String, CodingKey { case id, name, moves, movesToChoose }
+
+    init(from decoder: any Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        let moves = try c.decodeIfPresent([RestMove].self, forKey: .moves) ?? []
+        self.init(
+            id: try c.decode(String.self, forKey: .id), name: try c.decode(String.self, forKey: .name), moves: moves,
+            movesToChoose: try c.decodeIfPresent(Int.self, forKey: .movesToChoose) ?? (moves.isEmpty ? 0 : 1)
+        )
     }
 }
 
@@ -129,6 +152,23 @@ nonisolated extension LibraryList: Decodable {
     }
 }
 
+nonisolated extension EntryFilter: Decodable {
+    private enum CodingKeys: String, CodingKey { case within, atMost }
+
+    private struct WithinSpec: Decodable { var entry: String; var step: String; var key: String }
+    private struct AtMostSpec: Decodable { var entry: String; var formula: String }
+
+    /// `within`: [{"entry": the entry's attribute, "step": where an earlier choice was made, "key": its attribute}], and
+    /// `atMost`: [{"entry": the entry's number attribute, "formula": "level"}].
+    init(from decoder: any Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            within: (try c.decodeIfPresent([WithinSpec].self, forKey: .within) ?? []).map { Within(entryKey: $0.entry, step: $0.step, key: $0.key) },
+            atMost: (try c.decodeIfPresent([AtMostSpec].self, forKey: .atMost) ?? []).map { AtMost(entryKey: $0.entry, formula: $0.formula) }
+        )
+    }
+}
+
 nonisolated extension NumberRule.Entry: Decodable {
     private enum CodingKeys: String, CodingKey { case key, label, variable }
 
@@ -143,7 +183,7 @@ nonisolated extension NumberRule.Entry: Decodable {
 }
 
 nonisolated extension CreationStep: Decodable {
-    private enum CodingKeys: String, CodingKey { case id, title, type, list, required, entries, assignFrom, range }
+    private enum CodingKeys: String, CodingKey { case id, title, type, list, required, entries, assignFrom, range, of, count, key, valueText, filter }
 
     init(from decoder: any Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -154,6 +194,17 @@ nonisolated extension CreationStep: Decodable {
         case "review": self.init(id: id, title: title, kind: .review)
         case "choose":
             self.init(id: id, title: title, kind: .choose(list: try c.decode(LibraryList.self, forKey: .list), isRequired: try c.decodeIfPresent(Bool.self, forKey: .required) ?? true))
+        case "chooseChild":
+            self.init(id: id, title: title, kind: .chooseChild(of: try c.decode(String.self, forKey: .of), isRequired: try c.decodeIfPresent(Bool.self, forKey: .required) ?? true))
+        case "names":
+            self.init(id: id, title: title, kind: .names(
+                count: try c.decode(Int.self, forKey: .count), key: try c.decode(String.self, forKey: .key), valueText: try c.decodeIfPresent(String.self, forKey: .valueText) ?? ""
+            ))
+        case "pickEntries":
+            self.init(id: id, title: title, kind: .pickEntries(
+                list: try c.decode(LibraryList.self, forKey: .list), count: try c.decode(Int.self, forKey: .count), key: try c.decode(String.self, forKey: .key),
+                filter: try c.decodeIfPresent(EntryFilter.self, forKey: .filter) ?? .none
+            ))
         case "numbers":
             let entries = try c.decode([NumberRule.Entry].self, forKey: .entries)
             if let numbers = try c.decodeIfPresent([Int].self, forKey: .assignFrom) {
@@ -164,13 +215,13 @@ nonisolated extension CreationStep: Decodable {
                 throw corrupt(decoder, "Numbers need “assignFrom” (a list) or “range” (a lowest and a highest).")
             }
         default:
-            throw corrupt(decoder, "A step is “concept”, “choose”, “numbers” or “review”.")
+            throw corrupt(decoder, "A step is “concept”, “choose”, “chooseChild”, “names”, “pickEntries”, “numbers” or “review”.")
         }
     }
 }
 
 nonisolated extension CreationFlow: Decodable {
-    private enum CodingKeys: String, CodingKey { case steps, derived, levelKey, startingLevel }
+    private enum CodingKeys: String, CodingKey { case steps, derived, levelKey, startingLevel, featuresKey }
 
     init(from decoder: any Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -178,7 +229,8 @@ nonisolated extension CreationFlow: Decodable {
         let derived = try c.decodeIfPresent([String: String].self, forKey: .derived) ?? [:]
         self.init(
             steps: try c.decode([CreationStep].self, forKey: .steps), derived: derived.sorted { $0.key < $1.key }.map { ($0.key, $0.value) },
-            levelKey: try c.decodeIfPresent(String.self, forKey: .levelKey), startingLevel: try c.decodeIfPresent(Int.self, forKey: .startingLevel) ?? 1
+            levelKey: try c.decodeIfPresent(String.self, forKey: .levelKey), startingLevel: try c.decodeIfPresent(Int.self, forKey: .startingLevel) ?? 1,
+            featuresKey: try c.decodeIfPresent(String.self, forKey: .featuresKey)
         )
     }
 }
@@ -192,28 +244,64 @@ nonisolated extension AdvancementRule.Gain: Decodable {
     }
 }
 
+nonisolated extension AdvancementRule.Target: Decodable {
+    private enum CodingKeys: String, CodingKey { case type, keys, count, increase, marks, key, list, filter, role, valueText }
+
+    init(from decoder: any Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        switch try c.decode(String.self, forKey: .type) {
+        case "attributes":
+            self = .attributes(
+                keys: try c.decode([String].self, forKey: .keys), count: try c.decodeIfPresent(Int.self, forKey: .count) ?? 1,
+                increase: try c.decodeIfPresent(Int.self, forKey: .increase) ?? 1, marks: try c.decode(String.self, forKey: .marks)
+            )
+        case "entryValues":
+            self = .entryValues(key: try c.decode(String.self, forKey: .key), count: try c.decodeIfPresent(Int.self, forKey: .count) ?? 1, increase: try c.decodeIfPresent(Int.self, forKey: .increase) ?? 1)
+        case "libraryEntry":
+            self = .libraryEntry(list: try c.decode(LibraryList.self, forKey: .list), key: try c.decode(String.self, forKey: .key), filter: try c.decodeIfPresent(EntryFilter.self, forKey: .filter) ?? .none)
+        case "nextSubclassFeatures":
+            self = .nextSubclassFeatures(role: try c.decode(String.self, forKey: .role), key: try c.decode(String.self, forKey: .key))
+        case "newEntry":
+            self = .newEntry(key: try c.decode(String.self, forKey: .key), valueText: try c.decodeIfPresent(String.self, forKey: .valueText) ?? "")
+        default:
+            throw corrupt(decoder, "A target is “attributes”, “entryValues”, “libraryEntry”, “nextSubclassFeatures” or “newEntry”.")
+        }
+    }
+}
+
 nonisolated extension AdvancementRule.Choice: Decodable {
-    private enum CodingKeys: String, CodingKey { case id, title, cost, gains }
+    private enum CodingKeys: String, CodingKey { case id, title, cost, gains, target, onLevels }
 
     init(from decoder: any Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         let id = try c.decode(String.self, forKey: .id)
         self.init(
             id: id, title: try c.decodeIfPresent(String.self, forKey: .title) ?? id, cost: try c.decodeIfPresent(Int.self, forKey: .cost) ?? 1,
-            gains: try c.decode([AdvancementRule.Gain].self, forKey: .gains)
+            gains: try c.decodeIfPresent([AdvancementRule.Gain].self, forKey: .gains) ?? [], target: try c.decodeIfPresent(AdvancementRule.Target.self, forKey: .target),
+            onLevels: (try c.decodeIfPresent([Int].self, forKey: .onLevels)).map(Set.init)
         )
     }
 }
 
+nonisolated extension AdvancementRule.Clear: Decodable {
+    private enum CodingKeys: String, CodingKey { case levels, key }
+
+    init(from decoder: any Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(levels: Set(try c.decode([Int].self, forKey: .levels)), key: try c.decode(String.self, forKey: .key))
+    }
+}
+
 nonisolated extension AdvancementRule: Decodable {
-    private enum CodingKeys: String, CodingKey { case levelKey, maxLevel, gains, choices, choicePoints }
+    private enum CodingKeys: String, CodingKey { case levelKey, maxLevel, gains, choices, choicePoints, required, clears }
 
     init(from decoder: any Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         self.init(
             levelKey: try c.decode(String.self, forKey: .levelKey), maxLevel: try c.decode(Int.self, forKey: .maxLevel),
             gains: try c.decodeIfPresent([Gain].self, forKey: .gains) ?? [], choices: try c.decodeIfPresent([Choice].self, forKey: .choices) ?? [],
-            choicePoints: try c.decodeIfPresent(Int.self, forKey: .choicePoints) ?? 0
+            choicePoints: try c.decodeIfPresent(Int.self, forKey: .choicePoints) ?? 0, required: try c.decodeIfPresent([Choice].self, forKey: .required) ?? [],
+            clears: try c.decodeIfPresent([Clear].self, forKey: .clears) ?? []
         )
     }
 }
