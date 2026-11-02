@@ -11,6 +11,8 @@ enum LibraryEdition: String, CaseIterable, Identifiable, Codable {
     case srd51
     /// The System Reference Document 5.2.1 (the 2024 rules).
     case srd52
+    /// The Daggerheart System Reference Document 2.0.
+    case daggerheart
 
     var id: String { rawValue }
 
@@ -21,6 +23,7 @@ enum LibraryEdition: String, CaseIterable, Identifiable, Codable {
         switch self {
         case .srd51: "5.1 (2014 rules)"
         case .srd52: "5.2.1 (2024 rules)"
+        case .daggerheart: "Daggerheart SRD 2.0"
         }
     }
 
@@ -38,6 +41,7 @@ enum LibraryEdition: String, CaseIterable, Identifiable, Codable {
         switch self {
         case .srd51: "Races"
         case .srd52: "Species"
+        case .daggerheart: "Ancestries"
         }
     }
 
@@ -45,6 +49,7 @@ enum LibraryEdition: String, CaseIterable, Identifiable, Codable {
         switch self {
         case .srd51: "Race"
         case .srd52: "Species"
+        case .daggerheart: "Ancestry"
         }
     }
 }
@@ -132,11 +137,13 @@ nonisolated struct LibraryEntry: Decodable, Identifiable, Hashable, Sendable {
     var entries: [EntryValue]
     /// For an entry of kind `.entry`, which of the pack's `entryKinds` it is, such as "daggerheart.domainCard".
     var subKind: String?
+    /// A line to show under the name in a list, for kinds that have no built-in way of summarising themselves.
+    var detail: String?
 
     var id: String { key }
 
     private enum CodingKeys: String, CodingKey {
-        case key, kind, name, parent, summary, attributes, entries, subKind
+        case key, kind, name, parent, summary, attributes, entries, subKind, detail
     }
 
     init(from decoder: any Decoder) throws {
@@ -150,6 +157,7 @@ nonisolated struct LibraryEntry: Decodable, Identifiable, Hashable, Sendable {
             .mapValues(\.value)
         entries = try container.decodeIfPresent([EntryValue].self, forKey: .entries) ?? []
         subKind = try container.decodeIfPresent(String.self, forKey: .subKind)
+        detail = try container.decodeIfPresent(String.self, forKey: .detail)
     }
 
     init(
@@ -160,7 +168,8 @@ nonisolated struct LibraryEntry: Decodable, Identifiable, Hashable, Sendable {
         summary: String = "",
         attributes: [String: AttributeValue] = [:],
         entries: [EntryValue] = [],
-        subKind: String? = nil
+        subKind: String? = nil,
+        detail: String? = nil
     ) {
         self.key = key
         self.kind = kind
@@ -170,6 +179,7 @@ nonisolated struct LibraryEntry: Decodable, Identifiable, Hashable, Sendable {
         self.attributes = attributes
         self.entries = entries
         self.subKind = subKind
+        self.detail = detail
     }
 }
 

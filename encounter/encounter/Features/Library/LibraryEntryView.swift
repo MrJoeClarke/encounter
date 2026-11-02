@@ -108,9 +108,10 @@ struct LibraryEntryView: View {
     }
 
     /// Labels for attributes that only library entries have, since they have no page editor.
-    private static let libraryOnlyLabels: [String: LocalizedStringResource] = [
-        "dnd5e.ability": "Ability",
-    ]
+    private var libraryOnlyLabels: [String: String] { system.libraryAttributeLabels }
+
+    /// The system of the world the entry is being looked at in.
+    private var system: any RuleSystem { RuleSystems.system(forKey: world.systemRaw) }
 
     private var attribution: String? {
         LibraryEdition(key: entry.key).flatMap { Library.shared.attribution(for: $0) }
@@ -119,7 +120,7 @@ struct LibraryEntryView: View {
     /// The entry's plain attributes in the order the editor shows them, then any the editor has no label for.
     private var attributeRows: [Row] {
         let pageKind = entry.kind.pageKind ?? .characterClass
-        let definitions = RuleSystems.definitions(for: pageKind, system: .dnd5e)
+        let definitions = RuleSystems.definitions(for: pageKind, systemKey: world.systemRaw)
         var rows: [Row] = []
         var shown = Set<String>()
 
@@ -130,7 +131,7 @@ struct LibraryEntryView: View {
         }
         for (key, value) in entry.attributes.sorted(by: { $0.key < $1.key }) where !shown.contains(key) {
             if let text = displayText(for: value) {
-                rows.append(Row(label: Self.libraryOnlyLabels[key].map { String(localized: $0) } ?? key, value: text))
+                rows.append(Row(label: libraryOnlyLabels[key] ?? key, value: text))
             }
         }
         return rows

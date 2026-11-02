@@ -150,7 +150,7 @@ struct LibraryTests {
     }
 
     @Test func theBundledPacksAreInternallyConsistent() throws {
-        for edition in LibraryEdition.allCases {
+        for edition in LibraryEdition.dnd {
             let pack = try #require(Library.shared.pack(for: edition))
             let keys = pack.entries.map(\.key)
 
@@ -187,7 +187,7 @@ struct LibraryTests {
 
     @Test func everyAttributeInTheBundledPacksCanBeShownAndEditedOnACustomVersion() throws {
         // A custom version copies the attributes onto a page, so each must be one the editor has a field for.
-        for edition in LibraryEdition.allCases {
+        for edition in LibraryEdition.dnd {
             let pack = try #require(Library.shared.pack(for: edition))
             for entry in pack.entries {
                 let pageKind = try #require(entry.kind.pageKind ?? .characterClass)
@@ -807,7 +807,7 @@ struct LibraryTests {
             "Animal Handling": "Wisdom", "Insight": "Wisdom", "Medicine": "Wisdom", "Perception": "Wisdom", "Survival": "Wisdom",
             "Deception": "Charisma", "Intimidation": "Charisma", "Performance": "Charisma", "Persuasion": "Charisma",
         ]
-        for edition in LibraryEdition.allCases {
+        for edition in LibraryEdition.dnd {
             let skills = Library.shared.entries(.skill, in: edition)
             #expect(skills.count == 18, "\(edition)")
             for skill in skills {
@@ -827,7 +827,7 @@ struct LibraryTests {
     }
 
     @Test func theLibraryListsOnlyKindsThatHaveEntries() {
-        for edition in LibraryEdition.allCases {
+        for edition in LibraryEdition.dnd {
             let kinds = Library.shared.listKinds(in: edition)
             #expect(kinds.starts(with: [.race, .class]))
             #expect(kinds.contains(.skill))
@@ -955,7 +955,7 @@ struct LibraryTests {
     }
 
     @Test func theLibraryNowListsBackgroundsAndFeatsToo() {
-        for edition in LibraryEdition.allCases {
+        for edition in LibraryEdition.dnd {
             let kinds = Library.shared.listKinds(in: edition)
             #expect(kinds.contains(.background) && kinds.contains(.feat) && kinds.contains(.skill))
         }
@@ -1026,7 +1026,7 @@ struct LibraryTests {
         #expect(supplies.entries.map(\.name) == ["Utilize", "Craft"])
         #expect(equipmentCount("Artisan’s Tools", in: .srd52) == 17)
 
-        for edition in LibraryEdition.allCases {
+        for edition in LibraryEdition.dnd {
             let packs = Library.shared.entries(.equipment, in: edition).filter { $0.name.hasSuffix("Pack") }
             #expect(Set(packs.map(\.name)) == ["Burglar’s Pack", "Diplomat’s Pack", "Dungeoneer’s Pack", "Entertainer’s Pack", "Explorer’s Pack", "Priest’s Pack", "Scholar’s Pack"], "\(edition)")
             #expect(packs.allSatisfy { !$0.summary.isEmpty && text($0, "dnd5e.cost") != nil })
@@ -1035,7 +1035,7 @@ struct LibraryTests {
     }
 
     @Test func everyClassHasItsStartingEquipment() {
-        for edition in LibraryEdition.allCases {
+        for edition in LibraryEdition.dnd {
             for entry in Library.shared.topLevelEntries(.class, in: edition) {
                 #expect(text(entry, "dnd5e.startingEquipment")?.isEmpty == false, "\(entry.name) in \(edition)")
             }
@@ -1065,7 +1065,7 @@ struct LibraryTests {
     }
 
     @Test func theLibraryListsEquipmentToo() {
-        for edition in LibraryEdition.allCases {
+        for edition in LibraryEdition.dnd {
             #expect(Library.shared.listKinds(in: edition).contains(.equipment))
         }
     }
@@ -1078,7 +1078,7 @@ struct LibraryTests {
 
     @Test func bothEditionsHaveEverySpellWithItsFacts() {
         let counts: [LibraryEdition: Int] = [.srd51: 319, .srd52: 339]
-        for edition in LibraryEdition.allCases {
+        for edition in LibraryEdition.dnd {
             let spells = Library.shared.entries(.spell, in: edition)
             #expect(spells.count == counts[edition], "\(edition)")
             for spell in spells {
@@ -1152,7 +1152,7 @@ struct LibraryTests {
     }
 
     @Test func theLibraryListsSpellsAndTheyCanBeMentioned() {
-        for edition in LibraryEdition.allCases {
+        for edition in LibraryEdition.dnd {
             #expect(Library.shared.listKinds(in: edition).contains(.spell))
         }
         #expect(Library.shared.mentionableEntries(matching: "fireball", in: .srd51, limit: 8).map(\.name).contains("Fireball"))

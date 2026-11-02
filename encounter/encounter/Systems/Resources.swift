@@ -9,6 +9,37 @@ import Foundation
 nonisolated struct RestDefinition: Equatable, Identifiable, Sendable {
     var id: String
     var name: String
+    /// Moves a character chooses from when they take the rest, each giving back some resources. Empty if the rest simply gives
+    /// back what each resource says it does.
+    var moves: [RestMove] = []
+    /// How many moves a character chooses (the same one can be chosen more than once).
+    var movesToChoose = 0
+
+    init(id: String, name: String, moves: [RestMove] = [], movesToChoose: Int = 0) {
+        self.id = id
+        self.name = name
+        self.moves = moves
+        self.movesToChoose = movesToChoose
+    }
+
+    /// Whether the picks are a valid choice of moves for the rest.
+    func isValid(picks: [String]) -> Bool {
+        guard !moves.isEmpty else { return picks.isEmpty }
+        return picks.count == movesToChoose && picks.allSatisfy { id in moves.contains { $0.id == id } }
+    }
+}
+
+/// One of the moves a rest offers, such as clearing Stress.
+nonisolated struct RestMove: Equatable, Identifiable, Sendable {
+    struct Effect: Equatable, Sendable {
+        /// The id of the resource it gives back.
+        var resource: String
+        var restoration: Restoration
+    }
+
+    var id: String
+    var title: String
+    var effects: [Effect]
 }
 
 /// How a rest gives back a resource.
@@ -72,9 +103,11 @@ nonisolated struct ResourceDefinition: Equatable, Identifiable, Sendable {
 
 nonisolated enum ResourceRules {
     /// What a resource's stored value becomes after a rest, or nil if the rest leaves it alone. `current` is the stored value
-    /// (nil if the page has none yet); `formulas` and `inputs` are what the maximum and the amounts are worked out from.
+    /// (nil if the page has none yet); `formulas` and `inputs` are what the maximum and the amounts are worked out from, and `dice`
+    /// rolls any dice in an amount (an amount with dice that can't be rolled gives nil).
     static func valueAfter(
-        rest: String, resource: ResourceDefinition, current: Double?, formulas: FormulaSet, inputs: [String: Double]
+        rest: String, resource: ResourceDefinition, current: Double?, formulas: FormulaSet, inputs: [String: Double],
+        dice: ((_ count: Int, _ sides: Int) -> Double)? = nil
     ) -> Double? {
         guard resource.storage != .spentList, let restoration = resource.restoredBy[rest] else { return nil }
         if let condition = restoration.condition {
@@ -89,7 +122,7 @@ nonisolated enum ResourceRules {
         case (.empty, _): return nil
         case (.full, _): return 0
         case (.formula(let text), _):
-            guard let amount = Formula(text)?.evaluate({ formulas.value($0, inputs) }) else { return nil }
+            guard let amount = Formula(text)?.evaluate({ formulas.value($0, inputs) }, dice: dice) else { return nil }
             if resource.storage == .remaining {
                 let raised = stored + amount
                 return maximum.map { min($0, raised) } ?? raised

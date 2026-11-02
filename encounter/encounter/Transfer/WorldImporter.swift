@@ -37,6 +37,7 @@ enum WorldImporter {
         let world = World(name: uniqueName(archive.world.name, avoiding: existingNames), summary: archive.world.summary)
         world.systemRaw = archive.world.system
         world.systemVersion = archive.world.systemVersion ?? 0
+        world.systemState = archive.world.systemState ?? [:]
         world.editionRaw = archive.world.edition ?? LibraryEdition.default.rawValue
         context.insert(world)
         summary.worldName = world.name

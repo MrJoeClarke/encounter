@@ -50,7 +50,7 @@ struct ClassTableTests {
     }
 
     @Test func everyClassInBothEditionsHasATable() throws {
-        for edition in LibraryEdition.allCases {
+        for edition in LibraryEdition.dnd {
             let classes = Library.shared.topLevelEntries(.class, in: edition)
             #expect(classes.count == 12)
             for entry in classes {
@@ -100,7 +100,7 @@ struct ClassTableTests {
     }
 
     @Test func casterColumnsNeverFallAsTheLevelRises() throws {
-        for edition in LibraryEdition.allCases {
+        for edition in LibraryEdition.dnd {
             for entry in Library.shared.topLevelEntries(.class, in: edition) {
                 let table = try #require(ClassProgression(attributes: entry.attributes))
                 for column in [table.cantrips, table.spellsKnown, table.prepared, table.invocations].compactMap({ $0 }) {

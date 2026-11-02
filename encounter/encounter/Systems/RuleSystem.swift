@@ -45,6 +45,8 @@ protocol RuleSystem {
     var rests: [RestDefinition] { get }
     /// What a character has that goes down and up in play, and how each kind of rest gives it back.
     var resources: [ResourceDefinition] { get }
+    /// Resources the whole world shares, kept on the world, such as the GM's Fear.
+    var worldResources: [ResourceDefinition] { get }
     /// How a character is made, if the system has a guided flow for it.
     var creationFlow: CreationFlow? { get }
     /// How a character gains levels, if the system has them.
@@ -53,6 +55,17 @@ protocol RuleSystem {
     var conditions: [ConditionDefinition] { get }
     /// How a character's sheet is laid out, if the system has one.
     var sheetLayout: SheetLayout? { get }
+    /// The library editions the system's worlds can use, the first being the one a world starts on. Empty if it has no library.
+    var libraryEditions: [LibraryEdition] { get }
+    /// Whether the system is shown by the generic creation, level-up and sheet screens, which read it as data, rather than by
+    /// screens written for it.
+    var usesGenericScreens: Bool { get }
+    /// The line shown under an entry's name in a library list, for entries whose pack gives no `detail` of its own.
+    func libraryDetail(for entry: LibraryEntry) -> String?
+    /// Labels for attributes that only library entries have, which no page editor labels.
+    var libraryAttributeLabels: [String: String] { get }
+    /// The numbers a score attribute (`AttributeType.abilityScore`) can take.
+    var scoreRange: ClosedRange<Int> { get }
 }
 
 extension RuleSystem {
@@ -64,10 +77,16 @@ extension RuleSystem {
     var formulas: FormulaSet { FormulaSet([:]) }
     var rests: [RestDefinition] { [] }
     var resources: [ResourceDefinition] { [] }
+    var worldResources: [ResourceDefinition] { [] }
     var creationFlow: CreationFlow? { nil }
     var advancement: AdvancementRule? { nil }
     var conditions: [ConditionDefinition] { [] }
     var sheetLayout: SheetLayout? { nil }
+    var libraryEditions: [LibraryEdition] { [] }
+    var usesGenericScreens: Bool { false }
+    func libraryDetail(for entry: LibraryEntry) -> String? { entry.detail }
+    var libraryAttributeLabels: [String: String] { [:] }
+    var scoreRange: ClosedRange<Int> { 1...30 }
 
     /// Whether the system comes with a bundled content library (races, classes and so on).
     var hasContentLibrary: Bool { modules.contains(.library) }

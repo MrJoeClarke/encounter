@@ -35,7 +35,11 @@ struct PageEditorView: View {
                 .padding(.bottom, 8)
             }
             if hasSheet && mode == .sheet {
-                CharacterSheetView(page: page)
+                if page.world.map({ RuleSystems.system(forKey: $0.systemRaw).usesGenericScreens }) == true {
+                    GenericSheetView(page: page)
+                } else {
+                    CharacterSheetView(page: page)
+                }
             } else {
                 form
             }
@@ -67,7 +71,11 @@ struct PageEditorView: View {
             }
 
             if page.kind == .character, page.world?.rules.contains(.advancement) == true {
-                LevelUpSection(page: page)
+                if page.world.map({ RuleSystems.system(forKey: $0.systemRaw).usesGenericScreens }) == true {
+                    GenericLevelUpSection(page: page)
+                } else {
+                    LevelUpSection(page: page)
+                }
             }
 
             if page.kind == .place {

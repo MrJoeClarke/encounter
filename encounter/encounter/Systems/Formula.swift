@@ -10,6 +10,8 @@ import Foundation
 nonisolated struct Formula: Equatable, Sendable {
     fileprivate indirect enum Node: Equatable, Sendable {
         case number(Double)
+        /// A roll of dice, such as 1d4, which has a value only when something rolls it.
+        case dice(count: Int, sides: Int)
         case variable(String)
         case negate(Node)
         case binary(Character, Node, Node)
@@ -32,7 +34,7 @@ nonisolated struct Formula: Equatable, Sendable {
         var found: Set<String> = []
         func visit(_ node: Node) {
             switch node {
-            case .number: break
+            case .number, .dice: break
             case .variable(let name): found.insert(name)
             case .negate(let inner): visit(inner)
             case .binary(_, let left, let right): visit(left); visit(right)
@@ -44,19 +46,34 @@ nonisolated struct Formula: Equatable, Sendable {
     }
 
     /// What the formula comes to, asking `value` for each name it uses. Nil if a name is unknown or it divides by zero.
-    func evaluate(_ value: (String) -> Double?) -> Double? {
-        Self.evaluate(root, value)
+    func evaluate(_ value: (String) -> Double?, dice: ((_ count: Int, _ sides: Int) -> Double)? = nil) -> Double? {
+        Self.evaluate(root, value, dice)
+    }
+
+    /// Whether the formula rolls any dice, such as "1d4 + tier".
+    var hasDice: Bool {
+        func visit(_ node: Node) -> Bool {
+            switch node {
+            case .dice: true
+            case .number, .variable: false
+            case .negate(let inner): visit(inner)
+            case .binary(_, let left, let right): visit(left) || visit(right)
+            case .call(_, let arguments): arguments.contains(where: visit)
+            }
+        }
+        return visit(root)
     }
 
     func evaluate(_ values: [String: Double]) -> Double? { evaluate { values[$0] } }
 
-    private static func evaluate(_ node: Node, _ value: (String) -> Double?) -> Double? {
+    private static func evaluate(_ node: Node, _ value: (String) -> Double?, _ dice: ((Int, Int) -> Double)?) -> Double? {
         switch node {
         case .number(let number): return number
+        case .dice(let count, let sides): return dice?(count, sides)
         case .variable(let name): return value(name)
-        case .negate(let inner): return evaluate(inner, value).map { -$0 }
+        case .negate(let inner): return evaluate(inner, value, dice).map { -$0 }
         case .binary(let op, let left, let right):
-            guard let a = evaluate(left, value), let b = evaluate(right, value) else { return nil }
+            guard let a = evaluate(left, value, dice), let b = evaluate(right, value, dice) else { return nil }
             switch op {
             case "+": return a + b
             case "-": return a - b
@@ -66,7 +83,7 @@ nonisolated struct Formula: Equatable, Sendable {
         case .call(let name, let arguments):
             var numbers: [Double] = []
             for argument in arguments {
-                guard let number = evaluate(argument, value) else { return nil }
+                guard let number = evaluate(argument, value, dice) else { return nil }
                 numbers.append(number)
             }
             switch (name, numbers.count) {
@@ -86,6 +103,7 @@ nonisolated struct Formula: Equatable, Sendable {
 private nonisolated struct FormulaParser {
     enum Token: Equatable {
         case number(Double)
+        case dice(count: Int, sides: Int)
         case name(String)
         case symbol(Character)
     }
@@ -103,12 +121,29 @@ private nonisolated struct FormulaParser {
             } else if character.isNumber || character == "." {
                 var end = index
                 while end < text.endIndex, text[end].isNumber || text[end] == "." { end = text.index(after: end) }
-                if let number = Double(text[index..<end]) { tokens.append(.number(number)) } else { isValid = false }
-                index = end
+                // "1d4" or "d4": dice. A number followed straight away by a d and digits.
+                var diceEnd = end
+                if end < text.endIndex, text[end] == "d" || text[end] == "D" {
+                    diceEnd = text.index(after: end)
+                    while diceEnd < text.endIndex, text[diceEnd].isNumber { diceEnd = text.index(after: diceEnd) }
+                }
+                if diceEnd > end, text.index(after: end) < diceEnd, let count = Int(text[index..<end]), let sides = Int(text[text.index(after: end)..<diceEnd]),
+                   count >= 1, sides >= 2 {
+                    tokens.append(.dice(count: count, sides: sides))
+                    index = diceEnd
+                } else {
+                    if let number = Double(text[index..<end]) { tokens.append(.number(number)) } else { isValid = false }
+                    index = end
+                }
             } else if character.isLetter || character == "_" {
                 var end = index
                 while end < text.endIndex, text[end].isLetter || text[end].isNumber || text[end] == "_" || text[end] == "." { end = text.index(after: end) }
-                tokens.append(.name(String(text[index..<end])))
+                let word = String(text[index..<end])
+                if (word.first == "d" || word.first == "D"), word.count > 1, let sides = Int(word.dropFirst()), sides >= 2 {
+                    tokens.append(.dice(count: 1, sides: sides))
+                } else {
+                    tokens.append(.name(word))
+                }
                 index = end
             } else if "+-*/(),".contains(character) {
                 tokens.append(.symbol(character))
@@ -169,6 +204,8 @@ private nonisolated struct FormulaParser {
         switch token {
         case .number(let number):
             return .number(number)
+        case .dice(let count, let sides):
+            return .dice(count: count, sides: sides)
         case .name(let name):
             guard accept("(") else { return .variable(name) }
             var arguments: [Formula.Node] = []
@@ -207,8 +244,8 @@ nonisolated struct FormulaSet: Sendable {
 
     /// What a formula comes to, given the numbers it starts from (which win over a formula of the same name). Nil if it has
     /// no such formula, uses a name that is neither given nor a formula, or goes round in a circle.
-    func value(_ name: String, _ inputs: [String: Double] = [:]) -> Double? {
-        resolve(name, inputs, depth: 0)
+    func value(_ name: String, _ inputs: [String: Double] = [:], dice: ((_ count: Int, _ sides: Int) -> Double)? = nil) -> Double? {
+        resolve(name, inputs, dice, depth: 0)
     }
 
     /// The same, as a whole number.
@@ -216,9 +253,9 @@ nonisolated struct FormulaSet: Sendable {
         value(name, inputs).map { Int($0.rounded()) }
     }
 
-    private func resolve(_ name: String, _ inputs: [String: Double], depth: Int) -> Double? {
+    private func resolve(_ name: String, _ inputs: [String: Double], _ dice: ((Int, Int) -> Double)?, depth: Int) -> Double? {
         if let given = inputs[name] { return given }
         guard depth < 16, let formula = formulas[name] else { return nil }
-        return formula.evaluate { resolve($0, inputs, depth: depth + 1) }
+        return formula.evaluate({ resolve($0, inputs, dice, depth: depth + 1) }, dice: dice)
     }
 }

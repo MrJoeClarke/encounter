@@ -12,6 +12,7 @@ struct DnD5eSystem: RuleSystem {
     var additionalPageKinds: Set<PageKind> { [.characterClass, .background, .feat, .spell] }
     var modules: RuleModules { [.library, .characterCreation, .advancement, .sheet, .conditions] }
 
+    var libraryEditions: [LibraryEdition] { [.srd52, .srd51] }
     var rollModel: RollModel? { .d20 }
     var formulas: FormulaSet { Self.formulaSet }
 

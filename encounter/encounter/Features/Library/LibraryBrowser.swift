@@ -69,7 +69,7 @@ struct LibraryBrowser: View {
             } else {
                 ChoosableList(choice: selection) {
                     ForEach(entries) { entry in
-                        LibraryRow(entry: entry)
+                        LibraryRow(entry: entry, system: RuleSystems.system(forKey: world.systemRaw))
                             .choosable(entry.key, in: selection)
                     }
                 }
@@ -93,6 +93,7 @@ struct LibraryBrowser: View {
 /// of detail beneath.
 private struct LibraryRow: View {
     let entry: LibraryEntry
+    let system: any RuleSystem
 
     private let iconSize: CGFloat = 40
 
@@ -114,24 +115,9 @@ private struct LibraryRow: View {
         }
     }
 
-    /// For a class, its hit die and primary ability; for a race or species, its size and speed.
+    /// The line under the name, as the world's system gives it.
     private var detail: String? {
-        func text(_ key: String) -> String? {
-            if case .text(let value)? = entry.attributes[key], !value.isEmpty { value } else { nil }
-        }
-        let parts: [String?]
-        switch entry.kind {
-        case .class: parts = [text("dnd5e.hitDie").map { String(localized: "Hit die \($0)") }, text("dnd5e.primaryAbility")]
-        case .race, .subclass: parts = [text("core.raceSize"), text("dnd5e.speed")]
-        case .skill: parts = [text("dnd5e.ability")]
-        case .condition: parts = []
-        case .background: parts = [text("dnd5e.backgroundSkills")]
-        case .feat: parts = [text("dnd5e.featCategory"), text("dnd5e.featPrerequisite")]
-        case .equipment: parts = [text("dnd5e.equipmentCategory"), text("dnd5e.cost")]
-        case .spell: parts = [entry.spellHeadline, text("dnd5e.spellClasses")]
-        case .entry: parts = []
-        }
-        let joined = parts.compactMap { $0 }.joined(separator: " · ")
-        return joined.isEmpty ? nil : joined
+        let line = system.libraryDetail(for: entry)
+        return line?.isEmpty == false ? line : nil
     }
 }

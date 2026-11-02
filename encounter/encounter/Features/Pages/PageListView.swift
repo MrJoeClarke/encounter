@@ -80,7 +80,11 @@ struct PageListView: View {
             expanded.formUnion(page.ancestors.map(\.id))
         }
         .sheet(isPresented: $isBuildingCharacter) {
-            CharacterBuilderView(world: world) { selection = $0 }
+            if RuleSystems.system(forKey: world.systemRaw).usesGenericScreens {
+                GenericCharacterBuilderView(world: world) { selection = $0 }
+            } else {
+                CharacterBuilderView(world: world) { selection = $0 }
+            }
         }
         .alert(
             "Delete Page?",

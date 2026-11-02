@@ -15,7 +15,17 @@ extension World {
     /// Chooses a system by key and records its version.
     func choose(systemKey key: String) {
         systemRaw = key
-        systemVersion = RuleSystems.system(forKey: key).version
+        let system = RuleSystems.system(forKey: key)
+        systemVersion = system.version
+        // A system's library is its own, so the world moves to an edition the system has.
+        let editions = system.libraryEditions
+        if let first = editions.first, !editions.contains(edition) { edition = first }
+    }
+
+    /// What the system keeps for the whole world, by key.
+    var systemState: [String: Double] {
+        get { (try? JSONDecoder().decode([String: Double].self, from: Data(systemStateRaw.utf8))) ?? [:] }
+        set { systemStateRaw = newValue.isEmpty ? "" : (try? JSONEncoder().encode(newValue)).flatMap { String(data: $0, encoding: .utf8) } ?? "" }
     }
 
     /// How the system the world recorded compares with what the app has.

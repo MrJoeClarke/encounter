@@ -779,7 +779,7 @@ struct ConditionTests {
     // MARK: The library
 
     @Test func bothEditionsHaveAllFifteenConditionsWithTheirText() throws {
-        for edition in LibraryEdition.allCases {
+        for edition in LibraryEdition.dnd {
             let entries = Library.shared.entries(.condition, in: edition)
             #expect(Set(entries.map(\.name)) == Set(Condition.allCases.map(\.title)))
             #expect(entries.count == 15 && entries.allSatisfy { !$0.summary.isEmpty && $0.parent == nil })
@@ -791,7 +791,7 @@ struct ConditionTests {
     // MARK: The rules line up with the text
 
     @Test func theEffectsOnRollsMatchWhatTheConditionTextSays() throws {
-        for edition in LibraryEdition.allCases {
+        for edition in LibraryEdition.dnd {
             for condition in [Condition.poisoned] { #expect(try text(condition, edition).contains("disadvantage on attack rolls and ability checks")) }
             #expect(try text(.frightened, edition).contains("disadvantage on ability checks and attack rolls"))
             #expect(try text(.prone, edition).contains("disadvantage on attack rolls"))
@@ -812,7 +812,7 @@ struct ConditionTests {
     }
 
     @Test func theSpeedOfAConditionMatchesItsText() throws {
-        for edition in LibraryEdition.allCases {
+        for edition in LibraryEdition.dnd {
             for condition in ConditionRules.speedIsZero(ConditionState(active: Set(Condition.allCases)), edition: edition) {
                 let words = try text(condition, edition)
                 #expect(words.contains("speed") || words.contains("can’t move"), "\(condition) \(edition)")
@@ -840,7 +840,7 @@ struct ConditionTests {
     }
 
     @Test func attackRollsAreMadeWithAdvantageOrDisadvantage() {
-        for edition in LibraryEdition.allCases {
+        for edition in LibraryEdition.dnd {
             #expect(ConditionRules.attack(state(), edition: edition).mode == .normal && ConditionRules.attack(state(), edition: edition).isEmpty)
             for condition in [Condition.blinded, .frightened, .poisoned, .prone, .restrained] {
                 #expect(ConditionRules.attack(state(condition), edition: edition).mode == .disadvantage, "\(condition)")
@@ -856,7 +856,7 @@ struct ConditionTests {
     }
 
     @Test func abilityChecksAreAffectedByFearPoisonAndOldExhaustion() {
-        for edition in LibraryEdition.allCases {
+        for edition in LibraryEdition.dnd {
             #expect(ConditionRules.abilityCheck(state(.poisoned), edition: edition).mode == .disadvantage)
             #expect(ConditionRules.abilityCheck(state(.frightened), edition: edition).mode == .disadvantage)
             #expect(ConditionRules.abilityCheck(state(.prone), edition: edition).mode == .normal)
@@ -868,7 +868,7 @@ struct ConditionTests {
     }
 
     @Test func savesAreFailedOrMadeWithDisadvantage() {
-        for edition in LibraryEdition.allCases {
+        for edition in LibraryEdition.dnd {
             for condition in [Condition.paralyzed, .petrified, .stunned, .unconscious] {
                 #expect(ConditionRules.save(.strength, state(condition), edition: edition).autoFail != nil)
                 #expect(ConditionRules.save(.dexterity, state(condition), edition: edition).autoFail != nil)
