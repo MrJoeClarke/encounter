@@ -99,8 +99,8 @@ nonisolated struct SceneOptions: Codable, Equatable, Sendable {
     var stairs = true
     /// For a building, whether to take its shape from the place's outline if it has one.
     var fitOutline = true
-    /// The id of the `NamingStyle` the names of shops and inns are made in.
-    var namingStyle = NamingStyles.englishID
+    /// The id of the `RootLanguage` the names of shops and inns are made in.
+    var namingStyle = RootLanguages.englishID
 
     init() {}
 
@@ -209,7 +209,7 @@ nonisolated struct SceneMaker {
     init(options: SceneOptions, outline: [GridPoint]?) {
         self.options = options
         self.outline = outline
-        names = NameBank(style: NamingStyles.style(options.namingStyle))
+        names = NameBank(language: RootLanguages.language(options.namingStyle))
         n = options.squares
         random = SeededRandom(seed: options.seed &* 0x2545F4914F6CDD1D &+ 7)
     }

@@ -67,7 +67,7 @@ extension SettlementGenerator {
 
         init(options: SettlementOptions, outline: [GridPoint]?, extent given: Double?) {
             self.options = options
-            names = NameBank(style: NamingStyles.style(options.namingStyle))
+            names = NameBank(language: RootLanguages.language(options.namingStyle))
             if let outline {
                 let points = outline.map { V(x: $0.easting, y: $0.northing) }
                 let shape = PlaceGeometry.polygon(outline)

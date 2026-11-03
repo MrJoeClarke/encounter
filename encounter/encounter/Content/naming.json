@@ -1,97 +1,329 @@
 {
- "formatVersion": 1,
- "styles": [
+ "formatVersion": 2,
+ "concepts": {
+  "street": [
+   "mill",
+   "bridge",
+   "market",
+   "church",
+   "king",
+   "tanner",
+   "smith",
+   "baker",
+   "well",
+   "stone",
+   "oak",
+   "ash",
+   "river",
+   "high",
+   "low",
+   "old",
+   "new",
+   "chapel",
+   "mason",
+   "weaver",
+   "fisher",
+   "cooper",
+   "rope",
+   "gate",
+   "hill",
+   "orchard",
+   "elm",
+   "briar",
+   "heron",
+   "lantern"
+  ],
+  "quarter": [
+   "old",
+   "craft",
+   "temple",
+   "merchant",
+   "garden",
+   "harbour",
+   "weavers",
+   "tanners",
+   "scholars",
+   "guild"
+  ],
+  "innAdjective": [
+   "gilded",
+   "rusty",
+   "laughing",
+   "sleeping",
+   "crooked",
+   "merry",
+   "silver",
+   "golden",
+   "drunken",
+   "wandering",
+   "black",
+   "red",
+   "broken",
+   "jolly"
+  ],
+  "innNoun": [
+   "gull",
+   "stag",
+   "boar",
+   "lantern",
+   "anchor",
+   "crown",
+   "goose",
+   "barrel",
+   "raven",
+   "fox",
+   "wheel",
+   "plough",
+   "kettle",
+   "heron"
+  ],
+  "chapelVirtue": [
+   "light",
+   "mercy",
+   "harvest",
+   "hearth",
+   "moon",
+   "road",
+   "rest",
+   "deepWells"
+  ],
+  "landmarkVirtue": [
+   "light",
+   "mercy",
+   "harvest",
+   "hearth",
+   "moon",
+   "road",
+   "rest",
+   "wisdom"
+  ],
+  "landmarkAdjective": [
+   "grey",
+   "iron",
+   "white",
+   "black",
+   "high",
+   "old",
+   "silent",
+   "stern",
+   "golden",
+   "red"
+  ],
+  "woodAdjective": [
+   "old",
+   "dark",
+   "whispering",
+   "elder",
+   "silent",
+   "deep",
+   "green",
+   "grey",
+   "ancient",
+   "hollow"
+  ],
+  "peakAdjective": [
+   "grey",
+   "iron",
+   "white",
+   "broken",
+   "storm",
+   "black",
+   "high",
+   "frost",
+   "red",
+   "shattered"
+  ],
+  "seaAdjective": [
+   "grey",
+   "northern",
+   "narrow",
+   "stormy",
+   "silver",
+   "western",
+   "pale",
+   "salt",
+   "great"
+  ],
+  "compass": [
+   "east",
+   "northEast",
+   "north",
+   "northWest",
+   "west",
+   "southWest",
+   "south",
+   "southEast"
+  ],
+  "gate": [
+   "gate"
+  ]
+ },
+ "languages": [
   {
    "id": "english",
    "title": "English",
-   "summary": "Mills, bridges, lanes and inns, as in an English market town.",
-   "lists": {
-    "streetStart": [
-     "Mill",
-     "Bridge",
-     "Market",
-     "Church",
-     "King’s",
-     "Tanner’s",
-     "Smith’s",
-     "Baker’s",
-     "Well",
-     "Stone",
-     "Oak",
-     "Ash",
-     "River",
-     "High",
-     "Low",
-     "Old",
-     "New",
-     "Chapel",
-     "Mason’s",
-     "Weaver’s",
-     "Fisher’s",
-     "Cooper’s",
-     "Rope",
-     "Gate",
-     "Hill",
-     "Orchard",
-     "Elm",
-     "Briar",
-     "Heron",
-     "Lantern"
-    ],
-    "streetEnd": [
-     "Street",
-     "Lane",
-     "Row",
-     "Way",
-     "Walk",
-     "Road",
-     "Close"
-    ],
-    "quarter": [
-     "Old Quarter",
-     "Craft Quarter",
-     "Temple Quarter",
-     "Merchant Quarter",
-     "Garden Quarter",
-     "Harbour Quarter",
-     "Weavers’ Quarter",
-     "Tanners’ Quarter",
-     "Scholars’ Quarter",
-     "Guild Quarter"
-    ],
-    "innAdjective": [
-     "Gilded",
-     "Rusty",
-     "Laughing",
-     "Sleeping",
-     "Crooked",
-     "Merry",
-     "Silver",
-     "Golden",
-     "Drunken",
-     "Wandering",
-     "Black",
-     "Red",
-     "Broken",
-     "Jolly"
-    ],
-    "innNoun": [
-     "Gull",
-     "Stag",
-     "Boar",
-     "Lantern",
-     "Anchor",
-     "Crown",
-     "Goose",
-     "Barrel",
-     "Raven",
-     "Fox",
-     "Wheel",
-     "Plough",
-     "Kettle",
-     "Heron"
-    ],
-    "surname": [
+   "summary": "Mills, bridges and inns, as in an English market town.",
+   "modifierPosition": "before",
+   "words": {
+    "street": {
+     "mill": "Mill",
+     "bridge": "Bridge",
+     "market": "Market",
+     "church": "Church",
+     "king": "King’s",
+     "tanner": "Tanner’s",
+     "smith": "Smith’s",
+     "baker": "Baker’s",
+     "well": "Well",
+     "stone": "Stone",
+     "oak": "Oak",
+     "ash": "Ash",
+     "river": "River",
+     "high": "High",
+     "low": "Low",
+     "old": "Old",
+     "new": "New",
+     "chapel": "Chapel",
+     "mason": "Mason’s",
+     "weaver": "Weaver’s",
+     "fisher": "Fisher’s",
+     "cooper": "Cooper’s",
+     "rope": "Rope",
+     "gate": "Gate",
+     "hill": "Hill",
+     "orchard": "Orchard",
+     "elm": "Elm",
+     "briar": "Briar",
+     "heron": "Heron",
+     "lantern": "Lantern"
+    },
+    "quarter": {
+     "old": "Old",
+     "craft": "Craft",
+     "temple": "Temple",
+     "merchant": "Merchant",
+     "garden": "Garden",
+     "harbour": "Harbour",
+     "weavers": "Weavers’",
+     "tanners": "Tanners’",
+     "scholars": "Scholars’",
+     "guild": "Guild"
+    },
+    "innAdjective": {
+     "gilded": "Gilded",
+     "rusty": "Rusty",
+     "laughing": "Laughing",
+     "sleeping": "Sleeping",
+     "crooked": "Crooked",
+     "merry": "Merry",
+     "silver": "Silver",
+     "golden": "Golden",
+     "drunken": "Drunken",
+     "wandering": "Wandering",
+     "black": "Black",
+     "red": "Red",
+     "broken": "Broken",
+     "jolly": "Jolly"
+    },
+    "innNoun": {
+     "gull": "Gull",
+     "stag": "Stag",
+     "boar": "Boar",
+     "lantern": "Lantern",
+     "anchor": "Anchor",
+     "crown": "Crown",
+     "goose": "Goose",
+     "barrel": "Barrel",
+     "raven": "Raven",
+     "fox": "Fox",
+     "wheel": "Wheel",
+     "plough": "Plough",
+     "kettle": "Kettle",
+     "heron": "Heron"
+    },
+    "chapelVirtue": {
+     "light": "Light",
+     "mercy": "Mercy",
+     "harvest": "the Harvest",
+     "hearth": "the Hearth",
+     "moon": "the Moon",
+     "road": "the Road",
+     "rest": "Rest",
+     "deepWells": "the Deep Wells"
+    },
+    "landmarkVirtue": {
+     "light": "Light",
+     "mercy": "Mercy",
+     "harvest": "the Harvest",
+     "hearth": "the Hearth",
+     "moon": "the Moon",
+     "road": "the Road",
+     "rest": "Rest",
+     "wisdom": "Wisdom"
+    },
+    "landmarkAdjective": {
+     "grey": "Grey",
+     "iron": "Iron",
+     "white": "White",
+     "black": "Black",
+     "high": "High",
+     "old": "Old",
+     "silent": "Silent",
+     "stern": "Stern",
+     "golden": "Golden",
+     "red": "Red"
+    },
+    "woodAdjective": {
+     "old": "Old",
+     "dark": "Dark",
+     "whispering": "Whispering",
+     "elder": "Elder",
+     "silent": "Silent",
+     "deep": "Deep",
+     "green": "Green",
+     "grey": "Grey",
+     "ancient": "Ancient",
+     "hollow": "Hollow"
+    },
+    "peakAdjective": {
+     "grey": "Grey",
+     "iron": "Iron",
+     "white": "White",
+     "broken": "Broken",
+     "storm": "Storm",
+     "black": "Black",
+     "high": "High",
+     "frost": "Frost",
+     "red": "Red",
+     "shattered": "Shattered"
+    },
+    "seaAdjective": {
+     "grey": "Grey",
+     "northern": "Northern",
+     "narrow": "Narrow",
+     "stormy": "Stormy",
+     "silver": "Silver",
+     "western": "Western",
+     "pale": "Pale",
+     "salt": "Salt",
+     "great": "Great"
+    },
+    "compass": {
+     "east": "East",
+     "northEast": "North-East",
+     "north": "North",
+     "northWest": "North-West",
+     "west": "West",
+     "southWest": "South-West",
+     "south": "South",
+     "southEast": "South-East"
+    },
+    "gate": {
+     "gate": "Gate"
+    }
+   },
+   "names": {
+    "shopOwner": [
      "Hale",
      "Marsh",
      "Thorne",
@@ -111,16 +343,6 @@
      "Sorrel",
      "Whitlow"
     ],
-    "virtue": [
-     "Light",
-     "Mercy",
-     "the Harvest",
-     "the Hearth",
-     "the Moon",
-     "the Road",
-     "Rest",
-     "the Deep Wells"
-    ],
     "riverName": [
      "Hale",
      "Marsh",
@@ -135,7 +357,7 @@
      "Yarrow",
      "Dunn"
     ],
-    "manorSurname": [
+    "manorOwner": [
      "Hale",
      "Marsh",
      "Thorne",
@@ -149,7 +371,7 @@
      "Vane",
      "Yarrow"
     ],
-    "landmarkSurname": [
+    "landmarkOwner": [
      "Hale",
      "Marsh",
      "Thorne",
@@ -162,28 +384,6 @@
      "Tarn",
      "Vane",
      "Yarrow"
-    ],
-    "landmarkAdjective": [
-     "Grey",
-     "Iron",
-     "White",
-     "Black",
-     "High",
-     "Old",
-     "Silent",
-     "Stern",
-     "Golden",
-     "Red"
-    ],
-    "landmarkVirtue": [
-     "Light",
-     "Mercy",
-     "the Harvest",
-     "the Hearth",
-     "the Moon",
-     "the Road",
-     "Rest",
-     "Wisdom"
     ],
     "placeStart": [
      "Ald",
@@ -274,257 +474,706 @@
      "Ashgrove",
      "Blackwater",
      "Corvane"
-    ],
-    "realmTitle": [
-     "Kingdom",
-     "Realm",
-     "Duchy",
-     "Principality",
-     "Dominion"
-    ],
-    "woodName": [
-     "Old",
-     "Dark",
-     "Whispering",
-     "Elder",
-     "Silent",
-     "Deep",
-     "Green",
-     "Grey",
-     "Ancient",
-     "Hollow"
-    ],
-    "peakName": [
-     "Grey",
-     "Iron",
-     "White",
-     "Broken",
-     "Storm",
-     "Black",
-     "High",
-     "Frost",
-     "Red",
-     "Shattered"
-    ],
-    "seaName": [
-     "Grey",
-     "Northern",
-     "Narrow",
-     "Stormy",
-     "Silver",
-     "Western",
-     "Pale",
-     "Salt",
-     "Great"
-    ],
-    "compass": [
-     "East",
-     "North-East",
-     "North",
-     "North-West",
-     "West",
-     "South-West",
-     "South",
-     "South-East"
     ]
-   },
-   "patterns": {
-    "street": [
-     "{streetStart} {streetEnd}"
-    ],
-    "quarter": [
-     "{quarter}"
-    ],
-    "inn": [
-     "The {innAdjective} {innNoun}"
-    ],
-    "forge": [
-     "{surname}’s Forge"
-    ],
-    "shop": [
-     "{surname}’s {shop}"
-    ],
-    "chapel": [
-     "Chapel of {virtue}"
-    ],
-    "river": [
-     "River {riverName}"
-    ],
-    "manor": [
-     "{manorSurname} Manor"
-    ],
-    "settlement": [
-     "{placeStart}{placeEnd}"
-    ],
-    "realm": [
-     "{realmTitle} of {realmName}"
-    ],
-    "forest": [
-     "The {woodName} Forest"
-    ],
-    "mountains": [
-     "The {peakName} Mountains"
-    ],
-    "sea": [
-     "The {seaName} Sea"
-    ],
-    "marketSquare": [
-     "Market Square"
-    ],
-    "landmark.cathedral": [
-     "Cathedral of {virtue}"
-    ],
-    "landmark.castle": [
-     "{surname} Keep"
-    ],
-    "landmark.university": [
-     "University of {surname}"
-    ],
-    "landmark.library": [
-     "The Great Library"
-    ],
-    "landmark.guildhall": [
-     "The {adjective} Guildhall"
-    ],
-    "landmark.arena": [
-     "The {adjective} Arena"
-    ],
-    "landmark.infirmary": [
-     "Infirmary of {virtue}"
-    ],
-    "landmark.wizardsTower": [
-     "{surname}’s Spire"
-    ],
-    "landmark.prison": [
-     "The {adjective} Gaol"
-    ],
-    "marketSquare.scene": [
-     "The Market Square"
-    ],
-    "gateRoad": [
-     "{compass} Gate Road"
-    ],
-    "road": [
-     "{compass} Road"
-    ],
-    "gate": [
-     "{compass} Gate"
-    ]
-   },
-   "trades": [
-    {
-     "shop": "Bakery",
-     "summary": "A bakery"
-    },
-    {
-     "shop": "Tannery",
-     "summary": "A tannery"
-    },
-    {
-     "shop": "Chandlery",
-     "summary": "A chandler’s shop"
-    },
-    {
-     "shop": "Weavers",
-     "summary": "A weaver’s workshop"
-    },
-    {
-     "shop": "Cooperage",
-     "summary": "A cooperage"
-    },
-    {
-     "shop": "Apothecary",
-     "summary": "An apothecary"
-    },
-    {
-     "shop": "Grocer",
-     "summary": "A grocer’s"
-    },
-    {
-     "shop": "Fletchery",
-     "summary": "A fletcher’s shop"
-    },
-    {
-     "shop": "Masonry",
-     "summary": "A mason’s yard"
-    },
-    {
-     "shop": "Cobblers",
-     "summary": "A cobbler’s shop"
-    }
-   ]
+   }
   },
   {
-   "id": "italian",
-   "title": "Italian",
-   "summary": "Vie and piazze, osterie and saints, as in a town of the Italian peninsula.",
-   "lists": {
-    "streetStart": [
-     "del Mulino",
-     "del Ponte",
-     "della Fonte",
-     "della Chiesa",
-     "dei Fabbri",
-     "dei Tessitori",
-     "del Mercato",
-     "dell’Orto",
-     "della Torre",
-     "del Castello",
-     "della Rosa",
-     "del Pozzo",
-     "delle Mura",
-     "dei Conciatori",
-     "del Forno",
-     "dei Pescatori",
-     "dei Muratori",
-     "della Luna",
-     "del Sole",
-     "dell’Olmo",
-     "della Quercia",
-     "dei Cavalieri",
-     "della Lanterna",
-     "del Corvo"
+   "id": "celtic",
+   "title": "Celtic",
+   "summary": "Welsh-flavoured: Aber and Pen places, Melin and Pont streets.",
+   "modifierPosition": "after",
+   "words": {
+    "street": {
+     "mill": "Melin",
+     "bridge": "Pont",
+     "market": "Marchnad",
+     "church": "Eglwys",
+     "king": "Brenin",
+     "tanner": "Barcer",
+     "smith": "Gof",
+     "baker": "Pobydd",
+     "well": "Ffynnon",
+     "stone": "Maen",
+     "oak": "Derwen",
+     "ash": "Onnen",
+     "river": "Afon",
+     "high": "Uchel",
+     "low": "Isel",
+     "old": "Hen",
+     "new": "Newydd",
+     "chapel": "Capel",
+     "mason": "Saer Maen",
+     "weaver": "Gwehydd",
+     "fisher": "Pysgotwr",
+     "cooper": "Casgenwr",
+     "rope": "Rhaff",
+     "gate": "Porth",
+     "hill": "Bryn",
+     "orchard": "Perllan",
+     "elm": "Llwyfen",
+     "briar": "Drain",
+     "heron": "Crëyr",
+     "lantern": "Llusern"
+    },
+    "quarter": {
+     "old": "Hen",
+     "craft": "Crefft",
+     "temple": "Teml",
+     "merchant": "Masnach",
+     "garden": "Gardd",
+     "harbour": "Harbwr",
+     "weavers": "Gwehyddion",
+     "tanners": "Barcwyr",
+     "scholars": "Ysgolheigion",
+     "guild": "Gild"
+    },
+    "innAdjective": {
+     "gilded": "Euraidd",
+     "rusty": "Rhydlyd",
+     "sleeping": "Cysglyd",
+     "crooked": "Cam",
+     "merry": "Llon",
+     "silver": "Arian",
+     "golden": "Aur",
+     "drunken": "Meddw",
+     "wandering": "Crwydrol",
+     "black": "Du",
+     "red": "Coch",
+     "broken": "Toredig",
+     "jolly": "Siriol"
+    },
+    "innNoun": {
+     "gull": "Gwylan",
+     "stag": "Hydd",
+     "boar": "Baedd",
+     "lantern": "Llusern",
+     "anchor": "Angor",
+     "crown": "Coron",
+     "goose": "Gŵydd",
+     "barrel": "Casgen",
+     "raven": "Cigfran",
+     "fox": "Cadno",
+     "wheel": "Olwyn",
+     "plough": "Aradr",
+     "kettle": "Tegell",
+     "heron": "Crëyr"
+    },
+    "chapelVirtue": {
+     "light": "Goleuni",
+     "mercy": "Trugaredd",
+     "harvest": "Cynhaeaf",
+     "hearth": "Aelwyd",
+     "moon": "Lleuad",
+     "road": "Ffordd",
+     "rest": "Gorffwys",
+     "deepWells": "Ffynhonnau Dwfn"
+    },
+    "landmarkVirtue": {
+     "light": "Goleuni",
+     "mercy": "Trugaredd",
+     "harvest": "Cynhaeaf",
+     "hearth": "Aelwyd",
+     "moon": "Lleuad",
+     "road": "Ffordd",
+     "rest": "Gorffwys",
+     "wisdom": "Doethineb"
+    },
+    "landmarkAdjective": {
+     "grey": "Llwyd",
+     "iron": "Haearn",
+     "white": "Gwyn",
+     "black": "Du",
+     "high": "Uchel",
+     "old": "Hen",
+     "silent": "Tawel",
+     "stern": "Llym",
+     "golden": "Aur",
+     "red": "Coch"
+    },
+    "woodAdjective": {
+     "old": "Hen",
+     "dark": "Tywyll",
+     "whispering": "Sibrwd",
+     "elder": "Hynaf",
+     "silent": "Tawel",
+     "deep": "Dwfn",
+     "green": "Gwyrdd",
+     "grey": "Llwyd",
+     "ancient": "Hynafol",
+     "hollow": "Gwag"
+    },
+    "peakAdjective": {
+     "grey": "Llwyd",
+     "iron": "Haearn",
+     "white": "Gwyn",
+     "broken": "Toredig",
+     "storm": "Storm",
+     "black": "Du",
+     "high": "Uchel",
+     "frost": "Rhew",
+     "red": "Coch",
+     "shattered": "Chwilfriw"
+    },
+    "seaAdjective": {
+     "grey": "Llwyd",
+     "northern": "Gogleddol",
+     "narrow": "Cul",
+     "stormy": "Stormus",
+     "silver": "Arian",
+     "western": "Gorllewinol",
+     "pale": "Gwelw",
+     "salt": "Hallt",
+     "great": "Mawr"
+    },
+    "compass": {
+     "east": "Dwyrain",
+     "northEast": "Gogledd-ddwyrain",
+     "north": "Gogledd",
+     "northWest": "Gogledd-orllewin",
+     "west": "Gorllewin",
+     "southWest": "De-orllewin",
+     "south": "De",
+     "southEast": "De-ddwyrain"
+    },
+    "gate": {
+     "gate": "Porth"
+    }
+   },
+   "names": {
+    "shopOwner": [
+     "Rhys",
+     "Gethin",
+     "Elwyn",
+     "Madoc",
+     "Owain",
+     "Bryn",
+     "Tegid",
+     "Idris",
+     "Aled",
+     "Dafydd",
+     "Emrys",
+     "Gwilym",
+     "Hywel",
+     "Iolo",
+     "Llywelyn",
+     "Morgan",
+     "Rhodri",
+     "Trefor"
     ],
-    "streetEnd": [
-     "Via",
-     "Vicolo",
-     "Strada",
-     "Corso"
+    "riverName": [
+     "Gwy",
+     "Dyfi",
+     "Taf",
+     "Elan",
+     "Alun",
+     "Teifi",
+     "Tywi",
+     "Ogwen",
+     "Conwy",
+     "Clwyd",
+     "Dwyryd",
+     "Llugwy"
     ],
-    "quarter": [
-     "Borgo Vecchio",
-     "Quartiere dei Mercanti",
-     "Quartiere del Porto",
-     "Quartiere dei Tessitori",
-     "Quartiere dei Conciatori",
-     "Quartiere dei Dotti",
-     "Rione del Tempio",
-     "Quartiere delle Corporazioni",
-     "Rione dei Giardini",
-     "Quartiere degli Artigiani"
+    "manorOwner": [
+     "Rhys",
+     "Gethin",
+     "Elwyn",
+     "Madoc",
+     "Owain",
+     "Bryn",
+     "Tegid",
+     "Idris",
+     "Aled",
+     "Dafydd",
+     "Emrys",
+     "Hywel"
     ],
-    "innKind": [
-     "Osteria",
-     "Locanda",
-     "Taverna"
+    "landmarkOwner": [
+     "Rhys",
+     "Gethin",
+     "Elwyn",
+     "Madoc",
+     "Owain",
+     "Bryn",
+     "Tegid",
+     "Idris",
+     "Aled",
+     "Dafydd",
+     "Emrys",
+     "Hywel"
     ],
-    "innNoun": [
-     "del Cervo",
-     "del Gallo",
-     "della Luna",
-     "dell’Aquila",
-     "del Corvo",
-     "del Leone",
-     "della Volpe",
-     "del Cinghiale",
-     "dell’Ancora",
-     "della Corona",
-     "del Pellegrino",
-     "dei Tre Re",
-     "della Lanterna",
-     "del Lupo"
+    "placeStart": [
+     "Aber",
+     "Pen",
+     "Caer",
+     "Tre",
+     "Pont",
+     "Cwm",
+     "Bryn",
+     "Rhos",
+     "Nant",
+     "Dol",
+     "Glyn"
     ],
-    "surname": [
+    "placeEnd": [
+     "gwy",
+     "dyfi",
+     "taf",
+     "wen",
+     "goch",
+     "glas",
+     "dur",
+     "fa",
+     "mawr",
+     "uchaf"
+    ],
+    "realmName": [
+     "Gwyndir",
+     "Cwmdur",
+     "Rhosfa",
+     "Tegfryn",
+     "Dolwen",
+     "Maesglas",
+     "Eryrfa",
+     "Garthwen",
+     "Moelglas",
+     "Nantgoch",
+     "Bryngwyn",
+     "Llwyn"
+    ]
+   }
+  },
+  {
+   "id": "slavic",
+   "title": "Slavic",
+   "summary": "Czech-flavoured: -hrad and -ves places, Mlýn and Most streets.",
+   "modifierPosition": "before",
+   "words": {
+    "street": {
+     "mill": "Mlýn",
+     "bridge": "Most",
+     "market": "Trh",
+     "church": "Kostel",
+     "king": "Král",
+     "tanner": "Koželuh",
+     "smith": "Kovář",
+     "baker": "Pekař",
+     "well": "Studna",
+     "stone": "Kámen",
+     "oak": "Dub",
+     "ash": "Jasan",
+     "river": "Řeka",
+     "high": "Vysoký",
+     "low": "Nízký",
+     "old": "Starý",
+     "new": "Nový",
+     "chapel": "Kaple",
+     "mason": "Zedník",
+     "weaver": "Tkadlec",
+     "fisher": "Rybář",
+     "cooper": "Bednář",
+     "rope": "Lano",
+     "gate": "Brána",
+     "hill": "Kopec",
+     "orchard": "Sad",
+     "elm": "Jilm",
+     "briar": "Trn",
+     "heron": "Volavka",
+     "lantern": "Lucerna"
+    },
+    "quarter": {
+     "old": "Starý",
+     "craft": "Řemeslnický",
+     "temple": "Chrámový",
+     "merchant": "Kupecký",
+     "garden": "Zahradní",
+     "harbour": "Přístavní",
+     "weavers": "Tkalcovský",
+     "tanners": "Koželužský",
+     "scholars": "Učený",
+     "guild": "Cechovní"
+    },
+    "innAdjective": {
+     "gilded": "Pozlacený",
+     "rusty": "Rezavý",
+     "laughing": "Smějící",
+     "sleeping": "Spící",
+     "crooked": "Křivý",
+     "merry": "Veselý",
+     "silver": "Stříbrný",
+     "golden": "Zlatý",
+     "drunken": "Opilý",
+     "wandering": "Putující",
+     "black": "Černý",
+     "red": "Červený",
+     "broken": "Zlomený",
+     "jolly": "Rozverný"
+    },
+    "innNoun": {
+     "gull": "Racek",
+     "stag": "Jelen",
+     "boar": "Kanec",
+     "lantern": "Lucerna",
+     "anchor": "Kotva",
+     "crown": "Koruna",
+     "goose": "Husa",
+     "barrel": "Sud",
+     "raven": "Havran",
+     "fox": "Liška",
+     "wheel": "Kolo",
+     "plough": "Pluh",
+     "kettle": "Kotlík",
+     "heron": "Volavka"
+    },
+    "chapelVirtue": {
+     "light": "Světlo",
+     "mercy": "Milosrdenství",
+     "harvest": "Žně",
+     "hearth": "Krb",
+     "moon": "Měsíc",
+     "road": "Cesta",
+     "rest": "Odpočinek",
+     "deepWells": "Hluboké studny"
+    },
+    "landmarkVirtue": {
+     "light": "Světlo",
+     "mercy": "Milosrdenství",
+     "harvest": "Žně",
+     "hearth": "Krb",
+     "moon": "Měsíc",
+     "road": "Cesta",
+     "rest": "Odpočinek",
+     "wisdom": "Moudrost"
+    },
+    "landmarkAdjective": {
+     "grey": "Šedý",
+     "iron": "Železný",
+     "white": "Bílý",
+     "black": "Černý",
+     "high": "Vysoký",
+     "old": "Starý",
+     "silent": "Tichý",
+     "stern": "Přísný",
+     "golden": "Zlatý",
+     "red": "Červený"
+    },
+    "woodAdjective": {
+     "old": "Starý",
+     "dark": "Temný",
+     "whispering": "Šeptající",
+     "elder": "Prastarý",
+     "silent": "Tichý",
+     "deep": "Hluboký",
+     "green": "Zelený",
+     "grey": "Šedý",
+     "ancient": "Dávný",
+     "hollow": "Dutý"
+    },
+    "peakAdjective": {
+     "grey": "Šedé",
+     "iron": "Železné",
+     "white": "Bílé",
+     "broken": "Zlomené",
+     "storm": "Bouřlivé",
+     "black": "Černé",
+     "high": "Vysoké",
+     "frost": "Mrazivé",
+     "red": "Červené",
+     "shattered": "Roztříštěné"
+    },
+    "seaAdjective": {
+     "grey": "Šedé",
+     "northern": "Severní",
+     "narrow": "Úzké",
+     "stormy": "Bouřlivé",
+     "silver": "Stříbrné",
+     "western": "Západní",
+     "pale": "Bledé",
+     "salt": "Slané",
+     "great": "Velké"
+    },
+    "compass": {
+     "east": "Východ",
+     "northEast": "Severovýchod",
+     "north": "Sever",
+     "northWest": "Severozápad",
+     "west": "Západ",
+     "southWest": "Jihozápad",
+     "south": "Jih",
+     "southEast": "Jihovýchod"
+    },
+    "gate": {
+     "gate": "Brána"
+    }
+   },
+   "names": {
+    "shopOwner": [
+     "Novák",
+     "Svoboda",
+     "Dvořák",
+     "Procházka",
+     "Krejčí",
+     "Horák",
+     "Němec",
+     "Pokorný",
+     "Marek",
+     "Pospíšil",
+     "Hájek",
+     "Král",
+     "Jelínek",
+     "Růžička",
+     "Beneš",
+     "Fiala",
+     "Sedláček",
+     "Kolář"
+    ],
+    "riverName": [
+     "Bystra",
+     "Lužná",
+     "Zlatá",
+     "Černá",
+     "Bílá",
+     "Tichá",
+     "Rychlá",
+     "Olšava",
+     "Sivá",
+     "Modrá",
+     "Střela",
+     "Hlubočka"
+    ],
+    "manorOwner": [
+     "Novák",
+     "Svoboda",
+     "Dvořák",
+     "Procházka",
+     "Krejčí",
+     "Horák",
+     "Němec",
+     "Pokorný",
+     "Marek",
+     "Hájek",
+     "Beneš",
+     "Fiala"
+    ],
+    "landmarkOwner": [
+     "Novák",
+     "Svoboda",
+     "Dvořák",
+     "Procházka",
+     "Krejčí",
+     "Horák",
+     "Němec",
+     "Pokorný",
+     "Marek",
+     "Hájek",
+     "Beneš",
+     "Fiala"
+    ],
+    "placeStart": [
+     "Zlato",
+     "Bělo",
+     "Černo",
+     "Novo",
+     "Staro",
+     "Lipo",
+     "Dubo",
+     "Boro",
+     "Kameno",
+     "Vysoko",
+     "Stříbro",
+     "Mokro"
+    ],
+    "placeEnd": [
+     "hrad",
+     "grad",
+     "ves",
+     "pole",
+     "hora",
+     "dol",
+     "brod",
+     "mír"
+    ],
+    "realmName": [
+     "Zlatohor",
+     "Černolesí",
+     "Bělohradsko",
+     "Stříbrnice",
+     "Novograd",
+     "Vysokohor",
+     "Dubrava",
+     "Svatopole",
+     "Medvědí Země",
+     "Orlí Hnízdo",
+     "Lipnice",
+     "Kamenohor"
+    ]
+   }
+  },
+  {
+   "id": "romance",
+   "title": "Romance",
+   "summary": "Italian-flavoured: Monte and Castel places, Mulino and Ponte streets.",
+   "modifierPosition": "after",
+   "words": {
+    "street": {
+     "mill": "Mulino",
+     "bridge": "Ponte",
+     "market": "Mercato",
+     "church": "Chiesa",
+     "king": "Re",
+     "tanner": "Conciatore",
+     "smith": "Fabbro",
+     "baker": "Fornaio",
+     "well": "Pozzo",
+     "stone": "Pietra",
+     "oak": "Quercia",
+     "ash": "Frassino",
+     "river": "Fiume",
+     "high": "Alto",
+     "low": "Basso",
+     "old": "Vecchio",
+     "new": "Nuovo",
+     "chapel": "Cappella",
+     "mason": "Muratore",
+     "weaver": "Tessitore",
+     "fisher": "Pescatore",
+     "cooper": "Bottaio",
+     "rope": "Corda",
+     "gate": "Porta",
+     "hill": "Colle",
+     "orchard": "Frutteto",
+     "elm": "Olmo",
+     "briar": "Rovo",
+     "heron": "Airone",
+     "lantern": "Lanterna"
+    },
+    "quarter": {
+     "old": "Vecchio",
+     "craft": "Artigiano",
+     "temple": "Tempio",
+     "merchant": "Mercante",
+     "garden": "Giardino",
+     "harbour": "Porto",
+     "weavers": "Tessitori",
+     "tanners": "Conciatori",
+     "scholars": "Dotti",
+     "guild": "Corporazione"
+    },
+    "innAdjective": {
+     "gilded": "Dorato",
+     "rusty": "Arrugginito",
+     "laughing": "Ridente",
+     "sleeping": "Dormiente",
+     "crooked": "Storto",
+     "merry": "Allegro",
+     "silver": "Argento",
+     "golden": "Oro",
+     "drunken": "Ubriaco",
+     "wandering": "Errante",
+     "black": "Nero",
+     "red": "Rosso",
+     "broken": "Rotto",
+     "jolly": "Gioviale"
+    },
+    "innNoun": {
+     "gull": "Gabbiano",
+     "stag": "Cervo",
+     "boar": "Cinghiale",
+     "lantern": "Lanterna",
+     "anchor": "Ancora",
+     "crown": "Corona",
+     "goose": "Oca",
+     "barrel": "Botte",
+     "raven": "Corvo",
+     "fox": "Volpe",
+     "wheel": "Ruota",
+     "plough": "Aratro",
+     "kettle": "Bollitore",
+     "heron": "Airone"
+    },
+    "chapelVirtue": {
+     "light": "Luce",
+     "mercy": "Misericordia",
+     "harvest": "Raccolto",
+     "hearth": "Focolare",
+     "moon": "Luna",
+     "road": "Strada",
+     "rest": "Riposo",
+     "deepWells": "Pozzi Profondi"
+    },
+    "landmarkVirtue": {
+     "light": "Luce",
+     "mercy": "Misericordia",
+     "harvest": "Raccolto",
+     "hearth": "Focolare",
+     "moon": "Luna",
+     "road": "Strada",
+     "rest": "Riposo",
+     "wisdom": "Saggezza"
+    },
+    "landmarkAdjective": {
+     "grey": "Grigio",
+     "iron": "Ferro",
+     "white": "Bianco",
+     "black": "Nero",
+     "high": "Alto",
+     "old": "Antico",
+     "silent": "Silenzioso",
+     "stern": "Severo",
+     "golden": "Oro",
+     "red": "Rosso"
+    },
+    "woodAdjective": {
+     "old": "Antico",
+     "dark": "Oscuro",
+     "whispering": "Sussurrante",
+     "elder": "Anziano",
+     "silent": "Silenzioso",
+     "deep": "Profondo",
+     "green": "Verde",
+     "grey": "Grigio",
+     "ancient": "Arcaico",
+     "hollow": "Cavo"
+    },
+    "peakAdjective": {
+     "grey": "Grigi",
+     "iron": "Ferro",
+     "white": "Bianchi",
+     "broken": "Spezzati",
+     "storm": "Tempesta",
+     "black": "Neri",
+     "high": "Alti",
+     "frost": "Gelo",
+     "red": "Rossi",
+     "shattered": "Infranti"
+    },
+    "seaAdjective": {
+     "grey": "Grigio",
+     "northern": "Settentrionale",
+     "narrow": "Stretto",
+     "stormy": "Tempestoso",
+     "silver": "Argento",
+     "western": "Occidentale",
+     "pale": "Pallido",
+     "salt": "Salato",
+     "great": "Grande"
+    },
+    "compass": {
+     "east": "Est",
+     "northEast": "Nord-Est",
+     "north": "Nord",
+     "northWest": "Nord-Ovest",
+     "west": "Ovest",
+     "southWest": "Sud-Ovest",
+     "south": "Sud",
+     "southEast": "Sud-Est"
+    },
+    "gate": {
+     "gate": "Porta"
+    }
+   },
+   "names": {
+    "shopOwner": [
      "Rossi",
      "Bianchi",
      "Ferrari",
@@ -544,16 +1193,6 @@
      "Longo",
      "Gatti"
     ],
-    "virtue": [
-     "San Martino",
-     "Santa Lucia",
-     "San Giorgio",
-     "Santa Chiara",
-     "San Luca",
-     "Santa Maria",
-     "San Michele",
-     "Santa Caterina"
-    ],
     "riverName": [
      "Alba",
      "Serena",
@@ -562,9 +1201,13 @@
      "Lenza",
      "Morena",
      "Sorana",
-     "Velina"
+     "Velina",
+     "Lirone",
+     "Verdana",
+     "Salina",
+     "Trebia"
     ],
-    "manorSurname": [
+    "manorOwner": [
      "Rossi",
      "Bianchi",
      "Ferrari",
@@ -574,9 +1217,11 @@
      "Bruno",
      "Gallo",
      "Costa",
-     "Fontana"
+     "Fontana",
+     "Marino",
+     "Ricci"
     ],
-    "landmarkSurname": [
+    "landmarkOwner": [
      "Rossi",
      "Bianchi",
      "Ferrari",
@@ -586,24 +1231,9 @@
      "Bruno",
      "Gallo",
      "Costa",
-     "Fontana"
-    ],
-    "landmarkAdjective": [
-     "Antica",
-     "Grande",
-     "Rossa",
-     "Nera",
-     "Bianca"
-    ],
-    "landmarkVirtue": [
-     "San Martino",
-     "Santa Lucia",
-     "San Giorgio",
-     "Santa Chiara",
-     "San Luca",
-     "Santa Maria",
-     "San Michele",
-     "Santa Caterina"
+     "Fontana",
+     "Marino",
+     "Ricci"
     ],
     "placeStart": [
      "Monte",
@@ -614,7 +1244,8 @@
      "Colle",
      "Porto",
      "Poggio",
-     "Rocca"
+     "Rocca",
+     "Villa"
     ],
     "placeEnd": [
      "alto",
@@ -645,257 +1276,174 @@
      "Aurelia",
      "Vesperia",
      "Albaterra"
-    ],
-    "realmTitle": [
-     "Regno",
-     "Ducato",
-     "Principato",
-     "Repubblica",
-     "Contea"
-    ],
-    "woodName": [
-     "Antica",
-     "Oscura",
-     "Profonda",
-     "Silenziosa",
-     "Verde",
-     "Grigia",
-     "Sussurrante",
-     "Vecchia"
-    ],
-    "peakName": [
-     "Grigi",
-     "Neri",
-     "Bianchi",
-     "Rossi",
-     "Spezzati",
-     "Tempestosi",
-     "Alti",
-     "Gelidi"
-    ],
-    "seaName": [
-     "Grigio",
-     "Settentrionale",
-     "Stretto",
-     "Tempestoso",
-     "Occidentale",
-     "Pallido",
-     "Salato",
-     "Grande",
-     "d’Argento"
-    ],
-    "compass": [
-     "Est",
-     "Nord-Est",
-     "Nord",
-     "Nord-Ovest",
-     "Ovest",
-     "Sud-Ovest",
-     "Sud",
-     "Sud-Est"
     ]
-   },
-   "patterns": {
-    "street": [
-     "{streetEnd} {streetStart}"
-    ],
-    "quarter": [
-     "{quarter}"
-    ],
-    "inn": [
-     "{innKind} {innNoun}"
-    ],
-    "forge": [
-     "Fucina {surname}"
-    ],
-    "shop": [
-     "{shop} {surname}"
-    ],
-    "chapel": [
-     "Cappella di {virtue}"
-    ],
-    "river": [
-     "Fiume {riverName}"
-    ],
-    "manor": [
-     "Villa {manorSurname}"
-    ],
-    "settlement": [
-     "{placeStart}{placeEnd}"
-    ],
-    "realm": [
-     "{realmTitle} di {realmName}"
-    ],
-    "forest": [
-     "La Foresta {woodName}"
-    ],
-    "mountains": [
-     "I Monti {peakName}"
-    ],
-    "sea": [
-     "Il Mare {seaName}"
-    ],
-    "marketSquare": [
-     "Piazza del Mercato"
-    ],
-    "landmark.cathedral": [
-     "Cattedrale di {virtue}"
-    ],
-    "landmark.castle": [
-     "Castello {surname}"
-    ],
-    "landmark.university": [
-     "Ateneo {surname}"
-    ],
-    "landmark.library": [
-     "La Grande Biblioteca"
-    ],
-    "landmark.guildhall": [
-     "Palazzo delle Corporazioni"
-    ],
-    "landmark.arena": [
-     "L’Arena {adjective}"
-    ],
-    "landmark.infirmary": [
-     "Ospedale di {virtue}"
-    ],
-    "landmark.wizardsTower": [
-     "Torre {surname}"
-    ],
-    "landmark.prison": [
-     "La Prigione {adjective}"
-    ],
-    "gateRoad": [
-     "Via della Porta {compass}"
-    ],
-    "road": [
-     "Strada {compass}"
-    ],
-    "gate": [
-     "Porta {compass}"
-    ]
-   },
-   "trades": [
-    {
-     "shop": "Panetteria",
-     "summary": "A bakery"
-    },
-    {
-     "shop": "Conceria",
-     "summary": "A tannery"
-    },
-    {
-     "shop": "Cereria",
-     "summary": "A chandler’s shop"
-    },
-    {
-     "shop": "Tessitoria",
-     "summary": "A weaver’s workshop"
-    },
-    {
-     "shop": "Bottaio",
-     "summary": "A cooperage"
-    },
-    {
-     "shop": "Erboristeria",
-     "summary": "An apothecary"
-    },
-    {
-     "shop": "Drogheria",
-     "summary": "A grocer’s"
-    },
-    {
-     "shop": "Arcaio",
-     "summary": "A fletcher’s shop"
-    },
-    {
-     "shop": "Scalpellino",
-     "summary": "A mason’s yard"
-    },
-    {
-     "shop": "Calzoleria",
-     "summary": "A cobbler’s shop"
-    }
-   ]
+   }
   },
   {
-   "id": "german",
-   "title": "German",
-   "summary": "Compound street names, Zum-inns and Zunfthäuser, as in a German town.",
-   "lists": {
-    "streetStart": [
-     "Mühlen",
-     "Kirch",
-     "Markt",
-     "Brücken",
-     "Schmiede",
-     "Bäcker",
-     "Brunnen",
-     "Linden",
-     "Eichen",
-     "Burg",
-     "Hafen",
-     "Gerber",
-     "Weber",
-     "Fischer",
-     "Maurer",
-     "Rosen",
-     "Tor",
-     "Wasser",
-     "Hirten",
-     "Kerzen",
-     "Berg",
-     "Schul"
-    ],
-    "streetEnd": [
-     "straße",
-     "gasse",
-     "weg",
-     "pfad"
-    ],
-    "quarter": [
-     "Altstadt",
-     "Handwerkerviertel",
-     "Tempelviertel",
-     "Kaufmannsviertel",
-     "Gartenviertel",
-     "Hafenviertel",
-     "Weberviertel",
-     "Gerberviertel",
-     "Gelehrtenviertel",
-     "Zunftviertel"
-    ],
-    "innAdjective": [
-     "goldenen",
-     "silbernen",
-     "roten",
-     "schwarzen",
-     "weißen",
-     "grünen",
-     "wilden",
-     "fröhlichen",
-     "durstigen",
-     "schlafenden",
-     "tanzenden",
-     "lachenden"
-    ],
-    "innNoun": [
-     "Hirsch",
-     "Bären",
-     "Adler",
-     "Löwen",
-     "Raben",
-     "Fuchs",
-     "Anker",
-     "Mond",
-     "Stern",
-     "Schwan",
-     "Wolf",
-     "Ochsen",
-     "Hahn",
-     "Pflug"
-    ],
-    "surname": [
+   "id": "germanic",
+   "title": "Germanic",
+   "summary": "German-flavoured: -burg and -dorf places, Mühle and Brücke streets.",
+   "modifierPosition": "before",
+   "words": {
+    "street": {
+     "mill": "Mühle",
+     "bridge": "Brücke",
+     "market": "Markt",
+     "church": "Kirche",
+     "king": "König",
+     "tanner": "Gerber",
+     "smith": "Schmied",
+     "baker": "Bäcker",
+     "well": "Brunnen",
+     "stone": "Stein",
+     "oak": "Eiche",
+     "ash": "Esche",
+     "river": "Fluss",
+     "high": "Hoch",
+     "low": "Nieder",
+     "old": "Alt",
+     "new": "Neu",
+     "chapel": "Kapelle",
+     "mason": "Maurer",
+     "weaver": "Weber",
+     "fisher": "Fischer",
+     "cooper": "Küfer",
+     "rope": "Seil",
+     "gate": "Tor",
+     "hill": "Berg",
+     "orchard": "Obstgarten",
+     "elm": "Ulme",
+     "briar": "Dorn",
+     "heron": "Reiher",
+     "lantern": "Laterne"
+    },
+    "quarter": {
+     "old": "Alt",
+     "craft": "Handwerk",
+     "temple": "Tempel",
+     "merchant": "Kaufmann",
+     "garden": "Garten",
+     "harbour": "Hafen",
+     "weavers": "Weber",
+     "tanners": "Gerber",
+     "scholars": "Gelehrte",
+     "guild": "Zunft"
+    },
+    "innAdjective": {
+     "gilded": "Vergoldet",
+     "rusty": "Rostig",
+     "laughing": "Lachend",
+     "sleeping": "Schlafend",
+     "crooked": "Krumm",
+     "merry": "Fröhlich",
+     "silver": "Silbern",
+     "golden": "Golden",
+     "drunken": "Betrunken",
+     "wandering": "Wandernd",
+     "black": "Schwarz",
+     "red": "Rot",
+     "broken": "Zerbrochen",
+     "jolly": "Heiter"
+    },
+    "innNoun": {
+     "gull": "Möwe",
+     "stag": "Hirsch",
+     "boar": "Eber",
+     "lantern": "Laterne",
+     "anchor": "Anker",
+     "crown": "Krone",
+     "goose": "Gans",
+     "barrel": "Fass",
+     "raven": "Rabe",
+     "fox": "Fuchs",
+     "wheel": "Rad",
+     "plough": "Pflug",
+     "kettle": "Kessel",
+     "heron": "Reiher"
+    },
+    "chapelVirtue": {
+     "light": "Licht",
+     "mercy": "Gnade",
+     "harvest": "Ernte",
+     "hearth": "Herd",
+     "moon": "Mond",
+     "road": "Weg",
+     "rest": "Ruhe",
+     "deepWells": "Tiefe Brunnen"
+    },
+    "landmarkVirtue": {
+     "light": "Licht",
+     "mercy": "Gnade",
+     "harvest": "Ernte",
+     "hearth": "Herd",
+     "moon": "Mond",
+     "road": "Weg",
+     "rest": "Ruhe",
+     "wisdom": "Weisheit"
+    },
+    "landmarkAdjective": {
+     "grey": "Grau",
+     "iron": "Eisern",
+     "white": "Weiß",
+     "black": "Schwarz",
+     "high": "Hoch",
+     "old": "Alt",
+     "silent": "Still",
+     "stern": "Streng",
+     "golden": "Golden",
+     "red": "Rot"
+    },
+    "woodAdjective": {
+     "old": "Alt",
+     "dark": "Dunkel",
+     "whispering": "Flüsternd",
+     "elder": "Ältest",
+     "silent": "Still",
+     "deep": "Tief",
+     "green": "Grün",
+     "grey": "Grau",
+     "ancient": "Uralt",
+     "hollow": "Hohl"
+    },
+    "peakAdjective": {
+     "grey": "Grau",
+     "iron": "Eisen",
+     "white": "Weiß",
+     "broken": "Zerbrochen",
+     "storm": "Sturm",
+     "black": "Schwarz",
+     "high": "Hoch",
+     "frost": "Frost",
+     "red": "Rot",
+     "shattered": "Zersplittert"
+    },
+    "seaAdjective": {
+     "grey": "Grau",
+     "northern": "Nördlich",
+     "narrow": "Eng",
+     "stormy": "Stürmisch",
+     "silver": "Silbern",
+     "western": "Westlich",
+     "pale": "Blass",
+     "salt": "Salzig",
+     "great": "Groß"
+    },
+    "compass": {
+     "east": "Ost",
+     "northEast": "Nordost",
+     "north": "Nord",
+     "northWest": "Nordwest",
+     "west": "West",
+     "southWest": "Südwest",
+     "south": "Süd",
+     "southEast": "Südost"
+    },
+    "gate": {
+     "gate": "Tor"
+    }
+   },
+   "names": {
+    "shopOwner": [
      "Müller",
      "Schmidt",
      "Becker",
@@ -915,16 +1463,6 @@
      "Bauer",
      "Schäfer"
     ],
-    "virtue": [
-     "Martin",
-     "Georg",
-     "Michael",
-     "Katharina",
-     "Johannes",
-     "Barbara",
-     "Nikolaus",
-     "Elisabeth"
-    ],
     "riverName": [
      "Lauter",
      "Tannau",
@@ -935,9 +1473,11 @@
      "Binn",
      "Eisen",
      "Murna",
-     "Wilde"
+     "Wilde",
+     "Sieg",
+     "Nahe"
     ],
-    "manorSurname": [
+    "manorOwner": [
      "Müller",
      "Schmidt",
      "Becker",
@@ -947,9 +1487,11 @@
      "Hoffmann",
      "Koch",
      "Richter",
-     "Krause"
+     "Krause",
+     "Keller",
+     "Vogel"
     ],
-    "landmarkSurname": [
+    "landmarkOwner": [
      "Müller",
      "Schmidt",
      "Becker",
@@ -959,25 +1501,9 @@
      "Hoffmann",
      "Koch",
      "Richter",
-     "Keller"
-    ],
-    "landmarkAdjective": [
-     "Alte",
-     "Graue",
-     "Eiserne",
-     "Goldene",
-     "Rote",
-     "Weiße"
-    ],
-    "landmarkVirtue": [
-     "Martin",
-     "Georg",
-     "Michael",
-     "Katharina",
-     "Johannes",
-     "Barbara",
-     "Nikolaus",
-     "Elisabeth"
+     "Krause",
+     "Keller",
+     "Vogel"
     ],
     "placeStart": [
      "Ober",
@@ -992,8 +1518,7 @@
      "Rosen",
      "Grün",
      "Königs",
-     "Hohen",
-     "Bad"
+     "Hohen"
     ],
     "placeEnd": [
      "berg",
@@ -1026,243 +1551,174 @@
      "Sonnenberg",
      "Bärenland",
      "Wasserburg"
-    ],
-    "realmTitle": [
-     "Königreich",
-     "Herzogtum",
-     "Fürstentum",
-     "Grafschaft",
-     "Markgrafschaft"
-    ],
-    "woodName": [
-     "Alte",
-     "Dunkle",
-     "Flüsternde",
-     "Tiefe",
-     "Stille",
-     "Grüne",
-     "Graue",
-     "Uralte"
-    ],
-    "peakName": [
-     "Graue",
-     "Eiserne",
-     "Weiße",
-     "Zerbrochene",
-     "Rote",
-     "Schwarze",
-     "Hohe",
-     "Frostige"
-    ],
-    "seaName": [
-     "Graue",
-     "Nördliche",
-     "Enge",
-     "Stürmische",
-     "Silberne",
-     "Westliche",
-     "Blasse",
-     "Salzige",
-     "Große"
-    ],
-    "compass": [
-     "Ost",
-     "Nordost",
-     "Nord",
-     "Nordwest",
-     "West",
-     "Südwest",
-     "Süd",
-     "Südost"
     ]
-   },
-   "patterns": {
-    "street": [
-     "{streetStart}{streetEnd}"
-    ],
-    "quarter": [
-     "{quarter}"
-    ],
-    "inn": [
-     "Zum {innAdjective} {innNoun}"
-    ],
-    "forge": [
-     "Schmiede {surname}"
-    ],
-    "shop": [
-     "{shop} {surname}"
-    ],
-    "chapel": [
-     "Kapelle St. {virtue}"
-    ],
-    "river": [
-     "Die {riverName}"
-    ],
-    "manor": [
-     "Gut {manorSurname}"
-    ],
-    "settlement": [
-     "{placeStart}{placeEnd}"
-    ],
-    "realm": [
-     "{realmTitle} {realmName}"
-    ],
-    "forest": [
-     "Der {woodName} Wald"
-    ],
-    "mountains": [
-     "Das {peakName} Gebirge"
-    ],
-    "sea": [
-     "Das {seaName} Meer"
-    ],
-    "marketSquare": [
-     "Marktplatz"
-    ],
-    "landmark.cathedral": [
-     "Dom St. {virtue}"
-    ],
-    "landmark.castle": [
-     "Burg {surname}"
-    ],
-    "landmark.university": [
-     "Universität {surname}"
-    ],
-    "landmark.library": [
-     "Die Große Bibliothek"
-    ],
-    "landmark.guildhall": [
-     "Das {adjective} Zunfthaus"
-    ],
-    "landmark.arena": [
-     "Die {adjective} Arena"
-    ],
-    "landmark.infirmary": [
-     "Spital St. {virtue}"
-    ],
-    "landmark.wizardsTower": [
-     "{surname}s Turm"
-    ],
-    "landmark.prison": [
-     "Das {adjective} Gefängnis"
-    ],
-    "gateRoad": [
-     "{compass}torstraße"
-    ],
-    "road": [
-     "{compass}straße"
-    ],
-    "gate": [
-     "{compass}tor"
-    ]
-   },
-   "trades": [
-    {
-     "shop": "Bäckerei",
-     "summary": "A bakery"
-    },
-    {
-     "shop": "Gerberei",
-     "summary": "A tannery"
-    },
-    {
-     "shop": "Kerzenzieherei",
-     "summary": "A chandler’s shop"
-    },
-    {
-     "shop": "Weberei",
-     "summary": "A weaver’s workshop"
-    },
-    {
-     "shop": "Küferei",
-     "summary": "A cooperage"
-    },
-    {
-     "shop": "Apotheke",
-     "summary": "An apothecary"
-    },
-    {
-     "shop": "Krämerei",
-     "summary": "A grocer’s"
-    },
-    {
-     "shop": "Bognerei",
-     "summary": "A fletcher’s shop"
-    },
-    {
-     "shop": "Steinmetz",
-     "summary": "A mason’s yard"
-    },
-    {
-     "shop": "Schusterei",
-     "summary": "A cobbler’s shop"
-    }
-   ]
+   }
   },
   {
    "id": "norse",
    "title": "Norse",
-   "summary": "Gata and veien, fjord towns and Den-inns, as in a Norwegian coastal town.",
-   "lists": {
-    "streetStart": [
-     "Kirke",
-     "Torg",
-     "Strand",
-     "Smed",
-     "Brygge",
-     "Mølle",
-     "Skole",
-     "Havne",
-     "Fjell",
-     "Elve",
-     "Eike",
-     "Bjørke",
-     "Garver",
-     "Fiske",
-     "Bakke",
-     "Furu"
-    ],
-    "streetEnd": [
-     "gata",
-     "veien",
-     "smuget"
-    ],
-    "quarter": [
-     "Gamlebyen",
-     "Håndverkerkvarteret",
-     "Tempelkvarteret",
-     "Kjøpmannskvarteret",
-     "Hagekvarteret",
-     "Havnekvarteret",
-     "Veverkvarteret",
-     "Garverkvarteret",
-     "Laugskvarteret"
-    ],
-    "innAdjective": [
-     "Gyldne",
-     "Røde",
-     "Svarte",
-     "Hvite",
-     "Glade",
-     "Sovende",
-     "Dansende",
-     "Tørste",
-     "Ville",
-     "Rustne"
-    ],
-    "innNoun": [
-     "Hjort",
-     "Bjørn",
-     "Ravn",
-     "Ulv",
-     "Ørn",
-     "Gås",
-     "Rev",
-     "Svane",
-     "Ugle",
-     "Hest"
-    ],
-    "surname": [
+   "summary": "Norwegian-flavoured: -fjord and -vik places, Mølle and Bro streets.",
+   "modifierPosition": "before",
+   "words": {
+    "street": {
+     "mill": "Mølle",
+     "bridge": "Bro",
+     "market": "Torg",
+     "church": "Kirke",
+     "king": "Konge",
+     "tanner": "Garver",
+     "smith": "Smed",
+     "baker": "Baker",
+     "well": "Brønn",
+     "stone": "Stein",
+     "oak": "Eik",
+     "ash": "Ask",
+     "river": "Elv",
+     "high": "Høy",
+     "low": "Lav",
+     "old": "Gammel",
+     "new": "Ny",
+     "chapel": "Kapell",
+     "mason": "Murer",
+     "weaver": "Veve",
+     "fisher": "Fisker",
+     "cooper": "Bøkker",
+     "rope": "Tau",
+     "gate": "Port",
+     "hill": "Bakke",
+     "orchard": "Frukthage",
+     "elm": "Alm",
+     "briar": "Torn",
+     "heron": "Hegre",
+     "lantern": "Lykt"
+    },
+    "quarter": {
+     "old": "Gamle",
+     "craft": "Håndverker",
+     "temple": "Tempel",
+     "merchant": "Kjøpmann",
+     "garden": "Hage",
+     "harbour": "Havn",
+     "weavers": "Veverne",
+     "tanners": "Garverne",
+     "scholars": "Lærde",
+     "guild": "Laug"
+    },
+    "innAdjective": {
+     "gilded": "Forgylt",
+     "rusty": "Rusten",
+     "laughing": "Leende",
+     "sleeping": "Sovende",
+     "crooked": "Skjev",
+     "merry": "Glad",
+     "silver": "Sølv",
+     "golden": "Gylden",
+     "drunken": "Full",
+     "wandering": "Vandrende",
+     "black": "Svart",
+     "red": "Rød",
+     "broken": "Knust",
+     "jolly": "Lystig"
+    },
+    "innNoun": {
+     "gull": "Måke",
+     "stag": "Hjort",
+     "boar": "Villsvin",
+     "lantern": "Lykt",
+     "anchor": "Anker",
+     "crown": "Krone",
+     "goose": "Gås",
+     "barrel": "Tønne",
+     "raven": "Ravn",
+     "fox": "Rev",
+     "wheel": "Hjul",
+     "plough": "Plog",
+     "kettle": "Kjele",
+     "heron": "Hegre"
+    },
+    "chapelVirtue": {
+     "light": "Lys",
+     "mercy": "Nåde",
+     "harvest": "Høst",
+     "hearth": "Ildsted",
+     "moon": "Måne",
+     "road": "Vei",
+     "rest": "Hvile",
+     "deepWells": "Dype Brønner"
+    },
+    "landmarkVirtue": {
+     "light": "Lys",
+     "mercy": "Nåde",
+     "harvest": "Høst",
+     "hearth": "Ildsted",
+     "moon": "Måne",
+     "road": "Vei",
+     "rest": "Hvile",
+     "wisdom": "Visdom"
+    },
+    "landmarkAdjective": {
+     "grey": "Grå",
+     "iron": "Jern",
+     "white": "Hvit",
+     "black": "Svart",
+     "high": "Høy",
+     "old": "Gammel",
+     "silent": "Stille",
+     "stern": "Streng",
+     "golden": "Gyllen",
+     "red": "Rød"
+    },
+    "woodAdjective": {
+     "old": "Gammel",
+     "dark": "Mørk",
+     "whispering": "Hviskende",
+     "elder": "Eldste",
+     "silent": "Stille",
+     "deep": "Dyp",
+     "green": "Grønn",
+     "grey": "Grå",
+     "ancient": "Eldgammel",
+     "hollow": "Hul"
+    },
+    "peakAdjective": {
+     "grey": "Grå",
+     "iron": "Jern",
+     "white": "Hvit",
+     "broken": "Knust",
+     "storm": "Storm",
+     "black": "Svart",
+     "high": "Høy",
+     "frost": "Frost",
+     "red": "Rød",
+     "shattered": "Splintret"
+    },
+    "seaAdjective": {
+     "grey": "Grå",
+     "northern": "Nordlig",
+     "narrow": "Trang",
+     "stormy": "Stormfull",
+     "silver": "Sølv",
+     "western": "Vestlig",
+     "pale": "Blek",
+     "salt": "Salt",
+     "great": "Stor"
+    },
+    "compass": {
+     "east": "Øst",
+     "northEast": "Nordøst",
+     "north": "Nord",
+     "northWest": "Nordvest",
+     "west": "Vest",
+     "southWest": "Sørvest",
+     "south": "Sør",
+     "southEast": "Sørøst"
+    },
+    "gate": {
+     "gate": "Port"
+    }
+   },
+   "names": {
+    "shopOwner": [
      "Haugen",
      "Berg",
      "Strand",
@@ -1276,15 +1732,11 @@
      "Hagen",
      "Solberg",
      "Lund",
-     "Holm"
-    ],
-    "virtue": [
-     "St. Olavs",
-     "St. Hallvards",
-     "St. Mikaels",
-     "St. Sunnivas",
-     "St. Magnus’",
-     "St. Johannes’"
+     "Holm",
+     "Ask",
+     "Brekke",
+     "Foss",
+     "Nygård"
     ],
     "riverName": [
      "Svartelva",
@@ -1296,9 +1748,11 @@
      "Dypelva",
      "Grønnelva",
      "Sandelva",
-     "Fossa"
+     "Fossa",
+     "Lågen",
+     "Tåna"
     ],
-    "manorSurname": [
+    "manorOwner": [
      "Haugen",
      "Berg",
      "Strand",
@@ -1308,9 +1762,11 @@
      "Vik",
      "Eide",
      "Sand",
-     "Hagen"
+     "Hagen",
+     "Lund",
+     "Holm"
     ],
-    "landmarkSurname": [
+    "landmarkOwner": [
      "Haugen",
      "Berg",
      "Dahl",
@@ -1318,24 +1774,11 @@
      "Moen",
      "Hagen",
      "Lund",
-     "Vik"
-    ],
-    "landmarkAdjective": [
-     "Gamle",
-     "Svarte",
-     "Grå",
-     "Rustne",
-     "Røde",
-     "Gyldne",
-     "Hvite"
-    ],
-    "landmarkVirtue": [
-     "St. Olavs",
-     "St. Hallvards",
-     "St. Mikaels",
-     "St. Sunnivas",
-     "St. Magnus’",
-     "St. Johannes’"
+     "Vik",
+     "Eide",
+     "Sand",
+     "Holm",
+     "Strand"
     ],
     "placeStart": [
      "Sol",
@@ -1351,9 +1794,7 @@
      "Ulv",
      "Ørn",
      "Sør",
-     "Nord",
-     "Øst",
-     "Vest"
+     "Nord"
     ],
     "placeEnd": [
      "by",
@@ -1382,510 +1823,8 @@
      "Eikeland",
      "Vinterheim",
      "Haukeland"
-    ],
-    "realmTitle": [
-     "Kongeriket",
-     "Hertugdømmet",
-     "Jarledømmet",
-     "Fylket",
-     "Riket"
-    ],
-    "woodName": [
-     "gamle",
-     "mørke",
-     "hviskende",
-     "dype",
-     "stille",
-     "grønne",
-     "grå",
-     "eldgamle"
-    ],
-    "peakName": [
-     "grå",
-     "svarte",
-     "hvite",
-     "knuste",
-     "røde",
-     "høye",
-     "kalde",
-     "stormfulle"
-    ],
-    "seaName": [
-     "grå",
-     "nordlige",
-     "trange",
-     "stormfulle",
-     "vestlige",
-     "bleke",
-     "salte",
-     "store"
-    ],
-    "compass": [
-     "Øst",
-     "Nordøst",
-     "Nord",
-     "Nordvest",
-     "Vest",
-     "Sørvest",
-     "Sør",
-     "Sørøst"
     ]
-   },
-   "patterns": {
-    "street": [
-     "{streetStart}{streetEnd}"
-    ],
-    "quarter": [
-     "{quarter}"
-    ],
-    "inn": [
-     "Den {innAdjective} {innNoun}"
-    ],
-    "forge": [
-     "{surname} Smie"
-    ],
-    "shop": [
-     "{surname} {shop}"
-    ],
-    "chapel": [
-     "{virtue} kapell"
-    ],
-    "river": [
-     "{riverName}"
-    ],
-    "manor": [
-     "{manorSurname}gård"
-    ],
-    "settlement": [
-     "{placeStart}{placeEnd}"
-    ],
-    "realm": [
-     "{realmTitle} {realmName}"
-    ],
-    "forest": [
-     "Den {woodName} skogen"
-    ],
-    "mountains": [
-     "De {peakName} fjellene"
-    ],
-    "sea": [
-     "Det {seaName} havet"
-    ],
-    "marketSquare": [
-     "Torget"
-    ],
-    "landmark.cathedral": [
-     "{virtue} domkirke"
-    ],
-    "landmark.castle": [
-     "{surname}borg"
-    ],
-    "landmark.university": [
-     "{surname} Akademi"
-    ],
-    "landmark.library": [
-     "Det Store Biblioteket"
-    ],
-    "landmark.guildhall": [
-     "Laugshuset"
-    ],
-    "landmark.arena": [
-     "Den {adjective} Arenaen"
-    ],
-    "landmark.infirmary": [
-     "{virtue} sykehus"
-    ],
-    "landmark.wizardsTower": [
-     "{surname}s Tårn"
-    ],
-    "landmark.prison": [
-     "Det {adjective} fengselet"
-    ],
-    "gateRoad": [
-     "{compass}portgata"
-    ],
-    "road": [
-     "{compass}veien"
-    ],
-    "gate": [
-     "{compass}porten"
-    ]
-   },
-   "trades": [
-    {
-     "shop": "Bakeri",
-     "summary": "A bakery"
-    },
-    {
-     "shop": "Garveri",
-     "summary": "A tannery"
-    },
-    {
-     "shop": "Lysstøperi",
-     "summary": "A chandler’s shop"
-    },
-    {
-     "shop": "Veveri",
-     "summary": "A weaver’s workshop"
-    },
-    {
-     "shop": "Bøkkeri",
-     "summary": "A cooperage"
-    },
-    {
-     "shop": "Apotek",
-     "summary": "An apothecary"
-    },
-    {
-     "shop": "Kolonial",
-     "summary": "A grocer’s"
-    },
-    {
-     "shop": "Pilmakeri",
-     "summary": "A fletcher’s shop"
-    },
-    {
-     "shop": "Steinhoggeri",
-     "summary": "A mason’s yard"
-    },
-    {
-     "shop": "Skomakeri",
-     "summary": "A cobbler’s shop"
-    }
-   ]
-  },
-  {
-   "id": "welsh",
-   "title": "Welsh",
-   "summary": "Heol and lôn, Aber, Llan and Pen towns, and inns named for beasts, as in Wales.",
-   "lists": {
-    "streetStart": [
-     "y Felin",
-     "y Farchnad",
-     "y Bont",
-     "yr Eglwys",
-     "y Castell",
-     "y Ffynnon",
-     "y Gof",
-     "y Coed",
-     "yr Afon",
-     "y Dderwen",
-     "yr Ysgol",
-     "y Cei",
-     "y Mynydd"
-    ],
-    "streetEnd": [
-     "Heol",
-     "Lôn",
-     "Stryd"
-    ],
-    "quarter": [
-     "Yr Hen Dref",
-     "Chwarter y Crefftwyr",
-     "Chwarter y Masnachwyr",
-     "Chwarter yr Eglwys",
-     "Chwarter y Cei",
-     "Chwarter y Gwehyddion",
-     "Chwarter y Cryddion",
-     "Chwarter y Dysgedig"
-    ],
-    "innNoun": [
-     "Y Ddraig Goch",
-     "Y Llew Coch",
-     "Yr Eryr",
-     "Y Gigfran",
-     "Y Dderwen",
-     "Yr Angor",
-     "Y Goron",
-     "Yr Hydd",
-     "Y Wennol",
-     "Y Tarw Du",
-     "Yr Hwyaden",
-     "Y Ceffyl Gwyn",
-     "Y Mochyn Du",
-     "Y Ceirw"
-    ],
-    "surname": [
-     "Rhys",
-     "Gethin",
-     "Elwyn",
-     "Madoc",
-     "Owain",
-     "Bryn",
-     "Tegid",
-     "Idris",
-     "Aled",
-     "Dafydd",
-     "Emrys",
-     "Gwilym",
-     "Hywel",
-     "Iolo",
-     "Llywelyn",
-     "Morgan",
-     "Rhodri",
-     "Trefor"
-    ],
-    "virtue": [
-     "Dewi",
-     "Mair",
-     "Teilo",
-     "Illtud",
-     "Padarn",
-     "Non",
-     "Cadog",
-     "Beuno"
-    ],
-    "riverName": [
-     "Ddu",
-     "Las",
-     "Wen",
-     "Goch",
-     "Dawel",
-     "Wyllt",
-     "Fawr"
-    ],
-    "manorSurname": [
-     "Rhys",
-     "Gethin",
-     "Elwyn",
-     "Madoc",
-     "Owain",
-     "Bryn",
-     "Tegid",
-     "Idris",
-     "Aled",
-     "Dafydd"
-    ],
-    "landmarkSurname": [
-     "Rhys",
-     "Gethin",
-     "Elwyn",
-     "Madoc",
-     "Owain",
-     "Bryn",
-     "Tegid",
-     "Idris",
-     "Aled",
-     "Dafydd"
-    ],
-    "landmarkAdjective": [
-     "Hen",
-     "Mawr",
-     "Du"
-    ],
-    "landmarkVirtue": [
-     "Dewi",
-     "Teilo",
-     "Illtud",
-     "Padarn",
-     "Cadog",
-     "Beuno"
-    ],
-    "riverMouth": [
-     "gwy",
-     "dyfi",
-     "taf",
-     "wen",
-     "ddu",
-     "glas"
-    ],
-    "saintTown": [
-     "fair",
-     "ddewi",
-     "deilo",
-     "gadog",
-     "illtud",
-     "badarn"
-    ],
-    "hill": [
-     "bryn",
-     "mynydd",
-     "craig",
-     "garth",
-     "allt"
-    ],
-    "realmName": [
-     "Gwyndir",
-     "Cwmdur",
-     "Rhosfa",
-     "Tegfryn",
-     "Dolwen",
-     "Maesglas",
-     "Eryrfa",
-     "Garthwen",
-     "Moelglas",
-     "Nantgoch",
-     "Bryngwyn",
-     "Llwyn"
-    ],
-    "realmTitle": [
-     "Teyrnas",
-     "Dugiaeth",
-     "Tywysogaeth",
-     "Arglwyddiaeth"
-    ],
-    "woodName": [
-     "Dywyll",
-     "Ddofn",
-     "Werdd",
-     "Lwyd",
-     "Dawel",
-     "Hynafol",
-     "Gudd"
-    ],
-    "peakName": [
-     "Duon",
-     "Gwynion",
-     "Cochion",
-     "Llwydion",
-     "Gleision",
-     "Uchel"
-    ],
-    "seaName": [
-     "Du",
-     "Llwyd",
-     "Tawel",
-     "Garw",
-     "Gwyn",
-     "Hallt",
-     "Mawr",
-     "Cul"
-    ],
-    "compass": [
-     "Dwyrain",
-     "Gogledd-ddwyrain",
-     "Gogledd",
-     "Gogledd-orllewin",
-     "Gorllewin",
-     "De-orllewin",
-     "De",
-     "De-ddwyrain"
-    ]
-   },
-   "patterns": {
-    "street": [
-     "{streetEnd} {streetStart}"
-    ],
-    "quarter": [
-     "{quarter}"
-    ],
-    "inn": [
-     "{innNoun}"
-    ],
-    "forge": [
-     "Gefail {surname}"
-    ],
-    "shop": [
-     "{shop} {surname}"
-    ],
-    "chapel": [
-     "Capel {virtue}"
-    ],
-    "river": [
-     "Afon {riverName}"
-    ],
-    "manor": [
-     "Plas {manorSurname}"
-    ],
-    "settlement": [
-     "Aber{riverMouth}",
-     "Llan{saintTown}",
-     "Pen{hill}"
-    ],
-    "realm": [
-     "{realmTitle} {realmName}"
-    ],
-    "forest": [
-     "Y Goedwig {woodName}"
-    ],
-    "mountains": [
-     "Y Mynyddoedd {peakName}"
-    ],
-    "sea": [
-     "Y Môr {seaName}"
-    ],
-    "marketSquare": [
-     "Sgwâr y Farchnad"
-    ],
-    "landmark.cathedral": [
-     "Eglwys Gadeiriol {virtue} Sant"
-    ],
-    "landmark.castle": [
-     "Castell {surname}"
-    ],
-    "landmark.university": [
-     "Prifysgol {surname}"
-    ],
-    "landmark.library": [
-     "Y Llyfrgell Fawr"
-    ],
-    "landmark.guildhall": [
-     "Neuadd y Gild"
-    ],
-    "landmark.arena": [
-     "Yr Arena"
-    ],
-    "landmark.infirmary": [
-     "Ysbyty {virtue}"
-    ],
-    "landmark.wizardsTower": [
-     "Tŵr {surname}"
-    ],
-    "landmark.prison": [
-     "Y Carchar"
-    ],
-    "gateRoad": [
-     "Heol Porth y {compass}"
-    ],
-    "road": [
-     "Heol y {compass}"
-    ],
-    "gate": [
-     "Porth y {compass}"
-    ]
-   },
-   "trades": [
-    {
-     "shop": "Becws",
-     "summary": "A bakery"
-    },
-    {
-     "shop": "Barcdy",
-     "summary": "A tannery"
-    },
-    {
-     "shop": "Siop Ganhwyllau",
-     "summary": "A chandler’s shop"
-    },
-    {
-     "shop": "Gwehydd",
-     "summary": "A weaver’s workshop"
-    },
-    {
-     "shop": "Casgenwr",
-     "summary": "A cooperage"
-    },
-    {
-     "shop": "Fferyllfa",
-     "summary": "An apothecary"
-    },
-    {
-     "shop": "Siop Fwyd",
-     "summary": "A grocer’s"
-    },
-    {
-     "shop": "Saer Bwâu",
-     "summary": "A fletcher’s shop"
-    },
-    {
-     "shop": "Saer Maen",
-     "summary": "A mason’s yard"
-    },
-    {
-     "shop": "Crydd",
-     "summary": "A cobbler’s shop"
-    }
-   ]
+   }
   }
  ]
 }

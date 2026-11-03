@@ -5,14 +5,14 @@
 
 import SwiftUI
 
-/// Chooses how the names a generator makes sound, with a line about the choice under it.
+/// Chooses the root language the proper names a generator makes come from.
 struct NamingStylePicker: View {
     @Binding var styleID: String
 
     var body: some View {
         Picker("Names", selection: $styleID) {
-            ForEach(NamingStyles.all) { style in Text(style.title).tag(style.id) }
+            ForEach(RootLanguages.all) { language in Text(language.title).tag(language.id) }
         }
-        .help(NamingStyles.style(styleID).summary)
+        .help(RootLanguages.language(styleID).summary)
     }
 }
