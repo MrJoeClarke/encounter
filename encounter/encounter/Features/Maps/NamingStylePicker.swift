@@ -41,23 +41,54 @@ struct LanguageMixEditor: View {
     }
 }
 
-/// The languages of each realm, so the names in a realm mix the influences it has.
+/// The languages of each realm, so the names in a realm mix the influences it has. A realm can be described in words, and the
+/// languages suggested from that.
 struct RealmLanguagesEditor: View {
     @Binding var options: WorldOptions
+    /// The realm whose languages are being worked out by the model.
+    @State private var suggesting: Int?
+    @State private var couldNotSuggest: Int?
+
+    private var modelAvailability: RootLanguageDrafter.Availability { RootLanguageDrafter.availability }
 
     var body: some View {
         ForEach(0..<options.realms, id: \.self) { realm in
             DisclosureGroup {
+                TextField("What is this realm like?", text: Binding(
+                    get: { options.description(forRealm: realm) },
+                    set: { options.setDescription($0, forRealm: realm) }
+                ), axis: .vertical)
+                .lineLimit(2...5)
+                HStack {
+                    Button("Suggest Languages", systemImage: "sparkles") { suggest(realm) }
+                        .disabled(suggesting != nil || modelAvailability != .available || options.description(forRealm: realm).trimmingCharacters(in: .whitespaces).isEmpty)
+                    if suggesting == realm { ProgressView().controlSize(.small) }
+                }
+                if case .unavailable(let reason) = modelAvailability {
+                    Text(reason).font(.caption).foregroundStyle(.secondary)
+                } else if couldNotSuggest == realm {
+                    Text("No languages could be suggested from that. Try describing the place or the people.").font(.caption).foregroundStyle(.secondary)
+                } else {
+                    Text("Reads the description and picks the languages to mix, which you can then change.").font(.caption).foregroundStyle(.secondary)
+                }
                 LanguageMixEditor(mix: Binding(
                     get: { options.languages(forRealm: realm) },
-                    set: { mix in
-                        while options.realmLanguages.count <= realm { options.realmLanguages.append([]) }
-                        options.realmLanguages[realm] = mix
-                    }
+                    set: { options.setLanguages($0, forRealm: realm) }
                 ))
             } label: {
                 LabeledContent("Realm \(realm + 1)", value: options.languages(forRealm: realm).titles)
             }
+        }
+    }
+
+    private func suggest(_ realm: Int) {
+        suggesting = realm
+        couldNotSuggest = nil
+        let text = options.description(forRealm: realm)
+        Task {
+            let mix = await LanguageChooser.choose(for: text)
+            if let mix { options.setLanguages(mix, forRealm: realm) } else { couldNotSuggest = realm }
+            suggesting = nil
         }
     }
 }

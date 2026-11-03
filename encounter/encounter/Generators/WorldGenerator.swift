@@ -122,6 +122,8 @@ nonisolated struct WorldOptions: Codable, Equatable, Sendable {
     var namingStyle = RootLanguages.englishID
     /// The languages of each realm, by realm number, with their weights. A realm with none uses `namingStyle`.
     var realmLanguages: [[LanguageWeight]] = []
+    /// What each realm is like, in the user's words, by realm number. Used to suggest its languages.
+    var realmDescriptions: [String] = []
 
     init() {}
 
@@ -129,6 +131,20 @@ nonisolated struct WorldOptions: Codable, Equatable, Sendable {
     func languages(forRealm realm: Int) -> [LanguageWeight] {
         if realm >= 0, realm < realmLanguages.count, !realmLanguages[realm].isEmpty { return realmLanguages[realm] }
         return [LanguageWeight(id: namingStyle, weight: 50)]
+    }
+
+    func description(forRealm realm: Int) -> String { realm >= 0 && realm < realmDescriptions.count ? realmDescriptions[realm] : "" }
+
+    mutating func setDescription(_ text: String, forRealm realm: Int) {
+        guard realm >= 0 else { return }
+        while realmDescriptions.count <= realm { realmDescriptions.append("") }
+        realmDescriptions[realm] = text
+    }
+
+    /// Sets the languages of a realm outright.
+    mutating func setLanguages(_ mix: [LanguageWeight], forRealm realm: Int) {
+        guard realm >= 0, !mix.isEmpty else { return }
+        storeLanguages(mix, forRealm: realm)
     }
 
     /// Turns one language on or off for a realm. The last one on can't be turned off.
@@ -167,6 +183,7 @@ nonisolated struct WorldOptions: Codable, Equatable, Sendable {
         includeExisting = try container.decodeIfPresent(Bool.self, forKey: .includeExisting) ?? true
         namingStyle = try container.decodeIfPresent(String.self, forKey: .namingStyle) ?? RootLanguages.englishID
         realmLanguages = try container.decodeIfPresent([[LanguageWeight]].self, forKey: .realmLanguages) ?? []
+        realmDescriptions = try container.decodeIfPresent([String].self, forKey: .realmDescriptions) ?? []
     }
 }
 

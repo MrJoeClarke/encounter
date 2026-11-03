@@ -83,3 +83,38 @@ struct RootLanguageDrafterModelTests {
         #expect(realms.count == 3)
     }
 }
+
+struct LanguageChooserTests {
+    @Test func theModelsAnswerIsCleanedIntoWeights() {
+        let made = LanguageChooser.weights(from: [("Slavic", 70), ("nonsense", 90), ("germanic", 250), ("slavic", 10), ("welsh", 0), ("norse", 5), ("romance", 5)])
+        // Unknown ids and repeats go, shares are kept within 1 to 100, the biggest first, and at most three remain.
+        #expect(made == [LanguageWeight(id: "germanic", weight: 100), LanguageWeight(id: "slavic", weight: 70), LanguageWeight(id: "norse", weight: 5)])
+    }
+
+    @Test func nothingUsableGivesNoChoice() {
+        #expect(LanguageChooser.weights(from: []) == nil)
+        #expect(LanguageChooser.weights(from: [("klingon", 50)]) == nil)
+    }
+
+    @Test func descriptionsAndLanguagesAreKeptWithTheOptions() throws {
+        var options = WorldOptions()
+        options.setDescription("Cold mountain clans", forRealm: 1)
+        options.setLanguages([LanguageWeight(id: "norse", weight: 80), LanguageWeight(id: "celtic", weight: 20)], forRealm: 1)
+        #expect(options.description(forRealm: 0).isEmpty && options.description(forRealm: 1) == "Cold mountain clans")
+        let back = try JSONDecoder().decode(WorldOptions.self, from: JSONEncoder().encode(options))
+        #expect(back == options && back.languages(forRealm: 1).map(\.id) == ["norse", "celtic"])
+        options.setLanguages([], forRealm: 1)
+        #expect(options.languages(forRealm: 1).count == 2)
+        #expect(try JSONDecoder().decode(WorldOptions.self, from: Data("{}".utf8)).realmDescriptions.isEmpty)
+    }
+
+    /// With the real model, on a machine that has one and RUN_MODEL_TESTS set: what a few descriptions give.
+    @Test(.enabled(if: RootLanguageDrafterModelTests.canRun), .timeLimit(.minutes(3)))
+    func theModelPicksSensibleLanguages() async {
+        for text in ["Inspired by eastern Europe", "Welsh hill farmers and old stone circles", "Viking raiders of the frozen north", "A merchant republic like Renaissance Italy", "Dwarvish names after Tolkien"] {
+            let started = Date()
+            let mix = await LanguageChooser.choose(for: text)
+            print("CHOICE \(text) ->", mix?.map { "\($0.id) \($0.weight)" } ?? ["nil"], Date().timeIntervalSince(started))
+        }
+    }
+}
