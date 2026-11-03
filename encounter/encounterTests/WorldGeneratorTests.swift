@@ -45,19 +45,73 @@ struct WorldGeneratorTests {
     // MARK: Land
 
     @Test func theShapeDecidesHowMuchLandThereIsAndWhere() {
-        let island = make(.island, realms: 1), continent = make(.continent), coast = make(.coast)
-        #expect(landShare(island) > 0.15 && landShare(island) < 0.4, "island \(landShare(island))")
+        let continent = make(.continent), coast = make(.coast), peninsula = make(.peninsula), archipelago = make(.archipelago)
         #expect(landShare(continent) > 0.4, "continent \(landShare(continent))")
         #expect(landShare(coast) > 0.4, "coast \(landShare(coast))")
-        #expect(landShare(island) < landShare(continent) && landShare(island) < landShare(coast))
-        // An island is one piece of land in the middle, with sea all round it.
-        #expect(island.features(of: "Region").count == 1)
-        let outline = vs(island.features(of: "Region")[0])
-        let bounds = Plane.bounds(outline)
-        #expect(bounds.min.x > 0.02 * island.extent && bounds.max.x < 0.98 * island.extent)
-        // A coast has sea along one side of the map and land reaching the other sides.
-        let reaches = vs(coast.features(of: "Region")[0]).map { ($0.x < 1, $0.y < 1, $0.x > coast.extent - 1, $0.y > coast.extent - 1) }
-        #expect(reaches.contains { $0.0 || $0.1 || $0.2 || $0.3 } == false || true)
+        #expect(landShare(peninsula) > 0.15 && landShare(peninsula) < 0.5, "peninsula \(landShare(peninsula))")
+        #expect(landShare(archipelago) > 0.12 && landShare(archipelago) < 0.4, "archipelago \(landShare(archipelago))")
+        #expect(landShare(archipelago) < landShare(continent) && landShare(archipelago) < landShare(coast))
+        // A continent has sea all round it.
+        for seed in UInt64(1)...6 {
+            let world = make(.continent, seed: seed)
+            let bounds = Plane.bounds(world.features(of: "Region").flatMap { vs($0) })
+            #expect(bounds.min.x > 0.01 * world.extent && bounds.max.x < 0.99 * world.extent && bounds.min.y > 0.01 * world.extent && bounds.max.y < 0.99 * world.extent, "seed \(seed)")
+        }
+    }
+
+    /// Which edges of the map the land of a world reaches.
+    private func edgesReached(_ world: GeneratedWorld) -> Set<Int> {
+        var reached = Set<Int>()
+        let slack = world.extent * 0.012
+        for point in world.features(of: "Region").flatMap({ vs($0) }) {
+            if point.y < slack { reached.insert(0) }
+            if point.y > world.extent - slack { reached.insert(1) }
+            if point.x < slack { reached.insert(2) }
+            if point.x > world.extent - slack { reached.insert(3) }
+        }
+        return reached
+    }
+
+    @Test func aCoastHasSeaAlongOneSideAndAPeninsulaIsJoinedToOneEdgeOnly() {
+        for seed in UInt64(1)...8 {
+            #expect(edgesReached(make(.coast, seed: seed)).count == 3, "coast, seed \(seed)")
+            let peninsula = make(.peninsula, seed: seed)
+            #expect(edgesReached(peninsula).count == 1, "peninsula, seed \(seed): \(edgesReached(peninsula))")
+        }
+    }
+
+    @Test func anArchipelagoIsIslandsWithACapitalOnEachWhenThereIsOneForEachRealm() {
+        for realms in [2, 3, 5] {
+            for seed in UInt64(1)...4 {
+                let world = make(.archipelago, realms: realms, seed: seed) { $0.islands = .few }
+                let islands = world.features(of: "Region").count
+                #expect(islands >= realms, "\(realms) realms, seed \(seed): \(islands) islands")
+                let capitals = world.features.filter { $0.kind == "capital" }
+                #expect(capitals.count == realms)
+                // No two capitals share an island.
+                let outlines = world.features(of: "Region").map { vs($0) }
+                var homes = Set<Int>()
+                for capital in capitals {
+                    guard case .point(let spot) = capital.shape else { continue }
+                    let home = outlines.firstIndex { SettlementGenerator.contains($0, V(x: spot.easting, y: spot.northing)) }
+                    #expect(home != nil && homes.insert(home!).inserted, "\(realms) realms, seed \(seed): two capitals on one island")
+                }
+            }
+        }
+    }
+
+    @Test func manyIslandsMakeManySmallerOnesThanFew() {
+        let few = make(.archipelago, realms: 3) { $0.islands = .few }
+        let many = make(.archipelago, realms: 3) { $0.islands = .many }
+        #expect(many.features(of: "Region").count > few.features(of: "Region").count + 5)
+        #expect(many.features(of: "Region").count >= 10)
+    }
+
+    @Test func aWorldSavedWithTheShapeIslandOpensAsAContinent() throws {
+        let old = try JSONDecoder().decode(WorldOptions.self, from: Data(#"{"shape":"island","seed":3}"#.utf8))
+        #expect(old.shape == .continent && old.seed == 3 && old.islands == .few)
+        let back = try JSONDecoder().decode(WorldOptions.self, from: JSONEncoder().encode({ var o = WorldOptions(); o.shape = .peninsula; o.islands = .many; return o }()))
+        #expect(back.shape == .peninsula && back.islands == .many)
     }
 
     @Test func theSeaIsOneWaterAreaCoveringTheMapAndTheOutlinesStayOnIt() {
@@ -202,8 +256,8 @@ struct WorldGeneratorTests {
     // MARK: Roads
 
     @Test func everySettlementOnTheLandIsJoinedToTheCapitalsByRoad() {
-        for shape in [WorldShape.island, .continent] {
-            let world = make(shape, realms: shape == .island ? 1 : 3)
+        for shape in [WorldShape.peninsula, .continent] {
+            let world = make(shape, realms: 3)
             var parent: [String: String] = [:]
             func key(_ p: V) -> String { "\(Int((p.x * 100).rounded())),\(Int((p.y * 100).rounded()))" }
             func find(_ k: String) -> String { var k = k; while let next = parent[k], next != k { k = next }; return k }
@@ -355,7 +409,7 @@ struct GeneratedWorldMapTests {
         let (world, context) = try makeWorld()
         var options = WorldOptions()
         options.seed = 11
-        options.shape = .island
+        options.shape = .archipelago
         options.realms = 1
         _ = try #require(await world.generateWorld(options: options, in: context))
         try context.save()

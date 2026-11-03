@@ -71,6 +71,11 @@ struct GenerateWorldSheet: View {
                     Picker("Land", selection: $options.shape) {
                         ForEach(WorldShape.allCases) { Text($0.title).tag($0) }
                     }
+                    if options.shape == .archipelago {
+                        Picker("Islands", selection: $options.islands) {
+                            ForEach(WorldIslands.allCases.filter { $0 != .none }) { Text($0.title).tag($0) }
+                        }
+                    }
                     Stepper("Realms: \(options.realms)", value: $options.realms, in: 1...8)
                     NamingStylePicker(styleID: $options.namingStyle)
                     RealmLanguagesEditor(options: $options)

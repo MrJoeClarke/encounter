@@ -7,15 +7,22 @@ import Foundation
 
 /// How the land lies in the world.
 nonisolated enum WorldShape: String, Codable, CaseIterable, Identifiable, Sendable {
-    case continent, coast, island
+    case continent, coast, peninsula, archipelago
 
     var id: String { rawValue }
+
+    /// Worlds saved with the shape Island, which this replaced (it came out much like a continent), open as a continent.
+    init(from decoder: any Decoder) throws {
+        let raw = try decoder.singleValueContainer().decode(String.self)
+        self = WorldShape(rawValue: raw) ?? .continent
+    }
 
     var title: String {
         switch self {
         case .continent: String(localized: "Continent")
         case .coast: String(localized: "Coast")
-        case .island: String(localized: "Island")
+        case .peninsula: String(localized: "Peninsula")
+        case .archipelago: String(localized: "Archipelago")
         }
     }
 
@@ -23,7 +30,8 @@ nonisolated enum WorldShape: String, Codable, CaseIterable, Identifiable, Sendab
         switch self {
         case .continent: String(localized: "A large land with sea round its edges.")
         case .coast: String(localized: "Land stretching off the edge of the map, with sea along one side.")
-        case .island: String(localized: "One island in the sea.")
+        case .peninsula: String(localized: "A big land joined to the edge of the map by a neck, with sea on three sides.")
+        case .archipelago: String(localized: "Islands in the sea, from one for each realm to many small ones.")
         }
     }
 
@@ -32,7 +40,23 @@ nonisolated enum WorldShape: String, Codable, CaseIterable, Identifiable, Sendab
         switch self {
         case .continent: 0.62
         case .coast: 0.6
-        case .island: 0.3
+        case .peninsula: 0.33
+        case .archipelago: 0.16
+        }
+    }
+}
+
+/// How many islands there are. For an archipelago this is how many make it up.
+nonisolated enum WorldIslands: String, Codable, CaseIterable, Identifiable, Sendable {
+    case none, few, many
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .none: String(localized: "None")
+        case .few: String(localized: "Few")
+        case .many: String(localized: "Many")
         }
     }
 }
@@ -105,6 +129,8 @@ nonisolated struct WorldOptions: Codable, Equatable, Sendable {
     /// Metres across and up.
     var width = 600_000.0
     var shape = WorldShape.continent
+    /// How many islands there are: for an archipelago, one for each realm (few) or many small ones.
+    var islands = WorldIslands.few
     var seed: UInt64 = 1
     /// The number of realms, each with a capital city.
     var realms = 3
@@ -171,6 +197,7 @@ nonisolated struct WorldOptions: Codable, Equatable, Sendable {
         let fresh = WorldOptions()
         width = try container.decodeIfPresent(Double.self, forKey: .width) ?? fresh.width
         shape = try container.decodeIfPresent(WorldShape.self, forKey: .shape) ?? fresh.shape
+        islands = try container.decodeIfPresent(WorldIslands.self, forKey: .islands) ?? fresh.islands
         seed = try container.decodeIfPresent(UInt64.self, forKey: .seed) ?? fresh.seed
         realms = try container.decodeIfPresent(Int.self, forKey: .realms) ?? fresh.realms
         citySpacing = try container.decodeIfPresent(Double.self, forKey: .citySpacing) ?? fresh.citySpacing

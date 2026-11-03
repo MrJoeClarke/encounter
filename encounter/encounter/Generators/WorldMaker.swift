@@ -145,44 +145,140 @@ nonisolated struct WorldMaker {
 
     // MARK: Land
 
+    /// A number from 0 to 1 that depends only on the seed and the salt, for the few choices a shape makes (which side, which way).
+    private func choice(_ salt: Int) -> Double { noise.value(0.37, 0.61, salt: 100 + salt) }
+
+    /// How much land each cell wants, from the shape: higher is land, lower is sea. The cut that makes it land is made later, so
+    /// the share of land is the shape's whatever the numbers are. Every shape bends its outline with a warp, so no two coasts match.
+    private func landPotential(side: Int) -> [Double] {
+        var potential = [Double](repeating: 0, count: n * n)
+        // Islands for an archipelago: where they are and how big.
+        let islands = options.shape == .archipelago ? archipelagoIslands() : []
+        for y in 0..<n {
+            for x in 0..<n {
+                let u = (Double(x) + 0.5) / Double(n), v = (Double(y) + 0.5) / Double(n)
+                let h = noise.fractal(u * 4, v * 4, octaves: 5, salt: 1)
+                // The outline is bent by a slow noise, more for some seeds than others.
+                let bend = 0.22 + 0.2 * choice(1)
+                let u2 = u + (noise.fractal(u * 2.3 + 3.1, v * 2.3 + 1.7, octaves: 3, salt: 21) - 0.5) * bend * 1.6
+                let v2 = v + (noise.fractal(u * 2.3 + 8.4, v * 2.3 + 6.2, octaves: 3, salt: 22) - 0.5) * bend * 1.6
+                var value: Double
+                switch options.shape {
+                case .continent:
+                    // A blob that is longer one way than the other, turned to a different angle for each seed.
+                    let aspect = 0.8 + 0.45 * choice(2), angle = choice(3) * .pi
+                    let px = u2 - 0.5, py = v2 - 0.5
+                    let rx = px * cos(angle) + py * sin(angle), ry = -px * sin(angle) + py * cos(angle)
+                    let d = hypot(rx * aspect, ry / aspect) * 2
+                    value = h * 0.75 - 0.45 * d * d
+                case .coast:
+                    let e = [v2, 1 - v2, u2, 1 - u2][side]
+                    value = h * 0.75 - 0.9 * (1 - e) * (1 - e)
+                case .peninsula:
+                    // Along the edge (b) and in from it (a), for whichever side the neck is on.
+                    let (a, b): (Double, Double) = [(v2, u2), (1 - v2, u2), (u2, v2), (1 - u2, v2)][side]
+                    let start = 0.38 + 0.24 * choice(4), sway = 0.05 + 0.07 * choice(5), phase = choice(6) * 6
+                    let spine = start + sway * sin(a * 4 + phase)
+                    // A narrow neck at the edge, widening to the body, then closing at the tip.
+                    let bulge = exp(-pow((a - 0.6) / 0.18, 2))
+                    let width = 0.07 + 0.23 * bulge
+                    let closeness = (width - abs(b - spine)) / width
+                    let tip = a > 0.9 ? -(a - 0.9) * 8 : 0
+                    value = h * 0.5 + closeness * 0.8 + tip - 0.15
+                case .archipelago:
+                    var best = -2.0
+                    for island in islands {
+                        let d = hypot(u2 - island.x, v2 - island.y)
+                        best = max(best, 1 - d / island.radius)
+                    }
+                    value = h * 0.45 + best * 0.85 - 0.25
+                }
+                potential[y * n + x] = value
+            }
+        }
+        return potential
+    }
+
+    /// Where the islands of an archipelago are, as centres and radii in units of the map's width. Few is one for each realm, spread
+    /// out; many is a good many smaller ones, a few of them bigger.
+    private func archipelagoIslands() -> [(x: Double, y: Double, radius: Double)] {
+        let count: Int
+        switch options.islands {
+        case .none, .few: count = max(1, min(8, options.realms))
+        case .many: count = min(30, max(14, options.realms * 4))
+        }
+        var rng = SeededRandom(seed: options.seed &* 0x9E3779B97F4A7C15 &+ 77)
+        // Roughly the share of the map that is land, divided between the islands, each a little different in size.
+        let basic = (options.shape.landShare * 0.9 / (Double(count) * .pi)).squareRoot()
+        var spacing = (0.62 * 0.62 / Double(count)).squareRoot()
+        var result: [(x: Double, y: Double, radius: Double)] = []
+        while result.count < count {
+            result = []
+            var tries = 0
+            while result.count < count, tries < 3_000 {
+                tries += 1
+                let x = rng.value(in: 0.16...0.84), y = rng.value(in: 0.16...0.84)
+                guard result.allSatisfy({ hypot($0.x - x, $0.y - y) > spacing }) else { continue }
+                let size = options.islands == .many ? rng.value(in: 0.4...1.25) : rng.value(in: 0.8...1.2)
+                result.append((x, y, basic * size))
+            }
+            // Too tight to fit them all: give each a little more room to be found, and try again.
+            if result.count < count { spacing *= 0.9 }
+        }
+        return result
+    }
+
+    /// The pieces of land, each cell numbered by the piece it is in (-1 for sea).
+    func landPieces() -> [Int] {
+        var label = [Int](repeating: -1, count: n * n)
+        var next = 0
+        for start in land.indices where land[start] && label[start] < 0 {
+            label[start] = next
+            var queue = [start]
+            while let at = queue.popLast() {
+                for nb in neighbours4(at) where land[nb] && label[nb] < 0 { label[nb] = next; queue.append(nb) }
+            }
+            next += 1
+        }
+        return label
+    }
+
     private mutating func terrain() {
         let side = Int(options.seed % 4)
         for i in wobble.indices {
             wobble[i] = 1 + 0.7 * noise.value(Double(i % n) / 9, Double(i / n) / 9, salt: 7)
         }
-        for y in 0..<n {
-            for x in 0..<n {
-                let u = (Double(x) + 0.5) / Double(n), v = (Double(y) + 0.5) / Double(n)
-                var h = noise.fractal(u * 4, v * 4, octaves: 5, salt: 1)
-                let d = hypot(u - 0.5, v - 0.5) * 2
-                switch options.shape {
-                case .continent: h = h * 0.75 - 0.45 * d * d
-                case .coast:
-                    let e = [v, 1 - v, u, 1 - u][side]
-                    h = h * 0.75 - 0.9 * (1 - e) * (1 - e)
-                case .island: h = h * 0.6 - 1.1 * d
-                }
-                height[y * n + x] = h
-            }
-        }
+        height = landPotential(side: side)
         let sorted = height.sorted()
         let level = sorted[min(sorted.count - 1, max(0, Int(Double(sorted.count) * (1 - options.shape.landShare))))]
         let margin = 3
         var isLand = height.indices.map { i -> Bool in
             let x = i % n, y = i / n
             guard height[i] > level else { return false }
+            let inside = x >= margin && y >= margin && x < n - margin && y < n - margin
             switch options.shape {
-            case .continent, .island: return x >= margin && y >= margin && x < n - margin && y < n - margin
+            case .continent, .archipelago: return inside
             case .coast:
+                // Sea along one side only: the land runs off the map on the others.
                 switch side {
                 case 0: return y >= margin
                 case 1: return y < n - margin
                 case 2: return x >= margin
                 default: return x < n - margin
                 }
+            case .peninsula:
+                // The neck joins the land to the edge it starts at, and the sea is on the other three sides.
+                switch side {
+                case 0: return x >= margin && x < n - margin && y < n - margin
+                case 1: return x >= margin && x < n - margin && y >= margin
+                case 2: return y >= margin && y < n - margin && x < n - margin
+                default: return y >= margin && y < n - margin && x >= margin
+                }
             }
         }
-        isLand = filtered(isLand, minimum: max(12, n * n / 100), onlyLargest: options.shape == .island)
+        // Small bits are left out, except in an archipelago, whose islands may be small; a peninsula is one piece.
+        let smallest = options.shape == .archipelago ? 14 : max(12, n * n / 100)
+        isLand = filtered(isLand, minimum: smallest, onlyLargest: options.shape == .peninsula)
         // Sea that the sea can't reach is a lake, and is filled in, so every river has the sea to run to.
         var reached = [Bool](repeating: false, count: n * n)
         var queue: [Int] = []
@@ -339,13 +435,21 @@ nonisolated struct WorldMaker {
             return free.isEmpty ? usable : free
         }()
         var capitalPositions = places.filter(\.isCapital).map(\.position)
+        // In an archipelago each capital goes on an island of its own while there are islands without one.
+        let pieces = options.shape == .archipelago ? landPieces() : []
         while capitalPositions.count < max(wanted, capitalPositions.count + capitalPending.count) {
+            var cells = capitalCells
+            if !pieces.isEmpty {
+                let taken = Set(capitalPositions.map { pieces[cellIndex(of: $0)] })
+                let free = capitalCells.filter { !taken.contains(pieces[$0]) }
+                if !free.isEmpty { cells = free }
+            }
             let choice: Int?
             if capitalPositions.isEmpty {
-                choice = capitalCells.min { (centre(of: $0).distance(to: landCentre), $0) < (centre(of: $1).distance(to: landCentre), $1) }
+                choice = cells.min { (centre(of: $0).distance(to: landCentre), $0) < (centre(of: $1).distance(to: landCentre), $1) }
             } else {
                 func clearance(_ c: Int) -> Double { capitalPositions.map { centre(of: c).distance(to: $0) }.min() ?? 0 }
-                choice = capitalCells.max { (clearance($0) * (0.6 + 0.4 * suit[$0]), -$0) < (clearance($1) * (0.6 + 0.4 * suit[$1]), -$1) }
+                choice = cells.max { (clearance($0) * (0.6 + 0.4 * suit[$0]), -$0) < (clearance($1) * (0.6 + 0.4 * suit[$1]), -$1) }
             }
             guard let choice else { break }
             let position = centre(of: choice)
