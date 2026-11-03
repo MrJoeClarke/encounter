@@ -115,3 +115,28 @@ extension RootLanguages {
         return known.isEmpty ? [(english, 1)] : known
     }
 }
+
+extension Array where Element == LanguageWeight {
+    /// Turns one language on or off. The last one on can't be turned off. A new one starts at an even share.
+    mutating func set(_ id: String, on: Bool) {
+        if on {
+            guard !contains(where: { RootLanguages.aliasedID($0.id) == id }) else { return }
+            append(LanguageWeight(id: id, weight: 50))
+        } else {
+            guard count > 1 else { return }
+            removeAll { RootLanguages.aliasedID($0.id) == id }
+        }
+    }
+
+    mutating func setWeight(_ weight: Int, of id: String) {
+        guard let index = firstIndex(where: { RootLanguages.aliasedID($0.id) == id }) else { return }
+        self[index].weight = Swift.min(Swift.max(weight, 1), 100)
+    }
+
+    func weight(of id: String) -> Int? { first { RootLanguages.aliasedID($0.id) == id }?.weight }
+
+    /// The titles of the languages, for showing, such as "Celtic and Slavic".
+    var titles: String {
+        RootLanguages.mix(self).map(\.language.title).formatted(.list(type: .and, width: .narrow))
+    }
+}

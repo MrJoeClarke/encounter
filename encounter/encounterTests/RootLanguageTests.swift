@@ -5,6 +5,7 @@
 
 import Testing
 import Foundation
+import SwiftData
 @testable import encounter
 
 struct RootLanguageTests {
@@ -462,5 +463,53 @@ struct RealmLanguageTests {
         #expect(back == options)
         let old = try JSONDecoder().decode(WorldOptions.self, from: Data("{}".utf8))
         #expect(old.realmLanguages.isEmpty)
+    }
+}
+
+@MainActor
+struct SettlementLanguageTests {
+    @Test func aSettlementInARealmTakesTheLanguagesOfThatRealm() async throws {
+        let context = ModelContext(try AppSchema.makeContainer(inMemory: true))
+        let world = World(name: "Aldara")
+        context.insert(world)
+        world.ensureRootPlace(in: context)
+        var options = WorldOptions()
+        options.seed = 3
+        options.realms = 2
+        options.width = 300_000
+        options.setLanguage("norse", on: true, forRealm: 0)
+        options.setLanguage("english", on: false, forRealm: 0)
+        options.setLanguage("romance", on: true, forRealm: 1)
+        options.setLanguage("english", on: false, forRealm: 1)
+        _ = try #require(await world.generateWorld(options: options, in: context))
+        let towns = (world.pages ?? []).filter { $0.attributeText("core.placeType") == "Settlement" && !$0.isDeleted }
+        #expect(!towns.isEmpty)
+        for town in towns {
+            let mix = try #require(town.realmLanguages)
+            #expect(mix.count == 1 && ["norse", "romance"].contains(mix[0].id))
+        }
+        #expect(Set(towns.compactMap { $0.realmLanguages?.first?.id }).count == 2)
+    }
+
+    @Test func aPlaceOutsideAnyRealmHasNoRealmLanguages() throws {
+        let context = ModelContext(try AppSchema.makeContainer(inMemory: true))
+        let world = World(name: "Aldara")
+        context.insert(world)
+        let place = world.addPage(kind: .place, in: context)
+        place.geometry = .point(GridPoint(easting: 10, northing: 10))
+        #expect(place.realmLanguages == nil)
+    }
+
+    @Test func aSettlementsNamesFollowItsLanguagesAndOlderOptionsStillOpen() throws {
+        var options = SettlementOptions(size: .town, layout: .organic, seed: 5)
+        #expect(options.nameLanguages.map(\.id) == ["english"] && options.inheritsRealm)
+        options.languages = [LanguageWeight(id: "norse", weight: 50)]
+        let norse = RootLanguages.language("norse")
+        let streets = SettlementGenerator.generate(options).features.filter { $0.placeType == "Street" }.map(\.name)
+        #expect(!streets.isEmpty && streets.allSatisfy { name in norse.words("street").contains { name.hasPrefix($0 + " ") } })
+        let back = try JSONDecoder().decode(SettlementOptions.self, from: JSONEncoder().encode(options))
+        #expect(back == options)
+        let old = try JSONDecoder().decode(SettlementOptions.self, from: Data("{}".utf8))
+        #expect(old.languages.isEmpty && old.inheritsRealm)
     }
 }

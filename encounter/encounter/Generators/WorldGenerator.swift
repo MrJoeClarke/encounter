@@ -135,20 +135,13 @@ nonisolated struct WorldOptions: Codable, Equatable, Sendable {
     mutating func setLanguage(_ id: String, on: Bool, forRealm realm: Int) {
         guard realm >= 0 else { return }
         var mix = languages(forRealm: realm)
-        if on {
-            guard !mix.contains(where: { $0.id == id }) else { return }
-            mix.append(LanguageWeight(id: id, weight: 50))
-        } else {
-            guard mix.count > 1 else { return }
-            mix.removeAll { $0.id == id }
-        }
+        mix.set(id, on: on)
         storeLanguages(mix, forRealm: realm)
     }
 
     mutating func setWeight(_ weight: Int, of id: String, forRealm realm: Int) {
         var mix = languages(forRealm: realm)
-        guard let index = mix.firstIndex(where: { $0.id == id }) else { return }
-        mix[index].weight = min(max(weight, 1), 100)
+        mix.setWeight(weight, of: id)
         storeLanguages(mix, forRealm: realm)
     }
 

@@ -189,6 +189,15 @@ nonisolated struct SettlementOptions: Codable, Equatable, Sendable {
     var merchants = true
     /// The id of the `RootLanguage` the names are made in.
     var namingStyle = RootLanguages.englishID
+    /// The languages and shares the names are made in. Empty means just `namingStyle`.
+    var languages: [LanguageWeight] = []
+    /// Whether, inside a realm on the world map, the languages are the realm's rather than those chosen here.
+    var inheritsRealm = true
+
+    /// What the names are made in.
+    var nameLanguages: [LanguageWeight] {
+        languages.isEmpty ? [LanguageWeight(id: namingStyle, weight: 50)] : languages
+    }
 
     init(
         size: Size = .village, layout: Layout = .organic, hasWalls: Bool = false, hasRiver: Bool = false, seed: UInt64 = 1,
@@ -223,6 +232,8 @@ nonisolated struct SettlementOptions: Codable, Equatable, Sendable {
         inns = try container.decodeIfPresent(Bool.self, forKey: .inns) ?? true
         merchants = try container.decodeIfPresent(Bool.self, forKey: .merchants) ?? true
         namingStyle = try container.decodeIfPresent(String.self, forKey: .namingStyle) ?? RootLanguages.englishID
+        languages = try container.decodeIfPresent([LanguageWeight].self, forKey: .languages) ?? []
+        inheritsRealm = try container.decodeIfPresent(Bool.self, forKey: .inheritsRealm) ?? true
     }
 }
 

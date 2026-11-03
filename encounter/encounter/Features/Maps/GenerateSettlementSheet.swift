@@ -22,6 +22,9 @@ struct GenerateSettlementSheet: View {
     @State private var isMaking = false
     @State private var generation: Task<Void, Never>?
 
+    /// The languages of the realm the place is in on the world map, if it is in one.
+    private var realm: [LanguageWeight]? { place.realmLanguages }
+
     /// Whether the place has an outline to fill, which decides how big the settlement is.
     private var usesOutline: Bool { place.drawnOutline != nil }
 
@@ -78,7 +81,7 @@ struct GenerateSettlementSheet: View {
                     }
                     Toggle("Wall", isOn: $options.hasWalls)
                     Toggle("River", isOn: $options.hasRiver)
-                    NamingStylePicker(styleID: $options.namingStyle)
+                    SettlementLanguagesEditor(options: $options, realm: realm)
                     LabeledContent("Seed") {
                         HStack {
                             TextField("Seed", value: $options.seed, format: .number.grouping(.never))
@@ -197,6 +200,8 @@ struct GenerateSettlementSheet: View {
             }
             .onAppear {
                 if let saved = existing?.settlementOptions { options = saved }
+                // Inside a realm the names follow its languages, as they are now.
+                if let realm, options.inheritsRealm { options.languages = realm }
             }
             // The layout is worked out on a background thread a moment after the last change, so typing a seed or
             // flicking a switch doesn't start a new one for every key.

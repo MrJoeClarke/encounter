@@ -17,45 +17,76 @@ struct NamingStylePicker: View {
     }
 }
 
-/// Chooses the root languages of each realm and how much of each, so the names in a realm mix the influences it has.
+/// Chooses root languages and how much of each: a switch per language, and a share for each one that is on.
+struct LanguageMixEditor: View {
+    @Binding var mix: [LanguageWeight]
+
+    var body: some View {
+        ForEach(RootLanguages.all) { language in
+            let current = mix.weight(of: language.id)
+            Toggle(language.title, isOn: Binding(
+                get: { current != nil },
+                set: { mix.set(language.id, on: $0) }
+            ))
+            .help(language.summary)
+            if let current {
+                Stepper(
+                    "Share: \(current)",
+                    value: Binding(get: { current }, set: { mix.setWeight($0, of: language.id) }),
+                    in: 1...100, step: 10
+                )
+                .padding(.leading)
+            }
+        }
+    }
+}
+
+/// The languages of each realm, so the names in a realm mix the influences it has.
 struct RealmLanguagesEditor: View {
     @Binding var options: WorldOptions
 
     var body: some View {
         ForEach(0..<options.realms, id: \.self) { realm in
             DisclosureGroup {
-                ForEach(RootLanguages.all) { language in
-                    languageRow(language, realm: realm)
-                }
+                LanguageMixEditor(mix: Binding(
+                    get: { options.languages(forRealm: realm) },
+                    set: { mix in
+                        while options.realmLanguages.count <= realm { options.realmLanguages.append([]) }
+                        options.realmLanguages[realm] = mix
+                    }
+                ))
             } label: {
-                LabeledContent("Realm \(realm + 1)", value: summary(realm))
+                LabeledContent("Realm \(realm + 1)", value: options.languages(forRealm: realm).titles)
             }
         }
     }
+}
 
-    private func weight(of language: RootLanguage, realm: Int) -> Int? {
-        options.languages(forRealm: realm).first { RootLanguages.aliasedID($0.id) == language.id }?.weight
-    }
+/// The names of a settlement: the languages of the realm it is in on the world map, which can be changed, or what is chosen here
+/// when it isn't in one.
+struct SettlementLanguagesEditor: View {
+    @Binding var options: SettlementOptions
+    /// The languages of the realm the place is in, if it is in one.
+    let realm: [LanguageWeight]?
 
-    private func summary(_ realm: Int) -> String {
-        RootLanguages.mix(options.languages(forRealm: realm)).map(\.language.title).formatted(.list(type: .and, width: .narrow))
-    }
-
-    @ViewBuilder
-    private func languageRow(_ language: RootLanguage, realm: Int) -> some View {
-        let current = weight(of: language, realm: realm)
-        Toggle(language.title, isOn: Binding(
-            get: { current != nil },
-            set: { options.setLanguage(language.id, on: $0, forRealm: realm) }
-        ))
-        .help(language.summary)
-        if let current {
-            Stepper(
-                "Share: \(current)",
-                value: Binding(get: { current }, set: { options.setWeight($0, of: language.id, forRealm: realm) }),
-                in: 1...100, step: 10
-            )
-            .padding(.leading)
+    var body: some View {
+        if let realm {
+            Toggle("Names from the realm (\(realm.titles))", isOn: Binding(
+                get: { options.inheritsRealm },
+                set: { inherits in
+                    options.inheritsRealm = inherits
+                    options.languages = inherits ? realm : options.nameLanguages
+                }
+            ))
+            if !options.inheritsRealm {
+                LanguageMixEditor(mix: Binding(get: { options.nameLanguages }, set: { options.languages = $0 }))
+            }
+        } else {
+            // Outside a realm one language is chosen; any left from when the place was in one no longer applies.
+            NamingStylePicker(styleID: Binding(
+                get: { options.languages.isEmpty ? options.namingStyle : options.languages[0].id },
+                set: { options.namingStyle = $0; options.languages = [] }
+            ))
         }
     }
 }

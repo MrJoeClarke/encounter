@@ -224,6 +224,8 @@ extension World {
             page.title = feature.name
             page.summary = feature.summary
             page.attributes["core.placeType"] = .text(feature.placeType)
+            // Which realm of the options a region is, so a settlement in it can use the realm's languages.
+            if feature.kind.hasPrefix("realm "), let number = Int(feature.kind.dropFirst("realm ".count)) { page.attributes["gen.realm"] = .number(Double(number)) }
             switch feature.shape {
             case .polygon(let points): page.geometry = .polygon(points.map(world))
             case .line(let points): page.geometry = .line(points.map(world))
@@ -273,5 +275,20 @@ extension WorldMap {
         pixelWidth = size
         pixelHeight = size
         calibration = World.vectorCalibration(for: place, size: size, metresPerPixel: metresPerPixel)
+    }
+}
+
+extension Page {
+    /// The languages of the realm this place lies in on the world map, if it lies in one the world generator made.
+    @MainActor
+    var realmLanguages: [LanguageWeight]? {
+        guard let world, let map = world.worldMap, let options = map.worldOptions, let spot = geometry?.centre else { return nil }
+        let point = V(x: spot.easting, y: spot.northing)
+        for region in world.pages ?? [] where !region.isDeleted && region.wasGenerated(by: map) {
+            guard let number = region.attributeNumber("gen.realm"), case .polygon(let corners)? = region.geometry,
+                  Plane.contains(corners.map { V(x: $0.easting, y: $0.northing) }, point) else { continue }
+            return options.languages(forRealm: Int(number))
+        }
+        return nil
     }
 }
