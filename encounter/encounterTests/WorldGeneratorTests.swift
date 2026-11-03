@@ -276,8 +276,8 @@ struct WorldGeneratorTests {
     }
 
     @Test func placesOfAKindKeepTheirDistance() {
-        let world = make { $0.citySpacing = 200_000; $0.townSpacing = 90_000; $0.villageSpacing = 60_000 }
-        for (kind, spacing) in [("city", 200_000.0), ("town", 90_000.0), ("village", 60_000.0)] {
+        let world = make { $0.citySpacing = 150_000; $0.townSpacing = 90_000; $0.villageSpacing = 60_000 }
+        for (kind, spacing) in [("city", 150_000.0), ("town", 90_000.0), ("village", 60_000.0)] {
             let places = settlements(world).filter { $0.feature.kind == kind }.map(\.at)
             #expect(places.count > 1, "no \(kind)s")
             for (i, a) in places.enumerated() { for b in places[(i + 1)...] { #expect(a.distance(to: b) >= spacing * 0.7, "two \(kind)s are \(a.distance(to: b)) metres apart") } }
@@ -764,5 +764,75 @@ struct CoastlineTests {
         let back = try JSONDecoder().decode(WorldOptions.self, from: JSONEncoder().encode(options))
         #expect(back.coastline == .rugged)
         #expect(try JSONDecoder().decode(WorldOptions.self, from: Data("{}".utf8)).coastline == .natural)
+    }
+}
+
+struct IslandSettingTests {
+    private typealias V = SettlementGenerator.V
+
+    private func world(_ shape: WorldShape, _ islands: WorldIslands, seed: UInt64) -> GeneratedWorld {
+        var options = WorldOptions()
+        options.shape = shape
+        options.realms = 3
+        options.seed = seed
+        options.islands = islands
+        return WorldGenerator.generate(options)
+    }
+
+    private func outlines(_ world: GeneratedWorld) -> [[V]] {
+        world.features(of: "Region").compactMap { feature in
+            if case .polygon(let p) = feature.shape { return p.map { V(x: $0.easting, y: $0.northing) } }
+            return nil
+        }
+    }
+
+    @Test(arguments: [WorldShape.continent, .coast, .peninsula])
+    func noIslandsLeavesOnlyTheRealmsAndMoreIslandsMakeMorePieces(shape: WorldShape) {
+        var none = 0, few = 0, many = 0
+        for seed in UInt64(1)...5 {
+            none += outlines(world(shape, .none, seed: seed)).count
+            few += outlines(world(shape, .few, seed: seed)).count
+            many += outlines(world(shape, .many, seed: seed)).count
+        }
+        #expect(none < few && few < many, "\(shape): \(none), \(few), \(many)")
+    }
+
+    @Test func islandsLieOffTheCoastAwayFromTheEdgeAndHaveNoSettlements() {
+        for seed in UInt64(1)...5 {
+            let made = world(.continent, .many, seed: seed)
+            let pieces = outlines(made)
+            let biggest = pieces.map { Plane.area($0) }.max() ?? 0
+            let small = pieces.filter { Plane.area($0) < biggest * 0.05 }
+            #expect(!small.isEmpty, "seed \(seed): no islands")
+            for island in small {
+                let bounds = Plane.bounds(island)
+                #expect(bounds.min.x > made.extent * 0.03 && bounds.max.x < made.extent * 0.97 && bounds.min.y > made.extent * 0.03 && bounds.max.y < made.extent * 0.97)
+                for town in made.features(of: "Settlement") {
+                    guard case .point(let spot) = town.shape else { continue }
+                    #expect(!SettlementGenerator.contains(island, V(x: spot.easting, y: spot.northing)), "seed \(seed): \(town.name) is on an island")
+                }
+            }
+        }
+    }
+
+    @Test func theSettingDoesNotMoveTheCapitalsOrTheLand() {
+        func capitals(_ world: GeneratedWorld) -> [V] {
+            world.features.filter { $0.kind == "capital" }.compactMap { feature in
+                if case .point(let p) = feature.shape { return V(x: p.easting, y: p.northing) }
+                return nil
+            }
+        }
+        // Islands are made apart from everything else, and nothing is built on them, so where the capitals are does not change.
+        for seed in UInt64(1)...4 {
+            let without = capitals(world(.continent, .none, seed: seed)), with = capitals(world(.continent, .many, seed: seed))
+            // To within a cell or so: a place the smoothed coast leaves just off the land is nudged in, towards the middle of the land.
+            #expect(without.count == with.count && zip(without, with).allSatisfy { $0.distance(to: $1) < 10_000 }, "seed \(seed)")
+        }
+    }
+
+    @Test func theChoiceIsKept() throws {
+        var options = WorldOptions()
+        options.islands = .many
+        #expect(try JSONDecoder().decode(WorldOptions.self, from: JSONEncoder().encode(options)).islands == .many)
     }
 }

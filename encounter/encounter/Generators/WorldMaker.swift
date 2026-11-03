@@ -41,6 +41,8 @@ nonisolated struct WorldMaker {
     var realmOf: [Int]
     /// Land near an edge it runs off, which no realm claims.
     var strip: [Bool]
+    /// Land that is an island off the coast of the main land, which has no settlements.
+    var isle: [Bool]
     /// Which piece of the strip each cell is in, so that a strip all round the map is made of pieces that have no hole in them.
     var stripGroup: [Int]
     var realmCount = 0
@@ -70,6 +72,7 @@ nonisolated struct WorldMaker {
         flowTo = [Int](repeating: -1, count: size * size)
         realmOf = [Int](repeating: -1, count: size * size)
         strip = [Bool](repeating: false, count: size * size)
+        isle = [Bool](repeating: false, count: size * size)
         stripGroup = [Int](repeating: -1, count: size * size)
     }
 
@@ -198,7 +201,7 @@ nonisolated struct WorldMaker {
                     let rx = px * cos(angle) + py * sin(angle), ry = -px * sin(angle) + py * cos(angle)
                     // The long way across is about the width of the map less its margin, so the land never reaches the sides.
                     let d = hypot(rx, ry * aspect) / 0.38
-                    value = h * 0.95 - 0.6 * d * d
+                    value = h * 0.7 - 1.5 * d * d
                 case .coast:
                     let e = [v2, 1 - v2, u2, 1 - u2][side]
                     value = h * 0.75 - 0.9 * (1 - e) * (1 - e)
@@ -327,6 +330,54 @@ nonisolated struct WorldMaker {
         }
     }
 
+    /// Islands off the coast, by the Islands setting: few are single islands, many are chains of them. They lie a little way out,
+    /// never joined to the land and never near the edge of the map, and nothing is built on them. An archipelago has its own islands.
+    private mutating func addIslands(to mask: inout [Bool]) {
+        guard options.islands != .none, options.shape != .archipelago, options.shape != .inland else { return }
+        // How far each cell is from the land, in cells, as far as 30.
+        var distance = [Int](repeating: 99, count: n * n)
+        var frontier: [Int] = []
+        for i in mask.indices where mask[i] { distance[i] = 0; frontier.append(i) }
+        var step = 0
+        while !frontier.isEmpty, step < 30 {
+            step += 1
+            var next: [Int] = []
+            for i in frontier {
+                for nb in neighbours8(i) where distance[nb.cell] > step { distance[nb.cell] = step; next.append(nb.cell) }
+            }
+            frontier = next
+        }
+        var rng = SeededRandom(seed: options.seed &* 0xD1B54A32D192ED03 &+ 5)
+        let groups = options.islands == .few ? 3 : 8
+        let margin = 8
+        for _ in 0..<groups {
+            // A spot in the sea a little way from the land.
+            var start: V?
+            for _ in 0..<300 {
+                let x = Int(rng.value(in: Double(margin)...Double(n - margin))), y = Int(rng.value(in: Double(margin)...Double(n - margin)))
+                let d = distance[y * n + x]
+                if !mask[y * n + x], (6...20).contains(d) { start = V(x: Double(x), y: Double(y)); break }
+            }
+            guard let start else { continue }
+            let direction = rng.value(in: 0...(2 * .pi))
+            let length = options.islands == .few ? 1 : Int(rng.value(in: 2...5))
+            for k in 0..<length {
+                let spacing = rng.value(in: 5...8) * Double(k)
+                let centre = V(x: start.x + cos(direction) * spacing + rng.value(in: -1.5...1.5), y: start.y + sin(direction) * spacing + rng.value(in: -1.5...1.5))
+                let radius = options.islands == .few ? rng.value(in: 2.5...5) : rng.value(in: 1.8...4.2)
+                for y in Int(centre.y - radius - 1)...Int(centre.y + radius + 1) {
+                    for x in Int(centre.x - radius - 1)...Int(centre.x + radius + 1) where x >= margin && y >= margin && x < n - margin && y < n - margin {
+                        let i = y * n + x
+                        // Not joined to the land, and not part of a bit of the sea that is a lake.
+                        guard !mask[i], distance[i] >= 4 else { continue }
+                        let wobble = 0.75 + 0.5 * noise.value(Double(x) * 0.7 + 3.3, Double(y) * 0.7 + 8.1, salt: 61)
+                        if hypot(Double(x) - centre.x, Double(y) - centre.y) < radius * wobble { mask[i] = true; isle[i] = true }
+                    }
+                }
+            }
+        }
+    }
+
     private mutating func terrain() {
         let side = Int(options.seed % 4)
         for i in wobble.indices {
@@ -373,6 +424,7 @@ nonisolated struct WorldMaker {
             for nb in neighbours4(next) where !isLand[nb] && !reached[nb] { reached[nb] = true; queue.append(nb) }
         }
         for i in isLand.indices where !isLand[i] && !reached[i] { isLand[i] = true }
+        addIslands(to: &isLand)
         land = isLand
         // Where the land runs off the map, the realms stop short of the edge, along a border that wanders, and the land carries
         // on past them to the edge of the map.
@@ -390,6 +442,12 @@ nonisolated struct WorldMaker {
                     stripGroup[i] = options.shape == .inland ? (Double(min(y, n - 1 - y)) < inset ? (y < n / 2 ? 0 : 1) : (x < n / 2 ? 2 : 3)) : 0
                 }
             }
+        }
+        // The slope up from the coast is smooth, which would send every river straight down it. Hills are added to the ground, so that
+        // rivers wind between them and ranges rise where they do.
+        for i in height.indices where land[i] {
+            let u = (Double(i % n) + 0.5) / Double(n), v = (Double(i / n) + 0.5) / Double(n)
+            height[i] += 0.45 * (noise.fractal(u * 7, v * 7, octaves: 4, salt: 71) - 0.5)
         }
         let top = height.indices.filter { land[$0] }.map { height[$0] }.max() ?? level + 1
         for i in height.indices where land[i] { elevation[i] = min(1, max(0, (height[i] - level) / max(top - level, 1e-9))) }
@@ -488,7 +546,7 @@ nonisolated struct WorldMaker {
     /// Lays out the capitals first, spread as far apart as they can be, then the cities, towns and villages round them.
     private mutating func settle() {
         var suit = [Double](repeating: 0, count: n * n)
-        for i in land.indices where land[i] && !mountain[i] && !strip[i] {
+        for i in land.indices where land[i] && !mountain[i] && !strip[i] && !isle[i] {
             var s = forest[i] ? 0.5 : 1.0
             if neighbours8(i).contains(where: { !land[$0.cell] }) { s += 0.6 }
             if riverIsNear(i) { s += 0.6 }

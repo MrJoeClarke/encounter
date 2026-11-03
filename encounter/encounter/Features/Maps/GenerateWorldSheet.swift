@@ -89,9 +89,10 @@ struct GenerateWorldSheet: View {
                             ForEach(WorldCoastline.allCases) { Text($0.title).tag($0) }
                         }
                     }
-                    if options.shape == .archipelago {
+                    if options.shape != .inland {
+                        // An archipelago is islands, so it has no setting for none.
                         Picker("Islands", selection: $options.islands) {
-                            ForEach(WorldIslands.allCases.filter { $0 != .none }) { Text($0.title).tag($0) }
+                            ForEach(WorldIslands.allCases.filter { options.shape != .archipelago || $0 != .none }) { Text($0.title).tag($0) }
                         }
                     }
                     Stepper("Realms: \(options.realms)", value: $options.realms, in: 1...8)
@@ -364,12 +365,13 @@ struct WorldPreview: View {
         .frame(width: 520, height: 520)
 }
 
-private func shapePreview(_ shape: WorldShape, _ coastline: WorldCoastline = .natural) -> some View {
+private func shapePreview(_ shape: WorldShape, _ coastline: WorldCoastline = .natural, islands: WorldIslands = .few) -> some View {
     var options = WorldOptions()
     options.seed = 7
     options.realms = 4
     options.shape = shape
     options.coastline = coastline
+    options.islands = islands
     return WorldPreview(world: WorldGenerator.generate(options)).frame(width: 520, height: 520)
 }
 
@@ -380,3 +382,4 @@ private func shapePreview(_ shape: WorldShape, _ coastline: WorldCoastline = .na
 #Preview("Smooth coast") { shapePreview(.continent, .smooth) }
 #Preview("Natural coast") { shapePreview(.continent, .natural) }
 #Preview("Rugged coast") { shapePreview(.continent, .rugged) }
+#Preview("Many islands") { shapePreview(.continent, islands: .many) }
