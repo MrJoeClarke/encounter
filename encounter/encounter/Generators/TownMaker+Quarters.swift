@@ -42,7 +42,7 @@ extension SettlementGenerator.TownMaker {
     /// by the wall, and the harbour on the river. The square and wards left over stay ordinary.
     mutating func assignQuarters() {
         let wanted = options.quarters ?? Self.automaticQuarters(for: size, hasRiver: options.hasRiver)
-        let candidates = wards.indices.filter { !wards[$0].isSquare }
+        let candidates = wards.indices.filter { !wards[$0].isSquare && !wards[$0].isBank }
         guard !wanted.isEmpty, candidates.count >= 3 else { return }
 
         func t(_ index: Int) -> Double { min(wards[index].site.distance(to: square) / radius, 1.2) }
@@ -107,7 +107,7 @@ extension SettlementGenerator.TownMaker {
         }
 
         func group(of index: Int) -> String? {
-            if wards[index].isSquare { return nil }
+            if wards[index].isSquare || wards[index].isBank { return nil }
             if let quarter = wards[index].quarter { return quarter.rawValue }
             return "old"
         }

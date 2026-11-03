@@ -182,7 +182,8 @@ struct RootLanguageGenerationTests {
         options.namingStyle = "romance"
         let romance = SettlementGenerator.generate(options)
         let language = RootLanguages.language("romance")
-        let streets = romance.features.filter { $0.placeType == "Street" }.map(\.name)
+        // The streets along the river are named for it, not from the list of street words.
+        let streets = romance.features.filter { $0.placeType == "Street" && !$0.name.contains(" Quay") && !$0.name.contains(" Embankment") }.map(\.name)
         #expect(!streets.isEmpty && streets.allSatisfy { name in language.words("street").contains { name.hasPrefix($0 + " ") } })
         #expect(romance.features.contains { $0.name == "Market Square" })
         #expect(romance.features.contains { $0.name.hasPrefix("Cathedral of ") && language.words("landmarkVirtue").contains(String($0.name.dropFirst("Cathedral of ".count))) })

@@ -467,3 +467,88 @@ struct MapRiverTests {
         #expect(try JSONDecoder().decode(SettlementOptions.self, from: Data("{}".utf8)).riverPath.isEmpty)
     }
 }
+
+struct BankRoadTests {
+    private typealias V = SettlementGenerator.V
+
+    private func make(_ layout: SettlementOptions.Layout, _ size: SettlementOptions.Size, seed: UInt64) -> GeneratedSettlement {
+        SettlementGenerator.generate(SettlementOptions(size: size, layout: layout, hasWalls: true, hasRiver: true, seed: seed))
+    }
+
+    private func line(_ feature: GeneratedFeature) -> [V] {
+        if case .line(let points) = feature.shape { return points.map { V(x: $0.easting, y: $0.northing) } }
+        return []
+    }
+
+    private static let cases: [(SettlementOptions.Layout, SettlementOptions.Size)] = [
+        (.planned, .town), (.radial, .town), (.organic, .town), (.planned, .city), (.radial, .village), (.organic, .city), (.organic, .village),
+    ]
+
+    @Test func aRiverHasAStreetAlongEachBankNamedForIt() {
+        var withBanks = 0, total = 0
+        for (layout, size) in Self.cases {
+            for seed in UInt64(1)...6 {
+                let made = make(layout, size, seed: seed)
+                total += 1
+                let names = made.features.map(\.name)
+                let quays = names.filter { $0.hasSuffix(" Quay") || $0.contains(" Quay ") }
+                let banks = names.filter { $0.hasSuffix(" Embankment") || $0.contains(" Embankment ") }
+                if !quays.isEmpty && !banks.isEmpty { withBanks += 1 }
+                #expect(Set(names).count == names.count)
+                #expect(made.features(of: "Building").count > 5)
+            }
+        }
+        print("BANKS", withBanks, "of", total)
+        // A river with a sharp bend can't have them, but most do.
+        #expect(withBanks * 10 >= total * 8)
+    }
+
+    @Test func bankStreetsRunAlongTheRiverJustBackFromIt() {
+        for (layout, size) in Self.cases {
+            for seed in UInt64(1)...4 {
+                let made = make(layout, size, seed: seed)
+                guard let river = made.features(of: "River").first.map(line) else { continue }
+                for street in made.features where street.name.contains(" Quay") || street.name.contains(" Embankment") {
+                    let points = line(street)
+                    let distances = points.map { SettlementGenerator.distance(from: $0, toPolyline: river) }
+                    #expect(distances.allSatisfy { $0 > 3 && $0 < 30 }, Comment(rawValue: "\(layout) \(size) \(seed): \(distances.min() ?? 0)...\(distances.max() ?? 0)"))
+                }
+            }
+        }
+    }
+
+    @Test func nothingIsBuiltBetweenABankStreetAndTheWater() {
+        for (layout, size) in Self.cases {
+            for seed in UInt64(1)...4 {
+                let made = make(layout, size, seed: seed)
+                guard made.features.contains(where: { $0.name.contains(" Quay") }), let river = made.features(of: "River").first.map(line) else { continue }
+                for building in made.features(of: "Building") {
+                    // A gatehouse stands where a road leaves the wall, which can be right by the water.
+                    guard case .polygon(let corners) = building.shape, !building.name.hasSuffix(" Gate") else { continue }
+                    let nearest = corners.map { SettlementGenerator.distance(from: V(x: $0.easting, y: $0.northing), toPolyline: river) }.min() ?? 0
+                    #expect(nearest >= 7, Comment(rawValue: "\(layout) \(size) \(seed) \(building.name): \(nearest)"))
+                }
+            }
+        }
+    }
+
+    @Test func aMainRoadCrossesTheRiverAtABridgeInMostSettlements() {
+        var crossing = 0, total = 0
+        for (layout, size) in Self.cases {
+            for seed in UInt64(1)...4 {
+                let made = make(layout, size, seed: seed)
+                guard let river = made.features(of: "River").first.map(line) else { continue }
+                total += 1
+                let crosses = made.features(of: "Road").contains { road in
+                    let points = line(road)
+                    return zip(points, points.dropFirst()).contains { a, b in
+                        zip(river, river.dropFirst()).contains { SettlementGenerator.TownMaker.segmentsCross(a, b, $0.0, $0.1) }
+                    }
+                }
+                if crosses { crossing += 1 }
+            }
+        }
+        print("BRIDGES", crossing, "of", total)
+        #expect(crossing * 10 >= total * 7)
+    }
+}

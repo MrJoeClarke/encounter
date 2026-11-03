@@ -53,7 +53,7 @@ extension SettlementGenerator.TownMaker {
     mutating func placeLandmarks() -> (features: [GeneratedFeature], reserved: [[V]]) {
         var features: [GeneratedFeature] = []
         var reserved: [[V]] = []
-        var free = Set(wards.indices.filter { !wards[$0].isSquare })
+        var free = Set(wards.indices.filter { !wards[$0].isSquare && !wards[$0].isBank })
         guard let plaza = wards.first(where: \.isSquare) else { return (features, reserved) }
         let plazaVertices = Set(plaza.vertexIDs)
         let boundaryVertices = Set(edges.filter(\.isBoundary).flatMap { [$0.a, $0.b] })

@@ -47,6 +47,13 @@ nonisolated enum NameTerms {
     static func forge(_ owner: String) -> String { String(localized: "\(owner)’s Forge") }
     static func chapel(_ virtue: String) -> String { String(localized: "Chapel of \(virtue)") }
     static func river(_ name: String) -> String { String(localized: "River \(name)") }
+    /// The name of a river without the plain word, such as "Hale" from "River Hale".
+    static func bareRiverName(_ title: String) -> String {
+        let prefix = river("")
+        return title.hasPrefix(prefix) ? String(title.dropFirst(prefix.count)) : title
+    }
+    static func quay(_ river: String) -> String { String(localized: "\(river) Quay") }
+    static func embankment(_ river: String) -> String { String(localized: "\(river) Embankment") }
     static func manor(_ owner: String) -> String { String(localized: "\(owner) Manor") }
     static func inn(_ name: String) -> String { String(localized: "The \(name)") }
     static func forest(_ name: String) -> String { String(localized: "The \(name) Forest") }

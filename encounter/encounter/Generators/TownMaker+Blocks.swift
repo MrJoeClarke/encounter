@@ -12,13 +12,21 @@ extension SettlementGenerator.TownMaker {
     /// roads along the edges of those cells, smooths them, and makes new wards from the blocks between the roads. For
     /// every layout the river is a break: a ward is on one side of it or the other, and a road crosses it only at a bridge.
     mutating func makeLayout() {
-        if options.layout == .organic, makeOrganicLayout() { return }
+        if options.layout == .organic {
+            if makeOrganicLayout() { finishRiver(); return }
+            // Streets along the banks can make the blocks come out wrong, so try again without them.
+            if !bankLines.isEmpty {
+                bankLines = []
+                if makeOrganicLayout() { finishRiver(); return }
+            }
+        }
         resetGraph()
         makeWards()
         if river.count >= 2 { splitWardsAtRiver() }
         buildGraph()
         classifyEdges()
         routeStreets()
+        finishRiver()
     }
 
     mutating func resetGraph() {
@@ -43,13 +51,87 @@ extension SettlementGenerator.TownMaker {
 
     // MARK: The river
 
-    /// Cuts every ward the river runs through into the part on each side.
+    /// The two lines a street runs along on each side of the river, a little way back from the water. Left out if either would
+    /// cross itself, as it can on a sharp bend, in which case the river has no bank streets.
+    mutating func makeBankLines() {
+        bankLines = []
+        guard river.count >= 2 else { return }
+        let d = min(max(radius * 0.04, 8), 18)
+        var left: [V] = [], right: [V] = []
+        for i in river.indices {
+            let before = river[max(i - 1, 0)], after = river[min(i + 1, river.count - 1)]
+            let direction = (after - before).unit
+            guard direction.length > 0.5 else { return }
+            left.append(river[i] + direction.perpendicular * d)
+            right.append(river[i] - direction.perpendicular * d)
+        }
+        func crossesItself(_ line: [V]) -> Bool {
+            for i in 0..<(line.count - 1) {
+                for j in (i + 2)..<max(i + 2, line.count - 1) where Self.segmentsCross(line[i], line[i + 1], line[j], line[j + 1]) { return true }
+            }
+            return false
+        }
+        guard !crossesItself(left), !crossesItself(right) else { return }
+        bankLines = [left, right]
+        bankWidth = d
+    }
+
+    /// Moves the main square off the river's banks, so a strip along the water is never the square.
+    mutating func keepSquareOffRiver() {
+        guard !bankLines.isEmpty, let near = river.min(by: { $0.distance(to: square) < $1.distance(to: square) }) else { return }
+        let clear = bankWidth * 2.5
+        guard near.distance(to: square) < clear else { return }
+        let away = (square - near).length > 0.5 ? (square - near).unit : V(x: 1, y: 0)
+        let moved = near + away * clear
+        if SettlementGenerator.contains(boundary, moved) { square = moved }
+    }
+
+    /// Once the streets are routed: nothing runs across the strip between a bank street and the river except a main road at a
+    /// bridge, and the strips themselves are marked so nothing is built on them.
+    mutating func finishRiver() {
+        guard !bankLines.isEmpty else { return }
+        for i in edges.indices where !edges[i].isBoundary && !edges[i].isRiver && edges[i].rank == .minor {
+            if riverNodes.contains(edges[i].a) || riverNodes.contains(edges[i].b) { edges[i].rank = .none }
+        }
+        for i in wards.indices where !wards[i].isSquare {
+            wards[i].isBank = wards[i].polygon.allSatisfy { SettlementGenerator.distance(from: $0, toPolyline: river) <= bankWidth + 1.5 }
+        }
+    }
+
+    /// The streets along the banks are named for the river, as a quay and an embankment, whatever they were named before.
+    mutating func nameBankStreets(_ streets: [Street]) -> [Street] {
+        guard !bankLines.isEmpty else { return streets }
+        let bare = NameTerms.bareRiverName(riverTitle)
+        return streets.map { street in
+            guard street.type == "Street" else { return street }
+            for (side, line) in bankLines.enumerated() where street.points.allSatisfy({ SettlementGenerator.distance(from: $0, toPolyline: line) < 0.8 }) {
+                var named = street
+                named.name = names.named(side == 0 ? NameTerms.quay(bare) : NameTerms.embankment(bare))
+                return named
+            }
+            return street
+        }
+    }
+
+    /// Cuts every ward the river runs through into the part on each side, and the strip along each bank.
     mutating func splitWardsAtRiver() {
-        var lines = wards.map { closed($0.polygon) }
-        lines.append(river)
-        lines.append(closed(boundary))
-        let faces = PlanarFaces.faces(of: lines, inside: boundary)
-        guard coversSettlement(faces), faces.count >= wards.count else { return }
+        for attempt in 0..<2 {
+            var lines = wards.map { closed($0.polygon) }
+            lines.append(river)
+            if attempt == 0 { lines += bankLines }
+            lines.append(closed(boundary))
+            let faces = PlanarFaces.faces(of: lines, inside: boundary)
+            guard coversSettlement(faces), faces.count >= wards.count else {
+                // Without bank streets it may come out right.
+                if attempt == 0, !bankLines.isEmpty { bankLines = []; continue }
+                return
+            }
+            applyFaces(faces)
+            return
+        }
+    }
+
+    private mutating func applyFaces(_ faces: [[V]]) {
         wards = faces.map { Ward(site: Plane.centroid($0), polygon: Plane.anticlockwise($0), isSquare: SettlementGenerator.contains($0, square)) }
         if !wards.contains(where: \.isSquare) {
             let nearest = wards.indices.min { wards[$0].site.distance(to: square) < wards[$1].site.distance(to: square) } ?? 0
@@ -101,7 +183,7 @@ extension SettlementGenerator.TownMaker {
         var lines = roads
         lines.append(closed(boundary))
         lines.append(closed(plaza))
-        if river.count >= 2 { lines.append(river) }
+        if river.count >= 2 { lines.append(river); lines += bankLines }
         let faces = PlanarFaces.faces(of: lines, inside: boundary)
         guard coversSettlement(faces) else { return false }
 

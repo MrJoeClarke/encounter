@@ -21,6 +21,11 @@ extension SettlementGenerator {
         /// The edge of the settlement, going anticlockwise.
         var boundary: [V] = []
         var river: [V] = []
+        /// The street lines along each bank of the river, a little back from the water, and how far back.
+        var bankLines: [[V]] = []
+        var bankWidth = 0.0
+        /// The river's name as it is given to the river itself (such as "River Hale").
+        var riverTitle = ""
         var square = V(x: 0, y: 0)
         var gatePoints: [V] = []
 
@@ -43,6 +48,8 @@ extension SettlementGenerator {
             var quarter: Quarter?
             /// A landmark stands in this ward, which takes it over.
             var landmark: Landmark?
+            /// The strip between a bank street and the river, where nothing is built.
+            var isBank = false
         }
 
         enum Rank: Int { case none, minor, major }
@@ -107,17 +114,23 @@ extension SettlementGenerator {
 
         mutating func make() -> GeneratedSettlement {
             if !hasOutline { makeBoundary() }
-            if options.hasRiver || options.riverPath.count >= 2 { makeRiver() }
+            if options.hasRiver || options.riverPath.count >= 2 {
+                makeRiver()
+                makeBankLines()
+                if !river.isEmpty {
+                    riverTitle = options.riverName.isEmpty ? names.river(using: &random) : names.named(options.riverName)
+                }
+            }
             placeSquareAndGates()
+            keepSquareOffRiver()
             makeLayout()
             assignQuarters()
-            let streets = chainStreets()
+            let streets = nameBankStreets(chainStreets())
 
             var features: [GeneratedFeature] = []
             if options.hasWalls { features.append(wall()) }
             if !river.isEmpty {
-                let riverName = options.riverName.isEmpty ? names.river(using: &random) : names.named(options.riverName)
-                features.append(GeneratedFeature(name: riverName, placeType: "River", summary: String(localized: "A river through the settlement."), shape: .line(river.map(\.grid))))
+                features.append(GeneratedFeature(name: riverTitle, placeType: "River", summary: String(localized: "A river through the settlement."), shape: .line(river.map(\.grid))))
             }
             for street in streets {
                 features.append(GeneratedFeature(

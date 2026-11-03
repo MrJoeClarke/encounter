@@ -38,7 +38,7 @@ extension SettlementGenerator.TownMaker {
     private func frontages() -> [Frontage] {
         var sites: [Frontage] = []
         var length = 0.0
-        let eligible = wards.indices.filter { !wards[$0].isSquare && wards[$0].landmark != .castle }
+        let eligible = wards.indices.filter { !wards[$0].isSquare && !wards[$0].isBank && wards[$0].landmark != .castle }
         func streetEdge(_ index: Int, _ i: Int) -> Edge? {
             let ids = wards[index].vertexIDs
             guard ids.count == wards[index].polygon.count else { return nil }
