@@ -87,6 +87,7 @@ extension World {
         for place: Page, options: SettlementOptions, in context: ModelContext, progress: ((_ made: Int, _ total: Int) -> Void)? = nil
     ) async -> GeneratedMapSummary? {
         guard place.kind == .place, !place.isWorldRoot, place.geometry != nil else { return nil }
+        let options = optionsWithMapRiver(options, for: place)
         let plan = World.settlementPlan(for: place, options: options)
         guard let generated = await SettlementGenerator.generateInBackground(options, outline: plan.outline, extent: plan.extent), !Task.isCancelled else { return nil }
         return await applySettlement(generated, plan: plan, for: place, options: options, in: context, progress: progress)
@@ -290,5 +291,61 @@ extension Page {
             return options.languages(forRealm: Int(number))
         }
         return nil
+    }
+}
+
+extension World {
+    /// How far from the middle of a settlement the world map's river may pass and still be its river: the settlement's own radius.
+    @MainActor
+    static func settlementRadius(for place: Page, options: SettlementOptions) -> Double {
+        if let drawn = place.drawnOutline, drawn.count >= 3 { return (PlaceGeometry.polygon(drawn).area / .pi).squareRoot() }
+        return options.size.radius
+    }
+
+    /// The river on the world map that runs through or beside a place, if any: the nearest river place whose line passes within
+    /// `radius` of the place's middle. Its stretch near the place is given as points in metres east and north of that middle,
+    /// reaching out to `extent` so it crosses the whole of the settlement's map, with the river's name.
+    /// The options with the world map's river for this place taken as the settlement's own, or, where the world map has none, with
+    /// any taken before let go.
+    @MainActor
+    func optionsWithMapRiver(_ options: SettlementOptions, for place: Page) -> SettlementOptions {
+        var made = options
+        let extent = SettlementGenerator.extent(for: options, outline: place.drawnOutline)
+        made.useMapRiver(riverNear(place, radius: Self.settlementRadius(for: place, options: options), extent: extent))
+        return made
+    }
+
+    @MainActor
+    func riverNear(_ place: Page, radius: Double, extent: Double) -> (name: String, path: [GridPoint])? {
+        guard let middle = place.geometry?.centre else { return nil }
+        let here = SettlementGenerator.V(x: middle.easting, y: middle.northing)
+        var best: (page: Page, line: [SettlementGenerator.V], distance: Double)?
+        for page in pages ?? [] where page.kind == .place && !page.isDeleted && page !== place && page.attributeText("core.placeType") == "River" {
+            guard case .line(let points)? = page.geometry, points.count >= 2 else { continue }
+            let line = points.map { SettlementGenerator.V(x: $0.easting, y: $0.northing) }
+            let distance = SettlementGenerator.distance(from: here, toPolyline: line)
+            if distance <= radius, distance < (best?.distance ?? .infinity) { best = (page, line, distance) }
+        }
+        guard let best else { return nil }
+        // Walk the river in small steps, keeping the stretch that lies near the settlement and joins on to the point nearest its middle.
+        let step = max(extent / 80, 2)
+        var dense: [SettlementGenerator.V] = []
+        for (a, b) in zip(best.line, best.line.dropFirst()) {
+            let count = max(1, Int((a.distance(to: b) / step).rounded(.up)))
+            for i in 0..<count { dense.append(a + (b - a) * (Double(i) / Double(count))) }
+        }
+        if let last = best.line.last { dense.append(last) }
+        let reach = extent * 0.9
+        func near(_ p: SettlementGenerator.V) -> Bool { abs(p.x - here.x) <= reach && abs(p.y - here.y) <= reach }
+        guard let closest = dense.indices.min(by: { dense[$0].distance(to: here) < dense[$1].distance(to: here) }) else { return nil }
+        var low = closest, high = closest
+        while low > 0, near(dense[low - 1]) { low -= 1 }
+        while high < dense.count - 1, near(dense[high + 1]) { high += 1 }
+        // One more point each way, so the line goes on past the edge of the map and is cut there.
+        if low > 0 { low -= 1 }
+        if high < dense.count - 1 { high += 1 }
+        let path = dense[low...high].map { GridPoint(easting: $0.x - here.x, northing: $0.y - here.y) }
+        guard path.count >= 2 else { return nil }
+        return (best.page.title, path)
     }
 }

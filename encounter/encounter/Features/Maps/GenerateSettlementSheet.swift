@@ -22,6 +22,15 @@ struct GenerateSettlementSheet: View {
     @State private var isMaking = false
     @State private var generation: Task<Void, Never>?
 
+    /// The name of the world map's river that runs through this place, if there is one ("" if it has no name). Then the settlement has
+    /// that river and nothing is chosen here.
+    @State private var mapRiver: String?
+
+    private var hasRiver: Bool { options.hasRiver || mapRiver != nil }
+
+    /// The options with that river in them.
+    private var effectiveOptions: SettlementOptions { place.world?.optionsWithMapRiver(options, for: place) ?? options }
+
     /// The languages of the realm the place is in on the world map, if it is in one.
     private var realm: [LanguageWeight]? { place.realmLanguages }
 
@@ -80,7 +89,12 @@ struct GenerateSettlementSheet: View {
                         ForEach(SettlementOptions.Layout.allCases) { Text($0.title).tag($0) }
                     }
                     Toggle("Wall", isOn: $options.hasWalls)
-                    Toggle("River", isOn: $options.hasRiver)
+                    if let mapRiver {
+                        Label(mapRiver.isEmpty ? String(localized: "River from the world map") : String(localized: "River from the world map: \(mapRiver)"), systemImage: "water.waves")
+                            .font(.callout)
+                    } else {
+                        Toggle("River", isOn: $options.hasRiver)
+                    }
                     SettlementLanguagesEditor(options: $options, realm: realm)
                     LabeledContent("Seed") {
                         HStack {
@@ -120,7 +134,7 @@ struct GenerateSettlementSheet: View {
                     Toggle("Choose for Me", isOn: Binding(
                         get: { options.quarters == nil },
                         set: { automatic in
-                            options.quarters = automatic ? nil : SettlementGenerator.TownMaker.automaticQuarters(for: options.size, hasRiver: options.hasRiver)
+                            options.quarters = automatic ? nil : SettlementGenerator.TownMaker.automaticQuarters(for: options.size, hasRiver: hasRiver)
                         }
                     ))
                     if let chosen = options.quarters {
@@ -133,9 +147,9 @@ struct GenerateSettlementSheet: View {
                                     options.quarters = list
                                 }
                             ))
-                            .disabled(quarter == .harbour && !options.hasRiver)
+                            .disabled(quarter == .harbour && !hasRiver)
                         }
-                        if !options.hasRiver { Text("A harbour needs a river.").font(.caption).foregroundStyle(.secondary) }
+                        if !hasRiver { Text("A harbour needs a river.").font(.caption).foregroundStyle(.secondary) }
                     }
                 } header: {
                     Text("Quarters")
@@ -200,6 +214,8 @@ struct GenerateSettlementSheet: View {
             }
             .onAppear {
                 if let saved = existing?.settlementOptions { options = saved }
+                // A river taken from the world map last time is looked for again, so a changed world map is followed.
+                options.useMapRiver(nil)
                 // Inside a realm the names follow its languages, as they are now.
                 if let realm, options.inheritsRealm { options.languages = realm }
             }
@@ -210,8 +226,10 @@ struct GenerateSettlementSheet: View {
                 defer { isPreviewing = false }
                 try? await Task.sleep(for: .milliseconds(250))
                 guard !Task.isCancelled else { return }
-                let plan = World.settlementPlan(for: place, options: options)
-                if let made = await SettlementGenerator.generateInBackground(options, outline: plan.outline, extent: plan.extent) {
+                let used = effectiveOptions
+                mapRiver = used.riverPath.isEmpty ? nil : used.riverName
+                let plan = World.settlementPlan(for: place, options: used)
+                if let made = await SettlementGenerator.generateInBackground(used, outline: plan.outline, extent: plan.extent) {
                     preview = made
                 }
             }

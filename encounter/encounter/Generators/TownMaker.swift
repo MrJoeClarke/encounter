@@ -107,7 +107,7 @@ extension SettlementGenerator {
 
         mutating func make() -> GeneratedSettlement {
             if !hasOutline { makeBoundary() }
-            if options.hasRiver { makeRiver() }
+            if options.hasRiver || options.riverPath.count >= 2 { makeRiver() }
             placeSquareAndGates()
             makeLayout()
             assignQuarters()
@@ -115,8 +115,9 @@ extension SettlementGenerator {
 
             var features: [GeneratedFeature] = []
             if options.hasWalls { features.append(wall()) }
-            if options.hasRiver, !river.isEmpty {
-                features.append(GeneratedFeature(name: names.river(using: &random), placeType: "River", summary: String(localized: "A river through the settlement."), shape: .line(river.map(\.grid))))
+            if !river.isEmpty {
+                let riverName = options.riverName.isEmpty ? names.river(using: &random) : names.named(options.riverName)
+                features.append(GeneratedFeature(name: riverName, placeType: "River", summary: String(localized: "A river through the settlement."), shape: .line(river.map(\.grid))))
             }
             for street in streets {
                 features.append(GeneratedFeature(
@@ -166,7 +167,55 @@ extension SettlementGenerator {
             return best
         }
 
+        /// The river from the world map, if there is one, in the settlement's own coordinates and cut off at the edge of its map.
         mutating func makeRiver() {
+            if options.riverPath.count >= 2 {
+                let middle = extent / 2
+                let clipped = Self.clip(options.riverPath.map { V(x: middle + $0.easting, y: middle + $0.northing) }, toSquareOf: extent)
+                if clipped.count >= 2 {
+                    river = clipped
+                    return
+                }
+            }
+            makeSyntheticRiver()
+        }
+
+        /// The part of a line inside the square from (0, 0) to (size, size), with the ends moved to the edge where the line leaves it.
+        /// If it leaves and comes back, only the longest stretch inside is kept.
+        static func clip(_ line: [V], toSquareOf size: Double) -> [V] {
+            func inside(_ p: V) -> Bool { p.x >= 0 && p.x <= size && p.y >= 0 && p.y <= size }
+            /// Where the segment from a to b meets the edge of the square, going from inside to outside (or the reverse).
+            func edgePoint(_ a: V, _ b: V) -> V {
+                var t0 = 0.0, t1 = 1.0
+                let d = b + a * -1
+                for (p, q) in [(-d.x, a.x), (d.x, size - a.x), (-d.y, a.y), (d.y, size - a.y)] {
+                    if p == 0 { continue }
+                    let r = q / p
+                    if p < 0 { t0 = max(t0, r) } else { t1 = min(t1, r) }
+                }
+                let t = inside(a) ? t1 : t0
+                return V(x: min(max(a.x + d.x * t, 0), size), y: min(max(a.y + d.y * t, 0), size))
+            }
+            var runs: [[V]] = []
+            var current: [V] = []
+            for (index, point) in line.enumerated() {
+                if inside(point) {
+                    if current.isEmpty, index > 0 { current.append(edgePoint(point, line[index - 1])) }
+                    current.append(point)
+                } else {
+                    if !current.isEmpty {
+                        current.append(edgePoint(line[index - 1], point))
+                        runs.append(current)
+                        current = []
+                    }
+                }
+            }
+            if !current.isEmpty { runs.append(current) }
+            func length(_ run: [V]) -> Double { zip(run, run.dropFirst()).reduce(0) { $0 + $1.0.distance(to: $1.1) } }
+            return runs.max { length($0) < length($1) } ?? []
+        }
+
+        mutating func makeSyntheticRiver() {
             let startY = centre.y + random.value(in: -radius * 0.45...radius * 0.45)
             let amplitude = random.value(in: radius * 0.1...radius * 0.3)
             let frequency = random.value(in: 1.5...3.5) * .pi / extent

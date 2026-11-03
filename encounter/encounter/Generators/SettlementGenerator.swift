@@ -175,6 +175,11 @@ nonisolated struct SettlementOptions: Codable, Equatable, Sendable {
     var layout = Layout.organic
     var hasWalls = false
     var hasRiver = false
+    /// A river taken from the world map, as points in metres east and north of the middle of the settlement's map. When there is
+    /// one it is the settlement's river, and `hasRiver` is on.
+    var riverPath: [GridPoint] = []
+    /// The name the world map gives that river.
+    var riverName = ""
     var seed: UInt64 = 1
     /// Where the gates are. Empty lets the generator choose.
     var gates: [SettlementGate] = []
@@ -197,6 +202,20 @@ nonisolated struct SettlementOptions: Codable, Equatable, Sendable {
     /// What the names are made in.
     var nameLanguages: [LanguageWeight] {
         languages.isEmpty ? [LanguageWeight(id: namingStyle, weight: 50)] : languages
+    }
+
+    /// Takes a river from the world map as the settlement's own (turning rivers on), or with nil lets go of one taken before.
+    mutating func useMapRiver(_ river: (name: String, path: [GridPoint])?) {
+        if let river {
+            riverPath = river.path
+            riverName = river.name
+            hasRiver = true
+        } else if !riverPath.isEmpty {
+            // It came from the world map, which no longer has it, so the river goes with it.
+            riverPath = []
+            riverName = ""
+            hasRiver = false
+        }
     }
 
     init(
@@ -224,6 +243,8 @@ nonisolated struct SettlementOptions: Codable, Equatable, Sendable {
         layout = try container.decodeIfPresent(Layout.self, forKey: .layout) ?? .organic
         hasWalls = try container.decodeIfPresent(Bool.self, forKey: .hasWalls) ?? false
         hasRiver = try container.decodeIfPresent(Bool.self, forKey: .hasRiver) ?? false
+        riverPath = try container.decodeIfPresent([GridPoint].self, forKey: .riverPath) ?? []
+        riverName = try container.decodeIfPresent(String.self, forKey: .riverName) ?? ""
         seed = try container.decodeIfPresent(UInt64.self, forKey: .seed) ?? 1
         gates = try container.decodeIfPresent([SettlementGate].self, forKey: .gates) ?? []
         square = try container.decodeIfPresent(SquareSpot.self, forKey: .square)

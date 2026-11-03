@@ -369,3 +369,101 @@ struct GeneratedWorldMapTests {
         #expect(again.map === map)
     }
 }
+
+@MainActor
+struct MapRiverTests {
+    private func worldWithRivers() async throws -> (World, ModelContext, WorldMap) {
+        let context = ModelContext(try AppSchema.makeContainer(inMemory: true))
+        let world = World(name: "Aldara")
+        context.insert(world)
+        world.ensureRootPlace(in: context)
+        var options = WorldOptions()
+        options.seed = 3
+        options.width = 300_000
+        options.rivers = 4
+        let summary = try #require(await world.generateWorld(options: options, in: context))
+        return (world, context, summary.map)
+    }
+
+    private func river(in world: World) -> (page: Page, line: [GridPoint])? {
+        for page in world.pages ?? [] where page.attributeText("core.placeType") == "River" {
+            if case .line(let points)? = page.geometry, points.count > 4 { return (page, points) }
+        }
+        return nil
+    }
+
+    @Test func aPlaceOnAWorldMapRiverGetsThatRiverAndAFarOneDoesNot() async throws {
+        let (world, context, _) = try await worldWithRivers()
+        let found = try #require(river(in: world))
+        let middle = found.line[found.line.count / 2]
+        let place = world.addPage(kind: .place, in: context)
+        place.geometry = .point(middle)
+        let options = SettlementOptions(size: .town, layout: .organic, seed: 4)
+        let extent = options.size.extent
+        let got = try #require(world.riverNear(place, radius: options.size.radius, extent: extent))
+        #expect(got.name == found.page.title && got.path.count >= 2)
+        // The stretch passes the middle, and reaches out to the edge of the map so it can be cut there.
+        #expect(got.path.map { $0.distance(to: GridPoint(easting: 0, northing: 0)) }.min()! < 30)
+        #expect(got.path.contains { abs($0.easting) > extent * 0.4 || abs($0.northing) > extent * 0.4 })
+
+        let far = world.addPage(kind: .place, in: context)
+        far.geometry = .point(GridPoint(easting: middle.easting + 40_000, northing: middle.northing + 40_000))
+        let others = (world.pages ?? []).filter { $0.attributeText("core.placeType") == "River" }
+        let tooNear = others.contains { page in
+            if case .line(let points)? = page.geometry { return points.contains { $0.distance(to: far.geometry!.centre) < options.size.radius * 3 } }
+            return false
+        }
+        if !tooNear { #expect(world.riverNear(far, radius: options.size.radius, extent: extent) == nil) }
+    }
+
+    @Test func theSettlementMadeThereFollowsTheWorldMapsRiver() async throws {
+        let (world, context, _) = try await worldWithRivers()
+        let found = try #require(river(in: world))
+        let place = world.addPage(kind: .place, in: context)
+        place.title = "Riverside"
+        place.geometry = .point(found.line[found.line.count / 2])
+        let options = world.optionsWithMapRiver(SettlementOptions(size: .town, layout: .organic, seed: 4), for: place)
+        #expect(options.hasRiver && options.riverName == found.page.title && options.riverPath.count >= 2)
+        let made = SettlementGenerator.generate(options)
+        let drawn = try #require(made.features(of: "River").first)
+        #expect(drawn.name == found.page.title)
+        guard case .line(let points) = drawn.shape else { Issue.record("The river is not a line"); return }
+        let extent = made.extent
+        #expect(points.allSatisfy { $0.easting >= -0.01 && $0.easting <= extent + 0.01 && $0.northing >= -0.01 && $0.northing <= extent + 0.01 })
+        // Every point of it lies on the world map's river, moved to the settlement's coordinates.
+        let relative = options.riverPath.map { SettlementGenerator.V(x: extent / 2 + $0.easting, y: extent / 2 + $0.northing) }
+        #expect(points.allSatisfy { SettlementGenerator.distance(from: SettlementGenerator.V(x: $0.easting, y: $0.northing), toPolyline: relative) < 1 })
+        // Without a river nearby the options let go of it again.
+        place.geometry = .point(GridPoint(easting: -9_000_000, northing: -9_000_000))
+        #expect(world.optionsWithMapRiver(options, for: place).riverPath.isEmpty && !world.optionsWithMapRiver(options, for: place).hasRiver)
+    }
+
+    @Test(arguments: [(0.0, 1.0), (1.0, 0.0), (1.0, 1.0), (-1.0, 0.6)])
+    func aRiverRunningAnyWayStillGivesAWholeSettlement(direction: (Double, Double)) {
+        var options = SettlementOptions(size: .town, layout: .organic, hasWalls: true, seed: 9)
+        let reach = options.size.extent
+        let path = (-10...10).map { i -> GridPoint in
+            let t = Double(i) / 10 * reach
+            let wiggle = sin(t / 60) * 25
+            return GridPoint(easting: direction.0 * t - direction.1 * wiggle, northing: direction.1 * t + direction.0 * wiggle)
+        }
+        options.useMapRiver(("Test", path))
+        let made = SettlementGenerator.generate(options)
+        #expect(made.features(of: "River").count == 1 && made.features(of: "Building").count > 10 && made.features(of: "Road").count + made.features(of: "Street").count > 3)
+    }
+
+    @Test func aRiverIsCutAtTheEdgeOfTheSquare() {
+        let line = (0..<40).map { SettlementGenerator.V(x: -100 + Double($0) * 20, y: 50) }
+        let cut = SettlementGenerator.TownMaker.clip(line, toSquareOf: 300)
+        #expect(cut.first == SettlementGenerator.V(x: 0, y: 50) && cut.last == SettlementGenerator.V(x: 300, y: 50))
+        #expect(SettlementGenerator.TownMaker.clip([SettlementGenerator.V(x: -50, y: -50), SettlementGenerator.V(x: -10, y: -10)], toSquareOf: 300).isEmpty)
+    }
+
+    @Test func optionsWithAMapRiverSurviveSavingAndOldOnesStillOpen() throws {
+        var options = SettlementOptions(size: .town, layout: .organic, seed: 4)
+        options.useMapRiver(("Hale", [GridPoint(easting: -50, northing: 0), GridPoint(easting: 50, northing: 10)]))
+        let back = try JSONDecoder().decode(SettlementOptions.self, from: JSONEncoder().encode(options))
+        #expect(back == options && back.hasRiver)
+        #expect(try JSONDecoder().decode(SettlementOptions.self, from: Data("{}".utf8)).riverPath.isEmpty)
+    }
+}
