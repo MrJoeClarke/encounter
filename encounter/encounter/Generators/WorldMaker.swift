@@ -193,8 +193,8 @@ nonisolated struct WorldMaker {
                     let px = u2 - 0.5, py = v2 - 0.5
                     let rx = px * cos(angle) + py * sin(angle), ry = -px * sin(angle) + py * cos(angle)
                     // The long way across is about the width of the map less its margin, so the land never reaches the sides.
-                    let d = hypot(rx, ry * aspect) / 0.46
-                    value = h * 0.75 - 0.45 * d * d
+                    let d = hypot(rx, ry * aspect) / 0.38
+                    value = h * 0.95 - 0.6 * d * d
                 case .coast:
                     let e = [v2, 1 - v2, u2, 1 - u2][side]
                     value = h * 0.75 - 0.9 * (1 - e) * (1 - e)
@@ -223,8 +223,8 @@ nonisolated struct WorldMaker {
                 // the edge of the map cutting the land off in a straight line.
                 for edge in sea {
                     let distance = [v2, 1 - v2, u2, 1 - u2][edge]
-                    let t = min(max((0.14 - distance) / 0.11, 0), 1)
-                    value -= 1.6 * t * t * (3 - 2 * t)
+                    let t = min(max((0.2 - distance) / 0.17, 0), 1)
+                    value -= 1.0 * t * t * (3 - 2 * t)
                 }
                 potential[y * n + x] = value
             }
@@ -279,12 +279,57 @@ nonisolated struct WorldMaker {
         return label
     }
 
+    /// Cuts bays and raises headlands and capes along the coast, by the Coastline setting. The coast is where the land potential is
+    /// near the cut that will make land (found here the same way it is found later), so this changes the outline and nothing inland,
+    /// and the share of land stays the shape's.
+    private mutating func shapeCoast() {
+        guard options.shape != .inland else { return }
+        let style = options.coastline
+        if style == .smooth {
+            // Rubbed over twice, which rounds off small bumps.
+            for _ in 0..<2 {
+                var blurred = height
+                for y in 0..<n {
+                    for x in 0..<n {
+                        var total = 0.0, count = 0.0
+                        for dy in -1...1 {
+                            for dx in -1...1 where x + dx >= 0 && x + dx < n && y + dy >= 0 && y + dy < n {
+                                total += height[(y + dy) * n + x + dx]
+                                count += 1
+                            }
+                        }
+                        blurred[y * n + x] = total / count
+                    }
+                }
+                height = blurred
+            }
+        }
+        let sorted = height.sorted()
+        let cut = sorted[min(sorted.count - 1, max(0, Int(Double(sorted.count) * (1 - options.shape.landShare))))]
+        for y in 0..<n {
+            for x in 0..<n {
+                let i = y * n + x
+                // Only near the coast.
+                let near = exp(-pow((height[i] - cut) / 0.32, 2))
+                guard near > 0.02 else { continue }
+                let u = (Double(x) + 0.5) / Double(n), v = (Double(y) + 0.5) / Double(n)
+                // Bays and headlands: a slow wave that the sea is let into and the land out of, a few of them along a coast.
+                let wave = (noise.fractal(u * 7.5 + 11.3, v * 7.5 + 4.1, octaves: 3, salt: 51) - 0.5) * 2.4
+                // Capes: land along the ridges of another noise, so arms reach out where a ridge meets the coast.
+                let ridge = 1 - abs(2 * noise.fractal(u * 3.6 + 2.2, v * 3.6 + 9.7, octaves: 3, salt: 52) - 1)
+                let rough = noise.fractal(u * 16, v * 16, octaves: 2, salt: 53) - 0.5
+                height[i] += near * (style.bays * wave + style.capes * pow(ridge, 4) + style.detail * rough * 2)
+            }
+        }
+    }
+
     private mutating func terrain() {
         let side = Int(options.seed % 4)
         for i in wobble.indices {
             wobble[i] = 1 + 0.7 * noise.value(Double(i % n) / 9, Double(i / n) / 9, salt: 7)
         }
         height = landPotential(side: side)
+        shapeCoast()
         let sorted = height.sorted()
         let level = options.shape == .inland ? (sorted.first ?? 0) - 1 : sorted[min(sorted.count - 1, max(0, Int(Double(sorted.count) * (1 - options.shape.landShare))))]
         let margin = 3

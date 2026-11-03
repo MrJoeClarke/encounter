@@ -71,6 +71,11 @@ struct GenerateWorldSheet: View {
                     Picker("Land", selection: $options.shape) {
                         ForEach(WorldShape.allCases) { Text($0.title).tag($0) }
                     }
+                    if options.shape != .inland {
+                        Picker("Coastline", selection: $options.coastline) {
+                            ForEach(WorldCoastline.allCases) { Text($0.title).tag($0) }
+                        }
+                    }
                     if options.shape == .archipelago {
                         Picker("Islands", selection: $options.islands) {
                             ForEach(WorldIslands.allCases.filter { $0 != .none }) { Text($0.title).tag($0) }
@@ -322,11 +327,12 @@ struct WorldPreview: View {
         .frame(width: 520, height: 520)
 }
 
-private func shapePreview(_ shape: WorldShape) -> some View {
+private func shapePreview(_ shape: WorldShape, _ coastline: WorldCoastline = .natural) -> some View {
     var options = WorldOptions()
     options.seed = 7
     options.realms = 4
     options.shape = shape
+    options.coastline = coastline
     return WorldPreview(world: WorldGenerator.generate(options)).frame(width: 520, height: 520)
 }
 
@@ -334,3 +340,6 @@ private func shapePreview(_ shape: WorldShape) -> some View {
 #Preview("A peninsula") { shapePreview(.peninsula) }
 #Preview("An archipelago") { shapePreview(.archipelago) }
 #Preview("An inland realm") { shapePreview(.inland) }
+#Preview("Smooth coast") { shapePreview(.continent, .smooth) }
+#Preview("Natural coast") { shapePreview(.continent, .natural) }
+#Preview("Rugged coast") { shapePreview(.continent, .rugged) }

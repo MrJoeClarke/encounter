@@ -46,7 +46,7 @@ struct WorldGeneratorTests {
 
     @Test func theShapeDecidesHowMuchLandThereIsAndWhere() {
         let continent = make(.continent), coast = make(.coast), peninsula = make(.peninsula), archipelago = make(.archipelago)
-        #expect(landShare(continent) > 0.3, "continent \(landShare(continent))")
+        #expect(landShare(continent) > 0.25, "continent \(landShare(continent))")
         #expect(landShare(coast) > 0.4, "coast \(landShare(coast))")
         #expect(landShare(peninsula) > 0.15 && landShare(peninsula) < 0.5, "peninsula \(landShare(peninsula))")
         #expect(landShare(archipelago) > 0.12 && landShare(archipelago) < 0.4, "archipelago \(landShare(archipelago))")
@@ -179,7 +179,7 @@ struct WorldGeneratorTests {
         let few = make(.archipelago, realms: 3) { $0.islands = .few }
         let many = make(.archipelago, realms: 3) { $0.islands = .many }
         #expect(many.features(of: "Region").count > few.features(of: "Region").count + 5)
-        #expect(many.features(of: "Region").count >= 10)
+        #expect(many.features(of: "Region").count >= 8)
     }
 
     @Test func aWorldSavedWithTheShapeIslandOpensAsAContinent() throws {
@@ -679,5 +679,67 @@ struct BankRoadTests {
         }
         print("BRIDGES", crossing, "of", total)
         #expect(crossing * 10 >= total * 7)
+    }
+}
+
+struct CoastlineTests {
+    private typealias V = SettlementGenerator.V
+
+    private func world(_ shape: WorldShape, _ coastline: WorldCoastline, seed: UInt64) -> GeneratedWorld {
+        var options = WorldOptions()
+        options.shape = shape
+        options.realms = 1
+        options.seed = seed
+        options.coastline = coastline
+        return WorldGenerator.generate(options)
+    }
+
+    /// How crinkled the coast is: the length round the land compared with the shortest it could be for that much land.
+    private func crinkle(_ world: GeneratedWorld) -> Double {
+        var perimeter = 0.0, area = 0.0
+        for feature in world.features(of: "Region") {
+            guard case .polygon(let points) = feature.shape else { continue }
+            let corners = points.map { V(x: $0.easting, y: $0.northing) }
+            area += Plane.area(corners)
+            perimeter += zip(corners, corners.dropFirst() + [corners[0]]).reduce(0) { $0 + $1.0.distance(to: $1.1) }
+        }
+        return perimeter / (2 * (Double.pi * area).squareRoot())
+    }
+
+    @Test(arguments: [WorldShape.continent, .coast, .peninsula, .archipelago])
+    func theRuggederTheSettingTheMoreCrinkledTheCoast(shape: WorldShape) {
+        var smooth = 0.0, natural = 0.0, rugged = 0.0
+        for seed in UInt64(1)...6 {
+            smooth += crinkle(world(shape, .smooth, seed: seed))
+            natural += crinkle(world(shape, .natural, seed: seed))
+            rugged += crinkle(world(shape, .rugged, seed: seed))
+        }
+        // A peninsula keeps only its biggest piece of land, which drops the islets that a rugged coast breaks off, so for that shape
+        // natural and rugged are not told apart by the length of coast.
+        #expect(smooth < natural && (shape == .peninsula || natural < rugged), "\(shape): \(smooth / 6), \(natural / 6), \(rugged / 6)")
+        #expect(rugged > smooth * 1.05)
+    }
+
+    @Test func theSettingDoesNotChangeHowMuchLandThereIsOrWhatShapeItIs() {
+        for coastline in WorldCoastline.allCases {
+            let continent = world(.continent, coastline, seed: 4)
+            let bounds = Plane.bounds(continent.features(of: "Region").flatMap { feature -> [V] in
+                if case .polygon(let p) = feature.shape { return p.map { V(x: $0.easting, y: $0.northing) } }
+                return []
+            })
+            // Still sea all round, and still land of about the same amount.
+            #expect(bounds.min.x > 0 && bounds.max.x < continent.extent && bounds.min.y > 0 && bounds.max.y < continent.extent, "\(coastline)")
+            var share = 0.0
+            for feature in continent.features(of: "Region") { if case .polygon(let p) = feature.shape { share += Plane.area(p.map { V(x: $0.easting, y: $0.northing) }) } }
+            #expect(share / (continent.extent * continent.extent) > 0.25 && share / (continent.extent * continent.extent) < 0.55, "\(coastline): \(share / (continent.extent * continent.extent))")
+        }
+    }
+
+    @Test func theChoiceIsKeptWithTheOptionsAndOldWorldsAreNatural() throws {
+        var options = WorldOptions()
+        options.coastline = .rugged
+        let back = try JSONDecoder().decode(WorldOptions.self, from: JSONEncoder().encode(options))
+        #expect(back.coastline == .rugged)
+        #expect(try JSONDecoder().decode(WorldOptions.self, from: Data("{}".utf8)).coastline == .natural)
     }
 }

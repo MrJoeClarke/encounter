@@ -40,11 +40,54 @@ nonisolated enum WorldShape: String, Codable, CaseIterable, Identifiable, Sendab
     /// How much of the map is land.
     var landShare: Double {
         switch self {
-        case .continent: 0.46
+        case .continent: 0.36
         case .coast: 0.6
         case .peninsula: 0.33
         case .archipelago: 0.16
         case .inland: 1
+        }
+    }
+}
+
+/// How much the coast bays and juts: smooth is gentle curves, rugged is deep bays, headlands and long capes.
+nonisolated enum WorldCoastline: String, Codable, CaseIterable, Identifiable, Sendable {
+    case smooth, natural, rugged
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .smooth: String(localized: "Smooth")
+        case .natural: String(localized: "Natural")
+        case .rugged: String(localized: "Rugged")
+        }
+    }
+
+    /// How far, in the units the land is worked out in, the sea is let cut into the land and the land reach out, at the scale of bays
+    /// and headlands.
+    var bays: Double {
+        switch self {
+        case .smooth: 0.1
+        case .natural: 0.42
+        case .rugged: 0.9
+        }
+    }
+
+    /// How far long arms of land reach out as capes and peninsulas.
+    var capes: Double {
+        switch self {
+        case .smooth: 0
+        case .natural: 0.25
+        case .rugged: 0.6
+        }
+    }
+
+    /// How rough the coast is at the finest scale.
+    var detail: Double {
+        switch self {
+        case .smooth: 0
+        case .natural: 0.07
+        case .rugged: 0.2
         }
     }
 }
@@ -134,6 +177,8 @@ nonisolated struct WorldOptions: Codable, Equatable, Sendable {
     var shape = WorldShape.continent
     /// How many islands there are: for an archipelago, one for each realm (few) or many small ones.
     var islands = WorldIslands.few
+    /// How much the coast bays and juts.
+    var coastline = WorldCoastline.natural
     var seed: UInt64 = 1
     /// The number of realms, each with a capital city.
     var realms = 3
@@ -201,6 +246,7 @@ nonisolated struct WorldOptions: Codable, Equatable, Sendable {
         width = try container.decodeIfPresent(Double.self, forKey: .width) ?? fresh.width
         shape = try container.decodeIfPresent(WorldShape.self, forKey: .shape) ?? fresh.shape
         islands = try container.decodeIfPresent(WorldIslands.self, forKey: .islands) ?? fresh.islands
+        coastline = try container.decodeIfPresent(WorldCoastline.self, forKey: .coastline) ?? fresh.coastline
         seed = try container.decodeIfPresent(UInt64.self, forKey: .seed) ?? fresh.seed
         realms = try container.decodeIfPresent(Int.self, forKey: .realms) ?? fresh.realms
         citySpacing = try container.decodeIfPresent(Double.self, forKey: .citySpacing) ?? fresh.citySpacing
