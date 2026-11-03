@@ -57,7 +57,7 @@ struct RootLanguageTests {
 
     @Test func theShippedLanguagesAreAllValidAndEnglishComesFirst() {
         let all = RootLanguages.all
-        #expect(all.map(\.id) == ["english", "celtic", "slavic", "romance", "germanic", "norse"])
+        #expect(all.map(\.id) == ["english", "celtic", "slavic", "romance", "germanic", "norse", "greek", "finnic", "iberian"])
         for language in all {
             #expect(language.problems.isEmpty, Comment(rawValue: "\(language.problems)"))
             for (name, words) in language.names { #expect(Set(words).count == words.count, Comment(rawValue: "\(language.id) \(name) repeats a name")) }
