@@ -118,3 +118,28 @@ struct LanguageChooserTests {
         }
     }
 }
+
+struct RealmDescriptionTests {
+    @Test func aRealmsDescriptionBecomesItsSummaryAndOthersKeepThePlainLine() {
+        var options = WorldOptions()
+        options.seed = 6
+        options.width = 300_000
+        options.realms = 2
+        options.setDescription("  Cold clans of the high passes. They trade furs.  ", forRealm: 1)
+        let world = WorldGenerator.generate(options)
+        func summaries(_ number: Int) -> Set<String> { Set(world.features(of: "Region").filter { $0.kind == "realm \(number)" }.map(\.summary)) }
+        #expect(summaries(1) == ["Cold clans of the high passes. They trade furs."])
+        #expect(summaries(0) == ["A realm."])
+        // The description does not change any name or where anything is.
+        options.setDescription("", forRealm: 1)
+        #expect(WorldGenerator.generate(options).features.map(\.name) == world.features.map(\.name))
+    }
+
+    /// With the real model: three descriptions, each a couple of whole sentences.
+    @Test(.enabled(if: RootLanguageDrafterModelTests.canRun), .timeLimit(.minutes(2)))
+    func theModelWritesOneDescriptionPerRealm() async throws {
+        let made = try await RootLanguageDrafter.realmDescriptions(count: 3)
+        print("REALMDESC", made)
+        #expect(made.count == 3 && made.allSatisfy { $0.count > 40 })
+    }
+}

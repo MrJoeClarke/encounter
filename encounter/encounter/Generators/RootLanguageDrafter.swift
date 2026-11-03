@@ -58,13 +58,13 @@ struct DraftedWords {
 /// Descriptions of realms for a world.
 @Generable
 struct DraftedRealmDescriptions {
-    @Guide(description: "One short description for each realm, each from a different real-world or fictional inspiration", .minimumCount(1), .maximumCount(8))
+    @Guide(description: "One description for each realm, each from a different real-world or fictional culture", .minimumCount(1), .maximumCount(8))
     var realms: [DraftedRealm]
 }
 
 @Generable
 struct DraftedRealm {
-    @Guide(description: "Two sentences on the realm's people, land and character, ending with what its names sound like")
+    @Guide(description: "Exactly two complete sentences on the realm's people, land and character, naming the culture it is inspired by")
     var description: String
 }
 
@@ -174,7 +174,8 @@ enum RootLanguageDrafter {
     static func realmDescriptions(count: Int, hint: String = "") async throws -> [String] {
         let session = LanguageModelSession(instructions: "You help a game master design a fantasy world. Be concrete and brief.")
         let theme = hint.isEmpty ? "" : " The world is: \(hint)."
-        let prompt = "Describe \(count) realms for a fantasy world.\(theme) Each takes inspiration from a different culture, real or from fiction."
-        return try await session.respond(to: prompt, generating: DraftedRealmDescriptions.self).content.realms.map(\.description)
+        let prompt = "Describe \(count) realms for a fantasy world.\(theme) Each takes inspiration from a different culture, real or from fiction. Do not use the names of real countries."
+        let made = try await session.respond(to: prompt, generating: DraftedRealmDescriptions.self).content.realms
+        return Array(made.map { $0.description.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty }.prefix(count))
     }
 }

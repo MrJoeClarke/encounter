@@ -48,10 +48,21 @@ struct RealmLanguagesEditor: View {
     /// The realm whose languages are being worked out by the model.
     @State private var suggesting: Int?
     @State private var couldNotSuggest: Int?
+    @State private var isDescribing = false
+    @State private var couldNotDescribe = false
 
     private var modelAvailability: RootLanguageDrafter.Availability { RootLanguageDrafter.availability }
 
     var body: some View {
+        HStack {
+            Button("Describe Realms", systemImage: "sparkles") { describeRealms() }
+                .disabled(isDescribing || modelAvailability != .available || emptyRealms.isEmpty)
+                .help("Writes a description for each realm that has none, which you can then edit")
+            if isDescribing { ProgressView().controlSize(.small) }
+        }
+        if couldNotDescribe {
+            Text("The descriptions could not be written. Try again.").font(.caption).foregroundStyle(.secondary)
+        }
         ForEach(0..<options.realms, id: \.self) { realm in
             DisclosureGroup {
                 TextField("What is this realm like?", text: Binding(
@@ -69,7 +80,7 @@ struct RealmLanguagesEditor: View {
                 } else if couldNotSuggest == realm {
                     Text("No languages could be suggested from that. Try describing the place or the people.").font(.caption).foregroundStyle(.secondary)
                 } else {
-                    Text("Reads the description and picks the languages to mix, which you can then change.").font(.caption).foregroundStyle(.secondary)
+                    Text("Reads the description and picks the languages to mix, which you can then change. The description becomes the realm's page.").font(.caption).foregroundStyle(.secondary)
                 }
                 LanguageMixEditor(mix: Binding(
                     get: { options.languages(forRealm: realm) },
@@ -78,6 +89,27 @@ struct RealmLanguagesEditor: View {
             } label: {
                 LabeledContent("Realm \(realm + 1)", value: options.languages(forRealm: realm).titles)
             }
+        }
+    }
+
+    /// The realms with nothing written about them.
+    private var emptyRealms: [Int] {
+        (0..<options.realms).filter { options.description(forRealm: $0).trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+    }
+
+    /// Has the model write a description for each realm that has none; ones already written are kept.
+    private func describeRealms() {
+        let targets = emptyRealms
+        guard !targets.isEmpty else { return }
+        isDescribing = true
+        couldNotDescribe = false
+        Task {
+            if let made = try? await RootLanguageDrafter.realmDescriptions(count: targets.count), !made.isEmpty {
+                for (realm, text) in zip(targets, made) { options.setDescription(text, forRealm: realm) }
+            } else {
+                couldNotDescribe = true
+            }
+            isDescribing = false
         }
     }
 

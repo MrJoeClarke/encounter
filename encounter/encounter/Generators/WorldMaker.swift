@@ -543,6 +543,12 @@ nonisolated struct WorldMaker {
         return found.sorted { $0.area > $1.area }.prefix(limit).map(\.points)
     }
 
+    /// What the realm's page says: the description the user wrote or had written, or a plain line if there is none.
+    private func realmSummary(_ realm: Int) -> String {
+        let text = options.description(forRealm: realm).trimmingCharacters(in: .whitespacesAndNewlines)
+        return text.isEmpty ? String(localized: "A realm.") : text
+    }
+
     private mutating func features() -> [GeneratedFeature] {
         var features: [GeneratedFeature] = []
         features.append(GeneratedFeature(
@@ -561,7 +567,7 @@ nonisolated struct WorldMaker {
             for points in polygons(of: mask, minimumCells: 6, limit: 6) {
                 let name = first ? realmNames[realm] : names.named(realmNames[realm])
                 first = false
-                features.append(GeneratedFeature(name: name, placeType: "Region", summary: String(localized: "A realm."), shape: .polygon(points), kind: "realm \(realm)"))
+                features.append(GeneratedFeature(name: name, placeType: "Region", summary: realmSummary(realm), shape: .polygon(points), kind: "realm \(realm)"))
             }
         }
         // The coast is smoothed from the grid, so a place on a coastal cell can end up just off the land. Nudge it in.
