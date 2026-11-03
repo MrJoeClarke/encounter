@@ -104,7 +104,11 @@ struct RealmLanguagesEditor: View {
         isDescribing = true
         couldNotDescribe = false
         Task {
-            if let made = try? await RootLanguageDrafter.realmDescriptions(count: targets.count), !made.isEmpty {
+            // A realm whose languages were chosen is described as drawing on their cultures.
+            let cultures = targets.map { realm in
+                options.realmLanguages.indices.contains(realm) && !options.realmLanguages[realm].isEmpty ? options.languages(forRealm: realm).titles : ""
+            }
+            if let made = try? await RootLanguageDrafter.realmDescriptions(count: targets.count, cultures: cultures), !made.isEmpty {
                 for (realm, text) in zip(targets, made) { options.setDescription(text, forRealm: realm) }
             } else {
                 couldNotDescribe = true

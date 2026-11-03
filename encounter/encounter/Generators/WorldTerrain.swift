@@ -148,6 +148,18 @@ nonisolated enum Contours {
         return Array(left.dropLast()) + right
     }
 
+    /// A closed outline with points added along any side longer than `step`, so that rounding it later cuts each corner by at most
+    /// about a step, however long the sides are.
+    static func subdivided(closed loop: [V], step: Double) -> [V] {
+        var result: [V] = []
+        for i in loop.indices {
+            let a = loop[i], b = loop[(i + 1) % loop.count]
+            let pieces = max(1, Int((a.distance(to: b) / step).rounded(.up)))
+            for k in 0..<pieces { result.append(V(x: a.x + (b.x - a.x) * Double(k) / Double(pieces), y: a.y + (b.y - a.y) * Double(k) / Double(pieces))) }
+        }
+        return result
+    }
+
     /// Cuts the corners off a closed outline, again and again, to make it round.
     static func rounded(closed loop: [V], times: Int) -> [V] {
         var current = loop

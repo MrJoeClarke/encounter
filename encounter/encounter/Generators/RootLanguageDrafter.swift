@@ -64,7 +64,7 @@ struct DraftedRealmDescriptions {
 
 @Generable
 struct DraftedRealm {
-    @Guide(description: "Exactly two complete sentences on the realm's people, land and character, naming the culture it is inspired by")
+    @Guide(description: "Exactly two complete sentences on the realm's people, land and character. Never give the realm, a place or a person a name: say 'the realm' or 'its people'")
     var description: String
 }
 
@@ -171,10 +171,17 @@ enum RootLanguageDrafter {
     }
 
     /// Descriptions for a number of realms, each from a different inspiration. `hint` is the user's idea of the world, if any.
-    static func realmDescriptions(count: Int, hint: String = "") async throws -> [String] {
-        let session = LanguageModelSession(instructions: "You help a game master design a fantasy world. Be concrete and brief.")
+    static func realmDescriptions(count: Int, hint: String = "", cultures: [String] = []) async throws -> [String] {
+        let session = LanguageModelSession(instructions: """
+            You help a game master design a fantasy world. Be concrete and brief. Never invent names for realms, places or people: \
+            the game gives them names, so refer to 'the realm' and 'its people'.
+            """)
         let theme = hint.isEmpty ? "" : " The world is: \(hint)."
-        let prompt = "Describe \(count) realms for a fantasy world.\(theme) Each takes inspiration from a different culture, real or from fiction. Do not use the names of real countries."
+        // A realm whose languages have been chosen draws on the cultures those languages come from; the others are left to the model.
+        let steer = cultures.enumerated().compactMap { index, culture -> String? in
+            culture.isEmpty ? nil : "Realm \(index + 1) draws on \(culture) culture."
+        }.joined(separator: " ")
+        let prompt = "Describe \(count) realms for a fantasy world, in order.\(theme) \(steer) Any other realm takes inspiration from a culture of its own, real or from fiction. Do not use the names of real countries."
         let made = try await session.respond(to: prompt, generating: DraftedRealmDescriptions.self).content.realms
         return Array(made.map { $0.description.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty }.prefix(count))
     }

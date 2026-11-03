@@ -41,6 +41,8 @@ nonisolated struct WorldMaker {
     var realmOf: [Int]
     /// Land near an edge it runs off, which no realm claims.
     var strip: [Bool]
+    /// Which piece of the strip each cell is in, so that a strip all round the map is made of pieces that have no hole in them.
+    var stripGroup: [Int]
     var realmCount = 0
     var roadEdges = Set<Int>()
     var roadCell: [Bool]
@@ -68,6 +70,7 @@ nonisolated struct WorldMaker {
         flowTo = [Int](repeating: -1, count: size * size)
         realmOf = [Int](repeating: -1, count: size * size)
         strip = [Bool](repeating: false, count: size * size)
+        stripGroup = [Int](repeating: -1, count: size * size)
     }
 
     // MARK: Grid
@@ -168,6 +171,7 @@ nonisolated struct WorldMaker {
     private func openEdges(side: Int) -> [Int] {
         switch options.shape {
         case .coast, .peninsula: [0, 1, 2, 3].filter { !seaEdges(side: side).contains($0) }
+        case .inland: [0, 1, 2, 3]
         default: []
         }
     }
@@ -377,8 +381,14 @@ nonisolated struct WorldMaker {
             for i in land.indices where land[i] {
                 let x = i % n, y = i / n
                 let distance = open.map { [y, n - 1 - y, x, n - 1 - x][$0] }.min() ?? n
-                let inset = 5 + 14 * noise.fractal(Double(x) / Double(n) * 4.3, Double(y) / Double(n) * 4.3, octaves: 3, salt: 41)
+                // The noise sits near the middle of its range, so it is stretched to make the border wander.
+                let wander = min(max((noise.fractal(Double(x) / Double(n) * 3.4, Double(y) / Double(n) * 3.4, octaves: 3, salt: 41) - 0.5) * 3, -0.5), 0.5)
+                let inset = 12 + 16 * wander
                 strip[i] = Double(distance) < inset
+                if strip[i] {
+                    // Along the south and north edges first, then what is left of the west and east, so each piece is a band.
+                    stripGroup[i] = options.shape == .inland ? (Double(min(y, n - 1 - y)) < inset ? (y < n / 2 ? 0 : 1) : (x < n / 2 ? 2 : 3)) : 0
+                }
             }
         }
         let top = height.indices.filter { land[$0] }.map { height[$0] }.max() ?? level + 1
@@ -528,6 +538,11 @@ nonisolated struct WorldMaker {
             return free.isEmpty ? usable : free
         }()
         var capitalPositions = places.filter(\.isCapital).map(\.position)
+        // Capitals are first put as far apart as they can be, then moved towards the middle of the land each is nearest, again and
+        // again, so that the realms come out about the same size. (An archipelago puts one on each island instead.)
+        var planned: [V] = options.shape == .archipelago ? [] : balancedCapitals(
+            count: max(wanted, capitalPositions.count + capitalPending.count) - capitalPositions.count, fixed: capitalPositions, cells: capitalCells, suit: suit
+        )
         // In an archipelago each capital goes on an island of its own while there are islands without one.
         let pieces = options.shape == .archipelago ? landPieces() : []
         while capitalPositions.count < max(wanted, capitalPositions.count + capitalPending.count) {
@@ -536,6 +551,13 @@ nonisolated struct WorldMaker {
                 let taken = Set(capitalPositions.map { pieces[cellIndex(of: $0)] })
                 let free = capitalCells.filter { !taken.contains(pieces[$0]) }
                 if !free.isEmpty { cells = free }
+            }
+            if !planned.isEmpty {
+                let position = planned.removeFirst()
+                let asked = capitalPending.isEmpty ? nil : capitalPending.removeFirst()
+                add(asked?.name ?? "", .city, position, capital: true, emit: true)
+                capitalPositions.append(position)
+                continue
             }
             let choice: Int?
             if capitalPositions.isEmpty {
@@ -588,7 +610,58 @@ nonisolated struct WorldMaker {
         }
     }
 
+    /// Where `count` capitals go so that the land is shared about equally between them and the ones already placed: first each as far
+    /// from the rest as it can be, then, again and again, each moved to the spot nearest the middle of the land it is nearest.
+    private func balancedCapitals(count: Int, fixed: [V], cells: [Int], suit: [Double]) -> [V] {
+        guard count > 0, !cells.isEmpty else { return [] }
+        var seeds: [V] = []
+        let centreOfLand = cells.reduce(V(x: 0, y: 0)) { $0 + centre(of: $1) }
+        let middle = V(x: centreOfLand.x / Double(cells.count), y: centreOfLand.y / Double(cells.count))
+        for _ in 0..<count {
+            let taken = fixed + seeds
+            let choice: Int?
+            if taken.isEmpty {
+                choice = cells.min { (centre(of: $0).distance(to: middle), $0) < (centre(of: $1).distance(to: middle), $1) }
+            } else {
+                func clearance(_ c: Int) -> Double { taken.map { centre(of: c).distance(to: $0) }.min() ?? 0 }
+                choice = cells.max { (clearance($0) * (0.6 + 0.4 * suit[$0]), -$0) < (clearance($1) * (0.6 + 0.4 * suit[$1]), -$1) }
+            }
+            guard let choice else { break }
+            seeds.append(centre(of: choice))
+        }
+        guard !seeds.isEmpty else { return [] }
+        let points = cells.map { centre(of: $0) }
+        for _ in 0..<12 {
+            let all = fixed + seeds
+            var sums = [V](repeating: V(x: 0, y: 0), count: all.count)
+            var counts = [Double](repeating: 0, count: all.count)
+            for point in points {
+                var best = 0, bestDistance = Double.infinity
+                for (k, seed) in all.enumerated() {
+                    let d = point.distance(to: seed)
+                    if d < bestDistance { best = k; bestDistance = d }
+                }
+                sums[best] = sums[best] + point
+                counts[best] += 1
+            }
+            for k in seeds.indices {
+                let at = fixed.count + k
+                guard counts[at] > 0 else { continue }
+                let target = V(x: sums[at].x / counts[at], y: sums[at].y / counts[at])
+                // The nearest place a capital can go to the middle of its land.
+                if let snapped = points.min(by: { $0.distance(to: target) < $1.distance(to: target) }) { seeds[k] = snapped }
+            }
+        }
+        return seeds
+    }
+
     // MARK: Realms
+
+    /// How hard a cell is to cross when deciding which realm it belongs to: ranges and rivers still make borders, but gently, so
+    /// that a mountain between a capital and the rest of its land doesn't leave it a small realm.
+    private func borderCost(_ i: Int) -> Double {
+        (mountain[i] ? 2.5 : forest[i] ? 1.3 : 1) * (river[i] ? 1.5 : 1) * (1 + 0.5 * (wobble[i] - 1))
+    }
 
     private func terrainCost(_ i: Int) -> Double {
         (mountain[i] ? 6 : forest[i] ? 1.8 : 1) * (river[i] ? 2.5 : 1) * wobble[i]
@@ -611,7 +684,7 @@ nonisolated struct WorldMaker {
         while let popped = heap.pop() {
             if popped.key > distance[popped.item] { continue }
             for nb in neighbours8(popped.item) where land[nb.cell] {
-                let through = popped.key + nb.distance * terrainCost(nb.cell)
+                let through = popped.key + nb.distance * borderCost(nb.cell)
                 if through < distance[nb.cell] {
                     distance[nb.cell] = through
                     realmOf[nb.cell] = realmOf[popped.item]
@@ -753,7 +826,7 @@ nonisolated struct WorldMaker {
             let area = Plane.signedArea(loop)
             guard area >= minimumCells else { continue }
             let shifted = loop.map { V(x: $0.x - Double(pad), y: $0.y - Double(pad)) }
-            let rounded = Contours.rounded(closed: Contours.simplify(closed: shifted, tolerance: 0.6), times: 3)
+            let rounded = Contours.rounded(closed: Contours.subdivided(closed: Contours.simplify(closed: shifted, tolerance: 0.6), step: 3), times: 3)
             let clipped = Self.clip(rounded, toSquareOf: Double(n))
             guard clipped.count >= 3 else { continue }
             let points = clipped.map { GridPoint(easting: min(max($0.x * cell, 0), extent), northing: min(max($0.y * cell, 0), extent)) }
@@ -820,11 +893,13 @@ nonisolated struct WorldMaker {
             }
         }
         // The land that carries on past the realms, to the edge of the map.
-        for points in polygons(of: strip, minimumCells: 6, limit: 4) {
-            features.append(GeneratedFeature(
-                name: names.named(String(localized: "The Far Lands")), placeType: "Region",
-                summary: String(localized: "Land that carries on beyond the realms and off the map."), shape: .polygon(points), kind: "land"
-            ))
+        for group in Set(stripGroup).filter({ $0 >= 0 }).sorted() {
+            for points in polygons(of: stripGroup.map { $0 == group }, minimumCells: 6, limit: 4) {
+                features.append(GeneratedFeature(
+                    name: names.named(String(localized: "The Far Lands")), placeType: "Region",
+                    summary: String(localized: "Land that carries on beyond the realms and off the map."), shape: .polygon(points), kind: "land"
+                ))
+            }
         }
         // The coast is smoothed from the grid, so a place on a coastal cell can end up just off the land. Nudge it in.
         let outlines = features.filter { $0.placeType == "Region" }.map { feature -> [V] in

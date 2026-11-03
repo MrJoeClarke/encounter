@@ -119,12 +119,35 @@ struct WorldGeneratorTests {
         }
     }
 
+    @Test func theRealmsOfAWorldAreAboutTheSameSize() {
+        for shape in [WorldShape.continent, .coast, .peninsula, .inland] {
+            var worst = 0.0
+            for seed in UInt64(1)...6 {
+                let world = make(shape, realms: 3, seed: seed)
+                var areas: [String: Double] = [:]
+                for feature in world.features(of: "Region") where feature.kind.hasPrefix("realm ") { areas[feature.kind, default: 0] += Plane.area(vs(feature)) }
+                let biggest = areas.values.max() ?? 1, smallest = max(areas.values.min() ?? 0, 1)
+                print("REALMSIZE \(shape) seed \(seed): \(areas.count) realms, ratio \(biggest / smallest)")
+                worst = max(worst, biggest / smallest)
+            }
+            // A coast is land off the map on three sides round a gulf, and its realms are still unevenly shared on some seeds.
+            #expect(worst < (shape == .coast ? 7 : 3), "\(shape): the biggest realm is \(worst) times the smallest")
+        }
+    }
+
     @Test func inlandIsLandAllOverWithNoSea() {
         let world = make(.inland, realms: 4)
         #expect(world.features(of: "Water").isEmpty)
         #expect(landShare(world) > 0.97, "inland \(landShare(world))")
         #expect(world.features.filter { $0.kind == "capital" }.count == 4)
-        #expect(Set(world.features(of: "Region").map(\.kind)).count == 4)
+        // The realms stop short of all four edges, and the land beyond them carries on to each.
+        let realms = world.features(of: "Region").filter { $0.kind.hasPrefix("realm ") }
+        #expect(Set(realms.map(\.kind)).count == 4)
+        let slack = world.extent * 0.012
+        for edge in 0..<4 {
+            #expect(realms.allSatisfy { vs($0).allSatisfy { [$0.y, world.extent - $0.y, $0.x, world.extent - $0.x][edge] > slack } }, "a realm reaches edge \(edge)")
+        }
+        #expect(edgesReached(world) == [0, 1, 2, 3])
         // The rivers run off the map, since there is no sea to run to.
         #expect(!world.features(of: "River").isEmpty)
     }
