@@ -18,6 +18,9 @@ struct GenerateWorldSheet: View {
         fresh.seed = UInt64.random(in: 1...999_999)
         return fresh
     }()
+    /// The land is chosen first; the realms' names, languages and descriptions and any places to add come second.
+    private enum Step { case land, realms }
+    @State private var step = Step.land
     @State private var preview: GeneratedWorld?
     @State private var isPreviewing = false
     @State private var making: (made: Int, total: Int)?
@@ -27,6 +30,15 @@ struct GenerateWorldSheet: View {
     @State private var placing: WorldLocation.ID?
 
     private let unit = DistanceUnit.forCalibrating(.world)
+
+    /// The name each realm has in the preview, by realm number.
+    private var realmNames: [Int: String] {
+        var names: [Int: String] = [:]
+        for feature in preview?.features(of: "Region") ?? [] where feature.kind.hasPrefix("realm ") {
+            if let number = Int(feature.kind.dropFirst("realm ".count)), names[number] == nil { names[number] = feature.name }
+        }
+        return names
+    }
 
     private var existing: WorldMap? {
         world.rootPlace.flatMap { root in
@@ -66,6 +78,7 @@ struct GenerateWorldSheet: View {
                             .foregroundStyle(.secondary)
                     }
                 }
+                if step == .land {
                 Section {
                     distanceField("Width", metres: $options.width, minimum: 20_000)
                     Picker("Land", selection: $options.shape) {
@@ -82,8 +95,6 @@ struct GenerateWorldSheet: View {
                         }
                     }
                     Stepper("Realms: \(options.realms)", value: $options.realms, in: 1...8)
-                    NamingStylePicker(styleID: $options.namingStyle)
-                    RealmLanguagesEditor(options: $options)
                     LabeledContent("Seed") {
                         HStack {
                             TextField("Seed", value: $options.seed, format: .number.grouping(.never))
@@ -97,7 +108,7 @@ struct GenerateWorldSheet: View {
                 } header: {
                     Text("World")
                 } footer: {
-                    Text("\(options.shape.summary) Each realm has a capital city. Names in a realm come from the languages chosen for it, which start as the one chosen for Names. The same seed and choices always make the same world.")
+                    Text("\(options.shape.summary) Each realm has a capital city. The same seed and choices always make the same world.")
                 }
                 Section {
                     Picker("Mountains", selection: $options.mountains) {
@@ -119,6 +130,21 @@ struct GenerateWorldSheet: View {
                     Text("Settlements")
                 } footer: {
                     Text("About how far apart places of each kind are. Roads join them, and rivers and mountains slow the roads. Settlements are pins; make a settlement’s own map from its page.")
+                }
+                } else {
+                Section {
+                    NamingStylePicker(styleID: $options.namingStyle)
+                } header: {
+                    Text("Names")
+                } footer: {
+                    Text("The language the names come from unless a realm below has its own. Names change as you choose, and the land stays as it is.")
+                }
+                Section {
+                    RealmLanguagesEditor(options: $options, realmNames: realmNames)
+                } header: {
+                    Text("Realms")
+                } footer: {
+                    Text("Each realm's name and its settlements' names come from its languages. A description can be written for it, and is kept as the realm's page. Suggest Languages reads a description and picks the languages.")
                 }
                 Section {
                     ForEach($options.locations) { $location in
@@ -147,11 +173,12 @@ struct GenerateWorldSheet: View {
                             .font(.callout)
                         }
                     }
-                    Button("Add Location", systemImage: "plus") { options.locations.append(WorldLocation()) }
+                    Button("Add Place", systemImage: "plus") { options.locations.append(WorldLocation()) }
                 } header: {
-                    Text("Locations")
+                    Text("Places")
                 } footer: {
-                    Text("Places you want in the world. One with no spot is put where it suits its kind. A capital city takes one of the realms.")
+                    Text("Places you want in the world, added to what is generated. One with no spot is put where it suits its kind. A capital city takes one of the realms.")
+                }
                 }
                 if let existing {
                     Section {
@@ -164,7 +191,7 @@ struct GenerateWorldSheet: View {
             .formStyle(.grouped)
             .disabled(isMaking)
             .interactiveDismissDisabled(isMaking)
-            .navigationTitle("Generate World")
+            .navigationTitle(step == .land ? "Generate World" : "Realms and Places")
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
             #endif
@@ -176,9 +203,19 @@ struct GenerateWorldSheet: View {
                     }
                     .disabled(isMaking && making != nil)
                 }
+                if step == .realms {
+                    ToolbarItem(placement: .navigation) {
+                        Button("Back", systemImage: "chevron.left") { step = .land; placing = nil }
+                            .disabled(isMaking)
+                    }
+                }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button(existing == nil ? "Generate" : "Generate Again") { generation = Task { await generate() } }
-                        .disabled(isMaking || world.rootPlace == nil)
+                    if step == .land {
+                        Button("Next") { step = .realms }
+                    } else {
+                        Button(existing == nil ? "Generate" : "Generate Again") { generation = Task { await generate() } }
+                            .disabled(isMaking || world.rootPlace == nil)
+                    }
                 }
             }
             .onAppear {

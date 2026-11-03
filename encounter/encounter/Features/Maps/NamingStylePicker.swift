@@ -45,6 +45,8 @@ struct LanguageMixEditor: View {
 /// languages suggested from that.
 struct RealmLanguagesEditor: View {
     @Binding var options: WorldOptions
+    /// The name each realm has in the preview, by realm number, to head its row.
+    var realmNames: [Int: String] = [:]
     /// The realm whose languages are being worked out by the model.
     @State private var suggesting: Int?
     @State private var couldNotSuggest: Int?
@@ -87,7 +89,7 @@ struct RealmLanguagesEditor: View {
                     set: { options.setLanguages($0, forRealm: realm) }
                 ))
             } label: {
-                LabeledContent("Realm \(realm + 1)", value: options.languages(forRealm: realm).titles)
+                LabeledContent(realmNames[realm] ?? String(localized: "Realm \(realm + 1)"), value: options.languages(forRealm: realm).titles)
             }
         }
     }
