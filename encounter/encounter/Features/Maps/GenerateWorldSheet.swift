@@ -242,6 +242,8 @@ struct WorldPreview: View {
     var onTap: ((GridPoint) -> Void)?
 
     private static func realmColour(_ kind: String) -> Color {
+        // The land that carries on past the realms is plain, so it reads as no realm's.
+        if kind == "land" { return Color(white: 0.5) }
         let index = Int(kind.split(separator: " ").last ?? "0") ?? 0
         let hues: [Double] = [0.08, 0.58, 0.83, 0.15, 0.97, 0.45, 0.7, 0.3]
         return Color(hue: hues[index % hues.count], saturation: 0.45, brightness: 0.8)
@@ -319,3 +321,16 @@ struct WorldPreview: View {
     return WorldPreview(world: WorldGenerator.generate(options))
         .frame(width: 520, height: 520)
 }
+
+private func shapePreview(_ shape: WorldShape) -> some View {
+    var options = WorldOptions()
+    options.seed = 7
+    options.realms = 4
+    options.shape = shape
+    return WorldPreview(world: WorldGenerator.generate(options)).frame(width: 520, height: 520)
+}
+
+#Preview("A coast") { shapePreview(.coast) }
+#Preview("A peninsula") { shapePreview(.peninsula) }
+#Preview("An archipelago") { shapePreview(.archipelago) }
+#Preview("An inland realm") { shapePreview(.inland) }

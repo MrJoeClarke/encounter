@@ -46,7 +46,7 @@ struct WorldGeneratorTests {
 
     @Test func theShapeDecidesHowMuchLandThereIsAndWhere() {
         let continent = make(.continent), coast = make(.coast), peninsula = make(.peninsula), archipelago = make(.archipelago)
-        #expect(landShare(continent) > 0.4, "continent \(landShare(continent))")
+        #expect(landShare(continent) > 0.3, "continent \(landShare(continent))")
         #expect(landShare(coast) > 0.4, "coast \(landShare(coast))")
         #expect(landShare(peninsula) > 0.15 && landShare(peninsula) < 0.5, "peninsula \(landShare(peninsula))")
         #expect(landShare(archipelago) > 0.12 && landShare(archipelago) < 0.4, "archipelago \(landShare(archipelago))")
@@ -80,22 +80,97 @@ struct WorldGeneratorTests {
         }
     }
 
-    @Test func anArchipelagoIsIslandsWithACapitalOnEachWhenThereIsOneForEachRealm() {
-        for realms in [2, 3, 5] {
-            for seed in UInt64(1)...4 {
+    @Test func anArchipelagoHasARealmOnEachIslandAndNowAndThenTwoOnOne() {
+        for realms in [2, 3, 5, 7] {
+            for seed in UInt64(1)...6 {
                 let world = make(.archipelago, realms: realms, seed: seed) { $0.islands = .few }
-                let islands = world.features(of: "Region").count
-                #expect(islands >= realms, "\(realms) realms, seed \(seed): \(islands) islands")
+                let outlines = world.features(of: "Region").filter { $0.kind != "land" }.map { vs($0) }
+                // An island for each realm, or one fewer when one island holds two.
+                #expect(outlines.count >= realms - 1, "\(realms) realms, seed \(seed): \(outlines.count) pieces")
                 let capitals = world.features.filter { $0.kind == "capital" }
                 #expect(capitals.count == realms)
-                // No two capitals share an island.
-                let outlines = world.features(of: "Region").map { vs($0) }
-                var homes = Set<Int>()
+                var perIsland: [Int: Int] = [:]
                 for capital in capitals {
                     guard case .point(let spot) = capital.shape else { continue }
                     let home = outlines.firstIndex { SettlementGenerator.contains($0, V(x: spot.easting, y: spot.northing)) }
-                    #expect(home != nil && homes.insert(home!).inserted, "\(realms) realms, seed \(seed): two capitals on one island")
+                    #expect(home != nil, "\(realms) realms, seed \(seed): capital \(capital.name) is off the land")
+                    perIsland[home ?? -1, default: 0] += 1
                 }
+                // Capitals share an island only in the limited case of one island too few, and then only two on it.
+                #expect(perIsland.values.allSatisfy { $0 <= 2 } && perIsland.values.filter { $0 > 1 }.count <= 1, "\(realms) realms, seed \(seed): \(perIsland)")
+            }
+        }
+    }
+
+    @Test func anIslandBelongsToOneRealmUnlessItHasMoreThanOneCapital() {
+        for seed in UInt64(1)...5 {
+            let world = make(.archipelago, realms: 4, seed: seed) { $0.islands = .many }
+            let regions = world.features(of: "Region").filter { $0.kind.hasPrefix("realm ") }
+            let capitals = world.features.filter { $0.kind == "capital" }
+            // Each island's polygon belongs to one realm by construction, so an island with one capital is in one realm: no two
+            // realm regions overlap in their middles.
+            let middles = regions.map { Plane.centroid(vs($0)) }
+            for (i, outline) in regions.map({ vs($0) }).enumerated() {
+                for (j, middle) in middles.enumerated() where i != j && regions[i].kind != regions[j].kind {
+                    #expect(!SettlementGenerator.contains(outline, middle), "seed \(seed): realms overlap")
+                }
+            }
+            #expect(capitals.count == 4)
+        }
+    }
+
+    @Test func inlandIsLandAllOverWithNoSea() {
+        let world = make(.inland, realms: 4)
+        #expect(world.features(of: "Water").isEmpty)
+        #expect(landShare(world) > 0.97, "inland \(landShare(world))")
+        #expect(world.features.filter { $0.kind == "capital" }.count == 4)
+        #expect(Set(world.features(of: "Region").map(\.kind)).count == 4)
+        // The rivers run off the map, since there is no sea to run to.
+        #expect(!world.features(of: "River").isEmpty)
+    }
+
+    /// How much a coast wanders along one side of the map: the spread of the land's outermost point, in bands along that side.
+    private func wander(_ world: GeneratedWorld, side: Int) -> Double {
+        let points = world.features(of: "Region").flatMap { vs($0) }
+        let bands = 16
+        var outermost = [Double?](repeating: nil, count: bands)
+        for p in points {
+            let along = side < 2 ? p.x : p.y
+            let band = min(bands - 1, Int(along / world.extent * Double(bands)))
+            let depth = [p.y, world.extent - p.y, p.x, world.extent - p.x][side]
+            outermost[band] = min(outermost[band] ?? .infinity, depth)
+        }
+        let known = outermost.compactMap { $0 }
+        return known.count >= 6 ? (known.max()! - known.min()!) / world.extent : 0
+    }
+
+    @Test func aContinentsCoastWandersOnEverySideNotJustTopAndBottom() {
+        for seed in UInt64(1)...8 {
+            let world = make(.continent, seed: seed)
+            for side in 0..<4 {
+                #expect(wander(world, side: side) > 0.035, "seed \(seed), side \(side): \(wander(world, side: side))")
+            }
+        }
+    }
+
+    @Test func theRealmsOfACoastStopShortOfTheOpenEdgesAndTheLandCarriesOnToThem() {
+        for seed in UInt64(1)...6 {
+            for shape in [WorldShape.coast, .peninsula] {
+                let world = make(shape, seed: seed)
+                let realms = world.features(of: "Region").filter { $0.kind.hasPrefix("realm ") }
+                let far = world.features(of: "Region").filter { $0.kind == "land" }
+                #expect(!far.isEmpty, "\(shape) seed \(seed): nothing beyond the realms")
+                // The realms stay back from the edge by a margin...
+                let edges = edgesReached(world)
+                let slack = world.extent * 0.012
+                for edge in edges {
+                    for realm in realms {
+                        let depth = vs(realm).map { [$0.y, world.extent - $0.y, $0.x, world.extent - $0.x][edge] }.min() ?? 0
+                        #expect(depth > slack, "\(shape) seed \(seed): a realm reaches edge \(edge)")
+                    }
+                }
+                // ...and the land beyond them is what reaches it.
+                #expect(far.contains { vs($0).contains { p in edges.contains { [p.y, world.extent - p.y, p.x, world.extent - p.x][$0] < slack } } })
             }
         }
     }
@@ -357,7 +432,7 @@ struct GeneratedWorldMapTests {
         let summary = try #require(await world.generateWorld(options: options, in: context))
         let root = try #require(world.rootPlace)
         #expect(summary.map.isVector && summary.map.place === root && world.worldMap === summary.map)
-        #expect(summary.map.pixelWidth == Int(options.width) && summary.map.worldOptions == options && summary.map.settlementOptions == nil)
+        #expect(abs(Double(summary.map.pixelWidth) - options.width) < 1 && summary.map.worldOptions == options && summary.map.settlementOptions == nil)
         let places = generated(world, summary.map)
         let expected = WorldGenerator.generate(options)
         #expect(places.count == expected.features.count && summary.created == places.count)

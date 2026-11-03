@@ -39,6 +39,8 @@ nonisolated struct WorldMaker {
     }
     var places: [Place] = []
     var realmOf: [Int]
+    /// Land near an edge it runs off, which no realm claims.
+    var strip: [Bool]
     var realmCount = 0
     var roadEdges = Set<Int>()
     var roadCell: [Bool]
@@ -65,6 +67,7 @@ nonisolated struct WorldMaker {
         wobble = [Double](repeating: 1, count: size * size)
         flowTo = [Int](repeating: -1, count: size * size)
         realmOf = [Int](repeating: -1, count: size * size)
+        strip = [Bool](repeating: false, count: size * size)
     }
 
     // MARK: Grid
@@ -150,8 +153,28 @@ nonisolated struct WorldMaker {
 
     /// How much land each cell wants, from the shape: higher is land, lower is sea. The cut that makes it land is made later, so
     /// the share of land is the shape's whatever the numbers are. Every shape bends its outline with a warp, so no two coasts match.
+    /// Which edges of the map have sea along them: all four, except for a coast (only the one it is on), a peninsula (all but the
+    /// one its neck is on) and inland, where there is none. Edges are numbered 0 (south), 1 (north), 2 (west) and 3 (east).
+    private func seaEdges(side: Int) -> [Int] {
+        switch options.shape {
+        case .continent, .archipelago: [0, 1, 2, 3]
+        case .coast: [side]
+        case .peninsula: [0, 1, 2, 3].filter { $0 != side }
+        case .inland: []
+        }
+    }
+
+    /// Which edges the land runs off the map on: the opposite of the sea's.
+    private func openEdges(side: Int) -> [Int] {
+        switch options.shape {
+        case .coast, .peninsula: [0, 1, 2, 3].filter { !seaEdges(side: side).contains($0) }
+        default: []
+        }
+    }
+
     private func landPotential(side: Int) -> [Double] {
         var potential = [Double](repeating: 0, count: n * n)
+        let sea = seaEdges(side: side)
         // Islands for an archipelago: where they are and how big.
         let islands = options.shape == .archipelago ? archipelagoIslands() : []
         for y in 0..<n {
@@ -166,10 +189,11 @@ nonisolated struct WorldMaker {
                 switch options.shape {
                 case .continent:
                     // A blob that is longer one way than the other, turned to a different angle for each seed.
-                    let aspect = 0.8 + 0.45 * choice(2), angle = choice(3) * .pi
+                    let aspect = 1 + 0.35 * choice(2), angle = choice(3) * .pi
                     let px = u2 - 0.5, py = v2 - 0.5
                     let rx = px * cos(angle) + py * sin(angle), ry = -px * sin(angle) + py * cos(angle)
-                    let d = hypot(rx * aspect, ry / aspect) * 2
+                    // The long way across is about the width of the map less its margin, so the land never reaches the sides.
+                    let d = hypot(rx, ry * aspect) / 0.46
                     value = h * 0.75 - 0.45 * d * d
                 case .coast:
                     let e = [v2, 1 - v2, u2, 1 - u2][side]
@@ -192,6 +216,15 @@ nonisolated struct WorldMaker {
                         best = max(best, 1 - d / island.radius)
                     }
                     value = h * 0.45 + best * 0.85 - 0.25
+                case .inland:
+                    value = h
+                }
+                // Sea edges are fading to sea over the last tenth of the map, so the coast there is made by the noise and not by
+                // the edge of the map cutting the land off in a straight line.
+                for edge in sea {
+                    let distance = [v2, 1 - v2, u2, 1 - u2][edge]
+                    let t = min(max((0.14 - distance) / 0.11, 0), 1)
+                    value -= 1.6 * t * t * (3 - 2 * t)
                 }
                 potential[y * n + x] = value
             }
@@ -204,7 +237,10 @@ nonisolated struct WorldMaker {
     private func archipelagoIslands() -> [(x: Double, y: Double, radius: Double)] {
         let count: Int
         switch options.islands {
-        case .none, .few: count = max(1, min(8, options.realms))
+        case .none, .few:
+            // One island for each realm, and now and then, with four or more realms, one island that holds two.
+            let realms = max(1, min(8, options.realms))
+            count = realms >= 4 && choice(7) < 0.4 ? realms - 1 : realms
         case .many: count = min(30, max(14, options.realms * 4))
         }
         var rng = SeededRandom(seed: options.seed &* 0x9E3779B97F4A7C15 &+ 77)
@@ -250,14 +286,15 @@ nonisolated struct WorldMaker {
         }
         height = landPotential(side: side)
         let sorted = height.sorted()
-        let level = sorted[min(sorted.count - 1, max(0, Int(Double(sorted.count) * (1 - options.shape.landShare))))]
+        let level = options.shape == .inland ? (sorted.first ?? 0) - 1 : sorted[min(sorted.count - 1, max(0, Int(Double(sorted.count) * (1 - options.shape.landShare))))]
         let margin = 3
         var isLand = height.indices.map { i -> Bool in
+            if options.shape == .inland { return true }
             let x = i % n, y = i / n
             guard height[i] > level else { return false }
             let inside = x >= margin && y >= margin && x < n - margin && y < n - margin
             switch options.shape {
-            case .continent, .archipelago: return inside
+            case .continent, .archipelago, .inland: return inside
             case .coast:
                 // Sea along one side only: the land runs off the map on the others.
                 switch side {
@@ -278,7 +315,7 @@ nonisolated struct WorldMaker {
         }
         // Small bits are left out, except in an archipelago, whose islands may be small; a peninsula is one piece.
         let smallest = options.shape == .archipelago ? 14 : max(12, n * n / 100)
-        isLand = filtered(isLand, minimum: smallest, onlyLargest: options.shape == .peninsula)
+        if options.shape != .inland { isLand = filtered(isLand, minimum: smallest, onlyLargest: options.shape == .peninsula) }
         // Sea that the sea can't reach is a lake, and is filled in, so every river has the sea to run to.
         var reached = [Bool](repeating: false, count: n * n)
         var queue: [Int] = []
@@ -288,6 +325,17 @@ nonisolated struct WorldMaker {
         }
         for i in isLand.indices where !isLand[i] && !reached[i] { isLand[i] = true }
         land = isLand
+        // Where the land runs off the map, the realms stop short of the edge, along a border that wanders, and the land carries
+        // on past them to the edge of the map.
+        let open = openEdges(side: side)
+        if !open.isEmpty {
+            for i in land.indices where land[i] {
+                let x = i % n, y = i / n
+                let distance = open.map { [y, n - 1 - y, x, n - 1 - x][$0] }.min() ?? n
+                let inset = 5 + 14 * noise.fractal(Double(x) / Double(n) * 4.3, Double(y) / Double(n) * 4.3, octaves: 3, salt: 41)
+                strip[i] = Double(distance) < inset
+            }
+        }
         let top = height.indices.filter { land[$0] }.map { height[$0] }.max() ?? level + 1
         for i in height.indices where land[i] { elevation[i] = min(1, max(0, (height[i] - level) / max(top - level, 1e-9))) }
 
@@ -385,7 +433,7 @@ nonisolated struct WorldMaker {
     /// Lays out the capitals first, spread as far apart as they can be, then the cities, towns and villages round them.
     private mutating func settle() {
         var suit = [Double](repeating: 0, count: n * n)
-        for i in land.indices where land[i] && !mountain[i] {
+        for i in land.indices where land[i] && !mountain[i] && !strip[i] {
             var s = forest[i] ? 0.5 : 1.0
             if neighbours8(i).contains(where: { !land[$0.cell] }) { s += 0.6 }
             if riverIsNear(i) { s += 0.6 }
@@ -526,11 +574,21 @@ nonisolated struct WorldMaker {
                 }
             }
         }
-        // Land the capitals can't reach on foot, such as another island, goes to the nearest capital.
+        // Land the capitals can't reach on foot is a whole island or more, and each goes whole to the capital nearest its middle, so
+        // an island belongs to one realm unless it has more than one capital of its own.
+        let pieces = landPieces()
+        var sums: [Int: (x: Double, y: Double, count: Double)] = [:]
         for i in land.indices where land[i] && realmOf[i] < 0 {
             let here = centre(of: i)
-            realmOf[i] = capitals.indices.min { here.distance(to: places[capitals[$0]].position) < here.distance(to: places[capitals[$1]].position) } ?? 0
+            let sum = sums[pieces[i]] ?? (0, 0, 0)
+            sums[pieces[i]] = (sum.x + here.x, sum.y + here.y, sum.count + 1)
         }
+        var owner: [Int: Int] = [:]
+        for (piece, sum) in sums {
+            let middle = V(x: sum.x / sum.count, y: sum.y / sum.count)
+            owner[piece] = capitals.indices.min { middle.distance(to: places[capitals[$0]].position) < middle.distance(to: places[capitals[$1]].position) } ?? 0
+        }
+        for i in land.indices where land[i] && realmOf[i] < 0 { realmOf[i] = owner[pieces[i]] ?? 0 }
         for p in places.indices {
             let c = places[p].cell
             places[p].realm = realmOf[c] >= 0 ? realmOf[c] : 0
@@ -633,18 +691,58 @@ nonisolated struct WorldMaker {
         [GridPoint(easting: 0, northing: 0), GridPoint(easting: extent, northing: 0), GridPoint(easting: extent, northing: extent), GridPoint(easting: 0, northing: extent)]
     }
 
-    /// The outlines of an area of the grid, smoothed, in metres, biggest first.
+    /// The outlines of an area of the grid, smoothed, in metres, biggest first. An area that reaches the edge of the grid carries on
+    /// past it as far as the outline is worked out, and is cut off at the edge afterwards, so the smoothing doesn't round its corners
+    /// where it meets the edge of the map.
     private func polygons(of mask: [Bool], minimumCells: Double, limit: Int) -> [[GridPoint]] {
+        let pad = 8
+        let side = n + 2 * pad
+        var padded = [Bool](repeating: false, count: side * side)
+        for y in 0..<side {
+            for x in 0..<side {
+                padded[y * side + x] = mask[min(max(y - pad, 0), n - 1) * n + min(max(x - pad, 0), n - 1)]
+            }
+        }
         var found: [(area: Double, points: [GridPoint])] = []
-        for loop in Contours.loops(mask: mask, width: n, height: n) {
+        for loop in Contours.loops(mask: padded, width: side, height: side) {
             let area = Plane.signedArea(loop)
             guard area >= minimumCells else { continue }
-            let rounded = Contours.rounded(closed: Contours.simplify(closed: loop, tolerance: 0.6), times: 3)
-            let points = rounded.map { GridPoint(easting: min(max($0.x * cell, 0), extent), northing: min(max($0.y * cell, 0), extent)) }
+            let shifted = loop.map { V(x: $0.x - Double(pad), y: $0.y - Double(pad)) }
+            let rounded = Contours.rounded(closed: Contours.simplify(closed: shifted, tolerance: 0.6), times: 3)
+            let clipped = Self.clip(rounded, toSquareOf: Double(n))
+            guard clipped.count >= 3 else { continue }
+            let points = clipped.map { GridPoint(easting: min(max($0.x * cell, 0), extent), northing: min(max($0.y * cell, 0), extent)) }
             guard PlaceGeometry.polygon(points).isValid else { continue }
-            found.append((area, points))
+            found.append((Plane.area(clipped), points))
         }
         return found.sorted { $0.area > $1.area }.prefix(limit).map(\.points)
+    }
+
+    /// A polygon cut off at the sides of the square from (0, 0) to (size, size).
+    static func clip(_ polygon: [V], toSquareOf size: Double) -> [V] {
+        var result = polygon
+        // For each side: whether a point is inside it, and where a line from one point to another meets it.
+        let sides: [(inside: (V) -> Bool, meet: (V, V) -> V)] = [
+            ({ $0.x >= 0 }, { a, b in V(x: 0, y: a.y + (b.y - a.y) * (0 - a.x) / (b.x - a.x)) }),
+            ({ $0.x <= size }, { a, b in V(x: size, y: a.y + (b.y - a.y) * (size - a.x) / (b.x - a.x)) }),
+            ({ $0.y >= 0 }, { a, b in V(x: a.x + (b.x - a.x) * (0 - a.y) / (b.y - a.y), y: 0) }),
+            ({ $0.y <= size }, { a, b in V(x: a.x + (b.x - a.x) * (size - a.y) / (b.y - a.y), y: size) }),
+        ]
+        for side in sides {
+            let input = result
+            result = []
+            guard var previous = input.last else { return [] }
+            for point in input {
+                if side.inside(point) {
+                    if !side.inside(previous) { result.append(side.meet(previous, point)) }
+                    result.append(point)
+                } else if side.inside(previous) {
+                    result.append(side.meet(previous, point))
+                }
+                previous = point
+            }
+        }
+        return result
     }
 
     /// What the realm's page says: the description the user wrote or had written, or a plain line if there is none.
@@ -655,9 +753,11 @@ nonisolated struct WorldMaker {
 
     private mutating func features() -> [GeneratedFeature] {
         var features: [GeneratedFeature] = []
-        features.append(GeneratedFeature(
-            name: names.sea(using: &random), placeType: "Water", summary: String(localized: "The sea that the land lies in."), shape: .polygon(rectangle())
-        ))
+        if options.shape != .inland {
+            features.append(GeneratedFeature(
+                name: names.sea(using: &random), placeType: "Water", summary: String(localized: "The sea that the land lies in."), shape: .polygon(rectangle())
+            ))
+        }
 
         var realmNames: [String] = []
         for realm in 0..<realmCount {
@@ -667,12 +767,19 @@ nonisolated struct WorldMaker {
         names.use(options.languages(forRealm: -1))
         for realm in 0..<realmCount {
             var first = true
-            let mask = land.indices.map { land[$0] && realmOf[$0] == realm }
+            let mask = land.indices.map { land[$0] && !strip[$0] && realmOf[$0] == realm }
             for points in polygons(of: mask, minimumCells: 6, limit: 6) {
                 let name = first ? realmNames[realm] : names.named(realmNames[realm])
                 first = false
                 features.append(GeneratedFeature(name: name, placeType: "Region", summary: realmSummary(realm), shape: .polygon(points), kind: "realm \(realm)"))
             }
+        }
+        // The land that carries on past the realms, to the edge of the map.
+        for points in polygons(of: strip, minimumCells: 6, limit: 4) {
+            features.append(GeneratedFeature(
+                name: names.named(String(localized: "The Far Lands")), placeType: "Region",
+                summary: String(localized: "Land that carries on beyond the realms and off the map."), shape: .polygon(points), kind: "land"
+            ))
         }
         // The coast is smoothed from the grid, so a place on a coastal cell can end up just off the land. Nudge it in.
         let outlines = features.filter { $0.placeType == "Region" }.map { feature -> [V] in

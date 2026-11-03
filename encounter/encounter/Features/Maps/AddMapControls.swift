@@ -31,25 +31,11 @@ struct AddMapControls: View {
         return maps.isEmpty || maps.allSatisfy { $0.isVector && $0.generatorData != nil }
     }
 
+    /// The buttons go in a row when they fit, and one under another when they don't, so no label is cut short.
     var body: some View {
-        HStack {
-            Button("Add Map…", systemImage: "map") { isChoosingFiles = true }
-            PhotosPicker(selection: $photoSelection, maxSelectionCount: 1, matching: .images) {
-                Label("From Photos", systemImage: "photo.on.rectangle")
-            }
-            Button("Blank Vector Map…", systemImage: "scribble.variable") { isAddingVectorMap = true }
-            if !place.isWorldRoot {
-                // A building is already as small as a settlement gets, so it only has scenes.
-                if place.canHaveSettlementMap {
-                    Button("Generate Settlement…", systemImage: "building.2") { isGeneratingSettlement = true }
-                }
-                Button("Generate Scene…", systemImage: "square.grid.3x3") { isGeneratingScene = true }
-            } else if canGenerateWorld {
-                Button("Generate World…", systemImage: "globe.europe.africa") { isGeneratingWorld = true }
-            }
-            if isImporting {
-                ProgressView().controlSize(.small)
-            }
+        ViewThatFits(in: .horizontal) {
+            HStack { buttons }
+            VStack { buttons }
         }
         .sheet(isPresented: $isGeneratingSettlement) {
             GenerateSettlementSheet(place: place) { map in
@@ -98,6 +84,27 @@ struct AddMapControls: View {
             Button("OK") {}
         } message: {
             Text("^[\(failedImportCount) file](inflect: true) couldn’t be read as an image.")
+        }
+    }
+
+    @ViewBuilder
+    private var buttons: some View {
+        Button("Add Map…", systemImage: "map") { isChoosingFiles = true }
+        PhotosPicker(selection: $photoSelection, maxSelectionCount: 1, matching: .images) {
+            Label("From Photos", systemImage: "photo.on.rectangle")
+        }
+        Button("Blank Vector Map…", systemImage: "scribble.variable") { isAddingVectorMap = true }
+        if !place.isWorldRoot {
+            // A building is already as small as a settlement gets, so it only has scenes.
+            if place.canHaveSettlementMap {
+                Button("Generate Settlement…", systemImage: "building.2") { isGeneratingSettlement = true }
+            }
+            Button("Generate Scene…", systemImage: "square.grid.3x3") { isGeneratingScene = true }
+        } else if canGenerateWorld {
+            Button("Generate World…", systemImage: "globe.europe.africa") { isGeneratingWorld = true }
+        }
+        if isImporting {
+            ProgressView().controlSize(.small)
         }
     }
 

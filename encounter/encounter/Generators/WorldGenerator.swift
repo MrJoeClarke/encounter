@@ -7,7 +7,7 @@ import Foundation
 
 /// How the land lies in the world.
 nonisolated enum WorldShape: String, Codable, CaseIterable, Identifiable, Sendable {
-    case continent, coast, peninsula, archipelago
+    case continent, coast, peninsula, archipelago, inland
 
     var id: String { rawValue }
 
@@ -23,6 +23,7 @@ nonisolated enum WorldShape: String, Codable, CaseIterable, Identifiable, Sendab
         case .coast: String(localized: "Coast")
         case .peninsula: String(localized: "Peninsula")
         case .archipelago: String(localized: "Archipelago")
+        case .inland: String(localized: "Inland")
         }
     }
 
@@ -32,16 +33,18 @@ nonisolated enum WorldShape: String, Codable, CaseIterable, Identifiable, Sendab
         case .coast: String(localized: "Land stretching off the edge of the map, with sea along one side.")
         case .peninsula: String(localized: "A big land joined to the edge of the map by a neck, with sea on three sides.")
         case .archipelago: String(localized: "Islands in the sea, from one for each realm to many small ones.")
+        case .inland: String(localized: "Land all over the map, with no sea.")
         }
     }
 
     /// How much of the map is land.
     var landShare: Double {
         switch self {
-        case .continent: 0.62
+        case .continent: 0.46
         case .coast: 0.6
         case .peninsula: 0.33
         case .archipelago: 0.16
+        case .inland: 1
         }
     }
 }
@@ -126,8 +129,8 @@ nonisolated struct WorldLocation: Codable, Equatable, Identifiable, Sendable {
 /// What to generate for a world: how big, what shape, how many realms and how thickly settled, and the seed. The same options
 /// (and the same places already on the map) always give the same world.
 nonisolated struct WorldOptions: Codable, Equatable, Sendable {
-    /// Metres across and up.
-    var width = 600_000.0
+    /// Metres across and up. The defaults are round numbers of miles, which is how a world's distances are shown.
+    var width = 643_737.6  // 400 miles, the unit worlds are shown in
     var shape = WorldShape.continent
     /// How many islands there are: for an archipelago, one for each realm (few) or many small ones.
     var islands = WorldIslands.few
@@ -135,9 +138,9 @@ nonisolated struct WorldOptions: Codable, Equatable, Sendable {
     /// The number of realms, each with a capital city.
     var realms = 3
     /// About how far apart, in metres, places of a kind are from others of the same kind.
-    var citySpacing = 170_000.0
-    var townSpacing = 80_000.0
-    var villageSpacing = 50_000.0
+    var citySpacing = 160_934.4  // 100 miles
+    var townSpacing = 80_467.2  // 50 miles
+    var villageSpacing = 48_280.3  // 30 miles
     var mountains = WorldAmount.some
     var forests = WorldAmount.some
     var rivers = 4
