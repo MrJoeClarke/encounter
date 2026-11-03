@@ -513,3 +513,47 @@ struct SettlementLanguageTests {
         #expect(old.languages.isEmpty && old.inheritsRealm)
     }
 }
+
+struct BlendedNameTests {
+    private func towns(_ chance: Double, count: Int = 150) -> [String] {
+        var bank = NameBank(languages: [LanguageWeight(id: "celtic", weight: 50), LanguageWeight(id: "slavic", weight: 50)])
+        bank.blendChance = chance
+        var random = SeededRandom(seed: 9)
+        return (0..<count).map { _ in bank.settlement(using: &random) }
+    }
+
+    /// Whether a name's start and end come from the two languages in the order given.
+    private func isBlend(_ name: String, _ first: String, _ second: String) -> Bool {
+        let a = RootLanguages.language(first).names["placeStart"] ?? []
+        let b = RootLanguages.language(second).names["placeEnd"] ?? []
+        return a.contains { start in name.hasPrefix(start) && b.contains { name.hasSuffix($0) } }
+    }
+
+    @Test func withNoChanceOfBlendingEveryNameIsInOneLanguage() {
+        let names = towns(0)
+        let own = names.filter { isBlend($0, "celtic", "celtic") || isBlend($0, "slavic", "slavic") }
+        // A name that happens to read as both is still in one; every name must be whole in one language.
+        #expect(own.count == names.count)
+    }
+
+    @Test func withACertainChanceMostNamesTakeTheirPartsFromBothLanguages() {
+        let names = towns(1)
+        let mixed = names.filter { isBlend($0, "celtic", "slavic") || isBlend($0, "slavic", "celtic") }
+        #expect(mixed.count > names.count * 3 / 4)
+    }
+
+    @Test func theDefaultChanceGivesSomeButNotMostBlends() {
+        let names = towns(NameBank.defaultBlendChance, count: 300)
+        let whole = names.filter { isBlend($0, "celtic", "celtic") || isBlend($0, "slavic", "slavic") }.count
+        #expect(whole > names.count / 2 && whole < names.count)
+    }
+
+    @Test func oneLanguageNeverBlendsAndEnglishNamesAreUnchanged() {
+        var bank = NameBank(languages: [LanguageWeight(id: "english", weight: 50)])
+        bank.blendChance = 1
+        var random = SeededRandom(seed: 9)
+        var plain = NameBank()
+        var plainRandom = SeededRandom(seed: 9)
+        #expect((0..<30).map { _ in bank.settlement(using: &random) } == (0..<30).map { _ in plain.settlement(using: &plainRandom) })
+    }
+}

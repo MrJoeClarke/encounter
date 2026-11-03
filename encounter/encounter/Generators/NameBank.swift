@@ -10,6 +10,13 @@ import Foundation
 /// seeded random source, so the same seed gives the same names, and kept unique within one map.
 nonisolated struct NameBank: Sendable {
     private var used: Set<String> = []
+    /// How often a name that has two parts takes them from two different languages, when there are two or more to choose from.
+    /// A fixed value for now; it can be set from a user setting later.
+    static let defaultBlendChance = 0.25
+
+    /// The chance, from 0 to 1, that a two-part name is a blend of two languages.
+    var blendChance = NameBank.defaultBlendChance
+
     /// The languages names are made in, with their weights. With more than one, each name is in one of them, picked by weight.
     private var mix: [(language: RootLanguage, weight: Double)]
 
@@ -35,6 +42,21 @@ nonisolated struct NameBank: Sendable {
             roll -= entry.weight
         }
         return mix[mix.count - 1].language
+    }
+
+    /// The languages for the two parts of a name. Usually both are one language; with a blend chance and more than one language
+    /// the second is another, picked by weight among the rest. With a single language nothing is drawn.
+    private func pickPair(using random: inout SeededRandom) -> (RootLanguage, RootLanguage) {
+        let first = pick(using: &random)
+        guard mix.count > 1, Double.random(in: 0..<1, using: &random) < blendChance else { return (first, first) }
+        let others = mix.filter { $0.language.id != first.id }
+        guard !others.isEmpty else { return (first, first) }
+        var roll = Double.random(in: 0..<others.reduce(0) { $0 + $1.weight }, using: &random)
+        for entry in others {
+            if roll < entry.weight { return (first, entry.language) }
+            roll -= entry.weight
+        }
+        return (first, others[others.count - 1].language)
     }
 
     /// The first language, for what has no random draw of its own: compass words and the word for gate.
@@ -84,11 +106,12 @@ nonisolated struct NameBank: Sendable {
     }
 
     mutating func inn(using random: inout SeededRandom) -> String {
-        let language = pick(using: &random)
+        // In a blend the order is the noun's language's, as the noun is what the name is of.
+        let (adjectiveLanguage, nounLanguage) = pickPair(using: &random)
         return unique {
-            let adjective = Self.word(language, "innAdjective", using: &random)
-            let noun = Self.word(language, "innNoun", using: &random)
-            return NameTerms.inn(Self.compound(language, modifier: adjective, noun: noun))
+            let adjective = Self.word(adjectiveLanguage, "innAdjective", using: &random)
+            let noun = Self.word(nounLanguage, "innNoun", using: &random)
+            return NameTerms.inn(Self.compound(nounLanguage, modifier: adjective, noun: noun))
         }
     }
 
@@ -161,8 +184,8 @@ nonisolated struct NameBank: Sendable {
 
     /// A name for a city, town or village, such as "Aldford" or "Thornbury".
     mutating func settlement(using random: inout SeededRandom) -> String {
-        let language = pick(using: &random)
-        return unique { Self.name(language, "placeStart", using: &random) + Self.name(language, "placeEnd", using: &random) }
+        let (startLanguage, endLanguage) = pickPair(using: &random)
+        return unique { Self.name(startLanguage, "placeStart", using: &random) + Self.name(endLanguage, "placeEnd", using: &random) }
     }
 
     /// A name for a realm, such as "Kingdom of Carrow".
