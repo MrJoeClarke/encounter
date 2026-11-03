@@ -93,9 +93,25 @@ nonisolated enum RootLanguages {
     /// English, from which a language that lacks something borrows it.
     static let english: RootLanguage = all.first { $0.id == englishID } ?? empty
 
+    static func aliasedID(_ id: String) -> String { aliases[id] ?? id }
+
     /// The language with the id, or English if there isn't one.
     static func language(_ id: String) -> RootLanguage {
         let id = aliases[id] ?? id
         return all.first { $0.id == id } ?? english
+    }
+}
+
+/// How much of a place's names come from one root language, compared with the others it is mixed with.
+nonisolated struct LanguageWeight: Codable, Equatable, Hashable, Sendable {
+    var id: String
+    var weight: Int
+}
+
+extension RootLanguages {
+    /// The languages and weights as they are used: unknown ids dropped, nothing left giving English.
+    static func mix(_ weights: [LanguageWeight]) -> [(language: RootLanguage, weight: Double)] {
+        let known = weights.filter { $0.weight > 0 }.map { (language(aliasedID($0.id)), Double($0.weight)) }
+        return known.isEmpty ? [(english, 1)] : known
     }
 }

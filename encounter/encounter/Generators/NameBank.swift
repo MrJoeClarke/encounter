@@ -10,11 +10,35 @@ import Foundation
 /// seeded random source, so the same seed gives the same names, and kept unique within one map.
 nonisolated struct NameBank: Sendable {
     private var used: Set<String> = []
-    private let language: RootLanguage
+    /// The languages names are made in, with their weights. With more than one, each name is in one of them, picked by weight.
+    private var mix: [(language: RootLanguage, weight: Double)]
 
     init(language: RootLanguage = RootLanguages.english) {
-        self.language = language
+        mix = [(language, 1)]
     }
+
+    init(languages: [LanguageWeight]) {
+        mix = RootLanguages.mix(languages)
+    }
+
+    /// Changes the languages the next names are made in, for instance when moving to another realm. Names already used stay used.
+    mutating func use(_ languages: [LanguageWeight]) {
+        mix = RootLanguages.mix(languages)
+    }
+
+    /// The language for one name. With a single language nothing is drawn, so a seed's names don't change.
+    private func pick(using random: inout SeededRandom) -> RootLanguage {
+        guard mix.count > 1 else { return mix[0].language }
+        var roll = Double.random(in: 0..<mix.reduce(0) { $0 + $1.weight }, using: &random)
+        for entry in mix {
+            if roll < entry.weight { return entry.language }
+            roll -= entry.weight
+        }
+        return mix[mix.count - 1].language
+    }
+
+    /// The first language, for what has no random draw of its own: compass words and the word for gate.
+    private var language: RootLanguage { mix[0].language }
 
     // MARK: Proper names
 
@@ -47,7 +71,7 @@ nonisolated struct NameBank: Sendable {
     // MARK: A settlement
 
     mutating func street(using random: inout SeededRandom) -> String {
-        let language = self.language
+        let language = pick(using: &random)
         return unique {
             let name = Self.word(language, "street", using: &random)
             return (NameTerms.streetKinds.randomElement(using: &random) ?? NameTerms.streetKinds[0])(name)
@@ -55,12 +79,12 @@ nonisolated struct NameBank: Sendable {
     }
 
     mutating func quarter(using random: inout SeededRandom) -> String {
-        let language = self.language
+        let language = pick(using: &random)
         return unique { NameTerms.quarter(Self.word(language, "quarter", using: &random)) }
     }
 
     mutating func inn(using random: inout SeededRandom) -> String {
-        let language = self.language
+        let language = pick(using: &random)
         return unique {
             let adjective = Self.word(language, "innAdjective", using: &random)
             let noun = Self.word(language, "innNoun", using: &random)
@@ -69,35 +93,38 @@ nonisolated struct NameBank: Sendable {
     }
 
     mutating func forge(using random: inout SeededRandom) -> String {
-        let language = self.language
+        let language = pick(using: &random)
         return unique { NameTerms.forge(Self.name(language, "shopOwner", using: &random)) }
     }
 
     /// A shop and what it sells, such as ("Marsh’s Bakery", "A bakery").
     mutating func shop(using random: inout SeededRandom) -> (name: String, summary: String) {
-        let language = self.language
+        let language = pick(using: &random)
         let trade = NameTerms.trades.randomElement(using: &random) ?? NameTerms.trades[0]
         let name = unique { trade.name(Self.name(language, "shopOwner", using: &random)) }
         return (name, trade.summary)
     }
 
     mutating func chapel(using random: inout SeededRandom) -> String {
-        let language = self.language
+        let language = pick(using: &random)
         return unique { NameTerms.chapel(Self.word(language, "chapelVirtue", using: &random)) }
     }
 
     /// A name for a river, such as "River Hale".
     mutating func river(using random: inout SeededRandom) -> String {
-        named(NameTerms.river(Self.name(language, "riverName", using: &random)))
+        let language = pick(using: &random)
+        return named(NameTerms.river(Self.name(language, "riverName", using: &random)))
     }
 
     mutating func manor(using random: inout SeededRandom) -> String {
-        named(NameTerms.manor(Self.name(language, "manorOwner", using: &random)))
+        let language = pick(using: &random)
+        return named(NameTerms.manor(Self.name(language, "manorOwner", using: &random)))
     }
 
     /// A name for a landmark of a kind, such as "Cathedral of Mercy" or "Hale Keep".
     mutating func landmark(_ kind: Landmark, using random: inout SeededRandom) -> String {
         // The same three are drawn whatever the kind, so the names of a seed don't depend on which landmarks are chosen.
+        let language = pick(using: &random)
         let owner = Self.name(language, "landmarkOwner", using: &random)
         let adjective = Self.word(language, "landmarkAdjective", using: &random)
         let virtue = Self.word(language, "landmarkVirtue", using: &random)
@@ -134,13 +161,13 @@ nonisolated struct NameBank: Sendable {
 
     /// A name for a city, town or village, such as "Aldford" or "Thornbury".
     mutating func settlement(using random: inout SeededRandom) -> String {
-        let language = self.language
+        let language = pick(using: &random)
         return unique { Self.name(language, "placeStart", using: &random) + Self.name(language, "placeEnd", using: &random) }
     }
 
     /// A name for a realm, such as "Kingdom of Carrow".
     mutating func realm(using random: inout SeededRandom) -> String {
-        let language = self.language
+        let language = pick(using: &random)
         return unique {
             let title = NameTerms.realmTitles.randomElement(using: &random) ?? NameTerms.realmTitles[0]
             return title(Self.name(language, "realmName", using: &random))
@@ -148,17 +175,17 @@ nonisolated struct NameBank: Sendable {
     }
 
     mutating func forest(using random: inout SeededRandom) -> String {
-        let language = self.language
+        let language = pick(using: &random)
         return unique { NameTerms.forest(Self.word(language, "woodAdjective", using: &random)) }
     }
 
     mutating func mountains(using random: inout SeededRandom) -> String {
-        let language = self.language
+        let language = pick(using: &random)
         return unique { NameTerms.mountains(Self.word(language, "peakAdjective", using: &random)) }
     }
 
     mutating func sea(using random: inout SeededRandom) -> String {
-        let language = self.language
+        let language = pick(using: &random)
         return unique { NameTerms.sea(Self.word(language, "seaAdjective", using: &random)) }
     }
 }

@@ -48,7 +48,7 @@ nonisolated struct WorldMaker {
     init(options: WorldOptions, fixed: [FixedSettlement]) {
         self.options = options
         self.fixed = fixed
-        names = NameBank(language: RootLanguages.language(options.namingStyle))
+        names = NameBank(languages: options.languages(forRealm: -1))
         let size = 160
         n = size
         extent = max(options.width, 1_000)
@@ -550,7 +550,11 @@ nonisolated struct WorldMaker {
         ))
 
         var realmNames: [String] = []
-        for _ in 0..<realmCount { realmNames.append(names.realm(using: &random)) }
+        for realm in 0..<realmCount {
+            names.use(options.languages(forRealm: realm))
+            realmNames.append(names.realm(using: &random))
+        }
+        names.use(options.languages(forRealm: -1))
         for realm in 0..<realmCount {
             var first = true
             let mask = land.indices.map { land[$0] && realmOf[$0] == realm }
@@ -597,7 +601,12 @@ nonisolated struct WorldMaker {
         }
 
         // The settlements are named now, in a fixed order, so the roads can be named for them.
-        for p in places.indices where places[p].name.isEmpty { places[p].name = names.settlement(using: &random) }
+        // Each is named in the languages of the realm it lies in.
+        for p in places.indices where places[p].name.isEmpty {
+            names.use(options.languages(forRealm: places[p].realm))
+            places[p].name = names.settlement(using: &random)
+        }
+        names.use(options.languages(forRealm: -1))
         features += roadFeatures()
         for place in places where place.emit {
             let realm = place.realm >= 0 && place.realm < realmNames.count ? realmNames[place.realm] : ""

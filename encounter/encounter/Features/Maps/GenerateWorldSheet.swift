@@ -73,6 +73,7 @@ struct GenerateWorldSheet: View {
                     }
                     Stepper("Realms: \(options.realms)", value: $options.realms, in: 1...8)
                     NamingStylePicker(styleID: $options.namingStyle)
+                    RealmLanguagesEditor(options: $options)
                     LabeledContent("Seed") {
                         HStack {
                             TextField("Seed", value: $options.seed, format: .number.grouping(.never))
@@ -86,7 +87,7 @@ struct GenerateWorldSheet: View {
                 } header: {
                     Text("World")
                 } footer: {
-                    Text("\(options.shape.summary) Each realm has a capital city. The same seed and choices always make the same world.")
+                    Text("\(options.shape.summary) Each realm has a capital city. Names in a realm come from the languages chosen for it, which start as the one chosen for Names. The same seed and choices always make the same world.")
                 }
                 Section {
                     Picker("Mountains", selection: $options.mountains) {

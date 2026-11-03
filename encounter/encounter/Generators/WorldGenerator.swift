@@ -120,8 +120,42 @@ nonisolated struct WorldOptions: Codable, Equatable, Sendable {
     var includeExisting = true
     /// The id of the `RootLanguage` the names are made in.
     var namingStyle = RootLanguages.englishID
+    /// The languages of each realm, by realm number, with their weights. A realm with none uses `namingStyle`.
+    var realmLanguages: [[LanguageWeight]] = []
 
     init() {}
+
+    /// The languages the names of a realm (and of the settlements in it) are made in.
+    func languages(forRealm realm: Int) -> [LanguageWeight] {
+        if realm >= 0, realm < realmLanguages.count, !realmLanguages[realm].isEmpty { return realmLanguages[realm] }
+        return [LanguageWeight(id: namingStyle, weight: 50)]
+    }
+
+    /// Turns one language on or off for a realm. The last one on can't be turned off.
+    mutating func setLanguage(_ id: String, on: Bool, forRealm realm: Int) {
+        guard realm >= 0 else { return }
+        var mix = languages(forRealm: realm)
+        if on {
+            guard !mix.contains(where: { $0.id == id }) else { return }
+            mix.append(LanguageWeight(id: id, weight: 50))
+        } else {
+            guard mix.count > 1 else { return }
+            mix.removeAll { $0.id == id }
+        }
+        storeLanguages(mix, forRealm: realm)
+    }
+
+    mutating func setWeight(_ weight: Int, of id: String, forRealm realm: Int) {
+        var mix = languages(forRealm: realm)
+        guard let index = mix.firstIndex(where: { $0.id == id }) else { return }
+        mix[index].weight = min(max(weight, 1), 100)
+        storeLanguages(mix, forRealm: realm)
+    }
+
+    private mutating func storeLanguages(_ mix: [LanguageWeight], forRealm realm: Int) {
+        while realmLanguages.count <= realm { realmLanguages.append([]) }
+        realmLanguages[realm] = mix
+    }
 
     init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -139,6 +173,7 @@ nonisolated struct WorldOptions: Codable, Equatable, Sendable {
         locations = try container.decodeIfPresent([WorldLocation].self, forKey: .locations) ?? []
         includeExisting = try container.decodeIfPresent(Bool.self, forKey: .includeExisting) ?? true
         namingStyle = try container.decodeIfPresent(String.self, forKey: .namingStyle) ?? RootLanguages.englishID
+        realmLanguages = try container.decodeIfPresent([[LanguageWeight]].self, forKey: .realmLanguages) ?? []
     }
 }
 

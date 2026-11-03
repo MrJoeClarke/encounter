@@ -394,3 +394,73 @@ struct RootLanguageGenerationTests {
         #expect(RootLanguages.language("welsh").id == "celtic")
     }
 }
+
+struct RealmLanguageTests {
+    private func world(_ configure: (inout WorldOptions) -> Void = { _ in }) -> GeneratedWorld {
+        var options = WorldOptions()
+        options.seed = 11
+        options.width = 300_000
+        options.realms = 2
+        configure(&options)
+        return WorldGenerator.generate(options)
+    }
+
+    @Test func aRealmWithNoLanguagesChosenUsesTheWorldsAndTheNamesAreUnchanged() {
+        let plain = world()
+        let explicit = world { $0.realmLanguages = [[LanguageWeight(id: "english", weight: 50)], []] }
+        #expect(plain.features.map(\.name) == explicit.features.map(\.name))
+    }
+
+    @Test func eachRealmNamesItselfAndItsSettlementsInItsOwnLanguage() {
+        let made = world { $0.setLanguage("norse", on: true, forRealm: 1); $0.setLanguage("english", on: false, forRealm: 1)
+                           $0.setLanguage("romance", on: true, forRealm: 0); $0.setLanguage("english", on: false, forRealm: 0) }
+        let romance = RootLanguages.language("romance")
+        let norse = RootLanguages.language("norse")
+        func realmName(_ number: Int) -> String? { made.features(of: "Region").first { $0.kind == "realm \(number)" }?.name }
+        #expect(realmName(0).map { name in romance.names["realmName"]!.contains { name.hasSuffix($0) } } == true)
+        #expect(realmName(1).map { name in norse.names["realmName"]!.contains { name.hasSuffix($0) } } == true)
+    }
+
+    @Test func aMixedRealmUsesEachOfItsLanguages() {
+        var options = WorldOptions()
+        options.realms = 1
+        options.setLanguage("norse", on: true, forRealm: 0)
+        options.setLanguage("romance", on: true, forRealm: 0)
+        options.setLanguage("english", on: false, forRealm: 0)
+        var bank = NameBank(languages: options.languages(forRealm: 0))
+        var random = SeededRandom(seed: 3)
+        let names = (0..<60).map { _ in bank.chapel(using: &random) }
+        let norse = RootLanguages.language("norse").words("chapelVirtue")
+        let romance = RootLanguages.language("romance").words("chapelVirtue")
+        #expect(names.contains { name in norse.contains { name.hasSuffix($0) } })
+        #expect(names.contains { name in romance.contains { name.hasSuffix($0) } })
+    }
+
+    @Test func theWeightsDecideHowOftenEachIsUsed() {
+        var options = WorldOptions()
+        options.setLanguage("norse", on: true, forRealm: 0)
+        options.setLanguage("romance", on: true, forRealm: 0)
+        options.setLanguage("english", on: false, forRealm: 0)
+        options.setWeight(100, of: "norse", forRealm: 0)
+        options.setWeight(1, of: "romance", forRealm: 0)
+        // A fresh bank each time, as a bank runs out of unused chapel names after a few.
+        var random = SeededRandom(seed: 5)
+        let norse = RootLanguages.language("norse").words("chapelVirtue")
+        let names = (0..<80).map { _ -> String in
+            var bank = NameBank(languages: options.languages(forRealm: 0))
+            return bank.chapel(using: &random)
+        }
+        #expect(names.filter { name in norse.contains { name.hasSuffix($0) } }.count > 60)
+    }
+
+    @Test func theLastLanguageCannotBeTurnedOffAndTheChoicesSurviveSaving() throws {
+        var options = WorldOptions()
+        options.setLanguage("english", on: false, forRealm: 0)
+        #expect(options.languages(forRealm: 0).count == 1)
+        options.setLanguage("celtic", on: true, forRealm: 1)
+        let back = try JSONDecoder().decode(WorldOptions.self, from: JSONEncoder().encode(options))
+        #expect(back == options)
+        let old = try JSONDecoder().decode(WorldOptions.self, from: Data("{}".utf8))
+        #expect(old.realmLanguages.isEmpty)
+    }
+}
