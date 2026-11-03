@@ -190,10 +190,11 @@ nonisolated struct NameBank: Sendable {
 
     /// A name for a realm, such as "Kingdom of Carrow".
     mutating func realm(using random: inout SeededRandom) -> String {
-        let language = pick(using: &random)
+        // Two parts, like a settlement's name, which in a blend may be from two languages.
+        let (startLanguage, endLanguage) = pickPair(using: &random)
         return unique {
             let title = NameTerms.realmTitles.randomElement(using: &random) ?? NameTerms.realmTitles[0]
-            return title(Self.name(language, "realmName", using: &random))
+            return title(Self.name(startLanguage, "realmStart", using: &random) + Self.name(endLanguage, "realmEnd", using: &random))
         }
     }
 

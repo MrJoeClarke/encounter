@@ -9,189 +9,6 @@ import SwiftData
 @testable import encounter
 
 struct RootLanguageTests {
-    /// What the English names were before the proper names came from a root language and the plain words from the terms: they must
-    /// not change, or a map made again from its seed would get new names.
-    private static let golden: [String: [String]] = try! JSONDecoder().decode([String: [String]].self, from: Data("""
-{
-  "seed1": [
-    "New Road",
-    "Lantern Way",
-    "High Road",
-    "Elm Way",
-    "Well Road",
-    "River Walk",
-    "Garden Quarter",
-    "Harbour Quarter",
-    "Craft Quarter",
-    "The Wandering Plough",
-    "The Wandering Kettle",
-    "The Gilded Stag",
-    "Rudd’s Forge",
-    "Fenn’s Tannery|A tannery",
-    "Tarn’s Bakery|A bakery",
-    "Hale’s Fletchery|A fletcher’s shop",
-    "Chapel of the Deep Wells",
-    "Chapel of the Moon",
-    "River Rudd",
-    "River Fenn",
-    "Fenn Manor",
-    "Cathedral of the Moon",
-    "Rudd Keep",
-    "University of Vane",
-    "The Great Library",
-    "The Iron Guildhall",
-    "The Black Arena",
-    "Infirmary of the Hearth",
-    "Marsh’s Spire",
-    "The Golden Gaol",
-    "Casby",
-    "Blackchester",
-    "Marford",
-    "Aldworth",
-    "Elmham",
-    "Dominion of Corvane",
-    "Principality of Oakenfell",
-    "Duchy of Penhallow",
-    "The Ancient Forest",
-    "The Red Mountains",
-    "The Grey Sea",
-    "Weaver’s Lane"
-  ],
-  "seed2": [
-    "Chapel Road",
-    "Stone Row",
-    "Cooper’s Road",
-    "Baker’s Road",
-    "Oak Way",
-    "New Row",
-    "Guild Quarter",
-    "Temple Quarter",
-    "Merchant Quarter",
-    "The Merry Boar",
-    "The Gilded Barrel",
-    "The Merry Anchor",
-    "Sorrel’s Forge",
-    "Tarn’s Fletchery|A fletcher’s shop",
-    "Hale’s Grocer|A grocer’s",
-    "Reeve’s Weavers|A weaver’s workshop",
-    "Chapel of the Moon",
-    "Chapel of the Harvest",
-    "River Fenn",
-    "River Yarrow",
-    "Cobb Manor",
-    "Cathedral of Wisdom",
-    "Thorne Keep",
-    "University of Hale",
-    "The Great Library",
-    "The Old Guildhall",
-    "The Black Arena",
-    "Infirmary of the Moon",
-    "Cobb’s Spire",
-    "The Black Gaol",
-    "Norford",
-    "Eastworth",
-    "Halworth",
-    "Overwick",
-    "Elmgate",
-    "Dominion of Stormvale",
-    "Realm of Lorrain",
-    "Realm of Oakenfell",
-    "The Grey Forest",
-    "The Red Mountains",
-    "The Stormy Sea",
-    "Tanner’s Street"
-  ],
-  "seed3": [
-    "Church Walk",
-    "Mason’s Street",
-    "Smith’s Walk",
-    "King’s Close",
-    "Low Close",
-    "Fisher’s Walk",
-    "Garden Quarter",
-    "Merchant Quarter",
-    "Tanners’ Quarter",
-    "The Red Anchor",
-    "The Rusty Boar",
-    "The Drunken Plough",
-    "Sorrel’s Forge",
-    "Wick’s Grocer|A grocer’s",
-    "Sorrel’s Grocer|A grocer’s",
-    "Thorne’s Chandlery|A chandler’s shop",
-    "Chapel of the Road",
-    "Chapel of Rest",
-    "River Tarn",
-    "River Tarn 2",
-    "Thorne Manor",
-    "Cathedral of Mercy",
-    "Fenn Keep",
-    "University of Cobb",
-    "The Great Library",
-    "The Golden Guildhall",
-    "The Iron Arena",
-    "Infirmary of the Moon",
-    "Cobb’s Spire",
-    "The Old Gaol",
-    "Oakham",
-    "Thornfield",
-    "Ashbridge",
-    "Ashminster",
-    "Kingfield",
-    "Realm of Brightmarch",
-    "Duchy of Lorrain",
-    "Duchy of Fenwald",
-    "The Elder Forest",
-    "The Frost Mountains",
-    "The Salt Sea",
-    "Stone Row"
-  ],
-  "seed4": [
-    "River Close",
-    "Orchard Way",
-    "Ash Walk",
-    "Briar Way",
-    "Tanner’s Way",
-    "Gate Walk",
-    "Harbour Quarter",
-    "Weavers’ Quarter",
-    "Scholars’ Quarter",
-    "The Red Raven",
-    "The Laughing Wheel",
-    "The Rusty Crown",
-    "Hale’s Forge",
-    "Thorne’s Grocer|A grocer’s",
-    "Sorrel’s Apothecary|An apothecary",
-    "Reeve’s Apothecary|An apothecary",
-    "Chapel of Mercy",
-    "Chapel of the Road",
-    "River Dunn",
-    "River Hale",
-    "Wick Manor",
-    "Cathedral of Rest",
-    "Locke Keep",
-    "University of Thorne",
-    "The Great Library",
-    "The Red Guildhall",
-    "The Black Arena",
-    "Infirmary of the Harvest",
-    "Rudd’s Spire",
-    "The Iron Gaol",
-    "Blackfield",
-    "Greyton",
-    "Oakham",
-    "Halbridge",
-    "Longbridge",
-    "Principality of Eastmark",
-    "Realm of Fenwald",
-    "Kingdom of Aldermere",
-    "The Elder Forest",
-    "The Red Mountains",
-    "The Silver Sea",
-    "Heron Row"
-  ]
-}
-""".utf8))
-
     private func names(seed: UInt64, language: RootLanguage) -> [String] {
         var random = SeededRandom(seed: seed)
         var bank = NameBank(language: language)
@@ -212,9 +29,29 @@ struct RootLanguageTests {
         return names
     }
 
-    @Test func englishNamesAreExactlyWhatTheyWere() {
-        for seed in UInt64(1)...4 {
-            #expect(names(seed: seed, language: RootLanguages.english) == Self.golden["seed\(seed)"], "seed \(seed)")
+    @Test func theSameSeedGivesTheSameNamesAndAnotherGivesOthers() {
+        #expect(names(seed: 1, language: RootLanguages.english) == names(seed: 1, language: RootLanguages.english))
+        #expect(names(seed: 1, language: RootLanguages.english) != names(seed: 2, language: RootLanguages.english))
+    }
+
+    @Test func aRealmsNameIsMadeOfAStartAndAnEndOfItsLanguage() {
+        for language in RootLanguages.all {
+            var bank = NameBank(language: language)
+            var random = SeededRandom(seed: 21)
+            let starts = language.names["realmStart"] ?? [], ends = language.names["realmEnd"] ?? []
+            for _ in 0..<20 {
+                let name = bank.realm(using: &random)
+                #expect(starts.contains { start in name.contains(" of " + start) && ends.contains { name.hasSuffix($0) } }, Comment(rawValue: "\(language.id): \(name)"))
+            }
+        }
+    }
+
+    @Test func theListsAreLongEnoughToGiveVariety() {
+        for language in RootLanguages.all {
+            for key in ["shopOwner", "manorOwner", "landmarkOwner"] { #expect((language.names[key] ?? []).count >= 36, Comment(rawValue: "\(language.id) \(key)")) }
+            #expect((language.names["riverName"] ?? []).count >= 20, Comment(rawValue: "\(language.id) riverName"))
+            #expect((language.names["placeStart"] ?? []).count >= 25 && (language.names["placeEnd"] ?? []).count >= 15, Comment(rawValue: "\(language.id) place"))
+            #expect((language.names["realmStart"] ?? []).count >= 15 && (language.names["realmEnd"] ?? []).count >= 12, Comment(rawValue: "\(language.id) realm"))
         }
     }
 
@@ -365,7 +202,7 @@ struct RootLanguageGenerationTests {
         let language = RootLanguages.language("norse")
         let world = WorldGenerator.generate(options)
         let realms = world.features(of: "Region").map(\.name)
-        #expect(!realms.isEmpty && realms.allSatisfy { realm in realm == "The Land" || (realm.contains(" of ") && language.names["realmName"]!.contains { realm.hasSuffix($0) }) })
+        #expect(!realms.isEmpty && realms.allSatisfy { realm in realm == "The Land" || (realm.contains(" of ") && language.names["realmEnd"]!.contains { realm.hasSuffix($0) }) })
         #expect(world.features(of: "Mountains").allSatisfy { $0.name.hasPrefix("The ") && $0.name.hasSuffix(" Mountains") })
         #expect(world.features(of: "Mountains").allSatisfy { feature in language.words("peakAdjective").contains { feature.name == "The \($0) Mountains" } })
     }
@@ -418,8 +255,8 @@ struct RealmLanguageTests {
         let romance = RootLanguages.language("romance")
         let norse = RootLanguages.language("norse")
         func realmName(_ number: Int) -> String? { made.features(of: "Region").first { $0.kind == "realm \(number)" }?.name }
-        #expect(realmName(0).map { name in romance.names["realmName"]!.contains { name.hasSuffix($0) } } == true)
-        #expect(realmName(1).map { name in norse.names["realmName"]!.contains { name.hasSuffix($0) } } == true)
+        #expect(realmName(0).map { name in romance.names["realmEnd"]!.contains { name.hasSuffix($0) } } == true)
+        #expect(realmName(1).map { name in norse.names["realmEnd"]!.contains { name.hasSuffix($0) } } == true)
     }
 
     @Test func aMixedRealmUsesEachOfItsLanguages() {

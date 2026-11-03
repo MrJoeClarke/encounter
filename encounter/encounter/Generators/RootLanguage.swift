@@ -24,11 +24,11 @@ nonisolated struct RootLanguage: Codable, Identifiable, Hashable, Sendable {
     /// The word for each concept, by group (such as "street" or "innNoun") and then concept (such as "mill"). A language may
     /// leave a concept out, and it is then never used.
     var words: [String: [String: String]]
-    /// Lists of names: owners of shops and manors, rivers, the starts and ends of place names, realms.
+    /// Lists of names: owners of shops and manors, rivers, the starts and ends of the names of places and of realms.
     var names: [String: [String]]
 
     /// The lists of names every language must have, and the fewest each needs.
-    static let requiredNames = ["shopOwner", "riverName", "manorOwner", "landmarkOwner", "placeStart", "placeEnd", "realmName"]
+    static let requiredNames = ["shopOwner", "riverName", "manorOwner", "landmarkOwner", "placeStart", "placeEnd", "realmStart", "realmEnd"]
     static let fewestWords = 5
     static let fewestNames = 8
 
