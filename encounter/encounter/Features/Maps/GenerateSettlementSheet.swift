@@ -78,6 +78,7 @@ struct GenerateSettlementSheet: View {
                     }
                     Toggle("Wall", isOn: $options.hasWalls)
                     Toggle("River", isOn: $options.hasRiver)
+                    NamingStylePicker(styleID: $options.namingStyle)
                     LabeledContent("Seed") {
                         HStack {
                             TextField("Seed", value: $options.seed, format: .number.grouping(.never))

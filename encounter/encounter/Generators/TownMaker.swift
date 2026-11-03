@@ -67,6 +67,7 @@ extension SettlementGenerator {
 
         init(options: SettlementOptions, outline: [GridPoint]?, extent given: Double?) {
             self.options = options
+            names = NameBank(style: NamingStyles.style(options.namingStyle))
             if let outline {
                 let points = outline.map { V(x: $0.easting, y: $0.northing) }
                 let shape = PlaceGeometry.polygon(outline)
@@ -125,7 +126,7 @@ extension SettlementGenerator {
             }
             features += approachRoadsAndGates()
             if let plaza = wards.first(where: \.isSquare) {
-                features.append(GeneratedFeature(name: names.named(String(localized: "Market Square")), placeType: "Square", summary: String(localized: "The open space at the heart of the settlement."), shape: .polygon(plaza.polygon.map(\.grid))))
+                features.append(GeneratedFeature(name: names.marketSquare(), placeType: "Square", summary: String(localized: "The open space at the heart of the settlement."), shape: .polygon(plaza.polygon.map(\.grid))))
             }
             let districts = makeDistricts()
             features += districts.features
@@ -183,11 +184,15 @@ extension SettlementGenerator {
 
         // MARK: The square and the gates
 
-        static func compass(_ bearing: Double) -> String {
-            let names = ["East", "North-East", "North", "North-West", "West", "South-West", "South", "South-East"]
+        /// Which eighth of the compass a bearing points to: 0 is east, turning anticlockwise.
+        static func compassIndex(_ bearing: Double) -> Int {
             var turns = (bearing / (.pi / 4)).rounded()
             while turns < 0 { turns += 8 }
-            return names[Int(turns) % 8]
+            return Int(turns) % 8
+        }
+
+        static func compass(_ bearing: Double) -> String {
+            ["East", "North-East", "North", "North-West", "West", "South-West", "South", "South-East"][compassIndex(bearing)]
         }
 
         mutating func placeSquareAndGates() {
@@ -494,7 +499,7 @@ extension SettlementGenerator {
                     let name: String
                     if rank == .major, let gateIndex {
                         let bearing = atan2(gatePoints[gateIndex].y - centre.y, gatePoints[gateIndex].x - centre.x)
-                        name = names.named(String(localized: "\(Self.compass(bearing)) Gate Road"))
+                        name = names.gateRoad(direction: Self.compassIndex(bearing))
                     } else {
                         name = names.street(using: &random)
                     }
@@ -529,13 +534,13 @@ extension SettlementGenerator {
                 let bend = direction.perpendicular * random.value(in: -0.15...0.15) * length
                 let points = [gate, gate + direction * (length * 0.5) + bend, gate + direction * length]
                 features.append(GeneratedFeature(
-                    name: names.named(String(localized: "\(compass) Road")), placeType: "Road",
+                    name: names.road(direction: Self.compassIndex(bearing)), placeType: "Road",
                     summary: String(localized: "The road that leaves the \(compass) gate."), shape: .line(points.map(\.grid))
                 ))
                 if options.hasWalls {
                     let corners = SettlementGenerator.rectangle(centre: gate, direction: direction.perpendicular, width: 14, depth: 9)
                     features.append(GeneratedFeature(
-                        name: names.named(String(localized: "\(compass) Gate")), placeType: "Building",
+                        name: names.gate(direction: Self.compassIndex(bearing)), placeType: "Building",
                         summary: String(localized: "A gate in the wall, where the \(compass) road comes in."), shape: .polygon(corners.map(\.grid))
                     ))
                 }

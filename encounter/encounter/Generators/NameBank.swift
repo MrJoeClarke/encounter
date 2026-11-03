@@ -5,23 +5,45 @@
 
 import Foundation
 
-/// Names for what a generator makes: streets, quarters, inns, shops and chapels. Picked from short lists with a
-/// seeded random source, so the same seed gives the same names, and kept unique within one map.
+/// Names for what a generator makes: streets, quarters, inns, shops and chapels. Built from a `NamingStyle` with a seeded
+/// random source, so the same seed gives the same names, and kept unique within one map.
 nonisolated struct NameBank: Sendable {
     private var used: Set<String> = []
+    private let style: NamingStyle
 
-    private static let streetStarts = ["Mill", "Bridge", "Market", "Church", "King’s", "Tanner’s", "Smith’s", "Baker’s", "Well", "Stone", "Oak", "Ash", "River", "High", "Low", "Old", "New", "Chapel", "Mason’s", "Weaver’s", "Fisher’s", "Cooper’s", "Rope", "Gate", "Hill", "Orchard", "Elm", "Briar", "Heron", "Lantern"]
-    private static let streetEnds = ["Street", "Lane", "Row", "Way", "Walk", "Road", "Close"]
-    private static let quarters = ["Old Quarter", "Craft Quarter", "Temple Quarter", "Merchant Quarter", "Garden Quarter", "Harbour Quarter", "Weavers’ Quarter", "Tanners’ Quarter", "Scholars’ Quarter", "Guild Quarter"]
-    private static let innAdjectives = ["Gilded", "Rusty", "Laughing", "Sleeping", "Crooked", "Merry", "Silver", "Golden", "Drunken", "Wandering", "Black", "Red", "Broken", "Jolly"]
-    private static let innNouns = ["Gull", "Stag", "Boar", "Lantern", "Anchor", "Crown", "Goose", "Barrel", "Raven", "Fox", "Wheel", "Plough", "Kettle", "Heron"]
-    private static let surnames = ["Hale", "Marsh", "Thorne", "Wick", "Cobb", "Fenn", "Bram", "Locke", "Rudd", "Tarn", "Vane", "Yarrow", "Ames", "Dunn", "Pike", "Reeve", "Sorrel", "Whitlow"]
-    private static let trades: [(shop: String, summary: String)] = [
-        ("Bakery", "A bakery"), ("Tannery", "A tannery"), ("Chandlery", "A chandler’s shop"), ("Weavers", "A weaver’s workshop"),
-        ("Cooperage", "A cooperage"), ("Apothecary", "An apothecary"), ("Grocer", "A grocer’s"), ("Fletchery", "A fletcher’s shop"),
-        ("Masonry", "A mason’s yard"), ("Cobblers", "A cobbler’s shop"),
-    ]
-    private static let virtues = ["Light", "Mercy", "the Harvest", "the Hearth", "the Moon", "the Road", "Rest", "the Deep Wells"]
+    init(style: NamingStyle = NamingStyles.english) {
+        self.style = style
+    }
+
+    // MARK: Building names from the style
+
+    /// A name from the pattern for a kind, with each `{word}` filled from its list (or from `preset`). A kind with one pattern
+    /// uses it without drawing, so adding patterns to a style never changes what a style with one pattern gives.
+    private func fill(_ kind: String, using random: inout SeededRandom, preset: [String: String] = [:]) -> String {
+        Self.fill(style, kind, using: &random, preset: preset)
+    }
+
+    private static func fill(_ style: NamingStyle, _ kind: String, using random: inout SeededRandom, preset: [String: String] = [:]) -> String {
+        let options = style.patterns[kind] ?? NamingStyles.english.patterns[kind] ?? []
+        guard let pattern = options.count == 1 ? options.first : options.randomElement(using: &random) else { return kind }
+        var result = ""
+        var rest = pattern[...]
+        while let open = rest.firstIndex(of: "{"), let close = rest[open...].firstIndex(of: "}") {
+            result += rest[..<open]
+            let name = String(rest[rest.index(after: open)..<close])
+            result += preset[name] ?? Self.word(style, name, using: &random)
+            rest = rest[rest.index(after: close)...]
+        }
+        return result + rest
+    }
+
+    private func word(_ list: String, using random: inout SeededRandom) -> String {
+        Self.word(style, list, using: &random)
+    }
+
+    private static func word(_ style: NamingStyle, _ list: String, using random: inout SeededRandom) -> String {
+        (style.lists[list] ?? NamingStyles.english.lists[list] ?? []).randomElement(using: &random) ?? ""
+    }
 
     private mutating func unique(_ make: () -> String) -> String {
         for _ in 0..<40 {
@@ -34,101 +56,110 @@ nonisolated struct NameBank: Sendable {
         return "\(base) \(n)"
     }
 
+    // MARK: A settlement
+
     mutating func street(using random: inout SeededRandom) -> String {
-        unique { "\(Self.streetStarts.randomElement(using: &random) ?? "Mill") \(Self.streetEnds.randomElement(using: &random) ?? "Street")" }
+        let style = self.style
+        return unique { Self.fill(style, "street", using: &random) }
     }
 
     mutating func quarter(using random: inout SeededRandom) -> String {
-        unique { Self.quarters.randomElement(using: &random) ?? "Old Quarter" }
+        let style = self.style
+        return unique { Self.fill(style, "quarter", using: &random) }
     }
 
     mutating func inn(using random: inout SeededRandom) -> String {
-        unique { "The \(Self.innAdjectives.randomElement(using: &random) ?? "Gilded") \(Self.innNouns.randomElement(using: &random) ?? "Gull")" }
+        let style = self.style
+        return unique { Self.fill(style, "inn", using: &random) }
     }
 
     mutating func forge(using random: inout SeededRandom) -> String {
-        unique { "\(Self.surnames.randomElement(using: &random) ?? "Hale")’s Forge" }
+        let style = self.style
+        return unique { Self.fill(style, "forge", using: &random) }
     }
 
     /// A shop and what it sells, such as ("Marsh’s Bakery", "A bakery").
     mutating func shop(using random: inout SeededRandom) -> (name: String, summary: String) {
-        let trade = Self.trades.randomElement(using: &random) ?? Self.trades[0]
-        let name = unique { "\(Self.surnames.randomElement(using: &random) ?? "Hale")’s \(trade.shop)" }
+        let trades = style.trades.isEmpty ? NamingStyles.english.trades : style.trades
+        guard let trade = trades.randomElement(using: &random) else { return (named("Shop"), "A shop") }
+        let style = self.style
+        let name = unique { Self.fill(style, "shop", using: &random, preset: ["shop": trade.shop]) }
         return (name, trade.summary)
     }
 
     mutating func chapel(using random: inout SeededRandom) -> String {
-        unique { "Chapel of \(Self.virtues.randomElement(using: &random) ?? "Light")" }
+        let style = self.style
+        return unique { Self.fill(style, "chapel", using: &random) }
     }
 
     mutating func named(_ base: String) -> String { unique { base } }
+
+    /// The name of the road that leaves a gate, and of the road and the gate itself, for the direction (0 is east, turning
+    /// anticlockwise in eighths).
+    mutating func gateRoad(direction: Int) -> String { named(compassName("gateRoad", direction)) }
+    mutating func road(direction: Int) -> String { named(compassName("road", direction)) }
+    mutating func gate(direction: Int) -> String { named(compassName("gate", direction)) }
+
+    private func compassName(_ kind: String, _ direction: Int) -> String {
+        var unused = SeededRandom(seed: 0)
+        let words = style.lists["compass"] ?? NamingStyles.english.lists["compass"] ?? []
+        return fill(kind, using: &unused, preset: ["compass": words.indices.contains(((direction % 8) + 8) % 8) ? words[((direction % 8) + 8) % 8] : ""])
+    }
+
+    /// "Market Square", or what the style calls it.
+    mutating func marketSquare(inScene: Bool = false) -> String {
+        var random = SeededRandom(seed: 0)
+        let kind = inScene && style.patterns["marketSquare.scene"] != nil ? "marketSquare.scene" : "marketSquare"
+        return named(fill(kind, using: &random))
+    }
 }
 
 extension NameBank {
     /// A name for a river, such as "River Hale".
     mutating func river(using random: inout SeededRandom) -> String {
-        let surname = ["Hale", "Marsh", "Thorne", "Wick", "Fenn", "Bram", "Locke", "Rudd", "Tarn", "Vane", "Yarrow", "Dunn"].randomElement(using: &random) ?? "Hale"
-        return named("River \(surname)")
+        named(fill("river", using: &random))
     }
-}
 
-extension NameBank {
     mutating func manor(using random: inout SeededRandom) -> String {
-        let surname = ["Hale", "Marsh", "Thorne", "Wick", "Cobb", "Fenn", "Bram", "Locke", "Rudd", "Tarn", "Vane", "Yarrow"].randomElement(using: &random) ?? "Hale"
-        return named("\(surname) Manor")
+        named(fill("manor", using: &random))
     }
-
-    private static let landmarkSurnames = ["Hale", "Marsh", "Thorne", "Wick", "Cobb", "Fenn", "Bram", "Locke", "Rudd", "Tarn", "Vane", "Yarrow"]
-    private static let adjectives = ["Grey", "Iron", "White", "Black", "High", "Old", "Silent", "Stern", "Golden", "Red"]
-    private static let landmarkVirtues = ["Light", "Mercy", "the Harvest", "the Hearth", "the Moon", "the Road", "Rest", "Wisdom"]
 
     /// A name for a landmark of a kind, such as "Cathedral of Mercy" or "Hale Keep".
     mutating func landmark(_ kind: Landmark, using random: inout SeededRandom) -> String {
-        let surname = Self.landmarkSurnames.randomElement(using: &random) ?? "Hale"
-        let adjective = Self.adjectives.randomElement(using: &random) ?? "Grey"
-        let virtue = Self.landmarkVirtues.randomElement(using: &random) ?? "Light"
-        switch kind {
-        case .cathedral: return named(String(localized: "Cathedral of \(virtue)"))
-        case .castle: return named(String(localized: "\(surname) Keep"))
-        case .university: return named(String(localized: "University of \(surname)"))
-        case .library: return named(String(localized: "The Great Library"))
-        case .guildhall: return named(String(localized: "The \(adjective) Guildhall"))
-        case .arena: return named(String(localized: "The \(adjective) Arena"))
-        case .infirmary: return named(String(localized: "Infirmary of \(virtue)"))
-        case .wizardsTower: return named(String(localized: "\(surname)’s Spire"))
-        case .prison: return named(String(localized: "The \(adjective) Gaol"))
-        }
+        // The same three words are drawn whatever the kind, so the names of a seed don't depend on which landmarks are chosen.
+        let surname = word("landmarkSurname", using: &random)
+        let adjective = word("landmarkAdjective", using: &random)
+        let virtue = word("landmarkVirtue", using: &random)
+        var unused = SeededRandom(seed: 0)
+        return named(fill("landmark.\(kind.rawValue)", using: &unused, preset: ["surname": surname, "adjective": adjective, "virtue": virtue]))
     }
 }
 
 extension NameBank {
-    private static let placeStarts = ["Ald", "Bram", "Cas", "Dun", "Elm", "Fen", "Gar", "Hal", "Iron", "Kes", "Lin", "Mar", "Nor", "Oak", "Pen", "Ros", "Stan", "Tarn", "Wick", "Yar", "Ash", "Black", "Cold", "Dray", "East", "Free", "Grey", "High", "King", "Long", "Mill", "New", "Over", "Red", "Salt", "Thorn", "Under", "West", "White", "Wolf"]
-    private static let placeEnds = ["ford", "ton", "bury", "ham", "wick", "stead", "mouth", "bridge", "field", "haven", "gate", "worth", "dale", "ley", "chester", "by", "thorpe", "minster", "port", "holt"]
-    private static let realmNames = ["Aldermere", "Brightmarch", "Carrow", "Dunmore", "Eastmark", "Fenwald", "Greymoor", "Hollin", "Ironvale", "Kestrel", "Lorrain", "Marrowe", "Norland", "Oakenfell", "Penhallow", "Rivermark", "Stormvale", "Thornmere", "Valdry", "Westerlund", "Yarrowdale", "Ashgrove", "Blackwater", "Corvane"]
-    private static let titles = ["Kingdom", "Realm", "Duchy", "Principality", "Dominion"]
-    private static let woodNames = ["Old", "Dark", "Whispering", "Elder", "Silent", "Deep", "Green", "Grey", "Ancient", "Hollow"]
-    private static let peakNames = ["Grey", "Iron", "White", "Broken", "Storm", "Black", "High", "Frost", "Red", "Shattered"]
-    private static let seaNames = ["Grey", "Northern", "Narrow", "Stormy", "Silver", "Western", "Pale", "Salt", "Great"]
-
     /// A name for a city, town or village, such as "Aldford" or "Thornbury".
     mutating func settlement(using random: inout SeededRandom) -> String {
-        unique { (Self.placeStarts.randomElement(using: &random) ?? "Hal") + (Self.placeEnds.randomElement(using: &random) ?? "ford") }
+        let style = self.style
+        return unique { Self.fill(style, "settlement", using: &random) }
     }
 
     /// A name for a realm, such as "Kingdom of Carrow".
     mutating func realm(using random: inout SeededRandom) -> String {
-        unique { "\(Self.titles.randomElement(using: &random) ?? "Kingdom") of \(Self.realmNames.randomElement(using: &random) ?? "Carrow")" }
+        let style = self.style
+        return unique { Self.fill(style, "realm", using: &random) }
     }
 
     mutating func forest(using random: inout SeededRandom) -> String {
-        unique { "The \(Self.woodNames.randomElement(using: &random) ?? "Old") Forest" }
+        let style = self.style
+        return unique { Self.fill(style, "forest", using: &random) }
     }
 
     mutating func mountains(using random: inout SeededRandom) -> String {
-        unique { "The \(Self.peakNames.randomElement(using: &random) ?? "Grey") Mountains" }
+        let style = self.style
+        return unique { Self.fill(style, "mountains", using: &random) }
     }
 
     mutating func sea(using random: inout SeededRandom) -> String {
-        unique { "The \(Self.seaNames.randomElement(using: &random) ?? "Grey") Sea" }
+        let style = self.style
+        return unique { Self.fill(style, "sea", using: &random) }
     }
 }

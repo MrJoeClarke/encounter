@@ -48,6 +48,7 @@ nonisolated struct WorldMaker {
     init(options: WorldOptions, fixed: [FixedSettlement]) {
         self.options = options
         self.fixed = fixed
+        names = NameBank(style: NamingStyles.style(options.namingStyle))
         let size = 160
         n = size
         extent = max(options.width, 1_000)

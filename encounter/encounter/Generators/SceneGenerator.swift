@@ -99,6 +99,8 @@ nonisolated struct SceneOptions: Codable, Equatable, Sendable {
     var stairs = true
     /// For a building, whether to take its shape from the place's outline if it has one.
     var fitOutline = true
+    /// The id of the `NamingStyle` the names of shops and inns are made in.
+    var namingStyle = NamingStyles.englishID
 
     init() {}
 
@@ -114,6 +116,7 @@ nonisolated struct SceneOptions: Codable, Equatable, Sendable {
         secretDoors = try container.decodeIfPresent(Bool.self, forKey: .secretDoors) ?? fresh.secretDoors
         stairs = try container.decodeIfPresent(Bool.self, forKey: .stairs) ?? fresh.stairs
         fitOutline = try container.decodeIfPresent(Bool.self, forKey: .fitOutline) ?? fresh.fitOutline
+        namingStyle = try container.decodeIfPresent(String.self, forKey: .namingStyle) ?? fresh.namingStyle
     }
 }
 
@@ -206,6 +209,7 @@ nonisolated struct SceneMaker {
     init(options: SceneOptions, outline: [GridPoint]?) {
         self.options = options
         self.outline = outline
+        names = NameBank(style: NamingStyles.style(options.namingStyle))
         n = options.squares
         random = SeededRandom(seed: options.seed &* 0x2545F4914F6CDD1D &+ 7)
     }
@@ -949,7 +953,7 @@ nonisolated struct SceneMaker {
         let low = 2, high = n - 2
         let ground = SquareBox(x: low + depth, y: low + depth, width: high - low - 2 * depth, height: high - low - 2 * depth)
         guard ground.width >= 2, ground.height >= 2 else { return }
-        features.append(GeneratedFeature(name: names.named(String(localized: "The Market Square")), placeType: "Square", summary: String(localized: "The open paved square, where the market is held."), shape: .polygon(polygon(ground))))
+        features.append(GeneratedFeature(name: names.marketSquare(inScene: true), placeType: "Square", summary: String(localized: "The open paved square, where the market is held."), shape: .polygon(polygon(ground))))
 
         // The buildings, each with a door on the side facing the square.
         var buildings: [(box: SquareBox, door: (Double, Double))] = []

@@ -72,6 +72,7 @@ struct GenerateWorldSheet: View {
                         ForEach(WorldShape.allCases) { Text($0.title).tag($0) }
                     }
                     Stepper("Realms: \(options.realms)", value: $options.realms, in: 1...8)
+                    NamingStylePicker(styleID: $options.namingStyle)
                     LabeledContent("Seed") {
                         HStack {
                             TextField("Seed", value: $options.seed, format: .number.grouping(.never))

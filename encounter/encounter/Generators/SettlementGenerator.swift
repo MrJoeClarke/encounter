@@ -187,6 +187,8 @@ nonisolated struct SettlementOptions: Codable, Equatable, Sendable {
     /// Whether to put in inns and taverns, and merchants, a number suited to the size, spread round the settlement.
     var inns = true
     var merchants = true
+    /// The id of the `NamingStyle` the names are made in.
+    var namingStyle = NamingStyles.englishID
 
     init(
         size: Size = .village, layout: Layout = .organic, hasWalls: Bool = false, hasRiver: Bool = false, seed: UInt64 = 1,
@@ -220,6 +222,7 @@ nonisolated struct SettlementOptions: Codable, Equatable, Sendable {
         landmarks = try container.decodeIfPresent([Landmark].self, forKey: .landmarks) ?? []
         inns = try container.decodeIfPresent(Bool.self, forKey: .inns) ?? true
         merchants = try container.decodeIfPresent(Bool.self, forKey: .merchants) ?? true
+        namingStyle = try container.decodeIfPresent(String.self, forKey: .namingStyle) ?? NamingStyles.englishID
     }
 }
 

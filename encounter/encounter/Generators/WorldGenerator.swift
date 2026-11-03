@@ -118,6 +118,8 @@ nonisolated struct WorldOptions: Codable, Equatable, Sendable {
     var locations: [WorldLocation] = []
     /// Whether the settlements already on the world map are kept and built around.
     var includeExisting = true
+    /// The id of the `NamingStyle` the names are made in.
+    var namingStyle = NamingStyles.englishID
 
     init() {}
 
@@ -136,6 +138,7 @@ nonisolated struct WorldOptions: Codable, Equatable, Sendable {
         rivers = try container.decodeIfPresent(Int.self, forKey: .rivers) ?? fresh.rivers
         locations = try container.decodeIfPresent([WorldLocation].self, forKey: .locations) ?? []
         includeExisting = try container.decodeIfPresent(Bool.self, forKey: .includeExisting) ?? true
+        namingStyle = try container.decodeIfPresent(String.self, forKey: .namingStyle) ?? NamingStyles.englishID
     }
 }
 

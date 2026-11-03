@@ -86,6 +86,8 @@ struct GenerateSceneSheet: View {
                     } else {
                         Stepper("Size: \(options.squares) squares", value: $options.squares, in: 10...100, step: 5)
                     }
+                    // Only a market square has inns and shops to name.
+                    if options.kind == .marketSquare { NamingStylePicker(styleID: $options.namingStyle) }
                     LabeledContent("Seed") {
                         HStack {
                             TextField("Seed", value: $options.seed, format: .number.grouping(.never))
