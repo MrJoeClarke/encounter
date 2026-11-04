@@ -11,30 +11,34 @@ import CoreGraphics
 /// map always has the same paper. The size of the larger marks follows the size of the map, so they look alike at every zoom.
 nonisolated struct PaperTexture: Equatable, Sendable {
     /// How much the finest grain lightens and darkens the paper, as a share of its brightness.
-    var grain = 0.035
+    var grain = 0.04
     /// The same for the broad, cloudy variation, and how many such clouds there are across the map.
-    var mottle = 0.07
+    var mottle = 0.045
     var mottleScale = 5.0
     /// How strong the stains are, how many there are across the map, and the colour of the paper in them, as a multiple of its own.
-    var stain = 0.08
-    var stainScale = 2.2
+    var stain = 0.045
+    var stainScale = 6.0
     var stainTint = (red: 0.82, green: 0.72, blue: 0.55)
     /// How much darker the paper is at the edge of the map, and how far in, as a share of the map's width, the darkening reaches.
-    var edge = 0.28
-    var edgeReach = 0.12
+    var edge = 0.22
+    var edgeReach = 0.06
+    /// How much the crumple (at about 300, 80 and 20 screen pixels) and the fibres (at about 6) vary the paper. These are sized by
+    /// the screen, not the map, so there is texture to see at every zoom.
+    var crumple = 0.035
+    var fibre = 0.03
     /// Changes the paper without changing anything else.
     var seed: UInt64 = 7
 
     static func == (a: PaperTexture, b: PaperTexture) -> Bool {
         a.grain == b.grain && a.mottle == b.mottle && a.mottleScale == b.mottleScale && a.stain == b.stain
-            && a.stainScale == b.stainScale && a.stainTint == b.stainTint && a.edge == b.edge && a.edgeReach == b.edgeReach && a.seed == b.seed
+            && a.stainScale == b.stainScale && a.crumple == b.crumple && a.fibre == b.fibre && a.stainTint == b.stainTint && a.edge == b.edge && a.edgeReach == b.edgeReach && a.seed == b.seed
     }
 
     /// Where the map is, in the plane's metres, so the paper can darken towards its edge and size its marks.
     typealias Area = (minEasting: Double, minNorthing: Double, maxEasting: Double, maxNorthing: Double)
 
     /// The colour of the paper, as multiples of the plain ground's, at a place in the plane.
-    func tint(easting: Double, northing: Double, in map: Area) -> (red: Double, green: Double, blue: Double) {
+    func tint(easting: Double, northing: Double, in map: Area, metresPerPixel: Double = 0) -> (red: Double, green: Double, blue: Double) {
         let width = max(map.maxEasting - map.minEasting, 1)
         let height = max(map.maxNorthing - map.minNorthing, 1)
         let size = max(width, height)
@@ -44,9 +48,19 @@ nonisolated struct PaperTexture: Equatable, Sendable {
         light += mottle * (Self.noise(x * mottleScale, y * mottleScale, seed) * 2 - 1)
         light += mottle * 0.5 * (Self.noise(x * mottleScale * 3, y * mottleScale * 3, seed &+ 1) * 2 - 1)
 
+        // Texture sized by the screen: broad crumpling, then finer, then the fibres of the paper.
+        if metresPerPixel > 0 {
+            func layer(_ pixels: Double, _ salt: UInt64) -> Double {
+                Self.noise(easting / (metresPerPixel * pixels), northing / (metresPerPixel * pixels), seed &+ salt) * 2 - 1
+            }
+            light += crumple * (layer(300, 10) + 0.8 * layer(80, 11) + 0.6 * layer(20, 12)) / 1.8
+            light += fibre * (layer(6, 13) + 0.7 * layer(2.5, 14)) / 1.4
+        }
+
         // Stains are where a slow noise passes a threshold, fading in so they have soft edges.
-        let cloud = Self.noise(x * stainScale + 11, y * stainScale + 5, seed &+ 2)
-        let stained = min(max((cloud - 0.62) / 0.18, 0), 1) * stain / 0.12
+        // The edge is a little rough and fairly sharp, like a water mark.
+        let cloud = Self.noise(x * stainScale + 11, y * stainScale + 5, seed &+ 2) + 0.05 * (Self.noise(x * stainScale * 7, y * stainScale * 7, seed &+ 3) - 0.5)
+        let stained = min(max((cloud - 0.7) / 0.16, 0), 1) * stain / 0.12
 
         // Darker towards the edge of the map, and beyond it.
         let across = min(easting - map.minEasting, map.maxEasting - easting) / width
@@ -77,7 +91,7 @@ nonisolated struct PaperTexture: Equatable, Sendable {
             let northing = area.maxNorthing - (Double(row) + 0.5) * down
             for column in 0..<size {
                 let easting = area.minEasting + (Double(column) + 0.5) * across
-                let t = tint(easting: easting, northing: northing, in: map)
+                let t = tint(easting: easting, northing: northing, in: map, metresPerPixel: across)
                 let g = grain(atPixelX: originX + column, y: originY - row)
                 let i = (row * size + column) * 4
                 pixels[i] = Self.byte(ground.red * t.red * g)
