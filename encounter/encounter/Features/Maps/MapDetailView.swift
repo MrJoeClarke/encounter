@@ -290,8 +290,8 @@ struct MapDetailView: View {
     private var pins: [PlacePin] {
         guard map.isCalibrated else { return [] }
         return map.visiblePlaces(among: places).compactMap { page in
-            // A road or river is its line, with no pin.
-            if page.isLine { return nil }
+            // Only a place with a pin kind has one: an area is named across it, a line along it, and a building is a plain shape.
+            guard PlacePinKind.of(page) != nil else { return nil }
             return map.pixel(of: page).map { PlacePin(page: page, pixelX: $0.x, pixelY: $0.y, isMovable: page.isPoint) }
         }
     }

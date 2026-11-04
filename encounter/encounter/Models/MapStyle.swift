@@ -14,6 +14,12 @@ nonisolated struct MapStyle: Identifiable, Equatable, Sendable {
     let summary: String
     /// What the map is drawn on.
     let background: StyleColor
+    /// The colour of names on the map, and of the halo round them that keeps them readable over whatever is under.
+    let ink: StyleColor
+    let halo: StyleColor
+    /// The colour of pins, and of a capital's.
+    let pin: StyleColor
+    let capitalPin: StyleColor
     /// Places of these types are drawn as given; any other type is drawn as in the Dark style.
     private let places: [String: Look]
 
@@ -52,13 +58,15 @@ nonisolated struct MapStyle: Identifiable, Equatable, Sendable {
     /// The look maps have always had: a dark ground with bright lines.
     static let dark = MapStyle(
         id: "dark", title: String(localized: "Dark"), summary: String(localized: "A dark ground with bright lines."),
-        background: color(0.13, 0.13, 0.14), places: [:]
+        background: color(0.13, 0.13, 0.14), ink: color(0.93, 0.93, 0.93), halo: color(0.1, 0.1, 0.11, 0.9),
+        pin: color(0.9, 0.3, 0.25), capitalPin: color(0.98, 0.78, 0.2), places: [:]
     )
 
     /// An old map: cream paper, brown ink, muted washes.
     static let parchment = MapStyle(
         id: "parchment", title: String(localized: "Parchment"), summary: String(localized: "Cream paper, brown ink and muted washes, like an old fantasy map."),
-        background: color(0.93, 0.87, 0.73),
+        background: color(0.93, 0.87, 0.73), ink: color(0.3, 0.18, 0.08), halo: color(0.93, 0.87, 0.73, 0.9),
+        pin: color(0.6, 0.25, 0.15), capitalPin: color(0.55, 0.08, 0.08),
         places: [
             "Water": Look(fill: color(0.55, 0.68, 0.72, 0.6), stroke: color(0.35, 0.45, 0.5), lineWidth: 1.5),
             "Lake": Look(fill: color(0.55, 0.68, 0.72, 0.8), stroke: color(0.35, 0.45, 0.5), lineWidth: 1.5),
@@ -82,7 +90,8 @@ nonisolated struct MapStyle: Identifiable, Equatable, Sendable {
     /// An ordnance survey: white paper, fine dark lines, pale fills, red roads.
     static let survey = MapStyle(
         id: "survey", title: String(localized: "Survey"), summary: String(localized: "Plain paper, thin dark lines and pale fills, like a survey map."),
-        background: color(0.97, 0.97, 0.95),
+        background: color(0.97, 0.97, 0.95), ink: color(0.15, 0.15, 0.15), halo: color(1, 1, 1, 0.9),
+        pin: color(0.3, 0.3, 0.3), capitalPin: color(0.75, 0.2, 0.2),
         places: [
             "Water": Look(fill: color(0.7, 0.82, 0.92, 0.75), stroke: color(0.4, 0.6, 0.8), lineWidth: 1),
             "Lake": Look(fill: color(0.7, 0.82, 0.92, 0.9), stroke: color(0.4, 0.6, 0.8), lineWidth: 1),
@@ -106,7 +115,8 @@ nonisolated struct MapStyle: Identifiable, Equatable, Sendable {
     /// Painted washes on white paper: soft colour, broad pale edges where ink would be, no hard black.
     static let watercolour = MapStyle(
         id: "watercolour", title: String(localized: "Watercolour"), summary: String(localized: "Soft washes of colour on white paper, with wide pale edges."),
-        background: color(0.98, 0.97, 0.94),
+        background: color(0.98, 0.97, 0.94), ink: color(0.35, 0.3, 0.3), halo: color(1, 1, 1, 0.85),
+        pin: color(0.85, 0.5, 0.4), capitalPin: color(0.75, 0.35, 0.45),
         places: [
             "Water": Look(fill: color(0.55, 0.75, 0.88, 0.55), stroke: color(0.55, 0.75, 0.88, 0.6), lineWidth: 4),
             "Lake": Look(fill: color(0.5, 0.75, 0.85, 0.7), stroke: color(0.5, 0.75, 0.85, 0.7), lineWidth: 3),

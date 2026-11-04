@@ -117,7 +117,8 @@ extension SettlementGenerator.TownMaker {
                 reserved.append(ward.polygon)
             }
             features.append(GeneratedFeature(
-                name: names.landmark(landmark, using: &random), placeType: "Landmark", summary: landmark.summary, shape: .polygon(footprint.map(\.grid))
+                name: names.landmark(landmark, using: &random), placeType: "Landmark", summary: landmark.summary, shape: .polygon(footprint.map(\.grid)),
+                kind: landmark.rawValue
             ))
         }
         return (features, reserved)

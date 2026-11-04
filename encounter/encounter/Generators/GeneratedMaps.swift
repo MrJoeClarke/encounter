@@ -225,6 +225,8 @@ extension World {
             page.title = feature.name
             page.summary = feature.summary
             page.attributes["core.placeType"] = .text(feature.placeType)
+            // What kind of one it is (a city, a castle), which gives its pin.
+            if !feature.kind.isEmpty { page.attributes["gen.kind"] = .text(feature.kind) }
             // Which realm of the options a region is, so a settlement in it can use the realm's languages.
             if feature.kind.hasPrefix("realm "), let number = Int(feature.kind.dropFirst("realm ".count)) { page.attributes["gen.realm"] = .number(Double(number)) }
             switch feature.shape {

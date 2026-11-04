@@ -214,6 +214,69 @@ struct MapKitCanvas: PlatformViewRepresentable {
         private var journeyOverlay: JourneyLine?
         private var journeyRoute: [CGPoint] = []
 
+        /// The names on the map: across areas, along lines and under pins.
+        private var labelAnnotations: [PlaceLabelAnnotation] = []
+        private var drawnLabelKey = ""
+
+        /// Names the places that are named on the map, again whenever one of them, or the style, changes.
+        private func syncLabels(in view: MKMapView, pins: [PlacePin], shapes: [PlaceShape], lines: [PlaceLine]) {
+            let styleID = parent?.map.style.id ?? ""
+            var key = styleID
+            for shape in shapes { key += "|\(shape.id)\(shape.page.title)\(shape.page.attributeText("core.placeType"))\(shape.corners.count)" }
+            for line in lines { key += "|\(line.id)\(line.page.title)\(line.page.attributeText("core.placeType"))\(line.points.count)" }
+            for pin in pins { key += "|\(pin.id)\(pin.page.title)\(PlacePinKind.of(pin.page)?.rawValue ?? "")" }
+            guard key != drawnLabelKey else { return }
+            drawnLabelKey = key
+            view.removeAnnotations(labelAnnotations)
+            var made: [PlaceLabelAnnotation] = []
+            for shape in shapes where !shape.page.title.isEmpty {
+                let type = shape.page.attributeText("core.placeType")
+                guard PlaceLabelKind.of(type: type) == .area else { continue }
+                let middle = PlaceGeometry.polygon(shape.corners).centre
+                made.append(PlaceLabelAnnotation(
+                    text: shape.page.title, type: type, coordinate: WebMercator.coordinate(middle), angle: 0, priority: PlaceLabelKind.priority(type: type)
+                ))
+            }
+            for line in lines where !line.page.title.isEmpty && line.points.count >= 2 {
+                let type = line.page.attributeText("core.placeType")
+                guard PlaceLabelKind.of(type: type) == .line, let spot = Self.alongLine(line.points) else { continue }
+                made.append(PlaceLabelAnnotation(
+                    text: line.page.title, type: type, coordinate: WebMercator.coordinate(spot.point), angle: spot.degrees, priority: PlaceLabelKind.priority(type: type)
+                ))
+            }
+            for pin in pins where !pin.page.title.isEmpty {
+                guard let kind = PlacePinKind.of(pin.page) else { continue }
+                let point = calibration.gridPoint(atX: pin.pixelX, y: pin.pixelY)
+                let label = PlaceLabelAnnotation(
+                    text: pin.page.title, type: kind == .capital ? "PinCapital" : "Pin", coordinate: WebMercator.coordinate(point), angle: 0, priority: kind.priority - 50
+                )
+                label.offset = CGPoint(x: 0, y: kind.size / 2 + 9)
+                made.append(label)
+            }
+            labelAnnotations = made
+            view.addAnnotations(made)
+        }
+
+        /// The middle of a line, by its length, and the angle of the text along it, in degrees anticlockwise from east, turned so
+        /// that it never reads upside down.
+        static func alongLine(_ points: [GridPoint]) -> (point: GridPoint, degrees: Double)? {
+            let lengths = zip(points, points.dropFirst()).map { $0.0.distance(to: $0.1) }
+            let total = lengths.reduce(0, +)
+            guard total > 0 else { return nil }
+            var remaining = total / 2
+            for (index, length) in lengths.enumerated() {
+                if remaining <= length || index == lengths.count - 1 {
+                    let a = points[index], b = points[index + 1]
+                    let t = length > 0 ? min(remaining / length, 1) : 0
+                    var degrees = atan2(b.northing - a.northing, b.easting - a.easting) * 180 / .pi
+                    if degrees > 90 { degrees -= 180 } else if degrees <= -90 { degrees += 180 }
+                    return (GridPoint(easting: a.easting + (b.easting - a.easting) * t, northing: a.northing + (b.northing - a.northing) * t), degrees)
+                }
+                remaining -= length
+            }
+            return nil
+        }
+
         func sync(markers: [MapMarker], pins: [PlacePin], shapes: [PlaceShape], draft: [CGPoint], draftIsLine: Bool, route: [CGPoint], lines: [PlaceLine], grid: SceneGridOverlay?, in view: MKMapView) {
             // The outline being drawn is replaced as corners are added.
             if draft != draftCorners || draftIsLine != self.draftIsLine {
@@ -263,6 +326,13 @@ struct MapKitCanvas: PlatformViewRepresentable {
                 for pin in pins {
                     let point = calibration.gridPoint(atX: pin.pixelX, y: pin.pixelY)
                     let coordinate = WebMercator.coordinate(point)
+                    let kind = PlacePinKind.of(pin.page) ?? .place
+                    let styleID = parent?.map.style.id ?? ""
+                    // A pin whose kind or style has changed is made again, with the right picture.
+                    if let annotation = pinAnnotations[pin.id], annotation.kind != kind || annotation.styleID != styleID {
+                        view.removeAnnotation(annotation)
+                        pinAnnotations[pin.id] = nil
+                    }
                     if let annotation = pinAnnotations[pin.id] {
                         annotation.title = pin.page.title
                         annotation.isMovable = pin.isMovable
@@ -272,12 +342,16 @@ struct MapKitCanvas: PlatformViewRepresentable {
                         }
                     } else {
                         let annotation = PlaceAnnotation(page: pin.page, coordinate: coordinate)
+                        annotation.kind = kind
+                        annotation.styleID = styleID
                         annotation.isMovable = pin.isMovable
                         pinAnnotations[pin.id] = annotation
                         view.addAnnotation(annotation)
                     }
                 }
             }
+
+            syncLabels(in: view, pins: pins, shapes: shapes, lines: lines)
 
             // Calibration marks are replaced each time, since there are at most two.
             view.removeAnnotations(markAnnotations)
@@ -376,15 +450,33 @@ struct MapKitCanvas: PlatformViewRepresentable {
 
         func mapView(_ mapView: MKMapView, viewFor annotation: any MKAnnotation) -> MKAnnotationView? {
             if let place = annotation as? PlaceAnnotation {
-                let view = (mapView.dequeueReusableAnnotationView(withIdentifier: "place") as? MKMarkerAnnotationView)
-                    ?? MKMarkerAnnotationView(annotation: place, reuseIdentifier: "place")
+                let view = mapView.dequeueReusableAnnotationView(withIdentifier: "place") ?? MKAnnotationView(annotation: place, reuseIdentifier: "place")
                 view.annotation = place
                 view.clusteringIdentifier = "place"
-                view.markerTintColor = .systemRed
-                view.glyphImage = Self.symbol(place.page.kind.systemImage)
+                // A small round pin with the icon of what it is, in the style's colours.
+                view.image = MapGlyphs.pin(place.kind, style: MapStyle.style(id: place.styleID))
                 view.canShowCallout = true
                 view.isDraggable = place.isMovable
-                view.titleVisibility = .adaptive
+                view.displayPriority = MKFeatureDisplayPriority(rawValue: place.kind.priority)
+                view.collisionMode = .circle
+                return view
+            }
+            if let name = annotation as? PlaceLabelAnnotation {
+                let view = mapView.dequeueReusableAnnotationView(withIdentifier: "label") ?? MKAnnotationView(annotation: name, reuseIdentifier: "label")
+                view.annotation = name
+                let style = parent?.map.style ?? .dark
+                view.image = MapGlyphs.label(name.text, type: name.type, style: style)
+                view.canShowCallout = false
+                view.isEnabled = false
+                view.centerOffset = name.offset
+                view.displayPriority = MKFeatureDisplayPriority(rawValue: name.priority)
+                view.collisionMode = .rectangle
+                #if os(macOS)
+                view.wantsLayer = true
+                view.frameCenterRotation = name.angle
+                #else
+                view.transform = CGAffineTransform(rotationAngle: -name.angle * .pi / 180)
+                #endif
                 return view
             }
             if let mark = annotation as? MarkAnnotation {
@@ -534,11 +626,36 @@ final class PlaceAnnotation: NSObject, MKAnnotation {
     @objc dynamic var coordinate: CLLocationCoordinate2D
     var title: String?
     var isMovable = true
+    /// What kind of pin it is, and the style it was drawn in, so it is drawn again when either changes.
+    var kind = PlacePinKind.place
+    var styleID = ""
 
     init(page: Page, coordinate: CLLocationCoordinate2D) {
         self.page = page
         self.coordinate = coordinate
         self.title = page.title
+    }
+}
+
+/// A name on the MapKit map, across an area, along a line or under a pin. It has no pin of its own and can't be selected, and names
+/// that crowd each other give way, the less important first.
+final class PlaceLabelAnnotation: NSObject, MKAnnotation {
+    let text: String
+    let type: String
+    let coordinate: CLLocationCoordinate2D
+    /// In degrees anticlockwise from east.
+    let angle: Double
+    let priority: Float
+    /// How far from its coordinate it is drawn, in points, down and across.
+    var offset = CGPoint.zero
+    var title: String? { nil }
+
+    init(text: String, type: String, coordinate: CLLocationCoordinate2D, angle: Double, priority: Float) {
+        self.text = text
+        self.type = type
+        self.coordinate = coordinate
+        self.angle = angle
+        self.priority = priority
     }
 }
 
