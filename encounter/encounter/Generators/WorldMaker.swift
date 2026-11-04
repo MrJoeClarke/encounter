@@ -1056,8 +1056,10 @@ nonisolated struct WorldMaker {
         for realm in 0..<realmCount {
             var first = true
             let mask = land.indices.map { land[$0] && !strip[$0] && realmOf[$0] == realm }
-            for points in polygons(of: mask, minimumCells: 6, limit: 6) {
-                let name = first ? realmNames[realm] : names.named(realmNames[realm])
+            // The biggest piece of land is the realm itself, and any other piece is an island of it with a name of its own.
+            let pieces = polygons(of: mask, minimumCells: 6, limit: 6).sorted { PlaceGeometry.polygon($0).area > PlaceGeometry.polygon($1).area }
+            for points in pieces {
+                let name = first ? realmNames[realm] : names.isle(of: realmNames[realm])
                 first = false
                 features.append(GeneratedFeature(name: name, placeType: "Region", summary: realmSummary(realm), shape: .polygon(points), kind: "realm \(realm)"))
             }

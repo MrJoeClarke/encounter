@@ -186,12 +186,14 @@ struct MapKitCanvas: PlatformViewRepresentable {
         private var shown = Set<ObjectIdentifier>()
         /// How wide the whole map is, in MapKit's points, and so how much of it is in view.
         private var mapWidth = 0.0
+        private var mapHeight = 0.0
+        private var isLeavingTheMap = false
         private var viewShare = 1.0
 
         /// Puts the pin or name on the map if the view is close enough for it, and takes it off if not.
-        private func present<A: MKAnnotation & AnyObject>(_ annotation: A, maxView: Double, in view: MKMapView) {
+        private func present<A: MKAnnotation & AnyObject>(_ annotation: A, maxView: Double, fits: Bool = true, in view: MKMapView) {
             let id = ObjectIdentifier(annotation)
-            if maxView >= effectiveView {
+            if maxView >= effectiveView && fits {
                 if shown.insert(id).inserted { view.addAnnotation(annotation) }
             } else if shown.remove(id) != nil {
                 view.removeAnnotation(annotation)
@@ -206,9 +208,14 @@ struct MapKitCanvas: PlatformViewRepresentable {
 
         /// Shows the pins and names the zoom allows, as the view moves in and out.
         func applyZoom(in view: MKMapView) {
-            if mapWidth > 0 { viewShare = view.visibleMapRect.width / mapWidth }
+            if mapWidth > 0 { viewShare = min(view.visibleMapRect.width / mapWidth, 1) }   // further out than the whole map is still the whole map
             for annotation in pinAnnotations.values { present(annotation, maxView: annotation.maxView, in: view) }
-            for annotation in labelAnnotations { present(annotation, maxView: annotation.maxView, in: view) }
+            // The name of an area needs room across it: where the area is too small on screen to hold its name, it is left out.
+            let pointsPerMapPoint = view.visibleMapRect.width > 0 ? Double(view.bounds.width) / view.visibleMapRect.width : 0
+            for annotation in labelAnnotations {
+                let fits = annotation.extent <= 0 || annotation.extent * pointsPerMapPoint >= annotation.textWidth
+                present(annotation, maxView: annotation.maxView, fits: fits, in: view)
+            }
         }
 
         /// The deepest zoom the tiles go to. Past it MapKit stops drawing the map and shows the world beneath, so the
@@ -227,13 +234,11 @@ struct MapKitCanvas: PlatformViewRepresentable {
                 span: MKCoordinateSpan(latitudeDelta: (northEast.latitude - southWest.latitude) * 1.05, longitudeDelta: (northEast.longitude - southWest.longitude) * 1.05)
             )
             view.setRegion(region, animated: false)
-            let wide = MKCoordinateRegion(
-                center: region.center,
-                span: MKCoordinateSpan(latitudeDelta: region.span.latitudeDelta * 2, longitudeDelta: region.span.longitudeDelta * 2)
-            )
-            view.setCameraBoundary(MKMapView.CameraBoundary(coordinateRegion: wide), animated: false)
+            // The map is the sheet: the centre can't leave it, and the view can't go out much past the whole of it.
+            view.setCameraBoundary(MKMapView.CameraBoundary(coordinateRegion: region), animated: false)
             let diagonal = hypot(b.maxEasting - b.minEasting, b.maxNorthing - b.minNorthing)
             view.setCameraZoomRange(MKMapView.CameraZoomRange(minCenterCoordinateDistance: max(diagonal / 5000, 2), maxCenterCoordinateDistance: diagonal * 3), animated: false)
+            mapHeight = abs(MKMapPoint(northEast).y - MKMapPoint(southWest).y)
         }
 
         private var gridOverlay: SceneGridOverlay?
@@ -268,6 +273,9 @@ struct MapKitCanvas: PlatformViewRepresentable {
                     text: shape.page.title, type: type, coordinate: WebMercator.coordinate(middle), angle: 0, priority: PlaceLabelKind.priority(type: type)
                 )
                 label.maxView = zoom.name(ofType: type)
+                let xs = shape.corners.map { MKMapPoint(WebMercator.coordinate($0)).x }
+                label.extent = (xs.max() ?? 0) - (xs.min() ?? 0)
+                label.textWidth = Double(MapGlyphs.label(shape.page.title, type: type, style: parent?.map.style ?? .dark)?.size.width ?? 0)
                 made.append(label)
             }
             for line in lines where !line.page.title.isEmpty && line.points.count >= 2 {
@@ -528,6 +536,17 @@ struct MapKitCanvas: PlatformViewRepresentable {
         /// to becomes the closest the camera may be, so the gesture meets a limit rather than being pushed back.
         func mapView(_ mapView: MKMapView, regionDidChangeAnimated animated: Bool) {
             applyZoom(in: mapView)
+            // Not out past the map: once the whole of it is in view with room to spare on every side, the camera is brought back in.
+            if mapWidth > 0, mapHeight > 0, !isLeavingTheMap {
+                let rect = mapView.visibleMapRect
+                let spare = min(rect.width / mapWidth, rect.height / mapHeight)
+                if spare > 1.2, let camera = mapView.camera.copy() as? MKMapCamera {
+                    isLeavingTheMap = true
+                    camera.centerCoordinateDistance /= spare / 1.15
+                    mapView.setCamera(camera, animated: false)
+                    isLeavingTheMap = false
+                }
+            }
             let width = Double(mapView.bounds.width)
             let delta = mapView.region.span.longitudeDelta
             guard width > 0, delta > 0 else { return }
@@ -683,6 +702,10 @@ final class PlaceLabelAnnotation: NSObject, MKAnnotation {
     let priority: Float
     /// The most of the map that may be in view for the name to show (see `ZoomRules`).
     var maxView = ZoomRules.always
+    /// For the name of an area, how wide the area is in MapKit's points, and how wide the name is on screen, in points. The name is
+    /// shown only where the area is at least as wide as the name. Zero for any other name.
+    var extent = 0.0
+    var textWidth = 0.0
     /// How far from its coordinate it is drawn, in points, down and across.
     var offset = CGPoint.zero
     var title: String? { nil }

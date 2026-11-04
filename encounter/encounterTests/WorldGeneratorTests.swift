@@ -966,3 +966,32 @@ struct RoadNameTests {
         #expect(numbered * 20 <= roads, "\(numbered) of \(roads) roads are numbered")
     }
 }
+
+struct RealmPieceTests {
+    @Test func aRealmsBiggestPieceHasTheRealmsNameAndOthersAreIslesWithoutNumbers() {
+        var isles = 0
+        for seed in UInt64(1)...10 {
+            var options = WorldOptions()
+            options.shape = .archipelago
+            options.realms = 3
+            options.seed = seed
+            let world = WorldGenerator.generate(options)
+            for realm in 0..<3 {
+                let pieces = world.features.filter { $0.kind == "realm \(realm)" }
+                guard pieces.count > 1 else { continue }
+                func area(_ f: GeneratedFeature) -> Double {
+                    if case .polygon(let p) = f.shape { return PlaceGeometry.polygon(p).area }
+                    return 0
+                }
+                let biggest = pieces.max { area($0) < area($1) }
+                let realmName = pieces.map(\.name).min { $0.count < $1.count } ?? ""
+                #expect(biggest?.name == realmName || !(biggest?.name.contains("Isle") ?? false))
+                for piece in pieces where piece.name != biggest?.name {
+                    isles += 1
+                    #expect(Int(piece.name.split(separator: " ").last ?? "") == nil, Comment(rawValue: piece.name))
+                }
+            }
+        }
+        #expect(isles > 0)
+    }
+}
