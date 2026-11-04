@@ -24,6 +24,20 @@ nonisolated struct MapStyle: Identifiable, Equatable, Sendable {
     private let places: [String: Look]
     /// What shows at each zoom.
     var zoom = ZoomRules.standard
+    /// The grain, mottling and ageing of the paper the map is drawn on, if it is drawn on paper rather than a flat colour.
+    var paper: PaperTexture?
+    /// The typeface names are set in, if not the system's serif.
+    var lettering: Lettering?
+
+    /// A typeface by its names: the regular face and the ones for italic, semibold and semibold italic.
+    struct Lettering: Equatable, Sendable {
+        var regular: String
+        var italic: String
+        var semibold: String
+        var semiboldItalic: String
+
+        static let baskerville = Lettering(regular: "Baskerville", italic: "Baskerville-Italic", semibold: "Baskerville-SemiBold", semiboldItalic: "Baskerville-SemiBoldItalic")
+    }
 
     /// What a style says about one type of place: the parts that change from style to style.
     struct Look: Equatable, Sendable {
@@ -86,7 +100,8 @@ nonisolated struct MapStyle: Identifiable, Equatable, Sendable {
             "Garden": Look(fill: color(0.5, 0.6, 0.35, 0.4), stroke: color(0.35, 0.45, 0.25), lineWidth: 1.5, isDashed: true),
             "Landmark": Look(fill: color(0.7, 0.45, 0.2, 0.9), stroke: color(0.35, 0.2, 0.08), lineWidth: 1.5),
             "Wall": Look(fill: nil, stroke: color(0.35, 0.25, 0.15), lineWidth: 3.5),
-        ]
+        ],
+        paper: PaperTexture(), lettering: .baskerville
     )
 
     /// An ordnance survey: white paper, fine dark lines, pale fills, red roads.

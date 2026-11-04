@@ -28,6 +28,9 @@ nonisolated final class MapTileSource: @unchecked Sendable {
     /// What a map with no picture is drawn on, and what lies outside a picture.
     var background = MapTileSource.background
 
+    /// The paper a map with no picture is drawn on, if it has any texture; otherwise it is the plain background.
+    var paper: PaperTexture?
+
     init(imageData: Data, pixelWidth: Int, pixelHeight: Int, calibration: MapCalibration) {
         self.imageData = imageData
         self.pixelWidth = pixelWidth
@@ -60,7 +63,11 @@ nonisolated final class MapTileSource: @unchecked Sendable {
     /// The PNG for one tile. Tiles the image doesn't touch are the plain background.
     func tile(zoom: Int, x: Int, y: Int) -> Data? {
         // A map with no picture is the plain background everywhere.
-        if imageData.isEmpty { return emptyTileData() }
+        if imageData.isEmpty {
+            guard let paper else { return emptyTileData() }
+            let ground = (red: Double(background.components?[0] ?? 0), green: Double(background.components?[1] ?? 0), blue: Double(background.components?[2] ?? 0))
+            return paper.tile(ground: ground, area: WebMercator.bounds(zoom: zoom, x: x, y: y), map: bounds, size: Int(WebMercator.tileSize)).flatMap(Self.png)
+        }
         let area = WebMercator.bounds(zoom: zoom, x: x, y: y)
         let covered = bounds
         guard area.maxEasting > covered.minEasting, area.minEasting < covered.maxEasting,

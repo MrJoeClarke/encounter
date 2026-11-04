@@ -67,8 +67,7 @@ enum MapGlyphs {
         let look = Self.look(of: type)
         let ink = swiftUI(style.ink), halo = swiftUI(style.halo)
         Text(look.uppercased ? text.uppercased() : text)
-            .font(.system(size: look.size, weight: look.weight, design: look.serif ? .serif : .default))
-            .italic(look.italic)
+            .font(Self.font(look, in: style))
             .tracking(look.tracking)
             .foregroundStyle(ink)
             .lineLimit(1)
@@ -84,6 +83,21 @@ enum MapGlyphs {
     /// A name on the map as a small label under a pin.
     static func pinLabel(_ text: String, kind: PlacePinKind, style: MapStyle) -> PlatformImage? {
         label(text, type: kind == .capital ? "PinCapital" : "Pin", style: style)
+    }
+
+    /// The typeface of a look: the style's own lettering where it has one and the name is in a serif, else the system's.
+    private static func font(_ look: Look, in style: MapStyle) -> Font {
+        guard look.serif, let lettering = style.lettering else {
+            return .system(size: look.size, weight: look.weight, design: look.serif ? .serif : .default).italic(look.italic)
+        }
+        let heavy = look.weight == .semibold || look.weight == .bold
+        let name = switch (heavy, look.italic) {
+        case (true, true): lettering.semiboldItalic
+        case (true, false): lettering.semibold
+        case (false, true): lettering.italic
+        case (false, false): lettering.regular
+        }
+        return .custom(name, size: look.size * 1.12)   // Baskerville sets small beside the system serif
     }
 
     private struct Look {

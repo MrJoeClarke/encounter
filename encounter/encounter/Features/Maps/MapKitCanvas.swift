@@ -142,6 +142,7 @@ struct MapKitCanvas: PlatformViewRepresentable {
             // What the map is drawn on comes from its style.
             let ground = map.style.background
             source.background = CGColor(red: ground.red, green: ground.green, blue: ground.blue, alpha: ground.alpha)
+            source.paper = map.style.paper
             let overlay = MapTileOverlay(source: source)
             view.insertOverlay(overlay, at: 0, level: .aboveLabels)
             coordinator.overlay = overlay
