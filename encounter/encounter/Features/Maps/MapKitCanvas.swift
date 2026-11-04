@@ -465,18 +465,12 @@ struct MapKitCanvas: PlatformViewRepresentable {
                 let view = mapView.dequeueReusableAnnotationView(withIdentifier: "label") ?? MKAnnotationView(annotation: name, reuseIdentifier: "label")
                 view.annotation = name
                 let style = parent?.map.style ?? .dark
-                view.image = MapGlyphs.label(name.text, type: name.type, style: style)
+                view.image = MapGlyphs.label(name.text, type: name.type, style: style, degrees: name.angle)
                 view.canShowCallout = false
                 view.isEnabled = false
                 view.centerOffset = name.offset
                 view.displayPriority = MKFeatureDisplayPriority(rawValue: name.priority)
                 view.collisionMode = .rectangle
-                #if os(macOS)
-                view.wantsLayer = true
-                view.frameCenterRotation = name.angle
-                #else
-                view.transform = CGAffineTransform(rotationAngle: -name.angle * .pi / 180)
-                #endif
                 return view
             }
             if let mark = annotation as? MarkAnnotation {

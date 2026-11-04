@@ -45,25 +45,40 @@ enum MapGlyphs {
         }
     }
 
-    /// A name, in the style's ink with a halo, sized and shaped by what is named.
-    static func label(_ text: String, type: String, style: MapStyle) -> PlatformImage? {
-        let look = Self.look(of: type)
-        return render("label|\(text)|\(type)|\(style.id)") {
-            let ink = swiftUI(style.ink), halo = swiftUI(style.halo)
-            Text(look.uppercased ? text.uppercased() : text)
-                .font(.system(size: look.size, weight: look.weight, design: look.serif ? .serif : .default))
-                .italic(look.italic)
-                .tracking(look.tracking)
-                .foregroundStyle(ink)
-                .lineLimit(1)
-                .fixedSize()
-                .shadow(color: halo, radius: 0, x: 1, y: 0)
-                .shadow(color: halo, radius: 0, x: -1, y: 0)
-                .shadow(color: halo, radius: 0, x: 0, y: 1)
-                .shadow(color: halo, radius: 0, x: 0, y: -1)
-                .shadow(color: halo, radius: 2)
-                .padding(3)
+    /// A name, in the style's ink with a halo, sized and shaped by what is named. A name along a line is turned `degrees`
+    /// anticlockwise inside a picture just big enough for it, so the picture's middle is the middle of the name wherever the
+    /// map turns it.
+    static func label(_ text: String, type: String, style: MapStyle, degrees: Double = 0) -> PlatformImage? {
+        let flat = render("label|\(text)|\(type)|\(style.id)") { labelText(text, type: type, style: style) }
+        let turn = degrees.rounded()
+        guard turn != 0, let flat else { return flat }
+        let radians = turn * .pi / 180
+        let width = abs(flat.size.width * cos(radians)) + abs(flat.size.height * sin(radians))
+        let height = abs(flat.size.width * sin(radians)) + abs(flat.size.height * cos(radians))
+        return render("label|\(text)|\(type)|\(style.id)|\(Int(turn))") {
+            labelText(text, type: type, style: style)
+                .rotationEffect(.degrees(-turn))
+                .frame(width: width, height: height)
         }
+    }
+
+    @ViewBuilder
+    private static func labelText(_ text: String, type: String, style: MapStyle) -> some View {
+        let look = Self.look(of: type)
+        let ink = swiftUI(style.ink), halo = swiftUI(style.halo)
+        Text(look.uppercased ? text.uppercased() : text)
+            .font(.system(size: look.size, weight: look.weight, design: look.serif ? .serif : .default))
+            .italic(look.italic)
+            .tracking(look.tracking)
+            .foregroundStyle(ink)
+            .lineLimit(1)
+            .fixedSize()
+            .shadow(color: halo, radius: 0, x: 1, y: 0)
+            .shadow(color: halo, radius: 0, x: -1, y: 0)
+            .shadow(color: halo, radius: 0, x: 0, y: 1)
+            .shadow(color: halo, radius: 0, x: 0, y: -1)
+            .shadow(color: halo, radius: 2)
+            .padding(3)
     }
 
     /// A name on the map as a small label under a pin.
