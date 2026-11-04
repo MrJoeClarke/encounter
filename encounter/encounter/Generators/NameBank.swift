@@ -90,6 +90,12 @@ nonisolated struct NameBank: Sendable {
 
     mutating func named(_ base: String) -> String { unique { base } }
 
+    /// The first of the names not yet used, or the last with a number if all are.
+    mutating func named(firstOf candidates: [String]) -> String {
+        for candidate in candidates where used.insert(candidate).inserted { return candidate }
+        return named(candidates.last ?? "")
+    }
+
     // MARK: A settlement
 
     mutating func street(using random: inout SeededRandom) -> String {
@@ -176,6 +182,19 @@ nonisolated struct NameBank: Sendable {
 
     /// The gate itself: "North Gate".
     mutating func gate(direction index: Int) -> String { named(NameTerms.gate(direction(index))) }
+
+    /// A road on the world map, named for the settlements at its ends, or the one it leaves or is near, with the way it runs
+    /// (`bearing`, anticlockwise from east, leaving `near`) and "Old" added before a number is: "Newwick Road", "North Newwick Road",
+    /// "Old Newwick Road".
+    mutating func worldRoad(between from: String?, and to: String?, near: String?, bearing: Double) -> String {
+        let way = direction(Int((bearing / (.pi / 4)).rounded()))
+        func with(_ base: String) -> [String] {
+            [NameTerms.road(base), NameTerms.road(NameTerms.directed(way, base)), NameTerms.road(NameTerms.old(base)), NameTerms.road(NameTerms.directed(way, NameTerms.old(base)))]
+        }
+        if let from, let to, from != to { return named(firstOf: [NameTerms.road("\(from)–\(to)")] + with(from)) }
+        guard let base = from ?? to ?? near else { return named(String(localized: "The Old Road")) }
+        return named(firstOf: with(base))
+    }
 
     /// The road that leaves a gate, named for the direction: "North Road".
     mutating func road(direction index: Int) -> String { named(NameTerms.road(direction(index))) }

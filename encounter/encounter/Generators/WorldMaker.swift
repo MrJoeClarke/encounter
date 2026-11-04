@@ -1187,11 +1187,17 @@ nonisolated struct WorldMaker {
                     .map { GridPoint(easting: min(max($0.x, 0), extent), northing: min(max($0.y, 0), extent)) }
                 guard points.count >= 2, PlaceGeometry.line(points).isValid else { continue }
                 let from = settlementAt[cells[0]].map { places[$0].name }, to = settlementAt[cells[cells.count - 1]].map { places[$0].name }
+                // The way the road runs from the settlement it names, and the settlement nearest its middle when it has none at either end.
+                let start = raw[0], end = raw[raw.count - 1]
                 let name: String
-                switch (from, to) {
-                case let (a?, b?) where a != b: name = names.named(String(localized: "\(a)–\(b) Road"))
-                case let (a?, _), let (_, a?): name = names.named(String(localized: "\(a) Road"))
-                default: name = names.named(String(localized: "The Old Road"))
+                if from == nil && to == nil {
+                    let middle = V(x: (start.x + end.x) / 2, y: (start.y + end.y) / 2)
+                    let nearest = places.min { hypot($0.position.x - middle.x, $0.position.y - middle.y) < hypot($1.position.x - middle.x, $1.position.y - middle.y) }
+                    name = names.worldRoad(between: nil, and: nil, near: nearest?.name, bearing: atan2(end.y - start.y, end.x - start.x))
+                } else {
+                    let leavesStart = from != nil
+                    let bearing = leavesStart ? atan2(end.y - start.y, end.x - start.x) : atan2(start.y - end.y, start.x - end.x)
+                    name = names.worldRoad(between: from, and: to, near: nil, bearing: bearing)
                 }
                 features.append(GeneratedFeature(name: name, placeType: "Road", summary: String(localized: "A road between settlements."), shape: .line(points)))
             }

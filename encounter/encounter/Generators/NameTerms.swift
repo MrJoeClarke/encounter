@@ -80,6 +80,9 @@ nonisolated enum NameTerms {
     /// Road" and "North Gate Road". In the last, Gate is the proper name's word for a gate, from the root language.
     static func gate(_ direction: String) -> String { String(localized: "\(direction) Gate") }
     static func road(_ name: String) -> String { String(localized: "\(name) Road") }
+    static func old(_ name: String) -> String { String(localized: "Old \(name)") }
+    /// A name with the way it lies from somewhere in front: "North Newwick".
+    static func directed(_ way: String, _ name: String) -> String { way.isEmpty ? name : String(localized: "\(way) \(name)") }
 
     static var marketSquare: String { String(localized: "Market Square") }
     static var marketSquareInScene: String { String(localized: "The Market Square") }

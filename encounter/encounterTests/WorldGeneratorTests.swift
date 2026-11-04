@@ -946,3 +946,23 @@ struct LakeTests {
         #expect(made.features(of: "Water").count == 1)
     }
 }
+
+struct RoadNameTests {
+    @Test func roadsOnTheWorldMapAreNamedWithoutNumbers() {
+        var roads = 0, numbered = 0
+        for seed in UInt64(1)...12 {
+            var options = WorldOptions()
+            options.realms = 4
+            options.seed = seed
+            let world = WorldGenerator.generate(options)
+            for feature in world.features where feature.placeType == "Road" {
+                roads += 1
+                if let last = feature.name.split(separator: " ").last, Int(last) != nil { numbered += 1 }
+            }
+            let names = world.features.filter { $0.placeType == "Road" }.map(\.name)
+            #expect(Set(names).count == names.count)
+        }
+        #expect(roads > 0)
+        #expect(numbered * 20 <= roads, "\(numbered) of \(roads) roads are numbered")
+    }
+}
