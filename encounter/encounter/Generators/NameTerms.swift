@@ -54,6 +54,7 @@ nonisolated enum NameTerms {
     }
     static func quay(_ river: String) -> String { String(localized: "\(river) Quay") }
     static func embankment(_ river: String) -> String { String(localized: "\(river) Embankment") }
+    static func lake(_ name: String) -> String { String(localized: "Lake \(name)") }
     static func manor(_ owner: String) -> String { String(localized: "\(owner) Manor") }
     static func inn(_ name: String) -> String { String(localized: "The \(name)") }
     static func forest(_ name: String) -> String { String(localized: "The \(name) Forest") }

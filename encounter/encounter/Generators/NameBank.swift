@@ -139,6 +139,12 @@ nonisolated struct NameBank: Sendable {
         return named(NameTerms.river(Self.name(language, "riverName", using: &random)))
     }
 
+    /// A name for a lake, such as "Lake Hale".
+    mutating func lake(using random: inout SeededRandom) -> String {
+        let language = pick(using: &random)
+        return named(NameTerms.lake(Self.name(language, "riverName", using: &random)))
+    }
+
     mutating func manor(using random: inout SeededRandom) -> String {
         let language = pick(using: &random)
         return named(NameTerms.manor(Self.name(language, "manorOwner", using: &random)))

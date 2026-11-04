@@ -234,12 +234,22 @@ struct WorldGeneratorTests {
     }
 
     @Test func riversAreAsManyAsAskedForAtMostAndRunInLongLines() {
-        #expect(make { $0.rivers = 0 }.features(of: "River").isEmpty)
+        // A lake always has a river out of it, so there can be those on top of the ones asked for (and in two pieces where a river
+        // runs through a lake).
+        let none = make { $0.rivers = 0 }
+        #expect(none.features(of: "River").count <= none.features(of: "Lake").count)
         let world = make { $0.rivers = 4 }
-        #expect(!world.features(of: "River").isEmpty && world.features(of: "River").count <= 4)
+        #expect(!world.features(of: "River").isEmpty && world.features(of: "River").count <= 4 + 3 * world.features(of: "Lake").count)
+        func nearALake(_ p: V) -> Bool {
+            world.features(of: "Lake").contains { lake in
+                let shore = vs(lake)
+                return SettlementGenerator.contains(shore, p) || SettlementGenerator.distance(from: p, toPolyline: shore + [shore[0]]) < world.extent / 160 * 2.5
+            }
+        }
         for river in world.features(of: "River") {
             let line = vs(river)
-            #expect(line.count >= 4)
+            // The stretch that runs out of a lake can be short and straight.
+            if line.count < 4 { #expect(nearALake(line[0]) || nearALake(line[line.count - 1]), "\(river.name) is a short river that is not by a lake") }
             var length = 0.0
             for (a, b) in zip(line, line.dropFirst()) { length += a.distance(to: b) }
             #expect(length > world.extent * 0.03, "\(river.name) is only \(length) metres long")
@@ -825,8 +835,8 @@ struct IslandSettingTests {
         // Islands are made apart from everything else, and nothing is built on them, so where the capitals are does not change.
         for seed in UInt64(1)...4 {
             let without = capitals(world(.continent, .none, seed: seed)), with = capitals(world(.continent, .many, seed: seed))
-            // To within a cell or so: a place the smoothed coast leaves just off the land is nudged in, towards the middle of the land.
-            #expect(without.count == with.count && zip(without, with).allSatisfy { $0.distance(to: $1) < 10_000 }, "seed \(seed)")
+            // To within a few cells: a place the smoothed coast leaves just off the land is nudged in, up to eight half-cells, towards the middle of the land.
+            #expect(without.count == with.count && zip(without, with).allSatisfy { $0.distance(to: $1) < 17_000 }, "seed \(seed)")
         }
     }
 
@@ -834,5 +844,105 @@ struct IslandSettingTests {
         var options = WorldOptions()
         options.islands = .many
         #expect(try JSONDecoder().decode(WorldOptions.self, from: JSONEncoder().encode(options)).islands == .many)
+    }
+}
+
+struct LakeTests {
+    private typealias V = SettlementGenerator.V
+
+    private func world(_ shape: WorldShape, seed: UInt64, rivers: Int = 4) -> GeneratedWorld {
+        var options = WorldOptions()
+        options.shape = shape
+        options.realms = 3
+        options.seed = seed
+        options.rivers = rivers
+        return WorldGenerator.generate(options)
+    }
+
+    private func outline(_ feature: GeneratedFeature) -> [V] {
+        switch feature.shape {
+        case .polygon(let p), .line(let p): p.map { V(x: $0.easting, y: $0.northing) }
+        case .point(let p): [V(x: p.easting, y: p.northing)]
+        }
+    }
+
+    @Test func worldsHaveLakesThatAreWaterOnTheLand() {
+        var withLakes = 0
+        for shape in [WorldShape.continent, .coast, .peninsula, .inland] {
+            for seed in UInt64(1)...5 {
+                let made = world(shape, seed: seed)
+                let lakes = made.features(of: "Lake")
+                if !lakes.isEmpty { withLakes += 1 }
+                for lake in lakes {
+                    #expect(lake.kind == "lake" && lake.name.hasPrefix("Lake "))
+                    let bounds = Plane.bounds(outline(lake))
+                    #expect(bounds.min.x > made.extent * 0.03 && bounds.max.x < made.extent * 0.97 && bounds.min.y > made.extent * 0.03 && bounds.max.y < made.extent * 0.97, "\(shape) \(seed): a lake reaches the edge")
+                }
+            }
+        }
+        #expect(withLakes >= 15, "only \(withLakes) of 20 worlds have a lake")
+    }
+
+    @Test func everyLakeHasARiverRunningOutOfItToTheSeaOrTheEdge() {
+        for shape in [WorldShape.continent, .coast, .peninsula, .inland] {
+            for seed in UInt64(1)...5 {
+                // With no rivers asked for, a lake still has its outflow.
+                let made = world(shape, seed: seed, rivers: 0)
+                let realms = made.features(of: "Region").map { outline($0) }
+                let cell = made.extent / 160
+                for lake in made.features(of: "Lake") {
+                    let shore = outline(lake)
+                    let closed = shore + [shore[0]]
+                    func touches(_ p: V) -> Bool { SettlementGenerator.contains(shore, p) || SettlementGenerator.distance(from: p, toPolyline: closed) < cell * 2.5 }
+                    // A river that starts at the lake and ends in the sea (off the land) or at the edge of the map.
+                    let out = made.features(of: "River").contains { river in
+                        let line = outline(river)
+                        guard let first = line.first, let last = line.last else { return false }
+                        func ends(_ p: V) -> Bool {
+                            let atEdge = p.x <= cell * 1.5 || p.y <= cell * 1.5 || p.x >= made.extent - cell * 1.5 || p.y >= made.extent - cell * 1.5
+                            // At the sea or the edge of the map, or joining another river that goes on.
+                            let joinsRiver = made.features(of: "River").contains { other in
+                                let l = outline(other)
+                                return l != line && SettlementGenerator.distance(from: p, toPolyline: l) < cell * 1.5
+                            }
+                            // Or running into another lake, which has its own river out.
+                            let intoLake = made.features(of: "Lake").contains { other in
+                                let l = outline(other)
+                                return l != shore && (SettlementGenerator.contains(l, p) || SettlementGenerator.distance(from: p, toPolyline: l + [l[0]]) < cell * 2.5)
+                            }
+                            return atEdge || joinsRiver || intoLake || !realms.contains { SettlementGenerator.contains($0, p) }
+                        }
+                        return (touches(first) && ends(last)) || (touches(last) && ends(first))
+                    }
+                    #expect(out, "\(shape) \(seed): \(lake.name) has no river running out of it")
+                }
+            }
+        }
+    }
+
+    @Test func nothingIsBuiltOnALakeAndNoRoadCrossesOne() {
+        for shape in [WorldShape.continent, .inland] {
+            for seed in UInt64(1)...5 {
+                let made = world(shape, seed: seed)
+                for lake in made.features(of: "Lake") {
+                    let shore = outline(lake)
+                    let cell = made.extent / 160
+                    // Standing on the shore is allowed (the outline is smoothed, so a place on the edge can fall just inside it).
+                    func inLake(_ p: V) -> Bool { SettlementGenerator.contains(shore, p) && SettlementGenerator.distance(from: p, toPolyline: shore + [shore[0]]) > cell * 0.8 }
+                    for town in made.features(of: "Settlement") {
+                        #expect(!inLake(outline(town)[0]), "\(shape) \(seed): \(town.name) is in \(lake.name)")
+                    }
+                    for road in made.features(of: "Road") {
+                        let line = outline(road)
+                        #expect(line.filter(inLake).isEmpty, "\(shape) \(seed): a road runs through \(lake.name)")
+                    }
+                }
+            }
+        }
+    }
+
+    @Test func lakesAreOnlyAddedWaterNotAnotherSea() {
+        let made = world(.continent, seed: 3)
+        #expect(made.features(of: "Water").count == 1)
     }
 }

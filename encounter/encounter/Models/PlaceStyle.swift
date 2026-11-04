@@ -33,12 +33,15 @@ nonisolated struct PlaceStyle: Equatable, Sendable {
     )
 
     /// The place types the map knows how to draw, with the order they are listed in.
-    static let types = ["Region", "Settlement", "District", "Building", "Wilderness", "Water", "Forest", "Mountains", "River", "Road", "Street", "Wall", "Square", "Garden", "Landmark", "Point of Interest", "Room", "Corridor", "Cave", "Rock", "Door", "Stairs", "Stall", "Tree", "Clearing"]
+    static let types = ["Region", "Settlement", "District", "Building", "Wilderness", "Water", "Lake", "Forest", "Mountains", "River", "Road", "Street", "Wall", "Square", "Garden", "Landmark", "Point of Interest", "Room", "Corridor", "Cave", "Rock", "Door", "Stairs", "Stall", "Tree", "Clearing"]
 
     static func style(forPlaceType type: String?) -> PlaceStyle {
         switch type {
         case "Water":
             PlaceStyle(fill: StyleColor(red: 0.25, green: 0.5, blue: 0.85, alpha: 0.55), stroke: StyleColor(red: 0.15, green: 0.35, blue: 0.7), lineWidth: 1.5, drawOrder: 5)
+        // A lake sits on the land, above forest and mountains, where the sea lies under everything.
+        case "Lake":
+            PlaceStyle(fill: StyleColor(red: 0.25, green: 0.5, blue: 0.85, alpha: 0.75), stroke: StyleColor(red: 0.15, green: 0.35, blue: 0.7), lineWidth: 1.5, drawOrder: 12)
         case "Region":
             PlaceStyle(fill: StyleColor(red: 0.6, green: 0.45, blue: 0.8, alpha: 0.1), stroke: StyleColor(red: 0.55, green: 0.4, blue: 0.75), lineWidth: 1.5, isDashed: true, drawOrder: 6)
         case "Wilderness":

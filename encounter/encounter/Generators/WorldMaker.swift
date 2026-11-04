@@ -43,6 +43,8 @@ nonisolated struct WorldMaker {
     var strip: [Bool]
     /// Land that is an island off the coast of the main land, which has no settlements.
     var isle: [Bool]
+    /// Land that is a lake: water on the map, though the ground under it counts for how rivers run.
+    var lake: [Bool]
     /// Which piece of the strip each cell is in, so that a strip all round the map is made of pieces that have no hole in them.
     var stripGroup: [Int]
     var realmCount = 0
@@ -73,6 +75,7 @@ nonisolated struct WorldMaker {
         realmOf = [Int](repeating: -1, count: size * size)
         strip = [Bool](repeating: false, count: size * size)
         isle = [Bool](repeating: false, count: size * size)
+        lake = [Bool](repeating: false, count: size * size)
         stripGroup = [Int](repeating: -1, count: size * size)
     }
 
@@ -145,7 +148,9 @@ nonisolated struct WorldMaker {
 
     mutating func make() -> GeneratedWorld {
         terrain()
+        makeLakes()
         rivers()
+        ensureLakeOutflows()
         settle()
         realms()
         roads()
@@ -506,7 +511,7 @@ nonisolated struct WorldMaker {
         for start in byHeight {
             if riverLines.count >= options.rivers || tries > 800 { break }
             tries += 1
-            if river[start] { continue }
+            if river[start] || lake[start] { continue }
             let sx = Double(start % n), sy = Double(start / n)
             if sources.contains(where: { hypot(Double($0 % n) - sx, Double($0 / n) - sy) < 12 }) { continue }
             var path = [start]
@@ -524,8 +529,115 @@ nonisolated struct WorldMaker {
                 current = next
             }
             guard path.count >= 10 else { continue }
-            for c in path where land[c] { river[c] = true }
+            for c in path where land[c] && !lake[c] { river[c] = true }
             sources.append(start)
+            riverLines.append(path)
+        }
+    }
+
+    // MARK: Lakes
+
+    /// The lakes, each as the cells of one connected piece of water.
+    private func lakeComponents() -> [[Int]] {
+        var seen = [Bool](repeating: false, count: n * n)
+        var result: [[Int]] = []
+        for start in lake.indices where lake[start] && !seen[start] {
+            var piece = [start]
+            var queue = [start]
+            seen[start] = true
+            while let at = queue.popLast() {
+                for nb in neighbours4(at) where lake[nb] && !seen[nb] { seen[nb] = true; piece.append(nb); queue.append(nb) }
+            }
+            result.append(piece)
+        }
+        return result
+    }
+
+    /// Makes a lake or two or three, in low ground well inland: each starts at the lowest ground among some places picked at random
+    /// and spreads over the next lowest, so it follows the lie of the land. The ground under it is lowered so that rivers drain into it.
+    private mutating func makeLakes() {
+        // How far each cell is from the sea, in cells, as far as 12.
+        var seaDistance = [Int](repeating: 99, count: n * n)
+        var frontier: [Int] = []
+        for i in land.indices where !land[i] { seaDistance[i] = 0; frontier.append(i) }
+        var step = 0
+        while !frontier.isEmpty, step < 12 {
+            step += 1
+            var next: [Int] = []
+            for i in frontier { for nb in neighbours8(i) where seaDistance[nb.cell] > step { seaDistance[nb.cell] = step; next.append(nb.cell) } }
+            frontier = next
+        }
+        func roomFor(_ i: Int, sea: Int, edge: Int) -> Bool {
+            let x = i % n, y = i / n
+            return land[i] && !strip[i] && !isle[i] && !mountain[i] && !lake[i] && seaDistance[i] >= sea && min(x, y, n - 1 - x, n - 1 - y) >= edge
+        }
+        let candidates = land.indices.filter { roomFor($0, sea: 12, edge: 14) }
+        guard candidates.count > 200 else { return }
+        var rng = SeededRandom(seed: options.seed &* 0xA24BAED4963EE407 &+ 11)
+        let count = 1 + (choice(11) > 0.35 ? 1 : 0) + (choice(12) > 0.7 ? 1 : 0)
+        var centres: [V] = []
+        for _ in 0..<count {
+            let pool = candidates.filter { c in !lake[c] && centres.allSatisfy { centre(of: c).distance(to: $0) > cell * 28 } }
+            guard !pool.isEmpty else { break }
+            var best: Int?
+            for _ in 0..<150 {
+                let c = pool[Int.random(in: 0..<pool.count, using: &rng)]
+                if best == nil || height[c] < height[best!] { best = c }
+            }
+            guard let seed = best else { break }
+            let target = Int(rng.value(in: 70...200))
+            // The lake spreads outwards from its lowest cell, mostly evenly all round, so it is round, but a little further over low
+            // ground and a little less over high, and with a rough edge.
+            func reach(_ c: Int) -> Double {
+                let dx = Double(c % n - seed % n), dy = Double(c / n - seed / n)
+                let rough = 0.7 + 0.6 * noise.value(Double(c % n) * 0.45 + 5.5, Double(c / n) * 0.45 + 1.5, salt: 81)
+                return hypot(dx, dy) * rough + 10 * (height[c] - height[seed])
+            }
+            var heap = MinHeap()
+            var queued: Set<Int> = [seed]
+            var cells: [Int] = []
+            heap.push(seed, key: 0)
+            while cells.count < target, let popped = heap.pop() {
+                let c = popped.item
+                guard roomFor(c, sea: 9, edge: 9) else { continue }
+                cells.append(c)
+                for nb in neighbours4(c) where !queued.contains(nb) { queued.insert(nb); heap.push(nb, key: reach(nb)) }
+            }
+            guard cells.count >= 20 else { continue }
+            for c in cells {
+                lake[c] = true
+                height[c] -= 0.2
+                elevation[c] = 0
+                forest[c] = false
+            }
+            centres.append(centre(of: seed))
+        }
+    }
+
+    /// Every lake has a river running out of it to the sea, even when that is more rivers than were asked for: from the lake's outlet,
+    /// where the ground drains out of it, downhill as the rivers go, unless a river already runs there.
+    private mutating func ensureLakeOutflows() {
+        for cells in lakeComponents() {
+            guard let outlet = cells.sorted().first(where: { c in flowTo[c] >= 0 && !lake[flowTo[c]] }) else { continue }
+            // A river that runs through the lake already runs out of it (it is cut at the shore), so it stays as it is.
+            let inLake = Set(cells)
+            if riverLines.contains(where: { line in line.contains(where: inLake.contains) && !(line.last.map(inLake.contains) ?? true) }) { continue }
+            var path = [outlet]
+            var current = outlet
+            var steps = 0
+            while steps < n * n {
+                steps += 1
+                let next = flowTo[current]
+                if next < 0 {
+                    if let sea = neighbours4(current).first(where: { !land[$0] }) { path.append(sea) }
+                    break
+                }
+                path.append(next)
+                if river[next] { break }
+                current = next
+            }
+            guard path.count >= 3 else { continue }
+            for c in path where land[c] && !lake[c] { river[c] = true }
             riverLines.append(path)
         }
     }
@@ -546,9 +658,9 @@ nonisolated struct WorldMaker {
     /// Lays out the capitals first, spread as far apart as they can be, then the cities, towns and villages round them.
     private mutating func settle() {
         var suit = [Double](repeating: 0, count: n * n)
-        for i in land.indices where land[i] && !mountain[i] && !strip[i] && !isle[i] {
+        for i in land.indices where land[i] && !mountain[i] && !strip[i] && !isle[i] && !lake[i] {
             var s = forest[i] ? 0.5 : 1.0
-            if neighbours8(i).contains(where: { !land[$0.cell] }) { s += 0.6 }
+            if neighbours8(i).contains(where: { !land[$0.cell] || lake[$0.cell] }) { s += 0.6 }
             if riverIsNear(i) { s += 0.6 }
             suit[i] = s / 2.2
         }
@@ -789,7 +901,7 @@ nonisolated struct WorldMaker {
                 while previous[at] >= 0 { at = previous[at]; path.append(at) }
                 return path.reversed()
             }
-            for nb in neighbours8(popped.item) where land[nb.cell] {
+            for nb in neighbours8(popped.item) where land[nb.cell] && !lake[nb.cell] {
                 var cost = terrainCost(nb.cell) + abs(elevation[nb.cell] - elevation[popped.item]) * 6
                 if roadCell[nb.cell] { cost = 0.25 }
                 let through = popped.key + nb.distance * cost
@@ -987,12 +1099,35 @@ nonisolated struct WorldMaker {
             features.append(GeneratedFeature(name: names.mountains(using: &random), placeType: "Mountains", summary: String(localized: "A range of mountains."), shape: .polygon(points)))
         }
 
+        // A lake is water, so it is drawn as such, and the rivers that run into it stop at its shore and the ones that run out begin
+        // there: each river's line is cut where it crosses a lake.
+        let lakePieces = lakeComponents()
+        for cells in lakePieces {
+            var mask = [Bool](repeating: false, count: n * n)
+            for c in cells { mask[c] = true }
+            guard let outline = polygons(of: mask, minimumCells: 4, limit: 1).first else { continue }
+            features.append(GeneratedFeature(name: names.lake(using: &random), placeType: "Lake", summary: String(localized: "A lake."), shape: .polygon(outline), kind: "lake"))
+        }
         for path in riverLines {
-            let raw = path.map { waypoint($0) }
-            let points = Curves.smooth(Contours.simplify(open: raw, tolerance: 0.7 * cell), steps: 4)
-                .map { GridPoint(easting: min(max($0.x, 0), extent), northing: min(max($0.y, 0), extent)) }
-            guard points.count >= 2 else { continue }
-            features.append(GeneratedFeature(name: names.river(using: &random), placeType: "River", summary: String(localized: "A river that runs to the sea."), shape: .line(points)))
+            var run: [Int] = []
+            func flush(_ run: [Int]) {
+                guard run.filter({ !lake[$0] }).count >= 2 else { return }
+                let raw = run.map { waypoint($0) }
+                let points = Curves.smooth(Contours.simplify(open: raw, tolerance: 0.7 * cell), steps: 4)
+                    .map { GridPoint(easting: min(max($0.x, 0), extent), northing: min(max($0.y, 0), extent)) }
+                guard points.count >= 2 else { return }
+                features.append(GeneratedFeature(name: names.river(using: &random), placeType: "River", summary: String(localized: "A river that runs to the sea."), shape: .line(points)))
+            }
+            for cell in path {
+                if lake[cell] {
+                    // The line ends at the first cell of the lake, so it reaches the shore.
+                    if !run.isEmpty, !lake[run[run.count - 1]] { run.append(cell); flush(run); run = [] }
+                    run = [cell]
+                } else {
+                    run.append(cell)
+                }
+            }
+            flush(run)
         }
 
         // The settlements are named now, in a fixed order, so the roads can be named for them.
