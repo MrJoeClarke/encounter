@@ -44,6 +44,8 @@ nonisolated struct WorldRecord: Codable, Sendable {
     var systemVersion: Int?
     /// What the system keeps for the whole world. Optional, because older files don't have it.
     var systemState: [String: Double]?
+    /// The world's map style. Optional, because older files don't have it.
+    var mapStyle: String?
 }
 
 nonisolated struct CalendarRecord: Codable, Sendable {
@@ -131,4 +133,6 @@ nonisolated struct MapRecord: Codable, Sendable {
     var worldOptions: WorldOptions?
     /// What a scene map was generated from.
     var sceneOptions: SceneOptions?
+    /// The map's own style, if it has one. Optional, because older files don't have it.
+    var style: String?
 }

@@ -22,6 +22,8 @@ final class World {
     var createdAt: Date = Date()
     /// The place at the top of the world's hierarchy, whose map is the world map. See `rootPlace`.
     var rootPlaceID: UUID?
+    /// The id of the `MapStyle` its vector maps are drawn in, unless a map has its own. Empty is the default style.
+    var mapStyleID: String = ""
 
     @Relationship(deleteRule: .cascade, inverse: \CalendarDefinition.world)
     var calendar: CalendarDefinition?

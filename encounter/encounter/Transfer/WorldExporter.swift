@@ -71,7 +71,8 @@ enum WorldExporter {
                     extentMetres: map.isVector ? map.pixelWidth : nil,
                     settlementOptions: map.settlementOptions,
                     worldOptions: map.worldOptions,
-                    sceneOptions: map.sceneOptions
+                    sceneOptions: map.sceneOptions,
+                    style: map.styleID.isEmpty ? nil : map.styleID
                 )
             }
 
@@ -94,7 +95,8 @@ enum WorldExporter {
                 edition: world.editionRaw,
                 rootPlaceID: world.rootPlaceID,
                 systemVersion: world.systemVersion > 0 ? world.systemVersion : nil,
-                systemState: world.systemState.isEmpty ? nil : world.systemState
+                systemState: world.systemState.isEmpty ? nil : world.systemState,
+                mapStyle: world.mapStyleID.isEmpty ? nil : world.mapStyleID
             ),
             campaigns: campaignRecords,
             pages: pageRecords,

@@ -50,7 +50,7 @@ struct GenerateWorldSheet: View {
         NavigationStack {
             Form {
                 Section {
-                    WorldPreview(world: preview, placing: placing != nil, onTap: place)
+                    WorldPreview(world: preview, mapStyle: MapStyle.style(id: world.mapStyleID), placing: placing != nil, onTap: place)
                         .frame(height: 320)
                         .opacity(isPreviewing && preview != nil ? 0.4 : 1)
                         .overlay {
@@ -281,6 +281,8 @@ struct GenerateWorldSheet: View {
 /// settlements. A tap reports where on the map it was, in metres.
 struct WorldPreview: View {
     let world: GeneratedWorld?
+    /// How it is drawn: the style the world's maps are in.
+    var mapStyle = MapStyle.dark
     var placing = false
     var onTap: ((GridPoint) -> Void)?
 
@@ -297,13 +299,13 @@ struct WorldPreview: View {
             let side = min(geometry.size.width, geometry.size.height)
             let origin = CGPoint(x: (geometry.size.width - side) / 2, y: (geometry.size.height - side) / 2)
             Canvas { context, _ in
-                context.fill(Path(CGRect(x: origin.x, y: origin.y, width: side, height: side)), with: .color(Color(red: 0.13, green: 0.13, blue: 0.14)))
+                context.fill(Path(CGRect(x: origin.x, y: origin.y, width: side, height: side)), with: .color(Color(red: mapStyle.background.red, green: mapStyle.background.green, blue: mapStyle.background.blue)))
                 guard let world else { return }
                 let scale = Double(side) / world.extent
                 func point(_ p: GridPoint) -> CGPoint { CGPoint(x: origin.x + p.easting * scale, y: origin.y + (world.extent - p.northing) * scale) }
-                let ordered = world.features.sorted { PlaceStyle.style(forPlaceType: $0.placeType).drawOrder < PlaceStyle.style(forPlaceType: $1.placeType).drawOrder }
+                let ordered = world.features.sorted { mapStyle.style(forPlaceType: $0.placeType).drawOrder < mapStyle.style(forPlaceType: $1.placeType).drawOrder }
                 for feature in ordered {
-                    let style = PlaceStyle.style(forPlaceType: feature.placeType)
+                    let style = mapStyle.style(forPlaceType: feature.placeType)
                     switch feature.shape {
                     case .polygon(let points):
                         guard let first = points.first else { continue }
@@ -365,14 +367,14 @@ struct WorldPreview: View {
         .frame(width: 520, height: 520)
 }
 
-private func shapePreview(_ shape: WorldShape, _ coastline: WorldCoastline = .natural, islands: WorldIslands = .few) -> some View {
+private func shapePreview(_ shape: WorldShape, _ coastline: WorldCoastline = .natural, islands: WorldIslands = .few, style: MapStyle = .dark) -> some View {
     var options = WorldOptions()
     options.seed = 7
     options.realms = 4
     options.shape = shape
     options.coastline = coastline
     options.islands = islands
-    return WorldPreview(world: WorldGenerator.generate(options)).frame(width: 520, height: 520)
+    return WorldPreview(world: WorldGenerator.generate(options), mapStyle: style).frame(width: 520, height: 520)
 }
 
 #Preview("A coast") { shapePreview(.coast) }
@@ -383,3 +385,6 @@ private func shapePreview(_ shape: WorldShape, _ coastline: WorldCoastline = .na
 #Preview("Natural coast") { shapePreview(.continent, .natural) }
 #Preview("Rugged coast") { shapePreview(.continent, .rugged) }
 #Preview("Many islands") { shapePreview(.continent, islands: .many) }
+#Preview("Parchment") { shapePreview(.continent, style: .parchment) }
+#Preview("Survey") { shapePreview(.continent, style: .survey) }
+#Preview("Watercolour") { shapePreview(.continent, style: .watercolour) }

@@ -108,6 +108,24 @@ struct MapDetailView: View {
         .onChange(of: map.kindRaw) { isCalibrating = false }
     }
 
+    // MARK: Style
+
+    /// Choose how this map is drawn, and how the world's maps are drawn unless they choose for themselves.
+    @ViewBuilder
+    private var styleMenus: some View {
+        if map.isVector {
+            Picker("Style of This Map", selection: $map.styleID) {
+                Text("World’s Style (\(MapStyle.style(id: map.world?.mapStyleID ?? "").title))").tag("")
+                ForEach(MapStyle.all) { Text($0.title).tag($0.id) }
+            }
+            if let world = map.world {
+                Picker("World’s Style", selection: Binding(get: { world.mapStyleID }, set: { world.mapStyleID = $0 })) {
+                    ForEach(MapStyle.all) { Text($0.title).tag($0.id == MapStyle.defaultID ? "" : $0.id) }
+                }
+            }
+        }
+    }
+
     // MARK: Header
 
     private var header: some View {
@@ -120,6 +138,7 @@ struct MapDetailView: View {
                     if map.kind == .scene {
                         Toggle("Show Grid", isOn: $showsGrid)
                     }
+                    styleMenus
                     journeyMenu
                     Button("Delete Map…", systemImage: "trash", role: .destructive) { isConfirmingDelete = true }
                 }

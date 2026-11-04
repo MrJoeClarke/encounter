@@ -38,6 +38,7 @@ enum WorldImporter {
         world.systemRaw = archive.world.system
         world.systemVersion = archive.world.systemVersion ?? 0
         world.systemState = archive.world.systemState ?? [:]
+        world.mapStyleID = archive.world.mapStyle ?? ""
         world.editionRaw = archive.world.edition ?? LibraryEdition.default.rawValue
         context.insert(world)
         summary.worldName = world.name
@@ -149,6 +150,7 @@ enum WorldImporter {
                     map.sceneOptions = options
                 }
             }
+            map.styleID = record.style ?? ""
             map.calibration = record.calibration
             map.gridColumns = record.gridColumns ?? 0
             map.gridRows = record.gridRows ?? 0

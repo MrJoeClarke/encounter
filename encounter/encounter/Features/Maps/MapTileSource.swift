@@ -25,6 +25,9 @@ nonisolated final class MapTileSource: @unchecked Sendable {
 
     static let background = CGColor(red: 0.13, green: 0.13, blue: 0.14, alpha: 1)
 
+    /// What a map with no picture is drawn on, and what lies outside a picture.
+    var background = MapTileSource.background
+
     init(imageData: Data, pixelWidth: Int, pixelHeight: Int, calibration: MapCalibration) {
         self.imageData = imageData
         self.pixelWidth = pixelWidth
@@ -88,7 +91,7 @@ nonisolated final class MapTileSource: @unchecked Sendable {
             space: CGColorSpace(name: CGColorSpace.sRGB) ?? CGColorSpaceCreateDeviceRGB(),
             bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
         ) else { return nil }
-        context.setFillColor(Self.background)
+        context.setFillColor(background)
         context.fill(CGRect(x: 0, y: 0, width: size, height: size))
 
         // From the copy's pixels (x across, y up) to the tile's (x across, y up). The image's own y runs down
@@ -118,7 +121,7 @@ nonisolated final class MapTileSource: @unchecked Sendable {
             space: CGColorSpace(name: CGColorSpace.sRGB) ?? CGColorSpaceCreateDeviceRGB(),
             bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
         ) else { return nil }
-        context.setFillColor(Self.background)
+        context.setFillColor(background)
         context.fill(CGRect(x: 0, y: 0, width: size, height: size))
         emptyTile = context.makeImage().flatMap(Self.png)
         return emptyTile

@@ -135,10 +135,13 @@ struct MapKitCanvas: PlatformViewRepresentable {
         coordinator.calibration = calibration
 
         // The tiles are rebuilt when the map or its calibration changes.
-        let key = "\(map.id)|\(map.pixelWidth)x\(map.pixelHeight)|\(calibration.originEasting),\(calibration.originNorthing),\(calibration.metresPerPixel),\(calibration.rotation)"
+        let key = "\(map.id)|\(map.pixelWidth)x\(map.pixelHeight)|\(calibration.originEasting),\(calibration.originNorthing),\(calibration.metresPerPixel),\(calibration.rotation)|\(map.style.id)"
         if coordinator.tileKey != key, let data = map.imageData ?? (map.isVector ? Data() : nil), map.pixelWidth > 0 {
             if let old = coordinator.overlay { view.removeOverlay(old) }
             let source = MapTileSource(imageData: data, pixelWidth: map.pixelWidth, pixelHeight: map.pixelHeight, calibration: calibration)
+            // What the map is drawn on comes from its style.
+            let ground = map.style.background
+            source.background = CGColor(red: ground.red, green: ground.green, blue: ground.blue, alpha: ground.alpha)
             let overlay = MapTileOverlay(source: source)
             view.insertOverlay(overlay, at: 0, level: .aboveLabels)
             coordinator.overlay = overlay
@@ -170,6 +173,8 @@ struct MapKitCanvas: PlatformViewRepresentable {
         var calibration = MapCalibration(originEasting: 0, originNorthing: 0, metresPerPixel: 1)
         var overlay: MapTileOverlay?
         var tileKey = ""
+        /// The style the shapes and lines were last drawn in, so they are drawn again when it changes.
+        var drawnStyleID = ""
         var mapID: UUID?
         private var pinAnnotations: [UUID: PlaceAnnotation] = [:]
         private var markAnnotations: [MarkAnnotation] = []
@@ -288,11 +293,13 @@ struct MapKitCanvas: PlatformViewRepresentable {
             let overlaysUnchanged = wantedShapes.count == shapeOverlays.count && wantedLines.count == lineOverlays.count
                 && shapeOverlays.allSatisfy { wantedShapes[$0.key] == $0.value.corners && $0.value.styleType == $0.value.page.attributeText("core.placeType") }
                 && lineOverlays.allSatisfy { wantedLines[$0.key] == $0.value.points && $0.value.styleType == $0.value.page.attributeText("core.placeType") }
+                && drawnStyleID == (parent?.map.style.id ?? "")
             if !overlaysUnchanged {
                 for overlay in shapeOverlays.values { view.removeOverlay(overlay) }
                 for overlay in lineOverlays.values { view.removeOverlay(overlay) }
                 shapeOverlays = [:]
                 lineOverlays = [:]
+                drawnStyleID = parent?.map.style.id ?? ""
                 func order(_ page: Page) -> Int { PlaceStyle.style(forPlaceType: page.attributeText("core.placeType")).drawOrder }
                 // Bigger areas go under smaller ones of the same kind.
                 let sortedShapes = shapes.sorted { (order($0.page), -PlaceGeometry.polygon($0.corners).area) < (order($1.page), -PlaceGeometry.polygon($1.corners).area) }
@@ -346,7 +353,7 @@ struct MapKitCanvas: PlatformViewRepresentable {
                 return renderer
             }
             if let shape = overlay as? PlaceOverlay {
-                let style = PlaceStyle.style(forPlaceType: shape.page.attributeText("core.placeType"))
+                let style = (parent?.map.style ?? MapStyle.dark).style(forPlaceType: shape.page.attributeText("core.placeType"))
                 let renderer = MKPolygonRenderer(polygon: shape)
                 renderer.fillColor = style.fill.map(PlatformColor.init(style:))
                 renderer.strokeColor = PlatformColor(style: style.stroke)
@@ -355,7 +362,7 @@ struct MapKitCanvas: PlatformViewRepresentable {
                 return renderer
             }
             if let line = overlay as? PlaceLineOverlay {
-                let style = PlaceStyle.style(forPlaceType: line.page.attributeText("core.placeType"))
+                let style = (parent?.map.style ?? MapStyle.dark).style(forPlaceType: line.page.attributeText("core.placeType"))
                 let renderer = MKPolylineRenderer(overlay: line)
                 renderer.strokeColor = PlatformColor(style: style.stroke)
                 renderer.lineWidth = style.lineWidth

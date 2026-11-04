@@ -45,7 +45,7 @@ struct GenerateSettlementSheet: View {
         NavigationStack {
             Form {
                 Section {
-                    SettlementPreview(settlement: preview, onTap: handleTap)
+                    SettlementPreview(settlement: preview, mapStyle: place.world.map { MapStyle.style(id: $0.mapStyleID) } ?? .dark, onTap: handleTap)
                         .frame(height: 300)
                         .opacity(isPreviewing && preview != nil ? 0.4 : 1)
                         .overlay {
@@ -317,6 +317,7 @@ struct PreviewFrame {
 /// as a place on the map, for adding gates and moving the square.
 struct SettlementPreview: View {
     let settlement: GeneratedSettlement?
+    var mapStyle = MapStyle.dark
     var onTap: ((GridPoint, PreviewFrame) -> Void)?
 
     var body: some View {
@@ -325,7 +326,7 @@ struct SettlementPreview: View {
                 guard let settlement else { return }
                 let frame = PreviewFrame(settlement, size: size)
                 let point = frame.point
-                context.fill(Path(CGRect(origin: frame.origin, size: CGSize(width: frame.side, height: frame.side))), with: .color(Color(red: 0.13, green: 0.13, blue: 0.14)))
+                context.fill(Path(CGRect(origin: frame.origin, size: CGSize(width: frame.side, height: frame.side))), with: .color(Color(red: mapStyle.background.red, green: mapStyle.background.green, blue: mapStyle.background.blue)))
                 // The wards the settlement was cut into, faintly, under everything.
                 for ward in settlement.wards {
                     guard let first = ward.first else { continue }
@@ -335,9 +336,9 @@ struct SettlementPreview: View {
                     path.closeSubpath()
                     context.stroke(path, with: .color(.white.opacity(0.12)), lineWidth: 0.5)
                 }
-                let ordered = settlement.features.sorted { PlaceStyle.style(forPlaceType: $0.placeType).drawOrder < PlaceStyle.style(forPlaceType: $1.placeType).drawOrder }
+                let ordered = settlement.features.sorted { mapStyle.style(forPlaceType: $0.placeType).drawOrder < mapStyle.style(forPlaceType: $1.placeType).drawOrder }
                 for feature in ordered {
-                    let style = PlaceStyle.style(forPlaceType: feature.placeType)
+                    let style = mapStyle.style(forPlaceType: feature.placeType)
                     var path = Path()
                     switch feature.shape {
                     case .polygon(let points):
@@ -429,4 +430,17 @@ extension Color {
         landmarks: [.cathedral, .castle, .university, .guildhall, .arena, .library, .wizardsTower, .prison, .infirmary]
     )))
     .frame(width: 900, height: 900)
+}
+
+#Preview("Styles of a settlement") {
+    HStack(spacing: 4) {
+        ForEach(MapStyle.all) { style in
+            SettlementPreview(
+                settlement: SettlementGenerator.generate(SettlementOptions(size: .town, layout: .organic, hasWalls: true, hasRiver: true, seed: 12)),
+                mapStyle: style
+            )
+            .frame(width: 330, height: 330)
+        }
+    }
+    .padding(4)
 }

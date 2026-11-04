@@ -29,6 +29,8 @@ final class WorldMap {
     var isVector: Bool = false
     /// The options a generator made this map from, as JSON, so it can be made again. Use `settlementOptions`.
     var generatorData: Data?
+    /// The id of the `MapStyle` this map is drawn in. Empty means the world's.
+    var styleID: String = ""
     var createdAt: Date = Date()
     var world: World?
     /// The place this map depicts, which lets a place open its own map. A world map has none.
@@ -174,4 +176,9 @@ extension World {
         map.place = place
         return map
     }
+}
+
+extension WorldMap {
+    /// The style the map is drawn in: its own if it has one, otherwise the world's.
+    var style: MapStyle { MapStyle.style(id: styleID.isEmpty ? (world?.mapStyleID ?? "") : styleID) }
 }
