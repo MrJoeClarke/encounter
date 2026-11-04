@@ -105,7 +105,7 @@ enum MapGlyphs {
         case "District": Look(size: 12, weight: .semibold, uppercased: true, tracking: 1.5)
         case "River": Look(size: 11, italic: true)
         case "Road": Look(size: 10, weight: .medium)
-        case "Street": Look(size: 9)
+        case "Street", "Building": Look(size: 9)
         case "Wall": Look(size: 9, italic: true)
         case "Garden", "Square": Look(size: 10, italic: true)
         case "PinCapital": Look(size: 12, weight: .bold, serif: false)

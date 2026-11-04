@@ -7,7 +7,7 @@ import Foundation
 
 /// What a pin on the map stands for, which decides its icon: a capital, a city, a town or a village; a landmark of one kind or
 /// another; or some other place. Not every place has a pin: an area (a realm, a quarter, a forest) is drawn as an area and named
-/// across it, a line (a river, a road, a street) is named along it, and a building is a plain shape.
+/// across it, a line (a river, a road, a street) is named along it, and a building is a plain shape, named only when zoomed close.
 enum PlacePinKind: String, Sendable {
     case capital, city, town, village
     case cathedral, castle, university, library, guildhall, arena, infirmary, wizardsTower, prison
@@ -88,11 +88,11 @@ enum PlaceLabelKind: Sendable {
     /// Along a line.
     case line
 
-    /// The place types that are named, and how: areas across, lines along. Buildings and the smaller things in a scene are not
-    /// named here.
+    /// The place types that are named, and how: areas across, lines along. A building is named too, but only when the zoom is close
+    /// (see `ZoomRules`). The smaller things in a scene are not named here.
     static func of(type: String) -> PlaceLabelKind? {
         switch type {
-        case "Region", "District", "Forest", "Mountains", "Water", "Lake", "Wilderness", "Garden", "Square": .area
+        case "Region", "District", "Forest", "Mountains", "Water", "Lake", "Wilderness", "Garden", "Square", "Building": .area
         case "River", "Road", "Street", "Wall": .line
         default: nil
         }
@@ -109,6 +109,7 @@ enum PlaceLabelKind: Sendable {
         case "River": 620
         case "Road": 420
         case "Garden", "Square": 330
+        case "Building": 200
         case "Street": 300
         case "Wall": 250
         default: 100

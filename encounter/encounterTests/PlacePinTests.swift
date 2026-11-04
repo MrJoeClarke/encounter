@@ -60,7 +60,7 @@ struct PlacePinTests {
     @Test func areasAreNamedAcrossAndLinesAlongAndOthersNotAtAll() {
         for type in ["Region", "District", "Forest", "Mountains", "Water", "Lake"] { #expect(PlaceLabelKind.of(type: type) == .area, Comment(rawValue: type)) }
         for type in ["River", "Road", "Street", "Wall"] { #expect(PlaceLabelKind.of(type: type) == .line, Comment(rawValue: type)) }
-        for type in ["Building", "Room", "Door", "Settlement", "Landmark"] { #expect(PlaceLabelKind.of(type: type) == nil, Comment(rawValue: type)) }
+        for type in ["Room", "Door", "Settlement", "Landmark"] { #expect(PlaceLabelKind.of(type: type) == nil, Comment(rawValue: type)) }
         #expect(PlaceLabelKind.priority(type: "Region") > PlaceLabelKind.priority(type: "River") && PlaceLabelKind.priority(type: "River") > PlaceLabelKind.priority(type: "Street"))
     }
 

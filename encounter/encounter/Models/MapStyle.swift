@@ -22,6 +22,8 @@ nonisolated struct MapStyle: Identifiable, Equatable, Sendable {
     let capitalPin: StyleColor
     /// Places of these types are drawn as given; any other type is drawn as in the Dark style.
     private let places: [String: Look]
+    /// What shows at each zoom.
+    var zoom = ZoomRules.standard
 
     /// What a style says about one type of place: the parts that change from style to style.
     struct Look: Equatable, Sendable {

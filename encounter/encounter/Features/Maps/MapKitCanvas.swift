@@ -181,6 +181,34 @@ struct MapKitCanvas: PlatformViewRepresentable {
         private var shapeOverlays: [UUID: PlaceOverlay] = [:]
         private var lineOverlays: [UUID: PlaceLineOverlay] = [:]
         private var isDragging = false
+        /// The pins and names that are on the map now; the rest are held back until the view is close enough.
+        private var shown = Set<ObjectIdentifier>()
+        /// How wide the whole map is, in MapKit's points, and so how much of it is in view.
+        private var mapWidth = 0.0
+        private var viewShare = 1.0
+
+        /// Puts the pin or name on the map if the view is close enough for it, and takes it off if not.
+        private func present<A: MKAnnotation & AnyObject>(_ annotation: A, maxView: Double, in view: MKMapView) {
+            let id = ObjectIdentifier(annotation)
+            if maxView >= effectiveView {
+                if shown.insert(id).inserted { view.addAnnotation(annotation) }
+            } else if shown.remove(id) != nil {
+                view.removeAnnotation(annotation)
+            }
+        }
+
+        private func drop<A: MKAnnotation & AnyObject>(_ annotation: A, from view: MKMapView) {
+            if shown.remove(ObjectIdentifier(annotation)) != nil { view.removeAnnotation(annotation) }
+        }
+
+        private var effectiveView: Double { ZoomRules.view(share: viewShare, on: parent?.map.kind ?? .world) }
+
+        /// Shows the pins and names the zoom allows, as the view moves in and out.
+        func applyZoom(in view: MKMapView) {
+            if mapWidth > 0 { viewShare = view.visibleMapRect.width / mapWidth }
+            for annotation in pinAnnotations.values { present(annotation, maxView: annotation.maxView, in: view) }
+            for annotation in labelAnnotations { present(annotation, maxView: annotation.maxView, in: view) }
+        }
 
         /// The deepest zoom the tiles go to. Past it MapKit stops drawing the map and shows the world beneath, so the
         /// camera is held to it.
@@ -192,6 +220,7 @@ struct MapKitCanvas: PlatformViewRepresentable {
             let b = source.bounds
             let southWest = WebMercator.coordinate(easting: b.minEasting, northing: b.minNorthing)
             let northEast = WebMercator.coordinate(easting: b.maxEasting, northing: b.maxNorthing)
+            mapWidth = abs(MKMapPoint(northEast).x - MKMapPoint(southWest).x)
             let region = MKCoordinateRegion(
                 center: CLLocationCoordinate2D(latitude: (southWest.latitude + northEast.latitude) / 2, longitude: (southWest.longitude + northEast.longitude) / 2),
                 span: MKCoordinateSpan(latitudeDelta: (northEast.latitude - southWest.latitude) * 1.05, longitudeDelta: (northEast.longitude - southWest.longitude) * 1.05)
@@ -227,22 +256,27 @@ struct MapKitCanvas: PlatformViewRepresentable {
             for pin in pins { key += "|\(pin.id)\(pin.page.title)\(PlacePinKind.of(pin.page)?.rawValue ?? "")" }
             guard key != drawnLabelKey else { return }
             drawnLabelKey = key
-            view.removeAnnotations(labelAnnotations)
+            for old in labelAnnotations { drop(old, from: view) }
+            let zoom = (parent?.map.style ?? .dark).zoom
             var made: [PlaceLabelAnnotation] = []
             for shape in shapes where !shape.page.title.isEmpty {
                 let type = shape.page.attributeText("core.placeType")
                 guard PlaceLabelKind.of(type: type) == .area else { continue }
                 let middle = PlaceGeometry.polygon(shape.corners).centre
-                made.append(PlaceLabelAnnotation(
+                let label = PlaceLabelAnnotation(
                     text: shape.page.title, type: type, coordinate: WebMercator.coordinate(middle), angle: 0, priority: PlaceLabelKind.priority(type: type)
-                ))
+                )
+                label.maxView = zoom.name(ofType: type)
+                made.append(label)
             }
             for line in lines where !line.page.title.isEmpty && line.points.count >= 2 {
                 let type = line.page.attributeText("core.placeType")
                 guard PlaceLabelKind.of(type: type) == .line, let spot = Self.alongLine(line.points) else { continue }
-                made.append(PlaceLabelAnnotation(
+                let label = PlaceLabelAnnotation(
                     text: line.page.title, type: type, coordinate: WebMercator.coordinate(spot.point), angle: spot.degrees, priority: PlaceLabelKind.priority(type: type)
-                ))
+                )
+                label.maxView = zoom.name(ofType: type)
+                made.append(label)
             }
             for pin in pins where !pin.page.title.isEmpty {
                 guard let kind = PlacePinKind.of(pin.page) else { continue }
@@ -251,10 +285,11 @@ struct MapKitCanvas: PlatformViewRepresentable {
                     text: pin.page.title, type: kind == .capital ? "PinCapital" : "Pin", coordinate: WebMercator.coordinate(point), angle: 0, priority: kind.priority - 50
                 )
                 label.offset = CGPoint(x: 0, y: kind.size / 2 + 9)
+                label.maxView = zoom.pinName(kind)
                 made.append(label)
             }
             labelAnnotations = made
-            view.addAnnotations(made)
+            for label in made { present(label, maxView: label.maxView, in: view) }
         }
 
         /// The middle of a line, by its length, and the angle of the text along it, in degrees anticlockwise from east, turned so
@@ -320,7 +355,7 @@ struct MapKitCanvas: PlatformViewRepresentable {
             if !isDragging {
                 let wanted = Dictionary(uniqueKeysWithValues: pins.map { ($0.id, $0) })
                 for (id, annotation) in pinAnnotations where wanted[id] == nil {
-                    view.removeAnnotation(annotation)
+                    drop(annotation, from: view)
                     pinAnnotations[id] = nil
                 }
                 for pin in pins {
@@ -330,7 +365,7 @@ struct MapKitCanvas: PlatformViewRepresentable {
                     let styleID = parent?.map.style.id ?? ""
                     // A pin whose kind or style has changed is made again, with the right picture.
                     if let annotation = pinAnnotations[pin.id], annotation.kind != kind || annotation.styleID != styleID {
-                        view.removeAnnotation(annotation)
+                        drop(annotation, from: view)
                         pinAnnotations[pin.id] = nil
                     }
                     if let annotation = pinAnnotations[pin.id] {
@@ -345,13 +380,15 @@ struct MapKitCanvas: PlatformViewRepresentable {
                         annotation.kind = kind
                         annotation.styleID = styleID
                         annotation.isMovable = pin.isMovable
+                        annotation.maxView = (parent?.map.style ?? .dark).zoom.pin(kind)
                         pinAnnotations[pin.id] = annotation
-                        view.addAnnotation(annotation)
+                        present(annotation, maxView: annotation.maxView, in: view)
                     }
                 }
             }
 
             syncLabels(in: view, pins: pins, shapes: shapes, lines: lines)
+            applyZoom(in: view)
 
             // Calibration marks are replaced each time, since there are at most two.
             view.removeAnnotations(markAnnotations)
@@ -489,6 +526,7 @@ struct MapKitCanvas: PlatformViewRepresentable {
         /// Stops the camera going closer than the deepest tiles. The first time it does, the distance it was put back
         /// to becomes the closest the camera may be, so the gesture meets a limit rather than being pushed back.
         func mapView(_ mapView: MKMapView, regionDidChangeAnimated animated: Bool) {
+            applyZoom(in: mapView)
             let width = Double(mapView.bounds.width)
             let delta = mapView.region.span.longitudeDelta
             guard width > 0, delta > 0 else { return }
@@ -623,6 +661,8 @@ final class PlaceAnnotation: NSObject, MKAnnotation {
     /// What kind of pin it is, and the style it was drawn in, so it is drawn again when either changes.
     var kind = PlacePinKind.place
     var styleID = ""
+    /// The most of the map that may be in view for the pin to show (see `ZoomRules`).
+    var maxView = ZoomRules.always
 
     init(page: Page, coordinate: CLLocationCoordinate2D) {
         self.page = page
@@ -640,6 +680,8 @@ final class PlaceLabelAnnotation: NSObject, MKAnnotation {
     /// In degrees anticlockwise from east.
     let angle: Double
     let priority: Float
+    /// The most of the map that may be in view for the name to show (see `ZoomRules`).
+    var maxView = ZoomRules.always
     /// How far from its coordinate it is drawn, in points, down and across.
     var offset = CGPoint.zero
     var title: String? { nil }
