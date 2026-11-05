@@ -46,4 +46,12 @@ struct SheetTests {
         let pixel = Array((raw as Data).prefix(3))
         #expect(pixel.allSatisfy { $0 < 30 })
     }
+
+    @Test func onlyParchmentIsDrawnByHandAndOnlyWhatIsNaturalIsWobbled() {
+        #expect(MapStyle.parchment.hand != nil)
+        for style in [MapStyle.dark, .survey, .watercolour] { #expect(style.hand == nil, Comment(rawValue: style.id)) }
+        let types = MapStyle.HandDrawn.types
+        for natural in ["Water", "Region", "Forest", "Mountains", "River", "Road"] { #expect(types.contains(natural), Comment(rawValue: natural)) }
+        for crisp in ["Building", "Room", "Corridor", "Door", "Landmark"] { #expect(!types.contains(crisp), Comment(rawValue: crisp)) }
+    }
 }

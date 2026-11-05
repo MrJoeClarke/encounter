@@ -32,6 +32,8 @@ nonisolated struct MapStyle: Identifiable, Equatable, Sendable {
     var surround = StyleColor(red: 0.05, green: 0.05, blue: 0.06)
     /// The ruled border drawn just inside the edge of the sheet, if any.
     var frame: SheetFrame?
+    /// How lines and outlines are drawn if they are to look drawn by hand; nil for the clean line of a plan.
+    var hand: HandDrawn?
 
     /// A typeface by its names: the regular face and the ones for italic, semibold and semibold italic.
     struct Lettering: Equatable, Sendable {
@@ -41,6 +43,17 @@ nonisolated struct MapStyle: Identifiable, Equatable, Sendable {
         var semiboldItalic: String
 
         static let baskerville = Lettering(regular: "Baskerville", italic: "Baskerville-Italic", semibold: "Baskerville-SemiBold", semiboldItalic: "Baskerville-SemiBoldItalic")
+    }
+
+    /// The look of a pen: how far a line wanders from the true line, over what distance, and how much the stroke thickens and thins
+    /// (from 0 for an even stroke). The first two are in points on screen.
+    struct HandDrawn: Equatable, Sendable {
+        var amplitude: Double
+        var wavelength: Double
+        var weight: Double
+
+        /// The types of place drawn in this way; buildings, rooms and the like stay crisp.
+        static let types: Set<String> = ["Water", "Lake", "Region", "Wilderness", "Forest", "Mountains", "District", "Settlement", "River", "Road", "Street", "Wall"]
     }
 
     /// A ruled border: an outer line and, if wanted, a finer one inside it, with a gap between, all in points on screen.
@@ -117,7 +130,8 @@ nonisolated struct MapStyle: Identifiable, Equatable, Sendable {
             "Wall": Look(fill: nil, stroke: color(0.35, 0.25, 0.15), lineWidth: 3.5),
         ],
         paper: PaperTexture(), lettering: .baskerville,
-        surround: color(0.2, 0.14, 0.09), frame: SheetFrame(ink: color(0.3, 0.18, 0.08), outer: 2.6, inner: 0.8, gap: 6)
+        surround: color(0.2, 0.14, 0.09), frame: SheetFrame(ink: color(0.3, 0.18, 0.08), outer: 2.6, inner: 0.8, gap: 6),
+        hand: HandDrawn(amplitude: 0.9, wavelength: 16, weight: 0.35)
     )
 
     /// An ordnance survey: white paper, fine dark lines, pale fills, red roads.

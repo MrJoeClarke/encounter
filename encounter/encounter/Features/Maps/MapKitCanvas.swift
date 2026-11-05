@@ -518,7 +518,15 @@ struct MapKitCanvas: PlatformViewRepresentable {
                 return renderer
             }
             if let shape = overlay as? PlaceOverlay {
-                let style = (parent?.map.style ?? MapStyle.dark).style(forPlaceType: shape.page.attributeText("core.placeType"))
+                let mapStyle = parent?.map.style ?? MapStyle.dark
+                let type = shape.page.attributeText("core.placeType")
+                let style = mapStyle.style(forPlaceType: type)
+                if let hand = mapStyle.hand, MapStyle.HandDrawn.types.contains(type) {
+                    return InkRenderer(
+                        polygon: shape, fill: style.fill.map { PlatformColor(style: $0).cgColor }, stroke: PlatformColor(style: style.stroke).cgColor,
+                        width: style.lineWidth, dash: style.isDashed ? (style.dashPattern ?? [6, 4]) : nil, hand: hand
+                    )
+                }
                 let renderer = MKPolygonRenderer(polygon: shape)
                 renderer.fillColor = style.fill.map(PlatformColor.init(style:))
                 renderer.strokeColor = PlatformColor(style: style.stroke)
@@ -527,7 +535,15 @@ struct MapKitCanvas: PlatformViewRepresentable {
                 return renderer
             }
             if let line = overlay as? PlaceLineOverlay {
-                let style = (parent?.map.style ?? MapStyle.dark).style(forPlaceType: line.page.attributeText("core.placeType"))
+                let mapStyle = parent?.map.style ?? MapStyle.dark
+                let type = line.page.attributeText("core.placeType")
+                let style = mapStyle.style(forPlaceType: type)
+                if let hand = mapStyle.hand, MapStyle.HandDrawn.types.contains(type) {
+                    return InkRenderer(
+                        line: line, stroke: PlatformColor(style: style.stroke).cgColor, width: style.lineWidth,
+                        dash: style.isDashed ? (style.dashPattern ?? [6, 4]) : nil, hand: hand
+                    )
+                }
                 let renderer = MKPolylineRenderer(overlay: line)
                 renderer.strokeColor = PlatformColor(style: style.stroke)
                 renderer.lineWidth = style.lineWidth
