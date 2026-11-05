@@ -72,6 +72,8 @@ struct MapKitCanvas: PlatformViewRepresentable {
     var onPlace: ((_ pixelX: Double, _ pixelY: Double) -> Void)?
     var onMove: ((_ page: Page, _ pixelX: Double, _ pixelY: Double) -> Void)?
     var onSelect: ((_ page: Page?) -> Void)?
+    /// Told how much of the world a point on screen is, and which way the map is turned, whenever the view moves.
+    var onReading: ((MapViewReading) -> Void)?
 
     // MARK: The map as MapKit shows it
 
@@ -606,6 +608,15 @@ struct MapKitCanvas: PlatformViewRepresentable {
 
         /// Stops the camera going closer than the deepest tiles. The first time it does, the distance it was put back
         /// to becomes the closest the camera may be, so the gesture meets a limit rather than being pushed back.
+        func mapViewDidChangeVisibleRegion(_ mapView: MKMapView) {
+            guard let report = parent?.onReading, mapView.bounds.width > 0 else { return }
+            let metresPerMapPoint = WebMercator.worldSize / 268_435_456
+            report(MapViewReading(
+                metresPerPoint: mapView.visibleMapRect.width / Double(mapView.bounds.width) * metresPerMapPoint,
+                heading: mapView.camera.heading
+            ))
+        }
+
         func mapView(_ mapView: MKMapView, regionDidChangeAnimated animated: Bool) {
             applyZoom(in: mapView)
             // Not out past the map: once the whole of it is in view with room to spare on every side, the camera is brought back in.

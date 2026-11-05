@@ -42,6 +42,9 @@ struct MapDetailView: View {
         _places = Query(filter: #Predicate<Page> { $0.world?.id == worldID && $0.kindRaw == kindRaw })
     }
 
+    /// How the view of the map stands, for the compass rose and the scale.
+    @State private var reading: MapViewReading?
+
     var body: some View {
         VStack(spacing: 0) {
             header
@@ -63,8 +66,15 @@ struct MapDetailView: View {
                 },
                 onPlace: { x, y in placement = PlacementSpot(x: x, y: y) },
                 onMove: { page, x, y in put(page, atPixelX: x, y: y) },
-                onSelect: { selectedPlace = $0 }
+                onSelect: { selectedPlace = $0 },
+                onReading: { reading = $0 }
             )
+            .overlay {
+                // The compass rose and the scale, on the sheet of a map that is drawn.
+                if map.isVector, let reading {
+                    SheetDecorations(style: map.style, unit: DistanceUnit.forCalibrating(map.kind), reading: reading)
+                }
+            }
             if let selectedPlace { selectedPlaceBar(selectedPlace) }
             Divider()
             if outline != nil {
