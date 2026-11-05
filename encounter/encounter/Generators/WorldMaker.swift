@@ -493,7 +493,10 @@ nonisolated struct WorldMaker {
         // the slope. The unevenness is only for deciding the way; the ground itself is as it was.
         let heights = land.indices.filter { land[$0] }.map { height[$0] }
         let span = max((heights.max() ?? 1) - (heights.min() ?? 0), 0.1)
-        let roughness = (0..<(n * n)).map { span * 0.07 * (noise.fractal(Double($0 % n) / 7, Double($0 / n) / 7, octaves: 2, salt: 83) - 0.5) }
+        let roughness = (0..<(n * n)).map { i -> Double in
+            let x = Double(i % n), y = Double(i / n)
+            return span * 0.22 * (0.6 * (noise.value(x / 16, y / 16, salt: 83) - 0.5) + 0.4 * (noise.value(x / 6, y / 6, salt: 84) - 0.5))
+        }
         var visited = [Bool](repeating: false, count: n * n)
         var heap = MinHeap()
         for i in land.indices where land[i] {
@@ -867,6 +870,52 @@ nonisolated struct WorldMaker {
         return result
     }
 
+    /// A river's line through the points of the cells it runs over: spaced evenly, rounded so the turns of the grid are gone, and bent
+    /// by a push that depends only on where a point is, so that two rivers that meet are bent together. The ends in the sea, at a lake
+    /// or at the edge of the map (`keepStart`, `keepEnd`) stay where they are.
+    private func riverLine(through raw: [V], keepStart: Bool, keepEnd: Bool) -> [V] {
+        guard raw.count >= 2 else { return raw }
+        let lengths = zip(raw, raw.dropFirst()).map { $0.0.distance(to: $0.1) }
+        let total = lengths.reduce(0, +)
+        guard total > 0 else { return raw }
+        let steps = max(Int((total / (cell * 0.5)).rounded()), 2)
+        var line: [V] = []
+        var segment = 0, behind = 0.0
+        for k in 0...steps {
+            let s = total * Double(k) / Double(steps)
+            while segment < lengths.count - 1, behind + lengths[segment] < s { behind += lengths[segment]; segment += 1 }
+            let a = raw[segment], b = raw[segment + 1]
+            let t = lengths[segment] > 0 ? min(max((s - behind) / lengths[segment], 0), 1) : 0
+            line.append(a + (b - a) * t)
+        }
+        // Rounded: each point goes to the middle of its neighbours a few times, which takes the corners off the grid's path.
+        for _ in 0..<4 {
+            var next = line
+            for i in 1..<(line.count - 1) {
+                let lo = max(0, i - 4), hi = min(line.count - 1, i + 4)
+                var x = 0.0, y = 0.0
+                for j in lo...hi { x += line[j].x; y += line[j].y }
+                let count = Double(hi - lo + 1)
+                next[i] = V(x: x / count, y: y / count)
+            }
+            line = next
+        }
+        // Bent, a stretch of a few cells at a time and again over many.
+        let total2 = max(total, 1)
+        for i in line.indices {
+            let point = line[i]
+            let s = total2 * Double(i) / Double(max(line.count - 1, 1))
+            let hold = min(keepStart ? s / (3 * cell) : 1, keepEnd ? (total2 - s) / (3 * cell) : 1, 1)
+            var dx = 0.0, dy = 0.0
+            for (wavelength, share) in [(18.0, 1.0), (7.0, 0.45)] {
+                dx += share * (noise.value(point.x / (wavelength * cell), point.y / (wavelength * cell), salt: 31) - 0.5) * 2
+                dy += share * (noise.value(point.x / (wavelength * cell) + 7.3, point.y / (wavelength * cell) + 3.1, salt: 32) - 0.5) * 2
+            }
+            line[i] = point + V(x: dx, y: dy) * (1.6 * cell * hold / 1.45)
+        }
+        return line
+    }
+
     /// Bends a line by pushing every point of it by an amount that depends only on where the point is, so two lines that meet are bent
     /// together and still meet (a river and the one that runs into it). The ends move a little too.
     private func warped(_ line: [V], by amount: Double, wavelength: Double, salt: Int, keepStart: Bool = false, keepEnd: Bool = false) -> [V] {
@@ -1167,26 +1216,21 @@ nonisolated struct WorldMaker {
             guard let outline = fineOutlines(of: fineMask(of: mask, salt: 23, outsideSea: labels), minimumCells: 4, limit: 1).first else { continue }
             features.append(GeneratedFeature(name: names.lake(using: &random), placeType: "Lake", summary: String(localized: "A lake."), shape: .polygon(outline), kind: "lake"))
         }
+        // The rivers' lines are made first, and then a river that runs into another is joined to it, so there is no gap at the meeting.
+        struct RiverDraft { var points: [V]; var joinsAtEnd: Bool }
+        var drafts: [RiverDraft] = []
         for path in riverLines {
             var run: [Int] = []
             func flush(_ run: [Int]) {
-                guard run.filter({ !lake[$0] }).count >= 1, run.count >= 2 else { return }
-                let raw = run.map { waypoint($0) }
-                // A river bends from side to side, more as the ground flattens towards its mouth.
-                // The ends in the sea, at a lake or at the edge of the map stay where they are; an end that joins another river moves as that river does.
-                let atWater = { (c: Int) in !land[c] || lake[c] || c % n == 0 || c % n == n - 1 || c / n == 0 || c / n == n - 1 }
-                let simple = Contours.simplify(open: raw, tolerance: 0.35 * cell)
-                let bent = warped(simple, by: 1.3 * cell, wavelength: 12 * cell, salt: 31, keepStart: run.first.map(atWater) ?? false, keepEnd: run.last.map(atWater) ?? false)
+                guard run.filter({ !lake[$0] }).count >= 1, run.count >= 2, let first = run.first, let last = run.last else { return }
+                func atWater(_ c: Int) -> Bool { !land[c] || lake[c] || c % n == 0 || c % n == n - 1 || c / n == 0 || c / n == n - 1 }
+                var line = riverLine(through: run.map { waypoint($0) }, keepStart: atWater(first), keepEnd: atWater(last))
                 // A river that ends in the sea is carried a little way into it, so it reaches the shore however the coast has been drawn.
-                var reaching = bent
-                if let last = run.last, !land[last], simple.count >= 2, let end = bent.last {
-                    // Straight on from the way it was going before it was bent.
-                    reaching.append(end + (simple[simple.count - 1] - simple[simple.count - 2]).unit * (1.5 * cell))
+                if !land[last], line.count >= 2 {
+                    let back = line[max(line.count - 4, 0)], end = line[line.count - 1]
+                    line.append(end + (end - back).unit * (1.5 * cell))
                 }
-                let points = Curves.smooth(reaching, steps: 4)
-                    .map { GridPoint(easting: min(max($0.x, 0), extent), northing: min(max($0.y, 0), extent)) }
-                guard points.count >= 2 else { return }
-                features.append(GeneratedFeature(name: names.river(using: &random), placeType: "River", summary: String(localized: "A river that runs to the sea."), shape: .line(points)))
+                drafts.append(RiverDraft(points: line, joinsAtEnd: land[last] && !atWater(last)))
             }
             for cell in path {
                 if lake[cell] {
@@ -1198,6 +1242,29 @@ nonisolated struct WorldMaker {
                 }
             }
             flush(run)
+        }
+        for index in drafts.indices where drafts[index].joinsAtEnd {
+            guard let end = drafts[index].points.last else { continue }
+            var best: (distance: Double, point: V)?
+            for other in drafts.indices where other != index {
+                let line = drafts[other].points
+                for k in 0..<max(line.count - 1, 0) {
+                    let a = line[k], b = line[k + 1]
+                    let along = b - a
+                    let length2 = along.x * along.x + along.y * along.y
+                    let t = length2 > 0 ? min(max(((end.x - a.x) * along.x + (end.y - a.y) * along.y) / length2, 0), 1) : 0
+                    let point = a + along * t
+                    let d = point.distance(to: end)
+                    if best == nil || d < best!.distance { best = (d, point) }
+                }
+            }
+            if let best, best.distance < 4 * cell { drafts[index].points[drafts[index].points.count - 1] = best.point }
+        }
+        for draft in drafts {
+            let points = Curves.smooth(draft.points, steps: 3)
+                .map { GridPoint(easting: min(max($0.x, 0), extent), northing: min(max($0.y, 0), extent)) }
+            guard points.count >= 2 else { continue }
+            features.append(GeneratedFeature(name: names.river(using: &random), placeType: "River", summary: String(localized: "A river that runs to the sea."), shape: .line(points)))
         }
 
         // The settlements are named now, in a fixed order, so the roads can be named for them.
