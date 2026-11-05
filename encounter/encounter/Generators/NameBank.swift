@@ -228,14 +228,38 @@ nonisolated struct NameBank: Sendable {
         }
     }
 
+    /// A forest's name in one of several shapes ("The Green Forest", "Hollin Wood", "The Grey Weald", "Forest of Carrow"), from the
+    /// languages in use, with another draw when one is taken, so a name only gets a number once every one has been used.
     mutating func forest(using random: inout SeededRandom) -> String {
-        let language = pick(using: &random)
-        return unique { NameTerms.forest(Self.word(language, "woodAdjective", using: &random)) }
+        let (first, second) = pickPair(using: &random)
+        return unique {
+            let adjective = Self.word(first, "woodAdjective", using: &random)
+            let place = Self.name(first, "placeStart", using: &random) + Self.name(second, "placeEnd", using: &random)
+            switch Int.random(in: 0..<6, using: &random) {
+            case 0: return NameTerms.forest(adjective)
+            case 1: return NameTerms.wood(adjective)
+            case 2: return NameTerms.weald(adjective)
+            case 3: return NameTerms.holt(adjective)
+            case 4: return NameTerms.chase(place)
+            default: return NameTerms.forestOf(place)
+            }
+        }
     }
 
+    /// A range of mountains, in the same way.
     mutating func mountains(using random: inout SeededRandom) -> String {
-        let language = pick(using: &random)
-        return unique { NameTerms.mountains(Self.word(language, "peakAdjective", using: &random)) }
+        let (first, second) = pickPair(using: &random)
+        return unique {
+            let adjective = Self.word(first, "peakAdjective", using: &random)
+            let place = Self.name(first, "placeStart", using: &random) + Self.name(second, "placeEnd", using: &random)
+            switch Int.random(in: 0..<5, using: &random) {
+            case 0: return NameTerms.mountains(adjective)
+            case 1: return NameTerms.range(adjective)
+            case 2: return NameTerms.heights(adjective)
+            case 3: return NameTerms.peaks(place)
+            default: return NameTerms.mountainsOf(place)
+            }
+        }
     }
 
     mutating func sea(using random: inout SeededRandom) -> String {

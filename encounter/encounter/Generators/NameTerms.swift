@@ -58,7 +58,16 @@ nonisolated enum NameTerms {
     static func manor(_ owner: String) -> String { String(localized: "\(owner) Manor") }
     static func inn(_ name: String) -> String { String(localized: "The \(name)") }
     static func forest(_ name: String) -> String { String(localized: "The \(name) Forest") }
+    static func wood(_ name: String) -> String { String(localized: "\(name) Wood") }
+    static func weald(_ name: String) -> String { String(localized: "The \(name) Weald") }
+    static func holt(_ name: String) -> String { String(localized: "The \(name) Holt") }
+    static func chase(_ place: String) -> String { String(localized: "\(place) Chase") }
+    static func forestOf(_ place: String) -> String { String(localized: "Forest of \(place)") }
     static func mountains(_ name: String) -> String { String(localized: "The \(name) Mountains") }
+    static func range(_ name: String) -> String { String(localized: "The \(name) Range") }
+    static func heights(_ name: String) -> String { String(localized: "The \(name) Heights") }
+    static func peaks(_ place: String) -> String { String(localized: "\(place) Peaks") }
+    static func mountainsOf(_ place: String) -> String { String(localized: "Mountains of \(place)") }
     static func sea(_ name: String) -> String { String(localized: "The \(name) Sea") }
 
     /// A landmark's name from the owner, adjective and virtue drawn for it (it uses the ones it needs).

@@ -1069,3 +1069,36 @@ struct SharedBorderTests {
         }
     }
 }
+
+struct LandNameTests {
+    @Test func forestsMountainsAndRangesAreNamedWithoutNumbers() {
+        var named = 0, numbered = 0
+        for seed in UInt64(1)...12 {
+            var options = WorldOptions()
+            options.realms = 4
+            options.seed = seed
+            options.mountains = .many
+            options.forests = .many
+            let world = WorldGenerator.generate(options)
+            for feature in world.features where ["Forest", "Mountains"].contains(feature.placeType) {
+                named += 1
+                if Int(feature.name.split(separator: " ").last ?? "") != nil { numbered += 1 }
+            }
+            let names = world.features.map(\.name)
+            #expect(Set(names).count == names.count)
+        }
+        #expect(named > 20)
+        #expect(numbered == 0, "\(numbered) of \(named) forests and ranges have a number in the name")
+    }
+
+    @Test func theyAreNotAllInTheSameShape() {
+        var options = WorldOptions()
+        options.realms = 4
+        options.seed = 5
+        options.forests = .many
+        let forests = WorldGenerator.generate(options).features.filter { $0.placeType == "Forest" }.map(\.name)
+        #expect(forests.count >= 4)
+        // "The X Forest" is only one of the shapes.
+        #expect(forests.contains { !$0.hasSuffix("Forest") })
+    }
+}

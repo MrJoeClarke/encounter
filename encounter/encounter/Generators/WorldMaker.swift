@@ -1012,6 +1012,17 @@ nonisolated struct WorldMaker {
         return text.isEmpty ? String(localized: "A realm.") : text
     }
 
+    /// A name made in the languages of the realm that a feature is mostly in, or the world's if it is in none.
+    private mutating func nameInRealmLanguages(near points: [GridPoint], _ make: (inout NameBank, inout SeededRandom) -> String) -> String {
+        let middle = V(x: points.map(\.easting).reduce(0, +) / Double(max(points.count, 1)), y: points.map(\.northing).reduce(0, +) / Double(max(points.count, 1)))
+        let at = cellIndex(of: middle)
+        let realm = realmOf.indices.contains(at) ? realmOf[at] : -1
+        names.use(options.languages(forRealm: realm))
+        let name = make(&names, &random)
+        names.use(options.languages(forRealm: -1))
+        return name
+    }
+
     private mutating func features() -> [GeneratedFeature] {
         var features: [GeneratedFeature] = []
         if options.shape != .inland {
@@ -1079,10 +1090,10 @@ nonisolated struct WorldMaker {
         var forestCells = fineMask(of: forest, salt: 21, outsideSea: labels)
         for i in forestCells.indices where nearSea[i] || nearMountains[i] { forestCells[i] = false }
         for points in fineOutlines(of: forestCells, minimumCells: 8, limit: 30) {
-            features.append(GeneratedFeature(name: names.forest(using: &random), placeType: "Forest", summary: String(localized: "A great forest."), shape: .polygon(points)))
+            features.append(GeneratedFeature(name: nameInRealmLanguages(near: points) { $0.forest(using: &$1) }, placeType: "Forest", summary: String(localized: "A great forest."), shape: .polygon(points)))
         }
         for points in fineOutlines(of: mountainCells, minimumCells: 5, limit: 30) {
-            features.append(GeneratedFeature(name: names.mountains(using: &random), placeType: "Mountains", summary: String(localized: "A range of mountains."), shape: .polygon(points)))
+            features.append(GeneratedFeature(name: nameInRealmLanguages(near: points) { $0.mountains(using: &$1) }, placeType: "Mountains", summary: String(localized: "A range of mountains."), shape: .polygon(points)))
         }
 
         // A lake is water, so it is drawn as such, and the rivers that run into it stop at its shore and the ones that run out begin
