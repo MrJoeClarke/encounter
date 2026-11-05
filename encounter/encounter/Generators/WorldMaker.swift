@@ -979,33 +979,6 @@ nonisolated struct WorldMaker {
         [GridPoint(easting: 0, northing: 0), GridPoint(easting: extent, northing: 0), GridPoint(easting: extent, northing: extent), GridPoint(easting: 0, northing: extent)]
     }
 
-    /// The outlines of an area of the grid, smoothed, in metres, biggest first. An area that reaches the edge of the grid carries on
-    /// past it as far as the outline is worked out, and is cut off at the edge afterwards, so the smoothing doesn't round its corners
-    /// where it meets the edge of the map.
-    private func polygons(of mask: [Bool], minimumCells: Double, limit: Int) -> [[GridPoint]] {
-        let pad = 8
-        let side = n + 2 * pad
-        var padded = [Bool](repeating: false, count: side * side)
-        for y in 0..<side {
-            for x in 0..<side {
-                padded[y * side + x] = mask[min(max(y - pad, 0), n - 1) * n + min(max(x - pad, 0), n - 1)]
-            }
-        }
-        var found: [(area: Double, points: [GridPoint])] = []
-        for loop in Contours.loops(mask: padded, width: side, height: side) {
-            let area = Plane.signedArea(loop)
-            guard area >= minimumCells else { continue }
-            let shifted = loop.map { V(x: $0.x - Double(pad), y: $0.y - Double(pad)) }
-            let rounded = Contours.rounded(closed: Contours.subdivided(closed: Contours.simplify(closed: shifted, tolerance: 0.6), step: 3), times: 3)
-            let clipped = Self.clip(rounded, toSquareOf: Double(n))
-            guard clipped.count >= 3 else { continue }
-            let points = clipped.map { GridPoint(easting: min(max($0.x * cell, 0), extent), northing: min(max($0.y * cell, 0), extent)) }
-            guard PlaceGeometry.polygon(points).isValid else { continue }
-            found.append((Plane.area(clipped), points))
-        }
-        return found.sorted { $0.area > $1.area }.prefix(limit).map(\.points)
-    }
-
     /// A polygon cut off at the sides of the square from (0, 0) to (size, size).
     static func clip(_ polygon: [V], toSquareOf size: Double) -> [V] {
         var result = polygon
@@ -1053,11 +1026,14 @@ nonisolated struct WorldMaker {
             realmNames.append(names.realm(using: &random))
         }
         names.use(options.languages(forRealm: -1))
+        // The realms, the land beyond them and the sea are one partition, so a border and a coast are each one line shared by both sides.
+        let (categories, groups) = regionCategories()
+        let labels = fineLabels(of: categories)
+        let regions = partitionOutlines(labels, minimumCells: 6)
         for realm in 0..<realmCount {
             var first = true
-            let mask = land.indices.map { land[$0] && !strip[$0] && realmOf[$0] == realm }
             // The biggest piece of land is the realm itself, and any other piece is an island of it with a name of its own.
-            let pieces = polygons(of: mask, minimumCells: 6, limit: 6).sorted { PlaceGeometry.polygon($0).area > PlaceGeometry.polygon($1).area }
+            let pieces = Array((regions[Self.category(ofRealm: realm)] ?? []).prefix(6))
             for points in pieces {
                 let name = first ? realmNames[realm] : names.isle(of: realmNames[realm])
                 first = false
@@ -1066,7 +1042,7 @@ nonisolated struct WorldMaker {
         }
         // The land that carries on past the realms, to the edge of the map.
         for group in Set(stripGroup).filter({ $0 >= 0 }).sorted() {
-            for points in polygons(of: stripGroup.map { $0 == group }, minimumCells: 6, limit: 4) {
+            for points in (groups[group].flatMap { regions[$0] } ?? []).prefix(4) {
                 features.append(GeneratedFeature(
                     name: names.named(String(localized: "The Far Lands")), placeType: "Region",
                     summary: String(localized: "Land that carries on beyond the realms and off the map."), shape: .polygon(points), kind: "land"
@@ -1090,14 +1066,14 @@ nonisolated struct WorldMaker {
             }
         }
         if realmCount == 0 {
-            for points in polygons(of: land, minimumCells: 6, limit: 6) {
+            for points in (regions[1] ?? []).prefix(6) {
                 features.append(GeneratedFeature(name: names.named(String(localized: "The Land")), placeType: "Region", summary: String(localized: "The land."), shape: .polygon(points), kind: "realm 0"))
             }
         }
-        for points in polygons(of: forest, minimumCells: 8, limit: 30) {
+        for points in fineOutlines(of: fineMask(of: forest, salt: 21, outsideSea: labels), minimumCells: 8, limit: 30) {
             features.append(GeneratedFeature(name: names.forest(using: &random), placeType: "Forest", summary: String(localized: "A great forest."), shape: .polygon(points)))
         }
-        for points in polygons(of: mountain, minimumCells: 5, limit: 30) {
+        for points in fineOutlines(of: fineMask(of: mountain, salt: 22, outsideSea: labels), minimumCells: 5, limit: 30) {
             features.append(GeneratedFeature(name: names.mountains(using: &random), placeType: "Mountains", summary: String(localized: "A range of mountains."), shape: .polygon(points)))
         }
 
@@ -1107,7 +1083,7 @@ nonisolated struct WorldMaker {
         for cells in lakePieces {
             var mask = [Bool](repeating: false, count: n * n)
             for c in cells { mask[c] = true }
-            guard let outline = polygons(of: mask, minimumCells: 4, limit: 1).first else { continue }
+            guard let outline = fineOutlines(of: fineMask(of: mask, salt: 23, outsideSea: labels), minimumCells: 4, limit: 1).first else { continue }
             features.append(GeneratedFeature(name: names.lake(using: &random), placeType: "Lake", summary: String(localized: "A lake."), shape: .polygon(outline), kind: "lake"))
         }
         for path in riverLines {

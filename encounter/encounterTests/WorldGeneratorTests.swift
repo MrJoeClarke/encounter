@@ -995,3 +995,47 @@ struct RealmPieceTests {
         #expect(isles > 0)
     }
 }
+
+struct SharedBorderTests {
+    private func world(_ shape: WorldShape, seed: UInt64) -> GeneratedWorld {
+        var options = WorldOptions()
+        options.shape = shape
+        options.realms = 4
+        options.seed = seed
+        return WorldGenerator.generate(options)
+    }
+
+    private func polygons(_ world: GeneratedWorld, where match: (GeneratedFeature) -> Bool) -> [[GridPoint]] {
+        world.features.filter(match).compactMap { feature in
+            if case .polygon(let p) = feature.shape { return p }
+            return nil
+        }
+    }
+
+    @Test func realmsFitTogetherWithoutOverlapping() {
+        for shape in [WorldShape.continent, .coast, .inland] {
+            for seed in UInt64(1)...3 {
+                let made = world(shape, seed: seed)
+                let land = polygons(made) { $0.placeType == "Region" }
+                var overlapping = 0, covered = 0
+                for i in 0..<40 {
+                    for j in 0..<40 {
+                        let point = GridPoint(easting: (Double(i) + 0.5) / 40 * made.extent, northing: (Double(j) + 0.5) / 40 * made.extent)
+                        let inside = land.filter { PlaceGeometry.polygon($0).contains(point) }.count
+                        if inside > 0 { covered += 1 }
+                        if inside > 1 { overlapping += 1 }
+                    }
+                }
+                #expect(covered > 0)
+                #expect(overlapping * 100 <= max(covered, 1), "\(shape) seed \(seed): \(overlapping) of \(covered) points are in two realms")
+            }
+        }
+    }
+
+    @Test func outlinesAreNotTooFine() {
+        for seed in UInt64(1)...3 {
+            let made = world(.continent, seed: seed)
+            for polygon in polygons(made, where: { _ in true }) { #expect(polygon.count < 2500) }
+        }
+    }
+}
