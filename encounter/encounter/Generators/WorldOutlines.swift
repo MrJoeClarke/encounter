@@ -14,7 +14,7 @@ extension WorldMaker {
     /// How many cells of the fine grid make up a cell of the coarse one, along a side.
     static let detail = 4
     /// How many coarse cells the fine grid carries on past each edge of the map, so edges are not rounded off.
-    static let margin = 8
+    static let margin = 0
 
     /// What each coarse cell belongs to: 0 for the sea, 1 for land no realm has, then a number for each realm and each piece of the land
     /// beyond the realms. `groups` gives the number of each piece of that land.
@@ -87,6 +87,23 @@ extension WorldMaker {
                 let x = Double(i) + tx, y = Double(j) + ty
                 result[hy * side + hx] = weight + 1.0 * (noise.fractal(x * 1.1, y * 1.1, octaves: 3, salt: salt) - 0.5) >= 0.5
             }
+        }
+        return result
+    }
+
+    /// A mask grown by `radius` fine cells all round, which is how a margin is kept: what is left outside the grown mask is that far from it.
+    func dilated(_ mask: [Bool], radius: Int) -> [Bool] {
+        let side = fineSide
+        var across = [Bool](repeating: false, count: side * side)
+        var prefix = [Int](repeating: 0, count: side + 1)
+        for y in 0..<side {
+            for x in 0..<side { prefix[x + 1] = prefix[x] + (mask[y * side + x] ? 1 : 0) }
+            for x in 0..<side { across[y * side + x] = prefix[min(side - 1, x + radius) + 1] - prefix[max(0, x - radius)] > 0 }
+        }
+        var result = [Bool](repeating: false, count: side * side)
+        for x in 0..<side {
+            for y in 0..<side { prefix[y + 1] = prefix[y] + (across[y * side + x] ? 1 : 0) }
+            for y in 0..<side { result[y * side + x] = prefix[min(side - 1, y + radius) + 1] - prefix[max(0, y - radius)] > 0 }
         }
         return result
     }
@@ -196,6 +213,8 @@ extension WorldMaker {
 
         // Each border is smoothed once, keeping its ends where they are.
         let smoothed = chains.map { chain -> [V] in
+            // The edge of the map stays square: only the points along its straight runs are dropped.
+            if chain.left < 0 || chain.right < 0 { return Contours.simplify(open: chain.points, tolerance: 0.01) }
             if chain.start == chain.end {
                 let round = Contours.rounded(closed: Contours.simplify(closed: Array(chain.points.dropLast()), tolerance: 0.5), times: 2)
                 return Contours.simplify(closed: round, tolerance: 0.1) + [chain.points[0]]
@@ -242,13 +261,31 @@ extension WorldMaker {
                     end = all[next].end
                 }
                 guard closed else { continue }
-                // Smoothed, or if that has crossed itself where a region is very thin, as the grid drew it.
-                for plain in [false, true] {
-                    var loop: [V] = []
-                    for i in order { loop.append(contentsOf: points(all[i], plain: plain).dropLast()) }
-                    guard loop.count > 3 else { break }
-                    if let made = polygon(fromFine: loop, minimumCells: minimumCells) { found.append(made); break }
-                    if Plane.signedArea(loop.map { V(x: $0.x / Double(Self.detail), y: $0.y / Double(Self.detail)) }) < minimumCells { break }
+                // Where the region touches itself at a single corner, the outline passes that corner twice; it is cut there into
+                // separate outlines, so none of them touches itself.
+                var parts: [[Int]] = []
+                var stack: [Int] = []
+                var position: [Int: Int] = [:]
+                for piece in order {
+                    let node = all[piece].start
+                    if let at = position[node] {
+                        parts.append(Array(stack[at...]))
+                        for removed in stack[at...] { position[all[removed].start] = nil }
+                        stack.removeSubrange(at...)
+                    }
+                    position[node] = stack.count
+                    stack.append(piece)
+                }
+                parts.append(stack)
+                for part in parts {
+                    // Smoothed, or if that has crossed itself where a region is very thin, as the grid drew it.
+                    for plain in [false, true] {
+                        var loop: [V] = []
+                        for i in part { loop.append(contentsOf: points(all[i], plain: plain).dropLast()) }
+                        guard loop.count > 3 else { break }
+                        if let made = polygon(fromFine: loop, minimumCells: minimumCells) { found.append(made); break }
+                        if Plane.signedArea(loop.map { V(x: $0.x / Double(Self.detail), y: $0.y / Double(Self.detail)) }) < minimumCells { break }
+                    }
                 }
             }
             result[region] = found.sorted { $0.area > $1.area }.map(\.points)

@@ -1070,10 +1070,18 @@ nonisolated struct WorldMaker {
                 features.append(GeneratedFeature(name: names.named(String(localized: "The Land")), placeType: "Region", summary: String(localized: "The land."), shape: .polygon(points), kind: "realm 0"))
             }
         }
-        for points in fineOutlines(of: fineMask(of: forest, salt: 21, outsideSea: labels), minimumCells: 8, limit: 30) {
+        // Forests and mountains are traced on their own, so they are kept well in from the coast, and forests clear of mountains, so
+        // that no edge of theirs can end up in the sea or cross another.
+        let nearSea = dilated(labels.map { $0 == 0 }, radius: 6)
+        var mountainCells = fineMask(of: mountain, salt: 22, outsideSea: labels)
+        for i in mountainCells.indices where nearSea[i] { mountainCells[i] = false }
+        let nearMountains = dilated(mountainCells, radius: 3)
+        var forestCells = fineMask(of: forest, salt: 21, outsideSea: labels)
+        for i in forestCells.indices where nearSea[i] || nearMountains[i] { forestCells[i] = false }
+        for points in fineOutlines(of: forestCells, minimumCells: 8, limit: 30) {
             features.append(GeneratedFeature(name: names.forest(using: &random), placeType: "Forest", summary: String(localized: "A great forest."), shape: .polygon(points)))
         }
-        for points in fineOutlines(of: fineMask(of: mountain, salt: 22, outsideSea: labels), minimumCells: 5, limit: 30) {
+        for points in fineOutlines(of: mountainCells, minimumCells: 5, limit: 30) {
             features.append(GeneratedFeature(name: names.mountains(using: &random), placeType: "Mountains", summary: String(localized: "A range of mountains."), shape: .polygon(points)))
         }
 

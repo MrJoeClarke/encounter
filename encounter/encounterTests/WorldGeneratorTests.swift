@@ -1038,4 +1038,34 @@ struct SharedBorderTests {
             for polygon in polygons(made, where: { _ in true }) { #expect(polygon.count < 2500) }
         }
     }
+
+    @Test func forestsAndMountainsStayOnTheLandAndApartFromEachOther() {
+        for shape in [WorldShape.continent, .archipelago, .coast] {
+            for seed in UInt64(1)...4 {
+                let made = world(shape, seed: seed)
+                let land = polygons(made) { $0.placeType == "Region" }
+                let forests = polygons(made) { $0.placeType == "Forest" }
+                let mountains = polygons(made) { $0.placeType == "Mountains" }
+                // Every corner of a forest or a mountain range is on land.
+                for outline in forests + mountains {
+                    // A corner on the edge of the map is on the edge of the land too, which is as near as a test of "inside" can say.
+                    let off = outline.filter { corner in
+                        let onEdge = [corner.easting, corner.northing].contains { $0 < 50 || $0 > made.extent - 50 }
+                        return !onEdge && !land.contains { PlaceGeometry.polygon($0).contains(corner) }
+                    }
+                    #expect(off.count * 40 <= outline.count, "\(shape) seed \(seed): \(off.count) of \(outline.count) corners are off the land")
+                }
+                // No forest runs into a range of mountains.
+                var both = 0
+                for i in 0..<60 {
+                    for j in 0..<60 {
+                        let point = GridPoint(easting: (Double(i) + 0.5) / 60 * made.extent, northing: (Double(j) + 0.5) / 60 * made.extent)
+                        if forests.contains(where: { PlaceGeometry.polygon($0).contains(point) }) && mountains.contains(where: { PlaceGeometry.polygon($0).contains(point) }) { both += 1 }
+                    }
+                }
+                // A sliver or two where the smoothed edges of the two meet is allowed; a forest running into mountains is not.
+                #expect(both <= 12, "\(shape) seed \(seed): \(both) points are in a forest and in mountains")
+            }
+        }
+    }
 }
