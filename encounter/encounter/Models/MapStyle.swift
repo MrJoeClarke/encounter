@@ -28,6 +28,10 @@ nonisolated struct MapStyle: Identifiable, Equatable, Sendable {
     var paper: PaperTexture?
     /// The typeface names are set in, if not the system's serif.
     var lettering: Lettering?
+    /// What lies outside the sheet the map is drawn on.
+    var surround = StyleColor(red: 0.05, green: 0.05, blue: 0.06)
+    /// The ruled border drawn just inside the edge of the sheet, if any.
+    var frame: SheetFrame?
 
     /// A typeface by its names: the regular face and the ones for italic, semibold and semibold italic.
     struct Lettering: Equatable, Sendable {
@@ -39,12 +43,21 @@ nonisolated struct MapStyle: Identifiable, Equatable, Sendable {
         static let baskerville = Lettering(regular: "Baskerville", italic: "Baskerville-Italic", semibold: "Baskerville-SemiBold", semiboldItalic: "Baskerville-SemiBoldItalic")
     }
 
+    /// A ruled border: an outer line and, if wanted, a finer one inside it, with a gap between, all in points on screen.
+    struct SheetFrame: Equatable, Sendable {
+        var ink: StyleColor
+        var outer: Double
+        var inner: Double
+        var gap: Double
+    }
+
     /// What a style says about one type of place: the parts that change from style to style.
     struct Look: Equatable, Sendable {
         var fill: StyleColor?
         var stroke: StyleColor
         var lineWidth: Double
         var isDashed = false
+        var dash: [Double]?
     }
 
     /// The style for a type of place: the style's own look for it if it has one, in the same layer as ever.
@@ -55,6 +68,7 @@ nonisolated struct MapStyle: Identifiable, Equatable, Sendable {
         base.stroke = look.stroke
         base.lineWidth = look.lineWidth
         base.isDashed = look.isDashed
+        base.dashPattern = look.dash
         return base
     }
 
@@ -75,7 +89,8 @@ nonisolated struct MapStyle: Identifiable, Equatable, Sendable {
     static let dark = MapStyle(
         id: "dark", title: String(localized: "Dark"), summary: String(localized: "A dark ground with bright lines."),
         background: color(0.13, 0.13, 0.14), ink: color(0.93, 0.93, 0.93), halo: color(0.1, 0.1, 0.11, 0.9),
-        pin: color(0.9, 0.3, 0.25), capitalPin: color(0.98, 0.78, 0.2), places: [:]
+        pin: color(0.9, 0.3, 0.25), capitalPin: color(0.98, 0.78, 0.2), places: [:],
+        surround: color(0.04, 0.04, 0.05), frame: SheetFrame(ink: color(0.55, 0.55, 0.58), outer: 1.2, inner: 0, gap: 6)
     )
 
     /// An old map: cream paper, brown ink, muted washes.
@@ -86,7 +101,7 @@ nonisolated struct MapStyle: Identifiable, Equatable, Sendable {
         places: [
             "Water": Look(fill: color(0.55, 0.68, 0.72, 0.6), stroke: color(0.35, 0.45, 0.5), lineWidth: 1.5),
             "Lake": Look(fill: color(0.55, 0.68, 0.72, 0.8), stroke: color(0.35, 0.45, 0.5), lineWidth: 1.5),
-            "Region": Look(fill: color(0.7, 0.55, 0.35, 0.12), stroke: color(0.45, 0.3, 0.15), lineWidth: 1.5, isDashed: true),
+            "Region": Look(fill: color(0.7, 0.55, 0.35, 0.12), stroke: color(0.55, 0.2, 0.12), lineWidth: 1.6, isDashed: true, dash: [9, 3, 1.5, 3]),
             "Wilderness": Look(fill: color(0.7, 0.62, 0.4, 0.3), stroke: color(0.5, 0.4, 0.25), lineWidth: 1),
             "Forest": Look(fill: color(0.45, 0.55, 0.3, 0.5), stroke: color(0.3, 0.4, 0.2), lineWidth: 1),
             "Mountains": Look(fill: color(0.62, 0.5, 0.38, 0.6), stroke: color(0.4, 0.3, 0.2), lineWidth: 1.2),
@@ -94,14 +109,15 @@ nonisolated struct MapStyle: Identifiable, Equatable, Sendable {
             "Settlement": Look(fill: color(0.8, 0.5, 0.25, 0.3), stroke: color(0.5, 0.3, 0.12), lineWidth: 2),
             "Building": Look(fill: color(0.6, 0.45, 0.33, 0.85), stroke: color(0.3, 0.2, 0.1), lineWidth: 1),
             "River": Look(fill: nil, stroke: color(0.35, 0.5, 0.6), lineWidth: 3),
-            "Road": Look(fill: nil, stroke: color(0.45, 0.3, 0.15), lineWidth: 2.2, isDashed: true),
+            "Road": Look(fill: nil, stroke: color(0.4, 0.26, 0.12), lineWidth: 1.8),
             "Street": Look(fill: nil, stroke: color(0.5, 0.38, 0.25), lineWidth: 1.2),
             "Square": Look(fill: color(0.85, 0.75, 0.55, 0.5), stroke: color(0.5, 0.38, 0.2), lineWidth: 1.5),
             "Garden": Look(fill: color(0.5, 0.6, 0.35, 0.4), stroke: color(0.35, 0.45, 0.25), lineWidth: 1.5, isDashed: true),
             "Landmark": Look(fill: color(0.7, 0.45, 0.2, 0.9), stroke: color(0.35, 0.2, 0.08), lineWidth: 1.5),
             "Wall": Look(fill: nil, stroke: color(0.35, 0.25, 0.15), lineWidth: 3.5),
         ],
-        paper: PaperTexture(), lettering: .baskerville
+        paper: PaperTexture(), lettering: .baskerville,
+        surround: color(0.2, 0.14, 0.09), frame: SheetFrame(ink: color(0.3, 0.18, 0.08), outer: 2.6, inner: 0.8, gap: 6)
     )
 
     /// An ordnance survey: white paper, fine dark lines, pale fills, red roads.
@@ -126,7 +142,8 @@ nonisolated struct MapStyle: Identifiable, Equatable, Sendable {
             "Garden": Look(fill: color(0.8, 0.9, 0.75, 0.7), stroke: color(0.5, 0.65, 0.45), lineWidth: 0.8, isDashed: true),
             "Landmark": Look(fill: color(0.55, 0.55, 0.55, 1), stroke: color(0.2, 0.2, 0.2), lineWidth: 0.8),
             "Wall": Look(fill: nil, stroke: color(0.2, 0.2, 0.2), lineWidth: 2),
-        ]
+        ],
+        surround: color(0.8, 0.81, 0.83), frame: SheetFrame(ink: color(0.1, 0.1, 0.1), outer: 1.6, inner: 0.5, gap: 5)
     )
 
     /// Painted washes on white paper: soft colour, broad pale edges where ink would be, no hard black.
@@ -151,6 +168,7 @@ nonisolated struct MapStyle: Identifiable, Equatable, Sendable {
             "Garden": Look(fill: color(0.65, 0.82, 0.6, 0.5), stroke: color(0.6, 0.78, 0.55, 0.5), lineWidth: 2),
             "Landmark": Look(fill: color(0.9, 0.65, 0.4, 0.9), stroke: color(0.7, 0.45, 0.3, 0.8), lineWidth: 1.5),
             "Wall": Look(fill: nil, stroke: color(0.55, 0.5, 0.5, 0.85), lineWidth: 3),
-        ]
+        ],
+        surround: color(0.9, 0.89, 0.86), frame: SheetFrame(ink: color(0.8, 0.62, 0.5, 0.7), outer: 3, inner: 0, gap: 6)
     )
 }

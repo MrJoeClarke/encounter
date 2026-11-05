@@ -31,6 +31,9 @@ nonisolated final class MapTileSource: @unchecked Sendable {
     /// The paper a map with no picture is drawn on, if it has any texture; otherwise it is the plain background.
     var paper: PaperTexture?
 
+    /// What lies outside the sheet of a map with no picture, so the map is a bounded sheet. Without it the map runs on all round.
+    var surround: CGColor?
+
     init(imageData: Data, pixelWidth: Int, pixelHeight: Int, calibration: MapCalibration) {
         self.imageData = imageData
         self.pixelWidth = pixelWidth
@@ -63,11 +66,7 @@ nonisolated final class MapTileSource: @unchecked Sendable {
     /// The PNG for one tile. Tiles the image doesn't touch are the plain background.
     func tile(zoom: Int, x: Int, y: Int) -> Data? {
         // A map with no picture is the plain background everywhere.
-        if imageData.isEmpty {
-            guard let paper else { return emptyTileData() }
-            let ground = (red: Double(background.components?[0] ?? 0), green: Double(background.components?[1] ?? 0), blue: Double(background.components?[2] ?? 0))
-            return paper.tile(ground: ground, area: WebMercator.bounds(zoom: zoom, x: x, y: y), map: bounds, size: Int(WebMercator.tileSize)).flatMap(Self.png)
-        }
+        if imageData.isEmpty { return sheetTile(zoom: zoom, x: x, y: y) }
         let area = WebMercator.bounds(zoom: zoom, x: x, y: y)
         let covered = bounds
         guard area.maxEasting > covered.minEasting, area.minEasting < covered.maxEasting,
@@ -82,6 +81,36 @@ nonisolated final class MapTileSource: @unchecked Sendable {
     }
 
     // MARK: Drawing
+
+    private func rgb(_ color: CGColor) -> (red: Double, green: Double, blue: Double) {
+        let c = color.components ?? []
+        return c.count >= 3 ? (Double(c[0]), Double(c[1]), Double(c[2])) : (Double(c.first ?? 0), Double(c.first ?? 0), Double(c.first ?? 0))
+    }
+
+    /// A tile of a map with no picture: the paper or plain ground inside the sheet, and the surround outside it.
+    private func sheetTile(zoom: Int, x: Int, y: Int) -> Data? {
+        let area = WebMercator.bounds(zoom: zoom, x: x, y: y)
+        let sheet = bounds
+        let size = Int(WebMercator.tileSize)
+        if let paper {
+            return paper.tile(ground: rgb(background), surround: surround.map(rgb), area: area, map: sheet, size: size).flatMap(Self.png)
+        }
+        guard let surround else { return emptyTileData() }
+        let inside = area.minEasting >= sheet.minEasting && area.maxEasting <= sheet.maxEasting && area.minNorthing >= sheet.minNorthing && area.maxNorthing <= sheet.maxNorthing
+        if inside { return emptyTileData() }
+        guard let context = CGContext(
+            data: nil, width: size, height: size, bitsPerComponent: 8, bytesPerRow: 0,
+            space: CGColorSpace(name: CGColorSpace.sRGB) ?? CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ) else { return nil }
+        context.setFillColor(surround)
+        context.fill(CGRect(x: 0, y: 0, width: size, height: size))
+        let k = Double(size) / (area.maxEasting - area.minEasting)
+        context.setFillColor(background)
+        context.fill(CGRect(x: (sheet.minEasting - area.minEasting) * k, y: (sheet.minNorthing - area.minNorthing) * k,
+                            width: (sheet.maxEasting - sheet.minEasting) * k, height: (sheet.maxNorthing - sheet.minNorthing) * k))
+        return context.makeImage().flatMap(Self.png)
+    }
 
     /// A power of two: how many image pixels one pixel of the copy stands for.
     static func reduction(forTilePixelMetres tile: Double, imagePixelMetres image: Double) -> Int {

@@ -82,7 +82,7 @@ nonisolated struct PaperTexture: Equatable, Sendable {
     }
 
     /// A tile of paper: `ground` with the texture over it. `area` is the part of the plane the tile covers, and `map` all of the map.
-    func tile(ground: (red: Double, green: Double, blue: Double), area: Area, map: Area, size: Int) -> CGImage? {
+    func tile(ground: (red: Double, green: Double, blue: Double), surround: (red: Double, green: Double, blue: Double)? = nil, area: Area, map: Area, size: Int) -> CGImage? {
         var pixels = [UInt8](repeating: 255, count: size * size * 4)
         let across = (area.maxEasting - area.minEasting) / Double(size)
         let down = (area.maxNorthing - area.minNorthing) / Double(size)
@@ -91,9 +91,16 @@ nonisolated struct PaperTexture: Equatable, Sendable {
             let northing = area.maxNorthing - (Double(row) + 0.5) * down
             for column in 0..<size {
                 let easting = area.minEasting + (Double(column) + 0.5) * across
-                let t = tint(easting: easting, northing: northing, in: map, metresPerPixel: across)
                 let g = grain(atPixelX: originX + column, y: originY - row)
                 let i = (row * size + column) * 4
+                // Beyond the edge of the sheet is whatever it lies on, with only the grain.
+                if let surround, easting < map.minEasting || easting > map.maxEasting || northing < map.minNorthing || northing > map.maxNorthing {
+                    pixels[i] = Self.byte(surround.red * g)
+                    pixels[i + 1] = Self.byte(surround.green * g)
+                    pixels[i + 2] = Self.byte(surround.blue * g)
+                    continue
+                }
+                let t = tint(easting: easting, northing: northing, in: map, metresPerPixel: across)
                 pixels[i] = Self.byte(ground.red * t.red * g)
                 pixels[i + 1] = Self.byte(ground.green * t.green * g)
                 pixels[i + 2] = Self.byte(ground.blue * t.blue * g)

@@ -143,6 +143,10 @@ struct MapKitCanvas: PlatformViewRepresentable {
             let ground = map.style.background
             source.background = CGColor(red: ground.red, green: ground.green, blue: ground.blue, alpha: ground.alpha)
             source.paper = map.style.paper
+            if map.isVector {
+                let around = map.style.surround
+                source.surround = CGColor(red: around.red, green: around.green, blue: around.blue, alpha: around.alpha)
+            }
             let overlay = MapTileOverlay(source: source)
             view.insertOverlay(overlay, at: 0, level: .aboveLabels)
             coordinator.overlay = overlay
@@ -154,6 +158,7 @@ struct MapKitCanvas: PlatformViewRepresentable {
         #if os(macOS)
         (view as? PlacingMapView)?.canPlace = canPlace
         #endif
+        coordinator.syncFrame(in: view)
         coordinator.sync(markers: markers, pins: pins, shapes: shapes, draft: draftCorners, draftIsLine: draftIsLine, route: route, lines: lines, grid: showsGrid ? sceneGrid : nil, in: view)
     }
 
@@ -182,6 +187,10 @@ struct MapKitCanvas: PlatformViewRepresentable {
         private var shapeOverlays: [UUID: PlaceOverlay] = [:]
         private var lineOverlays: [UUID: PlaceLineOverlay] = [:]
         private var isDragging = false
+        /// The ruled border round the sheet, and the sheet's own place in MapKit's points.
+        private var frameOverlay: SheetFrameOverlay?
+        private var frameKey = ""
+        private var sheetRect = MKMapRect.null
         /// The pins and names that are on the map now; the rest are held back until the view is close enough.
         private var shown = Set<ObjectIdentifier>()
         /// How wide the whole map is, in MapKit's points, and so how much of it is in view.
@@ -189,6 +198,22 @@ struct MapKitCanvas: PlatformViewRepresentable {
         private var mapHeight = 0.0
         private var isLeavingTheMap = false
         private var viewShare = 1.0
+
+        /// Draws the ruled border of the style round the sheet, or takes it away, when the style or the map changes.
+        func syncFrame(in view: MKMapView) {
+            let style = parent?.map.style ?? .dark
+            let wanted = (parent?.map.isVector ?? false) ? style.frame : nil
+            let key = wanted == nil ? "" : "\(style.id)|\(mapID?.uuidString ?? "")"
+            guard key != frameKey else { return }
+            frameKey = key
+            if let frameOverlay { view.removeOverlay(frameOverlay) }
+            frameOverlay = nil
+            if let wanted, !sheetRect.isNull {
+                let overlay = SheetFrameOverlay(sheet: sheetRect, frame: wanted)
+                view.addOverlay(overlay, level: .aboveLabels)
+                frameOverlay = overlay
+            }
+        }
 
         /// Puts the pin or name on the map if the view is close enough for it, and takes it off if not.
         private func present<A: MKAnnotation & AnyObject>(_ annotation: A, maxView: Double, fits: Bool = true, in view: MKMapView) {
@@ -229,6 +254,8 @@ struct MapKitCanvas: PlatformViewRepresentable {
             let southWest = WebMercator.coordinate(easting: b.minEasting, northing: b.minNorthing)
             let northEast = WebMercator.coordinate(easting: b.maxEasting, northing: b.maxNorthing)
             mapWidth = abs(MKMapPoint(northEast).x - MKMapPoint(southWest).x)
+            let corner = MKMapPoint(southWest), far = MKMapPoint(northEast)
+            sheetRect = MKMapRect(x: min(corner.x, far.x), y: min(corner.y, far.y), width: abs(far.x - corner.x), height: abs(far.y - corner.y))
             let region = MKCoordinateRegion(
                 center: CLLocationCoordinate2D(latitude: (southWest.latitude + northEast.latitude) / 2, longitude: (southWest.longitude + northEast.longitude) / 2),
                 span: MKCoordinateSpan(latitudeDelta: (northEast.latitude - southWest.latitude) * 1.05, longitudeDelta: (northEast.longitude - southWest.longitude) * 1.05)
@@ -427,7 +454,10 @@ struct MapKitCanvas: PlatformViewRepresentable {
                 var layers: [(order: Int, add: () -> Void)] = []
                 for shape in sortedShapes {
                     layers.append((order(shape.page), { [unowned self] in
-                        let overlay = PlaceOverlay(page: shape.page, corners: shape.corners)
+                        // The sea is cut round the land, so the land is the ground itself and not sea under a faint tint.
+                        let holes = shape.page.attributeText("core.placeType") == "Water"
+                            ? shapes.filter { $0.page.attributeText("core.placeType") == "Region" }.map(\.corners) : []
+                        let overlay = PlaceOverlay(page: shape.page, corners: shape.corners, holes: holes)
                         self.shapeOverlays[shape.id] = overlay
                         view.addOverlay(overlay, level: .aboveLabels)
                     }))
@@ -457,6 +487,7 @@ struct MapKitCanvas: PlatformViewRepresentable {
         func mapView(_ mapView: MKMapView, rendererFor overlay: any MKOverlay) -> MKOverlayRenderer {
             if let tiles = overlay as? MKTileOverlay { return MKTileOverlayRenderer(tileOverlay: tiles) }
             if let grid = overlay as? SceneGridOverlay { return SceneGridRenderer(grid: grid) }
+            if let frame = overlay as? SheetFrameOverlay { return SheetFrameRenderer(frame: frame) }
             if overlay is JourneyLine {
                 let renderer = MKPolylineRenderer(overlay: overlay)
                 renderer.strokeColor = PlatformColor.systemPurple
@@ -478,7 +509,7 @@ struct MapKitCanvas: PlatformViewRepresentable {
                 renderer.fillColor = style.fill.map(PlatformColor.init(style:))
                 renderer.strokeColor = PlatformColor(style: style.stroke)
                 renderer.lineWidth = style.lineWidth
-                if style.isDashed { renderer.lineDashPattern = [6, 4] }
+                if style.isDashed { renderer.lineDashPattern = (style.dashPattern ?? [6, 4]).map { NSNumber(value: $0) } }
                 return renderer
             }
             if let line = overlay as? PlaceLineOverlay {
@@ -488,7 +519,7 @@ struct MapKitCanvas: PlatformViewRepresentable {
                 renderer.lineWidth = style.lineWidth
                 renderer.lineJoin = .round
                 renderer.lineCap = .round
-                if style.isDashed { renderer.lineDashPattern = [6, 4] }
+                if style.isDashed { renderer.lineDashPattern = (style.dashPattern ?? [6, 4]).map { NSNumber(value: $0) } }
                 return renderer
             }
             return MKOverlayRenderer(overlay: overlay)
@@ -759,9 +790,13 @@ final class PlaceOverlay: MKPolygon {
     private(set) var corners: [GridPoint] = []
     private(set) var styleType = ""
 
-    convenience init(page: Page, corners: [GridPoint]) {
+    convenience init(page: Page, corners: [GridPoint], holes: [[GridPoint]] = []) {
         var coordinates = corners.map(WebMercator.coordinate)
-        self.init(coordinates: &coordinates, count: coordinates.count)
+        let inside = holes.map { hole -> MKPolygon in
+            var points = hole.map(WebMercator.coordinate)
+            return MKPolygon(coordinates: &points, count: points.count)
+        }
+        self.init(coordinates: &coordinates, count: coordinates.count, interiorPolygons: inside.isEmpty ? nil : inside)
         self.page = page
         self.corners = corners
         self.styleType = page.attributeText("core.placeType")

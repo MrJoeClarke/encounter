@@ -26,6 +26,8 @@ nonisolated struct PlaceStyle: Equatable, Sendable {
     var isDashed = false
     /// Which is drawn first: lower numbers sit underneath. Seas under settlements, buildings above, then roads and rivers.
     var drawOrder: Int
+    /// The lengths of the dashes and gaps, in points, when the line isn't just the plain dashes `isDashed` gives.
+    var dashPattern: [Double]? = nil
 
     static let plain = PlaceStyle(
         fill: StyleColor(red: 0.9, green: 0.2, blue: 0.2, alpha: 0.18),

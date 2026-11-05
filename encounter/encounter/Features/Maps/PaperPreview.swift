@@ -11,7 +11,8 @@ private struct PaperSample: View {
 
     private func image(of area: PaperTexture.Area, in map: PaperTexture.Area) -> Image {
         let ground = (red: style.background.red, green: style.background.green, blue: style.background.blue)
-        guard let paper = style.paper, let made = paper.tile(ground: ground, area: area, map: map, size: 360) else { return Image(systemName: "xmark") }
+        let around = (red: style.surround.red, green: style.surround.green, blue: style.surround.blue)
+        guard let paper = style.paper, let made = paper.tile(ground: ground, surround: around, area: area, map: map, size: 360) else { return Image(systemName: "xmark") }
         return Image(decorative: made, scale: 1)
     }
 
@@ -21,6 +22,8 @@ private struct PaperSample: View {
             image(of: map, in: map)
             // A twelfth of the map, in from the corner, which shows the grain.
             image(of: (500, 500, 1_330, 1_330), in: map)
+            // A corner of the sheet, on what it lies on.
+            image(of: (-600, -600, 1_400, 1_400), in: map)
         }
         .padding(8)
     }
