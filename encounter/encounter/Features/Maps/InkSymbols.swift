@@ -47,11 +47,11 @@ extension InkRenderer {
         let screen = 1 / Double(zoomScale)
         switch decoration {
         case .trees(let ink, let wash):
-            scatter(mapRect: mapRect, zoomScale: zoomScale, spacing: 20, salt: 7, in: context) { c, size, h in
+            scatter(mapRect: mapRect, zoomScale: zoomScale, spacing: 36, keep: 0.55, salt: 7, in: context) { c, size, h in
                 tree(at: c, size: size, h: h, ink: ink, wash: wash, screen: screen, in: context)
             }
         case .peaks(let ink, let ground):
-            scatter(mapRect: mapRect, zoomScale: zoomScale, spacing: 30, salt: 11, in: context) { c, size, h in
+            scatter(mapRect: mapRect, zoomScale: zoomScale, spacing: 56, keep: 0.6, salt: 11, in: context) { c, size, h in
                 peak(at: c, size: size, h: h, ink: ink, ground: ground, screen: screen, in: context)
             }
         case .shore(let ink, let inward):
@@ -64,11 +64,11 @@ extension InkRenderer {
     /// Calls `draw` for a place on a lattice that is jittered, and so looks scattered, wherever it is inside the area. The lattice is
     /// fixed to the map and its cell is a power of two times a fixed size, so every tile agrees on where the symbols are and the
     /// same ones stay put between one zoom and the next.
-    private func scatter(mapRect: MKMapRect, zoomScale: MKZoomScale, spacing: Double, salt: UInt64, in context: CGContext, draw: (CGPoint, Double, UInt64) -> Void) {
+    private func scatter(mapRect: MKMapRect, zoomScale: MKZoomScale, spacing: Double, keep: Double, salt: UInt64, in context: CGContext, draw: (CGPoint, Double, UInt64) -> Void) {
         let screen = 1 / Double(zoomScale)
         let cell = pow(2, (log2(spacing * screen)).rounded())
         let onScreen = cell / screen
-        let size = min(max(onScreen * 0.5, 6), 22)
+        let size = min(max(onScreen * 0.32, 5), 15)
         let box = bounds
         let reach = size * screen
         let area = mapRect.intersection(box.insetBy(dx: -reach, dy: -reach)).insetBy(dx: -reach, dy: -reach)
@@ -81,7 +81,8 @@ extension InkRenderer {
             for iy in first.1...last.1 {
                 let h = Self.hash(ix, iy, salt)
                 let p = MKMapPoint(x: (Double(ix) + 0.15 + 0.7 * Self.unit(h, 0)) * cell, y: (Double(iy) + 0.15 + 0.7 * Self.unit(h, 16)) * cell)
-                if inside(p) { placed.append((p.y, p, h)) }
+                // Only some of the lattice's places have a symbol, so they are scattered and not in a pattern.
+                if Self.unit(h &* 0x9E3779B97F4A7C15, 20) < keep, inside(p) { placed.append((p.y, p, h)) }
             }
         }
         // Back to front, so a nearer symbol is drawn over a farther.

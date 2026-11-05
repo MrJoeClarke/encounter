@@ -81,14 +81,63 @@ nonisolated struct PaperTexture: Equatable, Sendable {
         return 1 + grain * (Double(h % 2001) / 1000 - 1)
     }
 
+    /// The size, in pixels, after which the fine look of the paper repeats. Its layers are 240, 80, 20, 6 and 2.5 pixels across, which
+    /// all go into it a whole number of times.
+    static let finePeriod = 480
+
+    nonisolated(unsafe) private static var fineKept: [UInt64: [Float]] = [:]
+    private static let fineLock = NSLock()
+
+    /// How much lighter or darker the crumpling and fibres of the paper make each pixel, over a square of `finePeriod` pixels that
+    /// repeats without a seam, made once for a seed. They are sized by the screen, not the map, so one picture serves every zoom.
+    private func fineLook() -> [Float] {
+        Self.fineLock.lock()
+        if let kept = Self.fineKept[seed] { Self.fineLock.unlock(); return kept }
+        Self.fineLock.unlock()
+        let period = Self.finePeriod
+        // Noise that repeats every `period` pixels: its lattice wraps after `period / wavelength` cells.
+        func layer(_ wavelength: Double, _ salt: UInt64, _ x: Int, _ y: Int) -> Double {
+            Self.wrappedNoise(Double(x) / wavelength, Double(y) / wavelength, wrap: Int((Double(period) / wavelength).rounded()), seed &+ salt) * 2 - 1
+        }
+        var look = [Float](repeating: 0, count: period * period)
+        for y in 0..<period {
+            for x in 0..<period {
+                let crumple = crumple * (layer(240, 10, x, y) + 0.8 * layer(80, 11, x, y) + 0.6 * layer(20, 12, x, y)) / 2.4
+                let fibre = fibre * (layer(6, 13, x, y) + 0.7 * layer(2.5, 14, x, y)) / 1.7
+                look[y * period + x] = Float(crumple + fibre)
+            }
+        }
+        Self.fineLock.lock()
+        Self.fineKept[seed] = look
+        Self.fineLock.unlock()
+        return look
+    }
+
     /// A tile of paper: `ground` with the texture over it. `area` is the part of the plane the tile covers, and `map` all of the map.
+    /// The broad look (mottling, stains, the burnt edge) is worked out every sixteen pixels and filled in between, since it changes
+    /// slowly; the fine look is looked up; only the grain is worked out for each pixel.
     func tile(ground: (red: Double, green: Double, blue: Double), surround: (red: Double, green: Double, blue: Double)? = nil, area: Area, map: Area, size: Int) -> CGImage? {
         var pixels = [UInt8](repeating: 255, count: size * size * 4)
         let across = (area.maxEasting - area.minEasting) / Double(size)
         let down = (area.maxNorthing - area.minNorthing) / Double(size)
         let originX = Int((area.minEasting / across).rounded()), originY = Int((area.maxNorthing / down).rounded())
+        let step = 16
+        let points = size / step + 1
+        var broad = [Double](repeating: 1, count: points * points * 3)
+        for gy in 0..<points {
+            for gx in 0..<points {
+                let t = tint(easting: area.minEasting + Double(gx * step) * across, northing: area.maxNorthing - Double(gy * step) * down, in: map)
+                let i = (gy * points + gx) * 3
+                broad[i] = t.red; broad[i + 1] = t.green; broad[i + 2] = t.blue
+            }
+        }
+        let fine = fineLook()
+        let period = Self.finePeriod
         for row in 0..<size {
             let northing = area.maxNorthing - (Double(row) + 0.5) * down
+            let fy = Double(row) / Double(step)
+            let gy = min(Int(fy), points - 2), ty = fy - Double(gy)
+            let lookRow = (((originY - row) % period) + period) % period * period
             for column in 0..<size {
                 let easting = area.minEasting + (Double(column) + 0.5) * across
                 let g = grain(atPixelX: originX + column, y: originY - row)
@@ -100,10 +149,23 @@ nonisolated struct PaperTexture: Equatable, Sendable {
                     pixels[i + 2] = Self.byte(surround.blue * g)
                     continue
                 }
-                let t = tint(easting: easting, northing: northing, in: map, metresPerPixel: across)
-                pixels[i] = Self.byte(ground.red * t.red * g)
-                pixels[i + 1] = Self.byte(ground.green * t.green * g)
-                pixels[i + 2] = Self.byte(ground.blue * t.blue * g)
+                let fx = Double(column) / Double(step)
+                let gx = min(Int(fx), points - 2), tx = fx - Double(gx)
+                let texture = Double(fine[lookRow + ((originX + column) % period + period) % period])
+                var colour = (0.0, 0.0, 0.0)
+                for channel in 0..<3 {
+                    let a = broad[(gy * points + gx) * 3 + channel], b = broad[(gy * points + gx + 1) * 3 + channel]
+                    let c = broad[((gy + 1) * points + gx) * 3 + channel], d = broad[((gy + 1) * points + gx + 1) * 3 + channel]
+                    let value = (a * (1 - tx) + b * tx) * (1 - ty) + (c * (1 - tx) + d * tx) * ty + texture
+                    switch channel {
+                    case 0: colour.0 = value
+                    case 1: colour.1 = value
+                    default: colour.2 = value
+                    }
+                }
+                pixels[i] = Self.byte(ground.red * colour.0 * g)
+                pixels[i + 1] = Self.byte(ground.green * colour.1 * g)
+                pixels[i + 2] = Self.byte(ground.blue * colour.2 * g)
             }
         }
         guard let provider = CGDataProvider(data: Data(pixels) as CFData) else { return nil }
@@ -124,6 +186,21 @@ nonisolated struct PaperTexture: Equatable, Sendable {
         x = (x ^ (x >> 30)) &* 0xBF58476D1CE4E5B9
         x = (x ^ (x >> 27)) &* 0x94D049BB133111EB
         return x ^ (x >> 31)
+    }
+
+    /// The same, but the lattice wraps round after `wrap` cells, so the noise repeats exactly every `wrap` units.
+    static func wrappedNoise(_ x: Double, _ y: Double, wrap: Int, _ seed: UInt64) -> Double {
+        let x0 = x.rounded(.down), y0 = y.rounded(.down)
+        let fx = x - x0, fy = y - y0
+        let sx = fx * fx * (3 - 2 * fx), sy = fy * fy * (3 - 2 * fy)
+        func corner(_ dx: Int, _ dy: Int) -> Double {
+            let cx = ((Int(x0) + dx) % wrap + wrap) % wrap, cy = ((Int(y0) + dy) % wrap + wrap) % wrap
+            let h = hash(UInt64(bitPattern: Int64(cx)) &* 374761393 ^ UInt64(bitPattern: Int64(cy)) &* 668265263 ^ seed &* 2246822519)
+            return Double(h % 10001) / 10000
+        }
+        let top = corner(0, 0) * (1 - sx) + corner(1, 0) * sx
+        let bottom = corner(0, 1) * (1 - sx) + corner(1, 1) * sx
+        return top * (1 - sy) + bottom * sy
     }
 
     /// Smooth noise from 0 to 1, with a feature about one unit across.
