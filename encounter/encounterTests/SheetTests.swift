@@ -54,4 +54,13 @@ struct SheetTests {
         for natural in ["Water", "Region", "Forest", "Mountains", "River", "Road"] { #expect(types.contains(natural), Comment(rawValue: natural)) }
         for crisp in ["Building", "Room", "Corridor", "Door", "Landmark"] { #expect(!types.contains(crisp), Comment(rawValue: crisp)) }
     }
+
+    @Test func onlyParchmentHasDrawnTreesPeaksAndShoreLines() {
+        #expect(MapStyle.parchment.symbols != nil)
+        for style in [MapStyle.dark, .survey, .watercolour] { #expect(style.symbols == nil, Comment(rawValue: style.id)) }
+        // The washes under the symbols are light, as the symbols say what the place is.
+        let forest = MapStyle.parchment.style(forPlaceType: "Forest").fill
+        let mountains = MapStyle.parchment.style(forPlaceType: "Mountains").fill
+        #expect((forest?.alpha ?? 1) < 0.3 && (mountains?.alpha ?? 1) < 0.3)
+    }
 }

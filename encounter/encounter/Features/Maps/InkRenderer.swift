@@ -9,7 +9,10 @@ import MapKit
 /// size that stays the same on screen at every zoom (a pen does not get bigger as you zoom). The wander depends only on where a
 /// point is, so the tiles MapKit draws a line in join up without a break, and it is the same every time.
 final class InkRenderer: MKOverlayRenderer {
-    private let rings: [[MKMapPoint]]
+    let rings: [[MKMapPoint]]
+    /// The smallest rectangle round the shape.
+    let bounds: MKMapRect
+    private let decoration: InkDecoration?
     private let isClosed: Bool
     private let fill: CGColor?
     private let stroke: CGColor
@@ -18,8 +21,10 @@ final class InkRenderer: MKOverlayRenderer {
     private let hand: MapStyle.HandDrawn
 
     /// The outline of an area, and the holes cut in it.
-    init(polygon: MKPolygon, fill: CGColor?, stroke: CGColor, width: Double, dash: [Double]?, hand: MapStyle.HandDrawn) {
+    init(polygon: MKPolygon, fill: CGColor?, stroke: CGColor, width: Double, dash: [Double]?, hand: MapStyle.HandDrawn, decoration: InkDecoration? = nil) {
         rings = ([polygon] + (polygon.interiorPolygons ?? [])).map(Self.mapPoints)
+        bounds = polygon.boundingMapRect
+        self.decoration = decoration
         isClosed = true
         self.fill = fill
         self.stroke = stroke
@@ -32,6 +37,8 @@ final class InkRenderer: MKOverlayRenderer {
     /// A line.
     init(line: MKPolyline, stroke: CGColor, width: Double, dash: [Double]?, hand: MapStyle.HandDrawn) {
         rings = [Self.mapPoints(of: line)]
+        bounds = line.boundingMapRect
+        decoration = nil
         isClosed = false
         fill = nil
         self.stroke = stroke
@@ -113,6 +120,7 @@ final class InkRenderer: MKOverlayRenderer {
             }
             stroke(run, zoomScale: zoomScale, in: context)
         }
+        if let decoration { drawDecoration(decoration, mapRect: mapRect, zoomScale: zoomScale, in: context) }
     }
 
     /// A stretch of line, in pieces of different thickness, or all at once if it is dashed (a dash can't be thicker in one place).
@@ -180,11 +188,25 @@ private func inkSample(zoomScale: Double) -> Image {
     let land = polygon([(40, 60), (200, 30), (330, 70), (360, 150), (300, 250), (180, 290), (70, 240), (30, 140)])
     let seaWithHole = polygon([(0, 0), (520, 0), (520, 330), (0, 330)], holes: [land])
     let ink = CGColor(red: 0.3, green: 0.18, blue: 0.08, alpha: 1)
-    draw(InkRenderer(polygon: seaWithHole, fill: CGColor(red: 0.55, green: 0.68, blue: 0.72, alpha: 0.6), stroke: CGColor(red: 0.35, green: 0.45, blue: 0.5, alpha: 1), width: 1.5, dash: nil, hand: hand))
+    draw(InkRenderer(polygon: seaWithHole, fill: CGColor(red: 0.55, green: 0.68, blue: 0.72, alpha: 0.6), stroke: CGColor(red: 0.35, green: 0.45, blue: 0.5, alpha: 1), width: 1.5, dash: nil, hand: hand, decoration: .shore(ink: CGColor(red: 0.35, green: 0.45, blue: 0.5, alpha: 1), inside: false)))
     draw(InkRenderer(line: line([(120, 80), (150, 140), (130, 190), (190, 240), (170, 310)]), stroke: CGColor(red: 0.35, green: 0.5, blue: 0.6, alpha: 1), width: 3, dash: nil, hand: hand))
     draw(InkRenderer(line: line([(60, 200), (160, 170), (250, 190), (340, 130), (480, 150)]), stroke: CGColor(red: 0.4, green: 0.26, blue: 0.12, alpha: 1), width: 1.8, dash: nil, hand: hand))
     draw(InkRenderer(line: line([(200, 40), (210, 120), (250, 190), (240, 270)]), stroke: CGColor(red: 0.55, green: 0.2, blue: 0.12, alpha: 1), width: 1.6, dash: [9, 3, 1.5, 3], hand: hand))
     _ = ink
+    let symbols = MapStyle.parchment.symbols!
+    func cg(_ c: StyleColor) -> CGColor { CGColor(red: c.red, green: c.green, blue: c.blue, alpha: c.alpha) }
+    draw(InkRenderer(
+        polygon: polygon([(70, 90), (150, 80), (195, 125), (175, 205), (100, 215), (60, 150)]), fill: CGColor(red: 0.45, green: 0.55, blue: 0.3, alpha: 0.22),
+        stroke: CGColor(red: 0.3, green: 0.4, blue: 0.2, alpha: 1), width: 1, dash: nil, hand: hand, decoration: .trees(ink: cg(symbols.tree), wash: cg(symbols.treeWash))
+    ))
+    draw(InkRenderer(
+        polygon: polygon([(225, 80), (340, 95), (350, 175), (265, 205), (215, 150)]), fill: CGColor(red: 0.62, green: 0.5, blue: 0.38, alpha: 0.2),
+        stroke: CGColor(red: 0.4, green: 0.3, blue: 0.2, alpha: 1), width: 1.2, dash: nil, hand: hand, decoration: .peaks(ink: cg(symbols.peak), ground: cg(MapStyle.parchment.background))
+    ))
+    draw(InkRenderer(
+        polygon: polygon([(255, 235), (325, 228), (340, 265), (290, 295), (248, 270)]), fill: CGColor(red: 0.55, green: 0.68, blue: 0.72, alpha: 0.8),
+        stroke: CGColor(red: 0.35, green: 0.45, blue: 0.5, alpha: 1), width: 1.5, dash: nil, hand: hand, decoration: .shore(ink: cg(symbols.shore), inside: true)
+    ))
     return Image(decorative: context.makeImage()!, scale: 2)
 }
 

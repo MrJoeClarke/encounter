@@ -34,6 +34,8 @@ nonisolated struct MapStyle: Identifiable, Equatable, Sendable {
     var frame: SheetFrame?
     /// How lines and outlines are drawn if they are to look drawn by hand; nil for the clean line of a plan.
     var hand: HandDrawn?
+    /// The drawn trees, peaks and shore lines of a map in this style, if it has them.
+    var symbols: Symbols?
 
     /// A typeface by its names: the regular face and the ones for italic, semibold and semibold italic.
     struct Lettering: Equatable, Sendable {
@@ -54,6 +56,14 @@ nonisolated struct MapStyle: Identifiable, Equatable, Sendable {
 
         /// The types of place drawn in this way; buildings, rooms and the like stay crisp.
         static let types: Set<String> = ["Water", "Lake", "Region", "Wilderness", "Forest", "Mountains", "District", "Settlement", "River", "Road", "Street", "Wall"]
+    }
+
+    /// The inks of the symbols drawn over the land.
+    struct Symbols: Equatable, Sendable {
+        var tree: StyleColor
+        var treeWash: StyleColor
+        var peak: StyleColor
+        var shore: StyleColor
     }
 
     /// A ruled border: an outer line and, if wanted, a finer one inside it, with a gap between, all in points on screen.
@@ -116,8 +126,8 @@ nonisolated struct MapStyle: Identifiable, Equatable, Sendable {
             "Lake": Look(fill: color(0.55, 0.68, 0.72, 0.8), stroke: color(0.35, 0.45, 0.5), lineWidth: 1.5),
             "Region": Look(fill: color(0.7, 0.55, 0.35, 0.12), stroke: color(0.55, 0.2, 0.12), lineWidth: 1.6, isDashed: true, dash: [9, 3, 1.5, 3]),
             "Wilderness": Look(fill: color(0.7, 0.62, 0.4, 0.3), stroke: color(0.5, 0.4, 0.25), lineWidth: 1),
-            "Forest": Look(fill: color(0.45, 0.55, 0.3, 0.5), stroke: color(0.3, 0.4, 0.2), lineWidth: 1),
-            "Mountains": Look(fill: color(0.62, 0.5, 0.38, 0.6), stroke: color(0.4, 0.3, 0.2), lineWidth: 1.2),
+            "Forest": Look(fill: color(0.45, 0.55, 0.3, 0.22), stroke: color(0.3, 0.4, 0.2), lineWidth: 1),
+            "Mountains": Look(fill: color(0.62, 0.5, 0.38, 0.2), stroke: color(0.4, 0.3, 0.2), lineWidth: 1.2),
             "District": Look(fill: color(0.8, 0.65, 0.35, 0.15), stroke: color(0.55, 0.38, 0.15), lineWidth: 1.5, isDashed: true),
             "Settlement": Look(fill: color(0.8, 0.5, 0.25, 0.3), stroke: color(0.5, 0.3, 0.12), lineWidth: 2),
             "Building": Look(fill: color(0.6, 0.45, 0.33, 0.85), stroke: color(0.3, 0.2, 0.1), lineWidth: 1),
@@ -131,7 +141,8 @@ nonisolated struct MapStyle: Identifiable, Equatable, Sendable {
         ],
         paper: PaperTexture(), lettering: .baskerville,
         surround: color(0.2, 0.14, 0.09), frame: SheetFrame(ink: color(0.3, 0.18, 0.08), outer: 2.6, inner: 0.8, gap: 6),
-        hand: HandDrawn(amplitude: 0.9, wavelength: 16, weight: 0.35)
+        hand: HandDrawn(amplitude: 0.9, wavelength: 16, weight: 0.35),
+        symbols: Symbols(tree: color(0.25, 0.33, 0.14), treeWash: color(0.5, 0.6, 0.32, 0.45), peak: color(0.3, 0.2, 0.12), shore: color(0.35, 0.45, 0.5))
     )
 
     /// An ordnance survey: white paper, fine dark lines, pale fills, red roads.

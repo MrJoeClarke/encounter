@@ -522,9 +522,20 @@ struct MapKitCanvas: PlatformViewRepresentable {
                 let type = shape.page.attributeText("core.placeType")
                 let style = mapStyle.style(forPlaceType: type)
                 if let hand = mapStyle.hand, MapStyle.HandDrawn.types.contains(type) {
+                    // Trees over a forest, peaks over mountains, lines along a shore, in a style that has them.
+                    var decoration: InkDecoration?
+                    if let symbols = mapStyle.symbols {
+                        switch type {
+                        case "Forest": decoration = .trees(ink: PlatformColor(style: symbols.tree).cgColor, wash: PlatformColor(style: symbols.treeWash).cgColor)
+                        case "Mountains": decoration = .peaks(ink: PlatformColor(style: symbols.peak).cgColor, ground: PlatformColor(style: mapStyle.background).cgColor)
+                        case "Water": decoration = .shore(ink: PlatformColor(style: symbols.shore).cgColor, inside: false)
+                        case "Lake": decoration = .shore(ink: PlatformColor(style: symbols.shore).cgColor, inside: true)
+                        default: break
+                        }
+                    }
                     return InkRenderer(
                         polygon: shape, fill: style.fill.map { PlatformColor(style: $0).cgColor }, stroke: PlatformColor(style: style.stroke).cgColor,
-                        width: style.lineWidth, dash: style.isDashed ? (style.dashPattern ?? [6, 4]) : nil, hand: hand
+                        width: style.lineWidth, dash: style.isDashed ? (style.dashPattern ?? [6, 4]) : nil, hand: hand, decoration: decoration
                     )
                 }
                 let renderer = MKPolygonRenderer(polygon: shape)
