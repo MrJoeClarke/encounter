@@ -291,17 +291,31 @@ struct MapKitCanvas: PlatformViewRepresentable {
             drawnLabelKey = key
             for old in labelAnnotations { drop(old, from: view) }
             let zoom = (parent?.map.style ?? .dark).zoom
+            let pinSpots = pins.map { calibration.gridPoint(atX: $0.pixelX, y: $0.pixelY) }
             var made: [PlaceLabelAnnotation] = []
             for shape in shapes where !shape.page.title.isEmpty {
                 let type = shape.page.attributeText("core.placeType")
                 guard PlaceLabelKind.of(type: type) == .area else { continue }
-                let middle = PlaceGeometry.polygon(shape.corners).centre
+                // Well inside the area and away from its pins; the sea's name goes out on the open water and not where the land is.
+                let spot: GridPoint
+                if type == "Water" {
+                    let land = shapes.filter { $0.page.attributeText("core.placeType") == "Region" }.map(\.corners)
+                    let low = GridPoint(easting: shape.corners.map(\.easting).min() ?? 0, northing: shape.corners.map(\.northing).min() ?? 0)
+                    let high = GridPoint(easting: shape.corners.map(\.easting).max() ?? 0, northing: shape.corners.map(\.northing).max() ?? 0)
+                    spot = LabelSpot.openWater(from: low, to: high, land: land)
+                } else {
+                    spot = LabelSpot.inside(shape.corners, avoiding: pinSpots)
+                }
                 let label = PlaceLabelAnnotation(
-                    text: shape.page.title, type: type, coordinate: WebMercator.coordinate(middle), angle: 0, priority: PlaceLabelKind.priority(type: type)
+                    text: shape.page.title, type: type, coordinate: WebMercator.coordinate(spot), angle: 0, priority: PlaceLabelKind.priority(type: type)
                 )
                 label.maxView = zoom.name(ofType: type)
-                let xs = shape.corners.map { MKMapPoint(WebMercator.coordinate($0)).x }
-                label.extent = (xs.max() ?? 0) - (xs.min() ?? 0)
+                // A realm or sea is always named and never moved aside by anything else, so the realms are the first names to appear.
+                label.ignoresCollisions = type == "Region" || type == "Water"
+                if !label.ignoresCollisions {
+                    let xs = shape.corners.map { MKMapPoint(WebMercator.coordinate($0)).x }
+                    label.extent = (xs.max() ?? 0) - (xs.min() ?? 0)
+                }
                 label.textWidth = Double(MapGlyphs.label(shape.page.title, type: type, style: parent?.map.style ?? .dark)?.size.width ?? 0)
                 made.append(label)
             }
@@ -547,7 +561,7 @@ struct MapKitCanvas: PlatformViewRepresentable {
                 view.isEnabled = false
                 view.centerOffset = name.offset
                 view.displayPriority = MKFeatureDisplayPriority(rawValue: name.priority)
-                view.collisionMode = .rectangle
+                view.collisionMode = name.ignoresCollisions ? .none : .rectangle
                 return view
             }
             if let mark = annotation as? MarkAnnotation {
@@ -736,6 +750,8 @@ final class PlaceLabelAnnotation: NSObject, MKAnnotation {
     /// For the name of an area, how wide the area is in MapKit's points, and how wide the name is on screen, in points. The name is
     /// shown only where the area is at least as wide as the name. Zero for any other name.
     var extent = 0.0
+    /// Whether the name is drawn whatever is under it and without moving anything else aside.
+    var ignoresCollisions = false
     var textWidth = 0.0
     /// How far from its coordinate it is drawn, in points, down and across.
     var offset = CGPoint.zero

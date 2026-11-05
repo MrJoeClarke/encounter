@@ -101,8 +101,8 @@ enum PlaceLabelKind: Sendable {
     /// Which names win a place on the screen when they crowd each other, from 0 to 1000: realms and seas over rivers over roads.
     static func priority(type: String) -> Float {
         switch type {
-        case "Region": 880
-        case "Water": 860
+        case "Region": 1000
+        case "Water": 990
         case "Lake": 800
         case "Mountains", "Forest", "Wilderness": 700
         case "District": 640
