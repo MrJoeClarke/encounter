@@ -85,14 +85,15 @@ nonisolated struct PaperTexture: Equatable, Sendable {
     /// all go into it a whole number of times.
     static let finePeriod = 480
 
-    nonisolated(unsafe) private static var fineKept: [UInt64: [Float]] = [:]
+    nonisolated(unsafe) private static var fineKept: [String: [Float]] = [:]
     private static let fineLock = NSLock()
 
     /// How much lighter or darker the crumpling and fibres of the paper make each pixel, over a square of `finePeriod` pixels that
     /// repeats without a seam, made once for a seed. They are sized by the screen, not the map, so one picture serves every zoom.
     private func fineLook() -> [Float] {
+        let key = "\(seed)|\(crumple)|\(fibre)"
         Self.fineLock.lock()
-        if let kept = Self.fineKept[seed] { Self.fineLock.unlock(); return kept }
+        if let kept = Self.fineKept[key] { Self.fineLock.unlock(); return kept }
         Self.fineLock.unlock()
         let period = Self.finePeriod
         // Noise that repeats every `period` pixels: its lattice wraps after `period / wavelength` cells.
@@ -108,7 +109,7 @@ nonisolated struct PaperTexture: Equatable, Sendable {
             }
         }
         Self.fineLock.lock()
-        Self.fineKept[seed] = look
+        Self.fineKept[key] = look
         Self.fineLock.unlock()
         return look
     }

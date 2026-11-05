@@ -191,6 +191,7 @@ struct MapKitCanvas: PlatformViewRepresentable {
         private var isDragging = false
         /// The ruled border round the sheet, and the sheet's own place in MapKit's points.
         private var frameOverlay: SheetFrameOverlay?
+        private var surveyGrid: SheetGridOverlay?
         private var frameKey = ""
         private var sheetRect = MKMapRect.null
         /// The pins and names that are on the map now; the rest are held back until the view is close enough.
@@ -210,6 +211,14 @@ struct MapKitCanvas: PlatformViewRepresentable {
             frameKey = key
             if let frameOverlay { view.removeOverlay(frameOverlay) }
             frameOverlay = nil
+            if let surveyGrid { view.removeOverlay(surveyGrid) }
+            surveyGrid = nil
+            // A grid over the tiles and under everything else, in a style that has one.
+            if parent?.map.isVector ?? false, let ink = style.gridInk, !sheetRect.isNull {
+                let grid = SheetGridOverlay(sheet: sheetRect, ink: ink)
+                if let tiles = overlay { view.insertOverlay(grid, above: tiles) } else { view.addOverlay(grid, level: .aboveLabels) }
+                surveyGrid = grid
+            }
             if let wanted, !sheetRect.isNull {
                 let overlay = SheetFrameOverlay(sheet: sheetRect, frame: wanted)
                 view.addOverlay(overlay, level: .aboveLabels)
@@ -504,6 +513,7 @@ struct MapKitCanvas: PlatformViewRepresentable {
             if let tiles = overlay as? MKTileOverlay { return MKTileOverlayRenderer(tileOverlay: tiles) }
             if let grid = overlay as? SceneGridOverlay { return SceneGridRenderer(grid: grid) }
             if let frame = overlay as? SheetFrameOverlay { return SheetFrameRenderer(frame: frame) }
+            if let grid = overlay as? SheetGridOverlay { return SheetGridRenderer(grid: grid) }
             if overlay is JourneyLine {
                 let renderer = MKPolylineRenderer(overlay: overlay)
                 renderer.strokeColor = PlatformColor.systemPurple
@@ -523,23 +533,7 @@ struct MapKitCanvas: PlatformViewRepresentable {
                 let mapStyle = parent?.map.style ?? MapStyle.dark
                 let type = shape.page.attributeText("core.placeType")
                 let style = mapStyle.style(forPlaceType: type)
-                if let hand = mapStyle.hand, MapStyle.HandDrawn.types.contains(type) {
-                    // Trees over a forest, peaks over mountains, lines along a shore, in a style that has them.
-                    var decoration: InkDecoration?
-                    if let symbols = mapStyle.symbols {
-                        switch type {
-                        case "Forest": decoration = .trees(ink: PlatformColor(style: symbols.tree).cgColor, wash: PlatformColor(style: symbols.treeWash).cgColor)
-                        case "Mountains": decoration = .peaks(ink: PlatformColor(style: symbols.peak).cgColor, ground: PlatformColor(style: mapStyle.background).cgColor)
-                        case "Water": decoration = .shore(ink: PlatformColor(style: symbols.shore).cgColor, inside: false)
-                        case "Lake": decoration = .shore(ink: PlatformColor(style: symbols.shore).cgColor, inside: true)
-                        default: break
-                        }
-                    }
-                    return InkRenderer(
-                        polygon: shape, fill: style.fill.map { PlatformColor(style: $0).cgColor }, stroke: PlatformColor(style: style.stroke).cgColor,
-                        width: style.lineWidth, dash: style.isDashed ? (style.dashPattern ?? [6, 4]) : nil, hand: hand, decoration: decoration
-                    )
-                }
+                if let ink = InkRenderer.make(polygon: shape, type: type, style: mapStyle) { return ink }
                 let renderer = MKPolygonRenderer(polygon: shape)
                 renderer.fillColor = style.fill.map(PlatformColor.init(style:))
                 renderer.strokeColor = PlatformColor(style: style.stroke)
@@ -551,12 +545,7 @@ struct MapKitCanvas: PlatformViewRepresentable {
                 let mapStyle = parent?.map.style ?? MapStyle.dark
                 let type = line.page.attributeText("core.placeType")
                 let style = mapStyle.style(forPlaceType: type)
-                if let hand = mapStyle.hand, MapStyle.HandDrawn.types.contains(type) {
-                    return InkRenderer(
-                        line: line, stroke: PlatformColor(style: style.stroke).cgColor, width: style.lineWidth,
-                        dash: style.isDashed ? (style.dashPattern ?? [6, 4]) : nil, hand: hand
-                    )
-                }
+                if let ink = InkRenderer.make(line: line, type: type, style: mapStyle) { return ink }
                 let renderer = MKPolylineRenderer(overlay: line)
                 renderer.strokeColor = PlatformColor(style: style.stroke)
                 renderer.lineWidth = style.lineWidth

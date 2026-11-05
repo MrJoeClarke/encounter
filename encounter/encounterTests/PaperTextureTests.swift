@@ -51,9 +51,17 @@ struct PaperTextureTests {
         #expect(image.width == 64 && image.height == 64)
     }
 
-    @Test func onlyParchmentHasPaperAndLettering() {
-        #expect(MapStyle.parchment.paper != nil)
-        #expect(MapStyle.parchment.lettering != nil)
+    @Test func everyStyleButDarkHasPaperAndLettering() {
+        for style in [MapStyle.parchment, .survey, .watercolour] {
+            #expect(style.paper != nil && style.lettering != nil, Comment(rawValue: style.id))
+        }
         #expect(MapStyle.dark.paper == nil && MapStyle.dark.lettering == nil)
+    }
+
+    @Test func eachStylesPaperIsItsOwn() {
+        #expect(MapStyle.parchment.paper != MapStyle.survey.paper)
+        #expect(MapStyle.survey.paper != MapStyle.watercolour.paper)
+        // A survey's paper is plain: no stains, no burnt edge.
+        #expect(MapStyle.survey.paper?.stain == 0 && MapStyle.survey.paper?.edge == 0)
     }
 }

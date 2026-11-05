@@ -36,6 +36,10 @@ nonisolated struct MapStyle: Identifiable, Equatable, Sendable {
     var hand: HandDrawn?
     /// The drawn trees, peaks and shore lines of a map in this style, if it has them.
     var symbols: Symbols?
+    /// Washes that pool a little darker at their edge, as watercolour does.
+    var wash: Wash?
+    /// The ink of a grid of squares over the sheet, as on a survey map.
+    var gridInk: StyleColor?
 
     /// A typeface by its names: the regular face and the ones for italic, semibold and semibold italic.
     struct Lettering: Equatable, Sendable {
@@ -63,7 +67,20 @@ nonisolated struct MapStyle: Identifiable, Equatable, Sendable {
         var tree: StyleColor
         var treeWash: StyleColor
         var peak: StyleColor
-        var shore: StyleColor
+        /// The ink of lines along a shore, or nil for none.
+        var shore: StyleColor?
+        /// Trees in tidy rows, as on a survey, instead of scattered.
+        var regular = false
+        /// Mountains drawn as contour lines instead of peaks.
+        var contours = false
+        /// Soft dabs of colour instead of inked drawings.
+        var soft = false
+    }
+
+    /// An edge where the colour of a wash gathers, as paint does: how wide the band is, in points, and how strong.
+    struct Wash: Equatable, Sendable {
+        var band: Double
+        var strength: Double
     }
 
     /// A ruled border: an outer line and, if wanted, a finer one inside it, with a gap between, all in points on screen.
@@ -168,7 +185,12 @@ nonisolated struct MapStyle: Identifiable, Equatable, Sendable {
             "Landmark": Look(fill: color(0.55, 0.55, 0.55, 1), stroke: color(0.2, 0.2, 0.2), lineWidth: 0.8),
             "Wall": Look(fill: nil, stroke: color(0.2, 0.2, 0.2), lineWidth: 2),
         ],
-        surround: color(0.8, 0.81, 0.83), frame: SheetFrame(ink: color(0.1, 0.1, 0.1), outer: 1.6, inner: 0.5, gap: 5)
+        paper: PaperTexture(grain: 0.012, mottle: 0.012, stain: 0, edge: 0, crumple: 0, fibre: 0.012),
+        lettering: Lettering(regular: "Helvetica", italic: "Helvetica-Oblique", semibold: "Helvetica-Bold", semiboldItalic: "Helvetica-BoldOblique"),
+        surround: color(0.8, 0.81, 0.83), frame: SheetFrame(ink: color(0.1, 0.1, 0.1), outer: 1.6, inner: 0.5, gap: 5),
+        hand: HandDrawn(amplitude: 0, wavelength: 16, weight: 0),
+        symbols: Symbols(tree: color(0.22, 0.42, 0.22), treeWash: color(0.78, 0.88, 0.72, 0.5), peak: color(0.5, 0.36, 0.22), shore: nil, regular: true, contours: true),
+        gridInk: color(0.4, 0.58, 0.85, 0.5)
     )
 
     /// Painted washes on white paper: soft colour, broad pale edges where ink would be, no hard black.
@@ -179,7 +201,7 @@ nonisolated struct MapStyle: Identifiable, Equatable, Sendable {
         places: [
             "Water": Look(fill: color(0.55, 0.75, 0.88, 0.55), stroke: color(0.55, 0.75, 0.88, 0.6), lineWidth: 4),
             "Lake": Look(fill: color(0.5, 0.75, 0.85, 0.7), stroke: color(0.5, 0.75, 0.85, 0.7), lineWidth: 3),
-            "Region": Look(fill: color(0.85, 0.7, 0.55, 0.14), stroke: color(0.8, 0.6, 0.45, 0.5), lineWidth: 4),
+            "Region": Look(fill: color(0.85, 0.7, 0.55, 0.1), stroke: color(0.62, 0.45, 0.68, 0.6), lineWidth: 3, isDashed: true, dash: [1.5, 6]),
             "Wilderness": Look(fill: color(0.85, 0.8, 0.55, 0.35), stroke: color(0.8, 0.75, 0.5, 0.4), lineWidth: 3),
             "Forest": Look(fill: color(0.55, 0.75, 0.55, 0.55), stroke: color(0.55, 0.75, 0.55, 0.45), lineWidth: 3),
             "Mountains": Look(fill: color(0.75, 0.68, 0.62, 0.6), stroke: color(0.65, 0.55, 0.5, 0.5), lineWidth: 3),
@@ -194,6 +216,11 @@ nonisolated struct MapStyle: Identifiable, Equatable, Sendable {
             "Landmark": Look(fill: color(0.9, 0.65, 0.4, 0.9), stroke: color(0.7, 0.45, 0.3, 0.8), lineWidth: 1.5),
             "Wall": Look(fill: nil, stroke: color(0.55, 0.5, 0.5, 0.85), lineWidth: 3),
         ],
-        surround: color(0.9, 0.89, 0.86), frame: SheetFrame(ink: color(0.8, 0.62, 0.5, 0.7), outer: 3, inner: 0, gap: 6)
+        paper: PaperTexture(grain: 0.045, mottle: 0.03, stain: 0.02, edge: 0.05, edgeReach: 0.05, crumple: 0.02, fibre: 0.05),
+        lettering: Lettering(regular: "Optima-Regular", italic: "Optima-Italic", semibold: "Optima-Bold", semiboldItalic: "Optima-BoldItalic"),
+        surround: color(0.9, 0.89, 0.86), frame: SheetFrame(ink: color(0.8, 0.62, 0.5, 0.7), outer: 3, inner: 0, gap: 6),
+        hand: HandDrawn(amplitude: 1.3, wavelength: 24, weight: 0.5),
+        symbols: Symbols(tree: color(0.3, 0.5, 0.3), treeWash: color(0.45, 0.7, 0.45, 0.55), peak: color(0.5, 0.4, 0.35), shore: color(0.45, 0.65, 0.85), soft: true),
+        wash: Wash(band: 7, strength: 0.55)
     )
 }

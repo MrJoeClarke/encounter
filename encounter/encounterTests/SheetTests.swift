@@ -47,17 +47,24 @@ struct SheetTests {
         #expect(pixel.allSatisfy { $0 < 30 })
     }
 
-    @Test func onlyParchmentIsDrawnByHandAndOnlyWhatIsNaturalIsWobbled() {
-        #expect(MapStyle.parchment.hand != nil)
-        for style in [MapStyle.dark, .survey, .watercolour] { #expect(style.hand == nil, Comment(rawValue: style.id)) }
+    @Test func handDrawnStylesWobbleOnlyWhatIsNatural() {
+        #expect(MapStyle.parchment.hand != nil && MapStyle.watercolour.hand != nil)
+        #expect(MapStyle.dark.hand == nil)
+        // A survey is drawn with the same renderer but with a straight, even pen.
+        #expect(MapStyle.survey.hand?.amplitude == 0 && MapStyle.survey.hand?.weight == 0)
+        #expect((MapStyle.parchment.hand?.amplitude ?? 0) > 0 && (MapStyle.watercolour.hand?.amplitude ?? 0) > 0)
         let types = MapStyle.HandDrawn.types
         for natural in ["Water", "Region", "Forest", "Mountains", "River", "Road"] { #expect(types.contains(natural), Comment(rawValue: natural)) }
         for crisp in ["Building", "Room", "Corridor", "Door", "Landmark"] { #expect(!types.contains(crisp), Comment(rawValue: crisp)) }
     }
 
-    @Test func onlyParchmentHasDrawnTreesPeaksAndShoreLines() {
+    @Test func eachStyleHasItsOwnKindOfSymbol() {
         #expect(MapStyle.parchment.symbols != nil)
-        for style in [MapStyle.dark, .survey, .watercolour] { #expect(style.symbols == nil, Comment(rawValue: style.id)) }
+        #expect(MapStyle.dark.symbols == nil)
+        // Each of the others has its own kind: a survey's are tidy signs and contours, a watercolour's soft dabs.
+        #expect(MapStyle.survey.symbols?.regular == true && MapStyle.survey.symbols?.contours == true && MapStyle.survey.symbols?.shore == nil)
+        #expect(MapStyle.watercolour.symbols?.soft == true && MapStyle.watercolour.symbols?.shore != nil)
+        #expect(MapStyle.parchment.symbols?.regular == false && MapStyle.parchment.symbols?.soft == false)
         // The washes under the symbols are light, as the symbols say what the place is.
         let forest = MapStyle.parchment.style(forPlaceType: "Forest").fill
         let mountains = MapStyle.parchment.style(forPlaceType: "Mountains").fill

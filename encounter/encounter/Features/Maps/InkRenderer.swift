@@ -13,6 +13,7 @@ final class InkRenderer: MKOverlayRenderer {
     /// The smallest rectangle round the shape.
     let bounds: MKMapRect
     private let decoration: InkDecoration?
+    private let wash: MapStyle.Wash?
     private let isClosed: Bool
     private let fill: CGColor?
     private let stroke: CGColor
@@ -21,10 +22,11 @@ final class InkRenderer: MKOverlayRenderer {
     private let hand: MapStyle.HandDrawn
 
     /// The outline of an area, and the holes cut in it.
-    init(polygon: MKPolygon, fill: CGColor?, stroke: CGColor, width: Double, dash: [Double]?, hand: MapStyle.HandDrawn, decoration: InkDecoration? = nil) {
+    init(polygon: MKPolygon, fill: CGColor?, stroke: CGColor, width: Double, dash: [Double]?, hand: MapStyle.HandDrawn, decoration: InkDecoration? = nil, wash: MapStyle.Wash? = nil) {
         rings = ([polygon] + (polygon.interiorPolygons ?? [])).map(Self.mapPoints)
         bounds = polygon.boundingMapRect
         self.decoration = decoration
+        self.wash = wash
         isClosed = true
         self.fill = fill
         self.stroke = stroke
@@ -39,6 +41,7 @@ final class InkRenderer: MKOverlayRenderer {
         rings = [Self.mapPoints(of: line)]
         bounds = line.boundingMapRect
         decoration = nil
+        wash = nil
         isClosed = false
         fill = nil
         self.stroke = stroke
@@ -75,6 +78,30 @@ final class InkRenderer: MKOverlayRenderer {
             }
             context.setFillColor(fill)
             context.fillPath(using: .evenOdd)
+            // Paint gathers at the edge of a wash: a few bands of the edge colour, widest and faintest first, kept inside the wash.
+            if let wash {
+                context.saveGState()
+                context.beginPath()
+                for ring in rings where ring.count >= 3 {
+                    context.move(to: point(for: ring[0]))
+                    for p in ring.dropFirst() { context.addLine(to: point(for: p)) }
+                    context.closePath()
+                }
+                context.clip(using: .evenOdd)
+                context.setLineJoin(.round)
+                for (share, alpha) in [(1.0, 0.35), (0.62, 0.55), (0.3, 0.9)] {
+                    context.setStrokeColor(stroke.copy(alpha: stroke.alpha * wash.strength * alpha * 0.5) ?? stroke)
+                    context.setLineWidth(wash.band * share * 2 * screen)
+                    context.beginPath()
+                    for ring in rings where ring.count >= 3 {
+                        context.move(to: point(for: ring[0]))
+                        for p in ring.dropFirst() { context.addLine(to: point(for: p)) }
+                        context.closePath()
+                    }
+                    context.strokePath()
+                }
+                context.restoreGState()
+            }
         }
         guard width > 0 else { return }
 
@@ -150,9 +177,9 @@ final class InkRenderer: MKOverlayRenderer {
 
 import SwiftUI
 
-/// The ink look on a few shapes, drawn straight into a picture (a preview can't show MapKit itself), at two sizes of the same shapes.
+/// A style's look on a few shapes, drawn straight into a picture (a preview can't show MapKit itself).
 @MainActor
-private func inkSample(zoomScale: Double) -> Image {
+func inkSample(_ style: MapStyle, zoomScale: Double = 1) -> Image {
     let size = CGSize(width: 520, height: 330)
     let context = CGContext(
         data: nil, width: Int(size.width * 2), height: Int(size.height * 2), bitsPerComponent: 8, bytesPerRow: 0,
@@ -160,9 +187,9 @@ private func inkSample(zoomScale: Double) -> Image {
     )!
     context.scaleBy(x: 2, y: -2)
     context.translateBy(x: 0, y: -size.height)
-    context.setFillColor(CGColor(red: 0.93, green: 0.87, blue: 0.73, alpha: 1))
+    let ground = style.background
+    context.setFillColor(CGColor(red: ground.red, green: ground.green, blue: ground.blue, alpha: 1))
     context.fill(CGRect(origin: .zero, size: size))
-    let hand = MapStyle.parchment.hand ?? MapStyle.HandDrawn(amplitude: 1, wavelength: 16, weight: 0.3)
     // MapKit points are `zoomScale` times a point on screen, so the shapes are drawn that much smaller to land in the same picture.
     let k = 1 / zoomScale
     // Near the middle of the world's map, where coordinates are exact, and moved back to the corner of the picture.
@@ -178,7 +205,8 @@ private func inkSample(zoomScale: Double) -> Image {
     }
     let rect = MKMapRect(x: origin.x, y: origin.y, width: size.width * k, height: size.height * k)
     // A renderer draws in a space whose corner is the corner of its overlay, which MapKit sets up; here it is set up by hand.
-    func draw(_ renderer: InkRenderer) {
+    func draw(_ renderer: InkRenderer?) {
+        guard let renderer else { return }
         let corner = renderer.overlay.boundingMapRect.origin
         context.saveGState()
         context.translateBy(x: corner.x - origin.x, y: corner.y - origin.y)
@@ -186,29 +214,17 @@ private func inkSample(zoomScale: Double) -> Image {
         context.restoreGState()
     }
     let land = polygon([(40, 60), (200, 30), (330, 70), (360, 150), (300, 250), (180, 290), (70, 240), (30, 140)])
-    let seaWithHole = polygon([(0, 0), (520, 0), (520, 330), (0, 330)], holes: [land])
-    let ink = CGColor(red: 0.3, green: 0.18, blue: 0.08, alpha: 1)
-    draw(InkRenderer(polygon: seaWithHole, fill: CGColor(red: 0.55, green: 0.68, blue: 0.72, alpha: 0.6), stroke: CGColor(red: 0.35, green: 0.45, blue: 0.5, alpha: 1), width: 1.5, dash: nil, hand: hand, decoration: .shore(ink: CGColor(red: 0.35, green: 0.45, blue: 0.5, alpha: 1), inside: false)))
-    draw(InkRenderer(line: line([(120, 80), (150, 140), (130, 190), (190, 240), (170, 310)]), stroke: CGColor(red: 0.35, green: 0.5, blue: 0.6, alpha: 1), width: 3, dash: nil, hand: hand))
-    draw(InkRenderer(line: line([(60, 200), (160, 170), (250, 190), (340, 130), (480, 150)]), stroke: CGColor(red: 0.4, green: 0.26, blue: 0.12, alpha: 1), width: 1.8, dash: nil, hand: hand))
-    draw(InkRenderer(line: line([(200, 40), (210, 120), (250, 190), (240, 270)]), stroke: CGColor(red: 0.55, green: 0.2, blue: 0.12, alpha: 1), width: 1.6, dash: [9, 3, 1.5, 3], hand: hand))
-    _ = ink
-    let symbols = MapStyle.parchment.symbols!
-    func cg(_ c: StyleColor) -> CGColor { CGColor(red: c.red, green: c.green, blue: c.blue, alpha: c.alpha) }
-    draw(InkRenderer(
-        polygon: polygon([(70, 90), (150, 80), (195, 125), (175, 205), (100, 215), (60, 150)]), fill: CGColor(red: 0.45, green: 0.55, blue: 0.3, alpha: 0.22),
-        stroke: CGColor(red: 0.3, green: 0.4, blue: 0.2, alpha: 1), width: 1, dash: nil, hand: hand, decoration: .trees(ink: cg(symbols.tree), wash: cg(symbols.treeWash))
-    ))
-    draw(InkRenderer(
-        polygon: polygon([(225, 80), (340, 95), (350, 175), (265, 205), (215, 150)]), fill: CGColor(red: 0.62, green: 0.5, blue: 0.38, alpha: 0.2),
-        stroke: CGColor(red: 0.4, green: 0.3, blue: 0.2, alpha: 1), width: 1.2, dash: nil, hand: hand, decoration: .peaks(ink: cg(symbols.peak), ground: cg(MapStyle.parchment.background))
-    ))
-    draw(InkRenderer(
-        polygon: polygon([(255, 235), (325, 228), (340, 265), (290, 295), (248, 270)]), fill: CGColor(red: 0.55, green: 0.68, blue: 0.72, alpha: 0.8),
-        stroke: CGColor(red: 0.35, green: 0.45, blue: 0.5, alpha: 1), width: 1.5, dash: nil, hand: hand, decoration: .shore(ink: cg(symbols.shore), inside: true)
-    ))
+    draw(.make(polygon: polygon([(0, 0), (520, 0), (520, 330), (0, 330)], holes: [land]), type: "Water", style: style))
+    draw(.make(polygon: polygon([(70, 90), (150, 80), (195, 125), (175, 205), (100, 215), (60, 150)]), type: "Forest", style: style))
+    draw(.make(polygon: polygon([(225, 80), (340, 95), (350, 175), (265, 205), (215, 150)]), type: "Mountains", style: style))
+    draw(.make(polygon: polygon([(255, 235), (325, 228), (340, 265), (290, 295), (248, 270)]), type: "Lake", style: style))
+    draw(.make(line: line([(120, 80), (150, 140), (130, 190), (190, 240), (170, 310)]), type: "River", style: style))
+    draw(.make(line: line([(60, 200), (160, 170), (250, 190), (340, 130), (480, 150)]), type: "Road", style: style))
+    draw(.make(line: line([(200, 40), (210, 120), (250, 190), (240, 270)]), type: "Region", style: style))
     return Image(decorative: context.makeImage()!, scale: 2)
 }
 
-#Preview("Ink, small") { inkSample(zoomScale: 1) }
-#Preview("Ink, zoomed") { inkSample(zoomScale: 4) }
+#Preview("Parchment ink") { inkSample(.parchment) }
+#Preview("Parchment ink, zoomed") { inkSample(.parchment, zoomScale: 4) }
+#Preview("Survey ink") { inkSample(.survey) }
+#Preview("Watercolour ink") { inkSample(.watercolour) }
