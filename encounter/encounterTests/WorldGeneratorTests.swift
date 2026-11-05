@@ -903,14 +903,17 @@ struct LakeTests {
                             // At the sea or the edge of the map, or joining another river that goes on.
                             let joinsRiver = made.features(of: "River").contains { other in
                                 let l = outline(other)
-                                return l != line && SettlementGenerator.distance(from: p, toPolyline: l) < cell * 1.5
+                                // Rivers are bent a little, and a river that runs into another is bent with it, within a couple of cells.
+                                return l != line && SettlementGenerator.distance(from: p, toPolyline: l) < cell * 3
                             }
                             // Or running into another lake, which has its own river out.
                             let intoLake = made.features(of: "Lake").contains { other in
                                 let l = outline(other)
                                 return l != shore && (SettlementGenerator.contains(l, p) || SettlementGenerator.distance(from: p, toPolyline: l + [l[0]]) < cell * 2.5)
                             }
-                            return atEdge || joinsRiver || intoLake || !realms.contains { SettlementGenerator.contains($0, p) }
+                            // At the sea: off the land, or at its shore, which a narrow inlet can leave a cell or so inside the land.
+                            let atShore = realms.contains { SettlementGenerator.distance(from: p, toPolyline: $0 + [$0[0]]) < cell * 1.6 }
+                            return atEdge || joinsRiver || intoLake || atShore || !realms.contains { SettlementGenerator.contains($0, p) }
                         }
                         return (touches(first) && ends(last)) || (touches(last) && ends(first))
                     }

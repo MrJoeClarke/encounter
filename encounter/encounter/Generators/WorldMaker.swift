@@ -50,6 +50,8 @@ nonisolated struct WorldMaker {
     var realmCount = 0
     var roadEdges = Set<Int>()
     var roadCell: [Bool]
+    /// How hard each cell is to cross for a small unevenness, so that roads wander a little instead of running straight.
+    var roadRough: [Double] = []
     /// A little unevenness in how hard each cell is to cross, so borders and roads don't run in straight lines.
     var wobble: [Double]
 
@@ -487,6 +489,11 @@ nonisolated struct WorldMaker {
 
     /// Rivers run from the highest ground down to the sea, by the way water would flow, and stop where they join another.
     private mutating func rivers() {
+        // Water finds its way over ground that is a little uneven, so that rivers wind between small rises instead of running straight down
+        // the slope. The unevenness is only for deciding the way; the ground itself is as it was.
+        let heights = land.indices.filter { land[$0] }.map { height[$0] }
+        let span = max((heights.max() ?? 1) - (heights.min() ?? 0), 0.1)
+        let roughness = (0..<(n * n)).map { span * 0.07 * (noise.fractal(Double($0 % n) / 7, Double($0 / n) / 7, octaves: 2, salt: 83) - 0.5) }
         var visited = [Bool](repeating: false, count: n * n)
         var heap = MinHeap()
         for i in land.indices where land[i] {
@@ -498,10 +505,11 @@ nonisolated struct WorldMaker {
             }
         }
         while let popped = heap.pop() {
-            for nb in neighbours4(popped.item) where land[nb] && !visited[nb] {
+            for step in neighbours8(popped.item) where land[step.cell] && !visited[step.cell] {
+                let nb = step.cell
                 visited[nb] = true
                 flowTo[nb] = popped.item
-                heap.push(nb, key: max(height[nb], popped.key + 1e-7))
+                heap.push(nb, key: max(height[nb] + roughness[nb], popped.key + 1e-7))
             }
         }
         guard options.rivers > 0 else { return }
@@ -636,7 +644,7 @@ nonisolated struct WorldMaker {
                 if river[next] { break }
                 current = next
             }
-            guard path.count >= 3 else { continue }
+            guard path.count >= 2 else { continue }
             for c in path where land[c] && !lake[c] { river[c] = true }
             riverLines.append(path)
         }
@@ -833,6 +841,56 @@ nonisolated struct WorldMaker {
         (mountain[i] ? 2.5 : forest[i] ? 1.3 : 1) * (river[i] ? 1.5 : 1) * (1 + 0.5 * (wobble[i] - 1))
     }
 
+    /// Bends a line from side to side across its way, by an amount that grows from the start to the end (`amplitude` is given how far
+    /// along it is, from 0 to 1), over about `wavelength` metres. The two ends stay where they are.
+    private func meander(_ line: [V], amplitude: (Double) -> Double, wavelength: Double, salt: Int) -> [V] {
+        guard line.count >= 2 else { return line }
+        let lengths = zip(line, line.dropFirst()).map { $0.0.distance(to: $0.1) }
+        let total = lengths.reduce(0, +)
+        guard total > cell else { return line }
+        let spacing = cell * 0.5
+        let steps = max(Int((total / spacing).rounded()), 2)
+        var result: [V] = []
+        var segment = 0, behind = 0.0
+        for k in 0...steps {
+            let s = total * Double(k) / Double(steps)
+            while segment < lengths.count - 1, behind + lengths[segment] < s { behind += lengths[segment]; segment += 1 }
+            let a = line[segment], b = line[segment + 1]
+            let t = lengths[segment] > 0 ? min(max((s - behind) / lengths[segment], 0), 1) : 0
+            let point = a + (b - a) * t
+            // Not at the ends, so the line still starts and finishes where it should.
+            let taper = min(1, s / (2 * cell), (total - s) / (2 * cell))
+            let sway = (noise.value(s / wavelength, 0.5, salt: salt) - 0.5) * 2
+            let normal = V(x: -(b - a).unit.y, y: (b - a).unit.x)
+            result.append(point + normal * (amplitude(s / total) * sway * taper))
+        }
+        return result
+    }
+
+    /// Bends a line by pushing every point of it by an amount that depends only on where the point is, so two lines that meet are bent
+    /// together and still meet (a river and the one that runs into it). The ends move a little too.
+    private func warped(_ line: [V], by amount: Double, wavelength: Double, salt: Int, keepStart: Bool = false, keepEnd: Bool = false) -> [V] {
+        guard line.count >= 2 else { return line }
+        let lengths = zip(line, line.dropFirst()).map { $0.0.distance(to: $0.1) }
+        let total = lengths.reduce(0, +)
+        guard total > 0 else { return line }
+        let steps = max(Int((total / (cell * 0.5)).rounded()), 2)
+        var result: [V] = []
+        var segment = 0, behind = 0.0
+        for k in 0...steps {
+            let s = total * Double(k) / Double(steps)
+            while segment < lengths.count - 1, behind + lengths[segment] < s { behind += lengths[segment]; segment += 1 }
+            let a = line[segment], b = line[segment + 1]
+            let t = lengths[segment] > 0 ? min(max((s - behind) / lengths[segment], 0), 1) : 0
+            let point = a + (b - a) * t
+            let dx = (noise.value(point.x / wavelength, point.y / wavelength, salt: salt) - 0.5) * 2
+            let dy = (noise.value(point.x / wavelength + 7.3, point.y / wavelength + 3.1, salt: salt + 1) - 0.5) * 2
+            let hold = min(keepStart ? s / (2 * cell) : 1, keepEnd ? (total - s) / (2 * cell) : 1, 1)
+            result.append(point + V(x: dx, y: dy) * (amount * hold))
+        }
+        return result
+    }
+
     private func terrainCost(_ i: Int) -> Double {
         (mountain[i] ? 6 : forest[i] ? 1.8 : 1) * (river[i] ? 2.5 : 1) * wobble[i]
     }
@@ -902,7 +960,10 @@ nonisolated struct WorldMaker {
                 return path.reversed()
             }
             for nb in neighbours8(popped.item) where land[nb.cell] && !lake[nb.cell] {
-                var cost = terrainCost(nb.cell) + abs(elevation[nb.cell] - elevation[popped.item]) * 6
+                // Steepness is the rise over the distance: a road climbs a gentle slope but goes round a steep one, and no cell is quite as
+                // easy to cross as its neighbour.
+                let slope = abs(elevation[nb.cell] - elevation[popped.item]) / nb.distance
+                var cost = (terrainCost(nb.cell) + 60 * slope + 2500 * slope * slope) * (roadRough.isEmpty ? 1 : roadRough[nb.cell])
                 if roadCell[nb.cell] { cost = 0.25 }
                 let through = popped.key + nb.distance * cost
                 if through < distance[nb.cell] {
@@ -925,6 +986,7 @@ nonisolated struct WorldMaker {
     /// Joins the capitals to each other, and then every other settlement to the nearest road or settlement already joined.
     private mutating func roads() {
         guard places.count > 1 else { return }
+        roadRough = (0..<(n * n)).map { 1 + 0.35 * noise.value(Double($0 % n) / 3.5, Double($0 / n) / 3.5, salt: 17) }
         var joined = [Bool](repeating: false, count: n * n)
         let capitals = places.indices.filter { places[$0].isCapital }
 
@@ -1108,9 +1170,20 @@ nonisolated struct WorldMaker {
         for path in riverLines {
             var run: [Int] = []
             func flush(_ run: [Int]) {
-                guard run.filter({ !lake[$0] }).count >= 2 else { return }
+                guard run.filter({ !lake[$0] }).count >= 1, run.count >= 2 else { return }
                 let raw = run.map { waypoint($0) }
-                let points = Curves.smooth(Contours.simplify(open: raw, tolerance: 0.7 * cell), steps: 4)
+                // A river bends from side to side, more as the ground flattens towards its mouth.
+                // The ends in the sea, at a lake or at the edge of the map stay where they are; an end that joins another river moves as that river does.
+                let atWater = { (c: Int) in !land[c] || lake[c] || c % n == 0 || c % n == n - 1 || c / n == 0 || c / n == n - 1 }
+                let simple = Contours.simplify(open: raw, tolerance: 0.35 * cell)
+                let bent = warped(simple, by: 1.3 * cell, wavelength: 12 * cell, salt: 31, keepStart: run.first.map(atWater) ?? false, keepEnd: run.last.map(atWater) ?? false)
+                // A river that ends in the sea is carried a little way into it, so it reaches the shore however the coast has been drawn.
+                var reaching = bent
+                if let last = run.last, !land[last], simple.count >= 2, let end = bent.last {
+                    // Straight on from the way it was going before it was bent.
+                    reaching.append(end + (simple[simple.count - 1] - simple[simple.count - 2]).unit * (1.5 * cell))
+                }
+                let points = Curves.smooth(reaching, steps: 4)
                     .map { GridPoint(easting: min(max($0.x, 0), extent), northing: min(max($0.y, 0), extent)) }
                 guard points.count >= 2 else { return }
                 features.append(GeneratedFeature(name: names.river(using: &random), placeType: "River", summary: String(localized: "A river that runs to the sea."), shape: .line(points)))
@@ -1180,7 +1253,7 @@ nonisolated struct WorldMaker {
                     if let p = settlementAt[c] { return places[p].position }
                     return waypoint(c)
                 }
-                let points = Curves.smooth(Contours.simplify(open: raw, tolerance: 0.8 * cell), steps: 4)
+                let points = Curves.smooth(meander(Contours.simplify(open: raw, tolerance: 0.45 * cell), amplitude: { _ in 0.25 * cell }, wavelength: 4 * cell, salt: 33), steps: 4)
                     .map { GridPoint(easting: min(max($0.x, 0), extent), northing: min(max($0.y, 0), extent)) }
                 guard points.count >= 2, PlaceGeometry.line(points).isValid else { continue }
                 let from = settlementAt[cells[0]].map { places[$0].name }, to = settlementAt[cells[cells.count - 1]].map { places[$0].name }
