@@ -188,7 +188,7 @@ struct MapLetteringSampleTests {
         guard let source = CGImageSourceCreateWithURL(url as CFURL, nil), let image = CGImageSourceCreateImageAtIndex(source, 0, nil) else { return }
         let calibration = MapCalibration(anchoringPixel: (0, Double(image.height)), at: GridPoint(easting: 0, northing: 0), metresPerPixel: 100)!
         var settings = MapTracer.Settings()
-        settings.workingSize = 800
+        settings.workingSize = 1200
         let areas = try #require(MapTracer.trace(image: image, calibration: calibration, settings: settings))
         let started = Date()
         let lines = MapLettering.read(image)
@@ -203,6 +203,40 @@ struct MapLetteringSampleTests {
         for line in withLines.lines {
             let length = zip(line.points, line.points.dropFirst()).reduce(0.0) { $0 + hypot($1.1.easting - $1.0.easting, $1.1.northing - $1.0.northing) }
             print("LETTERS line \(line.kind) '\(line.name)' named \(line.isNamed) points \(line.points.count) length \(Int(length / 100)) px")
+        }
+        // A picture of what was found, for looking at: the outlines of areas and the lines, over the picture.
+        let scale = 1800.0 / Double(image.width)
+        let wide = Int(1800), tall = Int(Double(image.height) * scale)
+        if let context = CGContext(data: nil, width: wide, height: tall, bitsPerComponent: 8, bytesPerRow: 0, space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) {
+            context.draw(image, in: CGRect(x: 0, y: 0, width: wide, height: tall))
+            func point(_ p: GridPoint) -> CGPoint { let pixel = calibration.pixel(at: p); return CGPoint(x: pixel.x * scale, y: Double(tall) - pixel.y * scale) }
+            for colour in withLines.colours {
+                for outline in colour.outlines {
+                    context.beginPath()
+                    for (i, p) in outline.enumerated() { i == 0 ? context.move(to: point(p)) : context.addLine(to: point(p)) }
+                    context.closePath()
+                    context.setFillColor(CGColor(red: colour.red, green: colour.green, blue: colour.blue, alpha: 0.0))
+                    context.setStrokeColor(CGColor(red: 1, green: 0, blue: 1, alpha: 1))
+                    context.setLineWidth(2)
+                    context.strokePath()
+                }
+            }
+            for line in withLines.lines {
+                context.beginPath()
+                for (i, p) in line.points.enumerated() { i == 0 ? context.move(to: point(p)) : context.addLine(to: point(p)) }
+                context.setStrokeColor(line.kind == .river ? CGColor(red: 0, green: 1, blue: 1, alpha: 1) : CGColor(red: 1, green: 1, blue: 0, alpha: 1))
+                context.setLineWidth(3)
+                context.strokePath()
+            }
+            if let result = context.makeImage() {
+                let data = NSMutableData()
+                if let destination = CGImageDestinationCreateWithData(data, "public.png" as CFString, 1, nil) {
+                    CGImageDestinationAddImage(destination, result, nil)
+                    CGImageDestinationFinalize(destination)
+                }
+                let target = FileManager.default.temporaryDirectory.appendingPathComponent("trace-preview.png")
+                do { try (data as Data).write(to: target); print("LETTERS wrote \(target.path)") } catch { print("LETTERS could not write: \(error)") }
+            }
         }
         #expect(!lines.isEmpty)
     }

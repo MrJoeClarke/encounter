@@ -10,6 +10,8 @@ import ImageIO
 /// Finds the coloured areas of a picture of a map, shows them over it, and lets the user say what each colour is before places are made.
 struct TraceMapSheet: View {
     let map: WorldMap
+    /// How many pixels long the picture's longer side is made for working; smaller is quicker and a little rougher.
+    var workingSize = MapTracer.Settings().workingSize
     var onFinish: (GeneratedMapSummary?) -> Void
 
     @Environment(\.modelContext) private var modelContext
@@ -191,8 +193,11 @@ struct TraceMapSheet: View {
             return
         }
         // The areas first, then the lettering on them, which names them and says what some are.
+        let size = workingSize
         let found = await Task.detached(priority: .userInitiated) { () -> MapTrace? in
-            guard let areas = MapTracer.trace(image: picture, calibration: calibration) else { return nil }
+            var settings = MapTracer.Settings()
+            settings.workingSize = size
+            guard let areas = MapTracer.trace(image: picture, calibration: calibration, settings: settings) else { return nil }
             let read = MapLettering.read(picture)
             let labels = MapLettering.labels(from: read)
             let named = MapTracer.attach(labels, to: areas, calibration: calibration)
@@ -213,3 +218,34 @@ struct TraceMapSheet: View {
         onFinish(world.addTracedPlaces(from: colours, lines: lines, for: map, in: modelContext))
     }
 }
+
+
+#if DEBUG
+/// The sample picture of a continent in `Samples/`, if it can be read from the repository, traced at a smaller working size.
+@MainActor
+private func samplePictureMap() -> (ModelContainer, WorldMap) {
+    let container = SampleData.makePreviewContainer()
+    let context = container.mainContext
+    let world = (try? context.fetch(FetchDescriptor<World>(sortBy: [SortDescriptor(\.name)])))?.first
+    let url = URL(fileURLWithPath: #filePath)
+        .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        .appendingPathComponent("Samples/KnownContinent.png")
+    let data = (try? Data(contentsOf: url)) ?? SampleData.solidImage(width: 1500, height: 900, blue: 0.8)
+    let map = WorldMap(name: "Known Continent", imageData: data, kind: .world)
+    let source = CGImageSourceCreateWithData(data as CFData, nil).flatMap { CGImageSourceCreateImageAtIndex($0, 0, nil) }
+    map.pixelWidth = source?.width ?? 1500
+    map.pixelHeight = source?.height ?? 900
+    map.calibration = MapCalibration(anchoringPixel: (0, Double(map.pixelHeight)), at: GridPoint(easting: 0, northing: 0), metresPerPixel: 100)
+    context.insert(map)
+    map.world = world
+    map.place = world?.rootPlace
+    return (container, map)
+}
+
+#Preview("Trace the sample continent") {
+    let (container, map) = samplePictureMap()
+    TraceMapSheet(map: map, workingSize: 800) { _ in }
+        .modelContainer(container)
+        .frame(width: 760, height: 900)
+}
+#endif

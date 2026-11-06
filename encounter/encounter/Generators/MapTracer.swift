@@ -130,7 +130,9 @@ nonisolated enum MapTracer {
         // Strokes are not areas: a colour that is only strokes, and the strokes of one that is also areas (a river in the sea's blue, an
         // outline in the surround's black), give their pixels to what they lie between.
         let original = labels
-        let thin = removeStrokes(&labels, count: centres.count, width: w, height: h, settings: settings)
+        // Water is held to wider strokes than other colours: a river as wide as a dozen pixels is a line on a map, not an area.
+        let water = Set(centres.indices.filter { guess(l: centres[$0].l, a: centres[$0].a, b: centres[$0].b) == .water })
+        let thin = removeStrokes(&labels, count: centres.count, width: w, height: h, settings: settings, wide: water)
         // What was taken off is kept, with its colour, for following the lines in it.
         var strokes = [Int16](repeating: -1, count: count)
         for y in 0..<h { for x in 0..<w where labels[y * w + x] < 0 { strokes[(h - 1 - y) * w + x] = original[y * w + x] } }
@@ -416,11 +418,11 @@ nonisolated enum MapTracer {
 
     /// Takes the colour off strokes: what is left of a colour's pixels after taking `thinRadius` off every edge and putting it back is
     /// the part of it that is wide enough to be an area. Returns which colours are only strokes, which have nothing left.
-    private static func removeStrokes(_ labels: inout [Int16], count colours: Int, width: Int, height: Int, settings: Settings) -> [Bool] {
+    private static func removeStrokes(_ labels: inout [Int16], count colours: Int, width: Int, height: Int, settings: Settings, wide: Set<Int> = []) -> [Bool] {
         var result = [Bool](repeating: false, count: colours)
-        let r = settings.thinRadius
         var keep = [Bool](repeating: false, count: labels.count)
         for colour in 0..<colours {
+            let r = wide.contains(colour) ? settings.thinRadius * 3 : settings.thinRadius
             let mask = labels.map { Int($0) == colour }
             let before = mask.reduce(0) { $0 + ($1 ? 1 : 0) }
             guard before > 0 else { result[colour] = true; continue }

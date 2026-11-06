@@ -78,8 +78,9 @@ nonisolated enum MapLines {
             for i in mask.indices where colours.contains(trace.strokes[i]) && !blank[i] { mask[i] = true; any = true }
             guard any else { continue }
             removeSpecks(&mask, width: w, height: h, smallest: settings.smallestStroke)
+            let stroke = mask
             thin(&mask, width: w, height: h)
-            for line in follow(mask, width: w, height: h, settings: settings) where !isBorder(line, in: trace) { found.append((kind, line)) }
+            for line in follow(mask, width: w, height: h, settings: settings) where !isBorder(line, in: trace, stroke: stroke) && !isCoast(line, in: trace) { found.append((kind, line)) }
         }
         return found.enumerated().map { index, line in
             let smooth = smoothed(line.points)
@@ -88,9 +89,35 @@ nonisolated enum MapLines {
         }
     }
 
+    /// Whether a line runs along the edge of the sea, as a narrow bay or the strip of shallows by a coast does, and is not a river: most
+    /// places along it have the sea within a few pixels.
+    private static func isCoast(_ line: [V], in trace: MapTrace) -> Bool {
+        let w = trace.workingWidth, h = trace.workingHeight
+        let sea = Set(trace.colours.filter { $0.type == .water && !$0.outlines.isEmpty }.map { Int16($0.id) })
+        guard !sea.isEmpty, line.count >= 2, trace.labels.count == w * h else { return false }
+        var near = 0, total = 0
+        var travelled = 0.0
+        for (a, b) in zip(line, line.dropFirst()) {
+            travelled += a.distance(to: b)
+            guard travelled >= 4 else { continue }
+            travelled = 0
+            total += 1
+            let cx = Int(a.x), cy = Int(a.y)
+            var found = false
+            for dy in stride(from: -8, through: 8, by: 4) {
+                for dx in stride(from: -8, through: 8, by: 4) {
+                    let x = cx + dx, y = cy + dy
+                    if x >= 0, y >= 0, x < w, y < h, sea.contains(trace.labels[y * w + x]) { found = true }
+                }
+            }
+            if found { near += 1 }
+        }
+        return total >= 3 && Double(near) >= 0.6 * Double(total)
+    }
+
     /// Whether a line runs along the border between two different areas, as the mixed colour at the edge of an area does, and not along
     /// inside one, as a river does: most places along it have a different colour on one side from the other.
-    private static func isBorder(_ line: [V], in trace: MapTrace) -> Bool {
+    private static func isBorder(_ line: [V], in trace: MapTrace, stroke: [Bool]) -> Bool {
         let w = trace.workingWidth, h = trace.workingHeight
         guard line.count >= 2, trace.labels.count == w * h else { return false }
         func label(_ p: V) -> Int16? {
@@ -98,6 +125,7 @@ nonisolated enum MapLines {
             return x >= 0 && y >= 0 && x < w && y < h ? trace.labels[y * w + x] : nil
         }
         var different = 0, total = 0
+        var widths = 0.0
         var travelled = 0.0
         for (a, b) in zip(line, line.dropFirst()) {
             let length = a.distance(to: b)
@@ -111,8 +139,21 @@ nonisolated enum MapLines {
             guard let one = label(middle + across), let other = label(middle - across) else { continue }
             total += 1
             if one != other { different += 1 }
+            // How wide the stroke is here, counted across it from the line's middle.
+            var width = 1.0
+            for sign in [1.0, -1.0] {
+                var step = 1.0
+                while step <= 8 {
+                    let x = Int(middle.x + across.x / 6 * step * sign), y = Int(middle.y + across.y / 6 * step * sign)
+                    guard x >= 0, y >= 0, x < w, y < h, stroke[y * w + x] else { break }
+                    width += 1
+                    step += 1
+                }
+            }
+            widths += width
         }
-        return total > 0 && Double(different) >= 0.5 * Double(total)
+        // The mixed colour at the edge of two areas is a stroke only a pixel or two wide; a river that is the border between two realms is wider.
+        return total > 0 && Double(different) >= 0.5 * Double(total) && widths / Double(total) < 3.5
     }
 
     // MARK: Thinning
