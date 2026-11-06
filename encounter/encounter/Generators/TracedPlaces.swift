@@ -27,18 +27,40 @@ extension World {
             }
         }
         let parent = map.place ?? rootPlace
-        for colour in colours {
-            guard let placeType = colour.type.placeType, let first = colour.outlines.first else { continue }
-            let page = addPage(kind: .place, in: context)
-            page.title = colour.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? colour.type.title : colour.name
-            page.attributes["core.placeType"] = .text(placeType)
-            page.geometry = colour.outlines.count == 1 ? .polygon(first) : .multiPolygon(colour.outlines)
-            page.parent = parent
-            page.parentSource = .manual
-            page.markGenerated(by: map)
-            page.attributes["gen.traced"] = .text("1")
-            page.updateSearchText()
-            summary.created += 1
+        for colour in colours where colour.type != .ignore {
+            // Pieces with a name from the lettering make a place each (one for each different name); the others make one with the colour's
+            // name, or if the colour has just one name, are more of that place, as an island is of its realm.
+            var groups: [(name: String, summary: String, type: TracedType, pieces: [[GridPoint]])] = []
+            var unnamed: [[GridPoint]] = []
+            for (i, outline) in colour.outlines.enumerated() {
+                guard let named = colour.named[i], !named.name.isEmpty else { unnamed.append(outline); continue }
+                let type = named.type ?? colour.type
+                if let at = groups.firstIndex(where: { $0.name == named.name && $0.type == type }) {
+                    groups[at].pieces.append(outline)
+                } else {
+                    groups.append((named.name, named.summary, type, [outline]))
+                }
+            }
+            if groups.count == 1 {
+                groups[0].pieces.append(contentsOf: unnamed)
+            } else if !unnamed.isEmpty {
+                let name = colour.name.trimmingCharacters(in: .whitespacesAndNewlines)
+                groups.append((name.isEmpty ? colour.type.title : name, "", colour.type, unnamed))
+            }
+            for group in groups {
+                guard let placeType = group.type.placeType, let first = group.pieces.first else { continue }
+                let page = addPage(kind: .place, in: context)
+                page.title = group.name
+                page.summary = group.summary
+                page.attributes["core.placeType"] = .text(placeType)
+                page.geometry = group.pieces.count == 1 ? .polygon(first) : .multiPolygon(group.pieces)
+                page.parent = parent
+                page.parentSource = .manual
+                page.markGenerated(by: map)
+                page.attributes["gen.traced"] = .text("1")
+                page.updateSearchText()
+                summary.created += 1
+            }
         }
         return summary
     }

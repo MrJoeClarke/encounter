@@ -38,6 +38,14 @@ nonisolated enum TracedType: String, CaseIterable, Identifiable, Sendable {
     }
 }
 
+/// A name that lettering on the picture gives to one piece of a colour's areas.
+nonisolated struct TracedName: Equatable, Sendable {
+    var name: String
+    var summary: String
+    /// What the name's words say the piece is, where that isn't what its colour is.
+    var type: TracedType?
+}
+
 /// One of the main colours of a picture, and the areas of it.
 nonisolated struct TracedColour: Identifiable, Equatable, Sendable {
     let id: Int
@@ -55,13 +63,28 @@ nonisolated struct TracedColour: Identifiable, Equatable, Sendable {
     var name: String
     /// Its areas in the world's plane, biggest first. Empty for a thin colour, and for the surround of the picture.
     var outlines: [[GridPoint]]
+    /// The names lettering gives to pieces, by the number of the piece in `outlines`. A piece with none has the colour's name.
+    var named: [Int: TracedName] = [:]
 }
 
-nonisolated struct MapTrace: Equatable, Sendable {
+nonisolated struct MapTrace: Sendable {
     var colours: [TracedColour]
     /// The size of the picture, in pixels.
     var width: Int
     var height: Int
+    /// Which colour (its `id`) each pixel of the working picture has, from the bottom row up, and how big that picture is.
+    var labels: [Int16] = []
+    var workingWidth = 0
+    var workingHeight = 0
+
+    /// The colour at a place in the picture, in its pixels from the top left, if it is one that has areas.
+    func colour(atX x: Double, y: Double) -> TracedColour? {
+        guard workingWidth > 0, width > 0, height > 0 else { return nil }
+        let column = Int(x / Double(width) * Double(workingWidth)), row = Int((1 - y / Double(height)) * Double(workingHeight))
+        guard column >= 0, column < workingWidth, row >= 0, row < workingHeight else { return nil }
+        let id = Int(labels[row * workingWidth + column])
+        return colours.first { $0.id == id && !$0.outlines.isEmpty }
+    }
 
     /// The colours that have areas, which are the ones to choose a type for.
     var areaColours: [TracedColour] { colours.filter { !$0.outlines.isEmpty } }
@@ -77,7 +100,7 @@ nonisolated enum MapTracer {
         /// How many colours are looked for, before near ones are joined.
         var colours = 12
         /// How far apart two colours must be (in Lab) to be different ones.
-        var separation = 12.0
+        var separation = 9.0
         /// A colour is thin if less than this share of its pixels are left after taking a few pixels off every edge.
         var thinShare = 0.15
         /// How many pixels are taken off every edge to find out.
@@ -163,7 +186,54 @@ nonisolated enum MapTracer {
             colours.append(TracedColour(id: colours.count, red: r, green: g, blue: b, share: 0, isThin: true, type: .ignore, name: "", outlines: []))
         }
         name(&colours)
-        return MapTrace(colours: colours, width: image.width, height: image.height)
+        return MapTrace(colours: colours, width: image.width, height: image.height, labels: compact, workingWidth: w, workingHeight: h)
+    }
+
+    // MARK: Names
+
+    /// Gives pieces of the areas the names written on them. A name with words that say what it is (Mountains, Forest, Sea) names the
+    /// piece it is on, and says what the piece is. Other lettering names a piece only if it is clearly bigger than most of the lettering
+    /// on the picture, as a realm's name is, so that the names of towns and rivers are not taken for the names of the land.
+    private static func edge(_ point: GridPoint, _ outline: [GridPoint]) -> Double {
+        Plane.distanceToEdge(V(x: point.easting, y: point.northing), outline.map { V(x: $0.easting, y: $0.northing) })
+    }
+
+    static func attach(_ labels: [MapLabel], to trace: MapTrace, calibration: MapCalibration) -> MapTrace {
+        guard !labels.isEmpty else { return trace }
+        let heights = labels.map(\.height).sorted()
+        let typical = heights[heights.count / 2]
+        var result = trace
+        // What each piece is given so far, by colour and piece: the label, and whether its words say what it is.
+        var chosen: [[Int: (label: MapLabel, said: Bool)]] = Array(repeating: [:], count: trace.colours.count)
+        for label in labels {
+            let said = label.type != nil
+            // Names of realms are written in capitals; lettering turned to run along a river is very tall to read, and is not a name of land.
+            guard said || ((label.isCapitals || label.height >= 1.35 * typical) && label.height <= 2.5 * typical),
+                  let colour = trace.colour(atX: label.x, y: label.y), let index = trace.colours.firstIndex(where: { $0.id == colour.id })
+            else { continue }
+            let point = calibration.gridPoint(atX: label.x, y: label.y)
+            // The piece it is on; the lettering of a name sits well inside it, but if it is on a piece's edge, the nearest.
+            let pieces = trace.colours[index].outlines
+            let on = pieces.indices.first { PlaceGeometry.polygon(pieces[$0]).contains(point) }
+                ?? pieces.indices.min { edge(point, pieces[$0]) < edge(point, pieces[$1]) }
+            guard let piece = on else { continue }
+            if let existing = chosen[index][piece] {
+                // Words that say what it is win over those that don't, and then the bigger lettering.
+                if (existing.said && !said) || (existing.said == said && existing.label.size >= label.size) { continue }
+            }
+            chosen[index][piece] = (label, said)
+        }
+        for index in result.colours.indices {
+            for (piece, pick) in chosen[index] {
+                result.colours[index].named[piece] = TracedName(name: pick.label.name, summary: pick.label.description, type: pick.label.type)
+            }
+            // The words of the names settle what the colour is, if its biggest piece says; other pieces that say something else keep theirs.
+            if let first = result.colours[index].named[0]?.type { result.colours[index].type = first }
+            for (piece, name) in result.colours[index].named where name.type == result.colours[index].type {
+                result.colours[index].named[piece]?.type = nil
+            }
+        }
+        return result
     }
 
     // MARK: The picture at working size
@@ -442,7 +512,7 @@ nonisolated enum MapTracer {
         // Greys and greyish browns are mountains.
         if chroma < 14, l > 35, l < 75 { return .mountains }
         // Sandy yellows and tans that are darker than paper are wilderness; the rest is land.
-        if chroma > 14, hue > 55, hue < 85, l < 72 { return .wilderness }
+        if chroma > 14, hue > 70, hue < 100, l < 68 { return .wilderness }
         return .region
     }
 

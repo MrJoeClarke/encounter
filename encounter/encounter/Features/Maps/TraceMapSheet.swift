@@ -63,9 +63,14 @@ struct TraceMapSheet: View {
             Divider()
             List {
                 Section {
-                    ForEach($colours) { $colour in row($colour) }
+                    ForEach($colours) { $colour in
+                        row($colour)
+                        ForEach(colour.named.keys.sorted(), id: \.self) { piece in
+                            namedPiece(piece, of: $colour)
+                        }
+                    }
                 } header: {
-                    Text("Each main colour of the picture. Choose what its areas are, or leave them out.")
+                    Text("Each main colour of the picture, and the names read from its lettering. Choose what each is, or leave it out.")
                         .textCase(nil)
                 }
             }
@@ -87,6 +92,31 @@ struct TraceMapSheet: View {
             TextField("Name", text: colour.name)
                 .disabled(colour.wrappedValue.type == .ignore)
             Text(colour.wrappedValue.share, format: .percent.precision(.fractionLength(0)))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    /// A piece of a colour's areas that has a name from the lettering on the picture.
+    private func namedPiece(_ piece: Int, of colour: Binding<TracedColour>) -> some View {
+        HStack {
+            Image(systemName: "text.cursor")
+                .foregroundStyle(.secondary)
+                .frame(width: 32)
+                .accessibilityHidden(true)
+            Picker("Type", selection: Binding(
+                get: { colour.wrappedValue.named[piece]?.type ?? colour.wrappedValue.type },
+                set: { colour.wrappedValue.named[piece]?.type = $0 == colour.wrappedValue.type ? nil : $0 }
+            )) {
+                ForEach(TracedType.allCases) { Text($0.title).tag($0) }
+            }
+            .labelsHidden()
+            .fixedSize()
+            TextField("Name", text: Binding(
+                get: { colour.wrappedValue.named[piece]?.name ?? "" },
+                set: { colour.wrappedValue.named[piece]?.name = $0 }
+            ))
+            Text("read from the picture")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
@@ -123,7 +153,11 @@ struct TraceMapSheet: View {
             problem = String(localized: "The map has no picture, or has not been calibrated yet.")
             return
         }
-        let found = await Task.detached(priority: .userInitiated) { MapTracer.trace(image: picture, calibration: calibration) }.value
+        // The areas first, then the lettering on them, which names them and says what some are.
+        let found = await Task.detached(priority: .userInitiated) { () -> MapTrace? in
+            guard let areas = MapTracer.trace(image: picture, calibration: calibration) else { return nil }
+            return MapTracer.attach(MapLettering.labels(from: MapLettering.read(picture)), to: areas, calibration: calibration)
+        }.value
         guard let found else {
             problem = String(localized: "No areas could be found in this picture.")
             return
