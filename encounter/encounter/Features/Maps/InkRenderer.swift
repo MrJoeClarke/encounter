@@ -14,6 +14,8 @@ final class InkRenderer: MKOverlayRenderer {
     let bounds: MKMapRect
     private let decoration: InkDecoration?
     private let wash: MapStyle.Wash?
+    /// The accent colour the place is highlighted in, if it is the one chosen.
+    private let highlight: CGColor?
     private let isClosed: Bool
     private let fill: CGColor?
     private let stroke: CGColor
@@ -22,11 +24,12 @@ final class InkRenderer: MKOverlayRenderer {
     private let hand: MapStyle.HandDrawn
 
     /// The outline of an area, and the holes cut in it.
-    init(polygon: MKPolygon, fill: CGColor?, stroke: CGColor, width: Double, dash: [Double]?, hand: MapStyle.HandDrawn, decoration: InkDecoration? = nil, wash: MapStyle.Wash? = nil) {
+    init(polygon: MKPolygon, fill: CGColor?, stroke: CGColor, width: Double, dash: [Double]?, hand: MapStyle.HandDrawn, decoration: InkDecoration? = nil, wash: MapStyle.Wash? = nil, highlight: CGColor? = nil) {
         rings = ([polygon] + (polygon.interiorPolygons ?? [])).map(Self.mapPoints)
         bounds = polygon.boundingMapRect
         self.decoration = decoration
         self.wash = wash
+        self.highlight = highlight
         isClosed = true
         self.fill = fill
         self.stroke = stroke
@@ -37,11 +40,12 @@ final class InkRenderer: MKOverlayRenderer {
     }
 
     /// A line.
-    init(line: MKPolyline, stroke: CGColor, width: Double, dash: [Double]?, hand: MapStyle.HandDrawn) {
+    init(line: MKPolyline, stroke: CGColor, width: Double, dash: [Double]?, hand: MapStyle.HandDrawn, highlight: CGColor? = nil) {
         rings = [Self.mapPoints(of: line)]
         bounds = line.boundingMapRect
         decoration = nil
         wash = nil
+        self.highlight = highlight
         isClosed = false
         fill = nil
         self.stroke = stroke
@@ -103,13 +107,37 @@ final class InkRenderer: MKOverlayRenderer {
                 context.restoreGState()
             }
         }
-        guard width > 0 else { return }
+        // A highlighted area is washed with the accent colour and outlined heavily in it; a highlighted line gets a wide pale halo of it behind
+        // its own stroke.
+        if let highlight, isClosed {
+            context.beginPath()
+            for ring in rings where ring.count >= 3 {
+                context.move(to: point(for: ring[0]))
+                for p in ring.dropFirst() { context.addLine(to: point(for: p)) }
+                context.closePath()
+            }
+            context.setFillColor(highlight.copy(alpha: 0.22) ?? highlight)
+            context.fillPath(using: .evenOdd)
+        }
+        var pens: [(color: CGColor, width: Double, dash: [Double]?)] = [(stroke, width, dash)]
+        if let highlight {
+            pens = isClosed
+                // An empty dash is a solid line drawn as one stroke, so a translucent halo has no darker beads where pieces overlap.
+                ? [(highlight, max(width * 1.6, 2.5), [])]
+                : [(highlight.copy(alpha: 0.32) ?? highlight, width + 9, []), (stroke, width, dash)]
+        }
+        for pen in pens where pen.width > 0 { strokePass(pen, mapRect: mapRect, zoomScale: zoomScale, in: context) }
+        if let decoration { drawDecoration(decoration, mapRect: mapRect, zoomScale: zoomScale, in: context) }
+    }
 
-        context.setStrokeColor(stroke)
+    /// The whole of the outline or line, drawn once in one pen.
+    private func strokePass(_ pen: (color: CGColor, width: Double, dash: [Double]?), mapRect: MKMapRect, zoomScale: MKZoomScale, in context: CGContext) {
+        let screen = 1 / Double(zoomScale)
+        context.setStrokeColor(pen.color)
         context.setLineCap(.round)
         context.setLineJoin(.round)
         let spacing = 3 * screen
-        let reach = (width + hand.amplitude * 2 + 4) * screen
+        let reach = (pen.width + hand.amplitude * 2 + 4) * screen
         let visible = mapRect.insetBy(dx: -reach, dy: -reach)
 
         for ring in rings where ring.count >= 2 {
@@ -124,7 +152,7 @@ final class InkRenderer: MKOverlayRenderer {
                 guard length > 0 else { continue }
                 let box = MKMapRect(x: min(a.x, b.x), y: min(a.y, b.y), width: abs(dx), height: abs(dy))
                 guard box.intersects(visible) else {
-                    stroke(run, zoomScale: zoomScale, in: context)
+                    stroke(run, pen: pen, zoomScale: zoomScale, in: context)
                     run = []
                     continue
                 }
@@ -145,17 +173,16 @@ final class InkRenderer: MKOverlayRenderer {
                     ))
                 }
             }
-            stroke(run, zoomScale: zoomScale, in: context)
+            stroke(run, pen: pen, zoomScale: zoomScale, in: context)
         }
-        if let decoration { drawDecoration(decoration, mapRect: mapRect, zoomScale: zoomScale, in: context) }
     }
 
     /// A stretch of line, in pieces of different thickness, or all at once if it is dashed (a dash can't be thicker in one place).
-    private func stroke(_ run: [Sample], zoomScale: MKZoomScale, in context: CGContext) {
+    private func stroke(_ run: [Sample], pen: (color: CGColor, width: Double, dash: [Double]?), zoomScale: MKZoomScale, in context: CGContext) {
         guard run.count >= 2 else { return }
         let screen = 1 / Double(zoomScale)
-        if let dash {
-            context.setLineWidth(width * screen)
+        if let dash = pen.dash {
+            context.setLineWidth(pen.width * screen)
             context.setLineDash(phase: CGFloat(run[0].along), lengths: dash.map { CGFloat($0 * screen) })
             context.beginPath()
             context.move(to: run[0].point)
@@ -165,7 +192,7 @@ final class InkRenderer: MKOverlayRenderer {
             return
         }
         for i in 1..<run.count {
-            context.setLineWidth(width * screen * (run[i].weight + run[i - 1].weight) / 2)
+            context.setLineWidth(pen.width * screen * (run[i].weight + run[i - 1].weight) / 2)
             context.move(to: run[i - 1].point)
             context.addLine(to: run[i].point)
             context.strokePath()
@@ -179,7 +206,7 @@ import SwiftUI
 
 /// A style's look on a few shapes, drawn straight into a picture (a preview can't show MapKit itself).
 @MainActor
-func inkSample(_ style: MapStyle, zoomScale: Double = 1) -> Image {
+func inkSample(_ style: MapStyle, zoomScale: Double = 1, highlighted: Set<String> = []) -> Image {
     let size = CGSize(width: 520, height: 330)
     let context = CGContext(
         data: nil, width: Int(size.width * 2), height: Int(size.height * 2), bitsPerComponent: 8, bytesPerRow: 0,
@@ -214,13 +241,13 @@ func inkSample(_ style: MapStyle, zoomScale: Double = 1) -> Image {
         context.restoreGState()
     }
     let land = polygon([(40, 60), (200, 30), (330, 70), (360, 150), (300, 250), (180, 290), (70, 240), (30, 140)])
-    draw(.make(polygon: polygon([(0, 0), (520, 0), (520, 330), (0, 330)], holes: [land]), type: "Water", style: style))
-    draw(.make(polygon: polygon([(70, 90), (150, 80), (195, 125), (175, 205), (100, 215), (60, 150)]), type: "Forest", style: style))
-    draw(.make(polygon: polygon([(225, 80), (340, 95), (350, 175), (265, 205), (215, 150)]), type: "Mountains", style: style))
-    draw(.make(polygon: polygon([(255, 235), (325, 228), (340, 265), (290, 295), (248, 270)]), type: "Lake", style: style))
-    draw(.make(line: line([(120, 80), (150, 140), (130, 190), (190, 240), (170, 310)]), type: "River", style: style))
-    draw(.make(line: line([(60, 200), (160, 170), (250, 190), (340, 130), (480, 150)]), type: "Road", style: style))
-    draw(.make(line: line([(200, 40), (210, 120), (250, 190), (240, 270)]), type: "Region", style: style))
+    draw(.make(polygon: polygon([(0, 0), (520, 0), (520, 330), (0, 330)], holes: [land]), type: "Water", style: style, highlighted: highlighted.contains("Water")))
+    draw(.make(polygon: polygon([(70, 90), (150, 80), (195, 125), (175, 205), (100, 215), (60, 150)]), type: "Forest", style: style, highlighted: highlighted.contains("Forest")))
+    draw(.make(polygon: polygon([(225, 80), (340, 95), (350, 175), (265, 205), (215, 150)]), type: "Mountains", style: style, highlighted: highlighted.contains("Mountains")))
+    draw(.make(polygon: polygon([(255, 235), (325, 228), (340, 265), (290, 295), (248, 270)]), type: "Lake", style: style, highlighted: highlighted.contains("Lake")))
+    draw(.make(line: line([(120, 80), (150, 140), (130, 190), (190, 240), (170, 310)]), type: "River", style: style, highlighted: highlighted.contains("River")))
+    draw(.make(line: line([(60, 200), (160, 170), (250, 190), (340, 130), (480, 150)]), type: "Road", style: style, highlighted: highlighted.contains("Road")))
+    draw(.make(line: line([(200, 40), (210, 120), (250, 190), (240, 270)]), type: "Region", style: style, highlighted: highlighted.contains("Region")))
     return Image(decorative: context.makeImage()!, scale: 2)
 }
 
@@ -228,3 +255,8 @@ func inkSample(_ style: MapStyle, zoomScale: Double = 1) -> Image {
 #Preview("Parchment ink, zoomed") { inkSample(.parchment, zoomScale: 4) }
 #Preview("Survey ink") { inkSample(.survey) }
 #Preview("Watercolour ink") { inkSample(.watercolour) }
+
+#Preview("Highlighted, Parchment") { inkSample(.parchment, highlighted: ["Forest", "River", "Region"]) }
+#Preview("Highlighted, Dark") { inkSample(.dark, highlighted: ["Mountains", "Road"]) }
+#Preview("Highlighted, Survey") { inkSample(.survey, highlighted: ["Forest", "Road"]) }
+#Preview("Highlighted, Watercolour") { inkSample(.watercolour, highlighted: ["Mountains", "River"]) }

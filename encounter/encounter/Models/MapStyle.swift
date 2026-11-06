@@ -34,6 +34,8 @@ nonisolated struct MapStyle: Identifiable, Equatable, Sendable {
     var frame: SheetFrame?
     /// How lines and outlines are drawn if they are to look drawn by hand; nil for the clean line of a plan.
     var hand: HandDrawn?
+    /// The colour a chosen place is highlighted in.
+    var accent = StyleColor(red: 1, green: 0.75, blue: 0.2)
     /// The drawn trees, peaks and shore lines of a map in this style, if it has them.
     var symbols: Symbols?
     /// Washes that pool a little darker at their edge, as watercolour does.
@@ -159,6 +161,7 @@ nonisolated struct MapStyle: Identifiable, Equatable, Sendable {
         paper: PaperTexture(), lettering: .baskerville,
         surround: color(0.2, 0.14, 0.09), frame: SheetFrame(ink: color(0.3, 0.18, 0.08), outer: 2.6, inner: 0.8, gap: 6),
         hand: HandDrawn(amplitude: 0.9, wavelength: 16, weight: 0.35),
+        accent: color(0.72, 0.1, 0.08),
         symbols: Symbols(tree: color(0.25, 0.33, 0.14), treeWash: color(0.5, 0.6, 0.32, 0.45), peak: color(0.3, 0.2, 0.12), shore: color(0.35, 0.45, 0.5))
     )
 
@@ -189,6 +192,7 @@ nonisolated struct MapStyle: Identifiable, Equatable, Sendable {
         lettering: Lettering(regular: "Helvetica", italic: "Helvetica-Oblique", semibold: "Helvetica-Bold", semiboldItalic: "Helvetica-BoldOblique"),
         surround: color(0.8, 0.81, 0.83), frame: SheetFrame(ink: color(0.1, 0.1, 0.1), outer: 1.6, inner: 0.5, gap: 5),
         hand: HandDrawn(amplitude: 0, wavelength: 16, weight: 0),
+        accent: color(0.86, 0.08, 0.08),
         symbols: Symbols(tree: color(0.22, 0.42, 0.22), treeWash: color(0.78, 0.88, 0.72, 0.5), peak: color(0.5, 0.36, 0.22), shore: nil, regular: true, contours: true),
         gridInk: color(0.4, 0.58, 0.85, 0.5)
     )
@@ -220,6 +224,7 @@ nonisolated struct MapStyle: Identifiable, Equatable, Sendable {
         lettering: Lettering(regular: "Optima-Regular", italic: "Optima-Italic", semibold: "Optima-Bold", semiboldItalic: "Optima-BoldItalic"),
         surround: color(0.9, 0.89, 0.86), frame: SheetFrame(ink: color(0.8, 0.62, 0.5, 0.7), outer: 3, inner: 0, gap: 6),
         hand: HandDrawn(amplitude: 1.3, wavelength: 24, weight: 0.5),
+        accent: color(0.82, 0.22, 0.4),
         symbols: Symbols(tree: color(0.3, 0.5, 0.3), treeWash: color(0.45, 0.7, 0.45, 0.55), peak: color(0.5, 0.4, 0.35), shore: color(0.45, 0.65, 0.85), soft: true),
         wash: Wash(band: 7, strength: 0.55)
     )

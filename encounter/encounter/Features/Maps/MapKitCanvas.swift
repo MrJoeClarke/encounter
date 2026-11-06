@@ -81,6 +81,8 @@ struct MapKitCanvas: PlatformViewRepresentable {
     var onPlace: ((_ pixelX: Double, _ pixelY: Double) -> Void)?
     var onMove: ((_ page: Page, _ pixelX: Double, _ pixelY: Double) -> Void)?
     var onSelect: ((_ page: Page?) -> Void)?
+    /// The place chosen, which is drawn in the style's accent colour.
+    var highlighted: Page?
     /// Told how much of the world a point on screen is, and which way the map is turned, whenever the view moves.
     var onReading: ((MapViewReading) -> Void)?
 
@@ -192,6 +194,8 @@ struct MapKitCanvas: PlatformViewRepresentable {
         var tileKey = ""
         /// The style the shapes and lines were last drawn in, so they are drawn again when it changes.
         var drawnStyleID = ""
+        /// The place that was highlighted when the shapes and lines were last drawn.
+        var drawnHighlightID: UUID?
         var mapID: UUID?
         private var pinAnnotations: [UUID: PlaceAnnotation] = [:]
         private var markAnnotations: [MarkAnnotation] = []
@@ -446,6 +450,11 @@ struct MapKitCanvas: PlatformViewRepresentable {
                         pinAnnotations[pin.id] = nil
                     }
                     if let annotation = pinAnnotations[pin.id] {
+                        let chosen = pin.page.id == parent?.highlighted?.id
+                        if annotation.isHighlighted != chosen {
+                            annotation.isHighlighted = chosen
+                            view.view(for: annotation)?.image = MapGlyphs.pin(annotation.kind, style: MapStyle.style(id: annotation.styleID), highlighted: chosen)
+                        }
                         annotation.title = pin.page.title
                         annotation.isMovable = pin.isMovable
                         view.view(for: annotation)?.isDraggable = pin.isMovable
@@ -456,6 +465,7 @@ struct MapKitCanvas: PlatformViewRepresentable {
                         let annotation = PlaceAnnotation(page: pin.page, coordinate: coordinate)
                         annotation.kind = kind
                         annotation.styleID = styleID
+                        annotation.isHighlighted = pin.page.id == parent?.highlighted?.id
                         annotation.isMovable = pin.isMovable
                         annotation.maxView = (parent?.map.style ?? .dark).zoom.pin(kind)
                         pinAnnotations[pin.id] = annotation
@@ -482,19 +492,24 @@ struct MapKitCanvas: PlatformViewRepresentable {
                 && shapeOverlays.allSatisfy { wantedShapes[$0.key] == $0.value.corners && $0.value.styleType == $0.value.page.attributeText("core.placeType") }
                 && lineOverlays.allSatisfy { wantedLines[$0.key] == $0.value.points && $0.value.styleType == $0.value.page.attributeText("core.placeType") }
                 && drawnStyleID == (parent?.map.style.id ?? "")
+                && drawnHighlightID == parent?.highlighted?.id
             if !overlaysUnchanged {
                 for overlay in shapeOverlays.values { view.removeOverlay(overlay) }
                 for overlay in lineOverlays.values { view.removeOverlay(overlay) }
                 shapeOverlays = [:]
                 lineOverlays = [:]
                 drawnStyleID = parent?.map.style.id ?? ""
+                drawnHighlightID = parent?.highlighted?.id
+                // The place chosen is drawn last, so it is on top.
+                let chosen = parent?.highlighted?.id
+                func rank(_ page: Page) -> Int { order(page) + (page.id == chosen ? 1000 : 0) }
                 func order(_ page: Page) -> Int { PlaceStyle.style(forPlaceType: page.attributeText("core.placeType")).drawOrder }
                 // Bigger areas go under smaller ones of the same kind.
                 let sortedShapes = shapes.sorted { (order($0.page), -PlaceGeometry.polygon($0.corners).area) < (order($1.page), -PlaceGeometry.polygon($1.corners).area) }
                 let sortedLines = lines.sorted { order($0.page) < order($1.page) }
                 var layers: [(order: Int, add: () -> Void)] = []
                 for shape in sortedShapes {
-                    layers.append((order(shape.page), { [unowned self] in
+                    layers.append((rank(shape.page), { [unowned self] in
                         // The sea is cut round the land, so the land is the ground itself and not sea under a faint tint.
                         let holes = shape.page.attributeText("core.placeType") == "Water"
                             ? shapes.filter { $0.page.attributeText("core.placeType") == "Region" }.map(\.corners) : []
@@ -504,7 +519,7 @@ struct MapKitCanvas: PlatformViewRepresentable {
                     }))
                 }
                 for line in sortedLines {
-                    layers.append((order(line.page), { [unowned self] in
+                    layers.append((rank(line.page), { [unowned self] in
                         let overlay = PlaceLineOverlay(page: line.page, points: line.points)
                         self.lineOverlays[line.id] = overlay
                         view.addOverlay(overlay, level: .aboveLabels)
@@ -549,7 +564,7 @@ struct MapKitCanvas: PlatformViewRepresentable {
                 let mapStyle = parent?.map.style ?? MapStyle.dark
                 let type = shape.page.attributeText("core.placeType")
                 let style = mapStyle.style(forPlaceType: type)
-                if let ink = InkRenderer.make(polygon: shape, type: type, style: mapStyle) { return ink }
+                if let ink = InkRenderer.make(polygon: shape, type: type, style: mapStyle, highlighted: shape.page.id == parent?.highlighted?.id) { return ink }
                 let renderer = MKPolygonRenderer(polygon: shape)
                 renderer.fillColor = style.fill.map(PlatformColor.init(style:))
                 renderer.strokeColor = PlatformColor(style: style.stroke)
@@ -561,7 +576,7 @@ struct MapKitCanvas: PlatformViewRepresentable {
                 let mapStyle = parent?.map.style ?? MapStyle.dark
                 let type = line.page.attributeText("core.placeType")
                 let style = mapStyle.style(forPlaceType: type)
-                if let ink = InkRenderer.make(line: line, type: type, style: mapStyle) { return ink }
+                if let ink = InkRenderer.make(line: line, type: type, style: mapStyle, highlighted: line.page.id == parent?.highlighted?.id) { return ink }
                 let renderer = MKPolylineRenderer(overlay: line)
                 renderer.strokeColor = PlatformColor(style: style.stroke)
                 renderer.lineWidth = style.lineWidth
@@ -579,7 +594,7 @@ struct MapKitCanvas: PlatformViewRepresentable {
                 view.annotation = place
                 view.clusteringIdentifier = "place"
                 // A small round pin with the icon of what it is, in the style's colours.
-                view.image = MapGlyphs.pin(place.kind, style: MapStyle.style(id: place.styleID))
+                view.image = MapGlyphs.pin(place.kind, style: MapStyle.style(id: place.styleID), highlighted: place.isHighlighted)
                 view.canShowCallout = true
                 view.isDraggable = place.isMovable
                 view.displayPriority = MKFeatureDisplayPriority(rawValue: place.kind.priority)
@@ -769,6 +784,8 @@ final class PlaceAnnotation: NSObject, MKAnnotation {
     /// What kind of pin it is, and the style it was drawn in, so it is drawn again when either changes.
     var kind = PlacePinKind.place
     var styleID = ""
+    /// Whether it is the place chosen, and so has a ring.
+    var isHighlighted = false
     /// The most of the map that may be in view for the pin to show (see `ZoomRules`).
     var maxView = ZoomRules.always
 

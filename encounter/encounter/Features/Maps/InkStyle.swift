@@ -9,8 +9,9 @@ extension InkRenderer {
     private static func colour(_ c: StyleColor) -> CGColor { PlatformColor(style: c).cgColor }
 
     /// The renderer for an area of a type in a style, or nil if the style doesn't draw that type by hand.
-    static func make(polygon: MKPolygon, type: String, style mapStyle: MapStyle) -> InkRenderer? {
-        guard let hand = mapStyle.hand, MapStyle.HandDrawn.types.contains(type) else { return nil }
+    static func make(polygon: MKPolygon, type: String, style mapStyle: MapStyle, highlighted: Bool = false) -> InkRenderer? {
+        // A highlighted place is drawn this way in every style, with a straight pen where the style has none.
+        guard let hand = hand(for: type, in: mapStyle, highlighted: highlighted) else { return nil }
         let look = mapStyle.style(forPlaceType: type)
         var decoration: InkDecoration?
         if let symbols = mapStyle.symbols {
@@ -25,14 +26,20 @@ extension InkRenderer {
         return InkRenderer(
             polygon: polygon, fill: look.fill.map(colour), stroke: colour(look.stroke), width: look.lineWidth,
             dash: look.isDashed ? (look.dashPattern ?? [6, 4]) : nil, hand: hand, decoration: decoration,
-            wash: type == "Building" ? nil : mapStyle.wash
+            wash: type == "Building" ? nil : mapStyle.wash, highlight: highlighted ? colour(mapStyle.accent) : nil
         )
     }
 
     /// The renderer for a line of a type in a style, or nil if the style doesn't draw that type by hand.
-    static func make(line: MKPolyline, type: String, style mapStyle: MapStyle) -> InkRenderer? {
-        guard let hand = mapStyle.hand, MapStyle.HandDrawn.types.contains(type) else { return nil }
+    static func make(line: MKPolyline, type: String, style mapStyle: MapStyle, highlighted: Bool = false) -> InkRenderer? {
+        guard let hand = hand(for: type, in: mapStyle, highlighted: highlighted) else { return nil }
         let look = mapStyle.style(forPlaceType: type)
-        return InkRenderer(line: line, stroke: colour(look.stroke), width: look.lineWidth, dash: look.isDashed ? (look.dashPattern ?? [6, 4]) : nil, hand: hand)
+        return InkRenderer(line: line, stroke: colour(look.stroke), width: look.lineWidth, dash: look.isDashed ? (look.dashPattern ?? [6, 4]) : nil, hand: hand, highlight: highlighted ? colour(mapStyle.accent) : nil)
+    }
+
+    private static func hand(for type: String, in style: MapStyle, highlighted: Bool) -> MapStyle.HandDrawn? {
+        if highlighted { return style.hand ?? MapStyle.HandDrawn(amplitude: 0, wavelength: 16, weight: 0) }
+        guard let hand = style.hand, MapStyle.HandDrawn.types.contains(type) else { return nil }
+        return hand
     }
 }

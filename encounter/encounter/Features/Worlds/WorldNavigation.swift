@@ -19,6 +19,8 @@ final class WorldNavigation {
     var selectedCampaign: Campaign?
     /// The map open in the map view, if it isn't the world map.
     var selectedMap: WorldMap?
+    /// A place to show chosen on the map that is opened, which the map takes when it appears.
+    var highlightedPlace: Page?
     /// What the user has typed in the search field. While it isn't empty, the results are showing.
     var searchText = ""
     var searchScope: SearchScope = .all
@@ -38,6 +40,14 @@ final class WorldNavigation {
         selectedPage = nil
         selectedLibraryKey = nil
         searchText = ""
+    }
+
+    /// Shows the place on the map that has it, with the place chosen: the map of the nearest place above it that has one, which for a realm is the
+    /// world map. Does nothing if there is none.
+    func showOnMap(_ page: Page) {
+        guard let map = page.mapShowingIt else { return }
+        openMap(map)
+        highlightedPlace = page
     }
 
     /// Shows the campaign: switches the sidebar to Campaigns and selects it.

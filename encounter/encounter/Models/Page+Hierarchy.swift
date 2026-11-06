@@ -20,6 +20,13 @@ extension Page {
         set { parentSourceRaw = newValue?.rawValue }
     }
 
+    /// The map this place is shown on, if it has a position: the first map of the nearest place above it that has one.
+    var mapShowingIt: WorldMap? {
+        guard geometry != nil else { return nil }
+        for ancestor in ancestors { if let map = ancestor.sortedMaps.first { return map } }
+        return nil
+    }
+
     /// The pages above this one, nearest first. Stops if the data somehow contains a loop.
     var ancestors: [Page] {
         var result: [Page] = []

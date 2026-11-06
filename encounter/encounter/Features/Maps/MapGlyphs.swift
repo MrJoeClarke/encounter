@@ -29,19 +29,27 @@ enum MapGlyphs {
     private static func swiftUI(_ c: StyleColor) -> Color { Color(red: c.red, green: c.green, blue: c.blue).opacity(c.alpha) }
 
     /// A round pin with the kind's icon in it. A capital has a ring round it.
-    static func pin(_ kind: PlacePinKind, style: MapStyle) -> PlatformImage? {
+    static func pin(_ kind: PlacePinKind, style: MapStyle, highlighted: Bool = false) -> PlatformImage? {
         let tint = kind == .capital ? style.capitalPin : style.pin
         let size = kind.size
-        return render("pin|\(kind.rawValue)|\(style.id)") {
+        let room = highlighted ? size + 18 : size + 4
+        return render("pin|\(kind.rawValue)|\(style.id)|\(highlighted)") {
             ZStack {
-                Circle().fill(swiftUI(tint))
-                Circle().strokeBorder(swiftUI(style.halo.with(alpha: 1)), lineWidth: kind == .capital ? 2.5 : 1.5)
-                Image(systemName: kind.symbol)
-                    .font(.system(size: size * 0.5, weight: .semibold))
-                    .foregroundStyle(.white)
+                // A chosen pin has a ring of the style's accent colour round it, on a pale disc of it.
+                if highlighted {
+                    Circle().fill(swiftUI(style.accent).opacity(0.28)).frame(width: size + 16, height: size + 16)
+                    Circle().strokeBorder(swiftUI(style.accent), lineWidth: 3).frame(width: size + 10, height: size + 10)
+                }
+                ZStack {
+                    Circle().fill(swiftUI(tint))
+                    Circle().strokeBorder(swiftUI(style.halo.with(alpha: 1)), lineWidth: kind == .capital ? 2.5 : 1.5)
+                    Image(systemName: kind.symbol)
+                        .font(.system(size: size * 0.5, weight: .semibold))
+                        .foregroundStyle(.white)
+                }
+                .frame(width: size, height: size)
             }
-            .frame(width: size, height: size)
-            .padding(2)
+            .frame(width: room, height: room)
         }
     }
 

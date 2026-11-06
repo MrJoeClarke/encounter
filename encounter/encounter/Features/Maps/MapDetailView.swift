@@ -67,6 +67,7 @@ struct MapDetailView: View {
                 onPlace: { x, y in placement = PlacementSpot(x: x, y: y) },
                 onMove: { page, x, y in put(page, atPixelX: x, y: y) },
                 onSelect: { selectedPlace = $0 },
+                highlighted: selectedPlace,
                 onReading: { reading = $0 }
             )
             .overlay {
@@ -75,6 +76,9 @@ struct MapDetailView: View {
                     SheetDecorations(style: map.style, unit: DistanceUnit.forCalibrating(map.kind), reading: reading)
                 }
             }
+            // A place sent here to be shown (from its page) is the one chosen.
+            .onAppear { takeHighlight() }
+            .onChange(of: navigation.highlightedPlace) { takeHighlight() }
             if let selectedPlace { selectedPlaceBar(selectedPlace) }
             Divider()
             if outline != nil {
@@ -265,6 +269,12 @@ struct MapDetailView: View {
             guard case .line(let points)? = page.geometry else { return nil }
             return PlaceLine(page: page, points: points)
         }
+    }
+
+    private func takeHighlight() {
+        guard let place = navigation.highlightedPlace else { return }
+        selectedPlace = place
+        navigation.highlightedPlace = nil
     }
 
     /// What can be done with the place picked on the MapKit map, in place of the popover of the custom canvas.

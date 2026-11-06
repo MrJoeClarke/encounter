@@ -60,6 +60,9 @@ struct PlaceHierarchySection: View {
     /// such as a building with a map for each floor.
     private var mapsSection: some View {
         Section(page.isWorldRoot ? "World Map" : "Maps") {
+            if page.mapShowingIt != nil {
+                Button("Show on Map", systemImage: "scope") { navigation.showOnMap(page) }
+            }
             ForEach(page.sortedMaps) { map in
                 Button {
                     navigation.openMap(map)
