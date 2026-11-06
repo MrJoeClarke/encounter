@@ -80,8 +80,14 @@ nonisolated struct MapTrace: Sendable {
     var strokes: [Int16] = []
     /// Lab colours (lightness, a, b) of the colours the picture was divided into before strokes were taken off.
     var strokeColours: [[Float]] = []
+    /// The colour (number in `strokeColours`) each pixel had before anything was taken off it, in the same order as `labels`.
+    var classes: [Int16] = []
+    /// The number (in `labels`) of the dark surround of the picture, or -1 if it has none.
+    var surround: Int16 = -1
     /// The rivers and roads followed, once they have been looked for.
     var lines: [TracedLine] = []
+    /// The settlements, found as dots.
+    var dots: [TracedDot] = []
 
     /// The colour at a place in the picture, in its pixels from the top left, if it is one that has areas.
     func colour(atX x: Double, y: Double) -> TracedColour? {
@@ -153,7 +159,8 @@ nonisolated enum MapTracer {
         for (i, label) in order.enumerated() { number[label] = Int16(i) }
         // Traced from the bottom up, as the outlines' points are, so they come out the right way round.
         var compact = [Int16](repeating: 0, count: count)
-        for y in 0..<h { for x in 0..<w { compact[(h - 1 - y) * w + x] = number[labels[y * w + x]] ?? 0 } }
+        var classesUp = [Int16](repeating: 0, count: count)
+        for y in 0..<h { for x in 0..<w { compact[(h - 1 - y) * w + x] = number[labels[y * w + x]] ?? 0; classesUp[(h - 1 - y) * w + x] = original[y * w + x] } }
 
         let sx = Double(w) / Double(image.width), sy = Double(h) / Double(image.height)
         let minimumArea = Double(smallest)
@@ -198,7 +205,7 @@ nonisolated enum MapTracer {
             colours.append(TracedColour(id: colours.count, red: r, green: g, blue: b, share: 0, isThin: true, type: .ignore, name: "", outlines: []))
         }
         name(&colours)
-        return MapTrace(colours: colours, width: image.width, height: image.height, labels: compact, workingWidth: w, workingHeight: h, strokes: strokes, strokeColours: centres.map { [$0.l, $0.a, $0.b] })
+        return MapTrace(colours: colours, width: image.width, height: image.height, labels: compact, workingWidth: w, workingHeight: h, strokes: strokes, strokeColours: centres.map { [$0.l, $0.a, $0.b] }, classes: classesUp, surround: outside.flatMap { number[$0] } ?? -1)
     }
 
     // MARK: Names
@@ -394,7 +401,7 @@ nonisolated enum MapTracer {
     // MARK: Cleaning up
 
     /// How many set cells there are in the square of `radius` round each cell, and how many cells that square has (less at the edge).
-    private static func windowCounts(_ mask: [Bool], width: Int, height: Int, radius: Int) -> (counts: [Int32], sizes: [Int32]) {
+    static func windowCounts(_ mask: [Bool], width: Int, height: Int, radius: Int) -> (counts: [Int32], sizes: [Int32]) {
         var across = [Int32](repeating: 0, count: width * height)
         for y in 0..<height {
             var prefix = [Int32](repeating: 0, count: width + 1)

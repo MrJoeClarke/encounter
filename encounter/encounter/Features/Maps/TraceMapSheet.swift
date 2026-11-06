@@ -19,6 +19,7 @@ struct TraceMapSheet: View {
     @State private var trace: MapTrace?
     @State private var colours: [TracedColour] = []
     @State private var lines: [TracedLine] = []
+    @State private var dots: [TracedDot] = []
     @State private var problem: String?
 
     var body: some View {
@@ -45,7 +46,7 @@ struct TraceMapSheet: View {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { onFinish(nil) } }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Add Places", action: add)
-                        .disabled(trace == nil || (!colours.contains { $0.type != .ignore } && !lines.contains { $0.isIncluded }))
+                        .disabled(trace == nil || (!colours.contains { $0.type != .ignore } && !lines.contains { $0.isIncluded } && !dots.contains { $0.isIncluded }))
                 }
             }
         }
@@ -76,6 +77,14 @@ struct TraceMapSheet: View {
                     Text("Each main colour of the picture, and the names read from its lettering. Choose what each is, or leave it out.")
                         .textCase(nil)
                 }
+                if !dots.isEmpty {
+                    Section {
+                        ForEach($dots) { $dot in dotRow($dot) }
+                    } header: {
+                        Text("Settlements: the dots found in the picture, named from the lettering beside them. Switch off any that are not.")
+                            .textCase(nil)
+                    }
+                }
                 if !lines.isEmpty {
                     Section {
                         ForEach($lines) { $line in lineRow($line) }
@@ -105,6 +114,31 @@ struct TraceMapSheet: View {
             Text(colour.wrappedValue.share, format: .percent.precision(.fractionLength(0)))
                 .font(.caption)
                 .foregroundStyle(.secondary)
+        }
+    }
+
+    private func dotRow(_ dot: Binding<TracedDot>) -> some View {
+        HStack {
+            Toggle("Include", isOn: dot.isIncluded)
+                .labelsHidden()
+            Image(systemName: "circle.fill")
+                .foregroundStyle(.primary)
+                .frame(width: 24)
+                .accessibilityHidden(true)
+            Picker("Size", selection: dot.kind) {
+                Text("City").tag("city")
+                Text("Town").tag("town")
+                Text("Village").tag("village")
+            }
+            .labelsHidden()
+            .fixedSize()
+            TextField("Name", text: dot.name)
+                .disabled(!dot.wrappedValue.isIncluded)
+            if dot.wrappedValue.isNamed {
+                Text("read from the picture")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
         }
     }
 
@@ -156,6 +190,13 @@ struct TraceMapSheet: View {
         Canvas { context, size in
             guard let calibration = map.calibration else { return }
             let sx = size.width / Double(image.width), sy = size.height / Double(image.height)
+            for dot in dots where dot.isIncluded {
+                let pixel = calibration.pixel(at: dot.point)
+                let radius = max(dot.size * sx / 2 + 2, 4)
+                let ring = Path(ellipseIn: CGRect(x: pixel.x * sx - radius, y: pixel.y * sy - radius, width: radius * 2, height: radius * 2))
+                context.stroke(ring, with: .color(.white), lineWidth: 3)
+                context.stroke(ring, with: .color(.red), lineWidth: 1.5)
+            }
             for line in lines where line.isIncluded {
                 var path = Path()
                 for (i, point) in line.points.enumerated() {
@@ -211,11 +252,12 @@ struct TraceMapSheet: View {
         trace = found
         colours = found.areaColours
         lines = found.lines
+        dots = found.dots
     }
 
     private func add() {
         guard let world = map.world else { return onFinish(nil) }
-        onFinish(world.addTracedPlaces(from: colours, lines: lines, for: map, in: modelContext))
+        onFinish(world.addTracedPlaces(from: colours, lines: lines, dots: dots, for: map, in: modelContext))
     }
 }
 

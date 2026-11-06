@@ -228,6 +228,12 @@ struct MapLetteringSampleTests {
                 context.setLineWidth(3)
                 context.strokePath()
             }
+            for dot in withLines.dots {
+                let c = point(dot.point)
+                context.setStrokeColor(CGColor(red: 1, green: 0, blue: 0, alpha: 1))
+                context.setLineWidth(3)
+                context.strokeEllipse(in: CGRect(x: c.x - 12, y: c.y - 12, width: 24, height: 24))
+            }
             if let result = context.makeImage() {
                 let data = NSMutableData()
                 if let destination = CGImageDestinationCreateWithData(data, "public.png" as CFString, 1, nil) {
@@ -238,6 +244,7 @@ struct MapLetteringSampleTests {
                 do { try (data as Data).write(to: target); print("LETTERS wrote \(target.path)") } catch { print("LETTERS could not write: \(error)") }
             }
         }
+        for dot in withLines.dots { print("LETTERS dot '\(dot.name)' named \(dot.isNamed) kind \(dot.kind) size \(Int(dot.size))") }
         #expect(!lines.isEmpty)
     }
 }

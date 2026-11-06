@@ -20,7 +20,7 @@ struct MapTracerTests {
 
     /// A picture: pink land with a blue sea on the left, a green forest in a corner of the land, a thin dark outline between sea and
     /// land, a dark surround, and a little noise over all of it, as paper has. Pixels run from the top.
-    private func picture(river: Bool = false, roads: Bool = false) throws -> CGImage {
+    private func picture(river: Bool = false, roads: Bool = false, dots: Bool = false) throws -> CGImage {
         var bytes = [UInt8](repeating: 255, count: width * height * 4)
         func set(_ x: Int, _ y: Int, _ c: Colour) {
             guard x >= 0, y >= 0, x < width, y < height else { return }
@@ -42,6 +42,9 @@ struct MapTracerTests {
                     let brown: Colour = (110, 80, 50)
                     if y >= 200 && y < 203 && x >= 150 && x < 380 { c = brown }
                     if x >= 200 && x < 203 && y >= 203 && y < 280 { c = brown }
+                }
+                if dots {
+                    for (cx, cy, r) in [(200, 60, 5), (320, 70, 4)] where (x - cx) * (x - cx) + (y - cy) * (y - cy) <= r * r { c = ink }
                 }
                 set(x, y, c)
             }
@@ -186,5 +189,30 @@ struct MapTracerTests {
         #expect(named.lines.first?.isNamed == true)
         let unnamed = MapLines.add(to: trace, lettering: [], labels: [far], calibration: calibration)
         #expect(unnamed.lines.first?.name == "River 1")
+    }
+
+    @Test func dotsAreFoundAndNamedFromTheLetteringBesideThem() throws {
+        let trace = try #require(MapTracer.trace(image: try picture(dots: true), calibration: calibration))
+        // A label by the bigger dot, one far from both, and a river-like name that must not take a dot.
+        let beside = MapLabel(name: "Smyrna", description: "", x: 230, y: 62, height: 14, type: nil, width: 40)
+        let far = MapLabel(name: "Elsewhere", description: "", x: 100, y: 250, height: 14, type: nil, width: 40)
+        let named = MapLines.add(to: trace, lettering: [], labels: [beside, far], calibration: calibration)
+        #expect(named.dots.count == 2, "dots \(named.dots.count)")
+        let big = try #require(named.dots.max { $0.size < $1.size })
+        // At 200 across and 60 down from the top, so 2,000 metres east and (300 - 60) pixels north.
+        #expect(abs(big.point.easting - 2005) < 40 && abs(big.point.northing - 2405) < 40, "\(big.point)")
+        #expect(big.name == "Smyrna" && big.isNamed)
+        // With two dots the bigger is the typical one, so it is a town, and the smaller a village.
+        #expect(big.kind == "town")
+        let small = try #require(named.dots.min { $0.size < $1.size })
+        #expect(!small.isNamed && small.name.hasPrefix("Settlement") && small.kind == "village")
+        // The name a dot took is not also given to a line.
+        #expect(named.lines.allSatisfy { $0.name != "Smyrna" })
+    }
+
+    @Test func lettersAndLinesAreNotDots() throws {
+        let trace = try #require(MapTracer.trace(image: try picture(river: true, roads: true), calibration: calibration))
+        let named = MapLines.add(to: trace, lettering: [], labels: [], calibration: calibration)
+        #expect(named.dots.isEmpty, "found \(named.dots.count) dots")
     }
 }

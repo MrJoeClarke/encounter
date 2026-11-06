@@ -77,4 +77,18 @@ struct TracedPlacesTests {
         #expect(made.first { $0.title == "Road 1" }?.attributeText("core.placeType") == "Road")
         if case .line(let points)? = made.first?.geometry { #expect(points.count == 3) } else { Issue.record("expected a line") }
     }
+
+    @Test func includedDotsBecomeSettlementsWithTheirSize() throws {
+        let (world, map, context) = try setUp()
+        let dots = [
+            TracedDot(id: 0, point: GridPoint(easting: 1000, northing: 1000), size: 12, name: "Smyrna", isNamed: true, kind: "city"),
+            TracedDot(id: 1, point: GridPoint(easting: 2000, northing: 1000), size: 6, name: "Settlement 1", isNamed: false, kind: "village", isIncluded: false),
+        ]
+        let summary = world.addTracedPlaces(from: [], dots: dots, for: map, in: context)
+        #expect(summary.created == 1)
+        let smyrna = try #require((world.pages ?? []).first { $0.title == "Smyrna" })
+        #expect(smyrna.attributeText("core.placeType") == "Settlement")
+        #expect(smyrna.attributeText("gen.kind") == "city")
+        if case .point(let at)? = smyrna.geometry { #expect(at.easting == 1000) } else { Issue.record("expected a point") }
+    }
 }

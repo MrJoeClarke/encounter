@@ -382,8 +382,12 @@ extension MapLines {
     static func add(to trace: MapTrace, lettering: [MapLettering.Line], labels: [MapLabel], calibration: MapCalibration) -> MapTrace {
         var result = trace
         let used = Set(trace.colours.flatMap { $0.named.values.map(\.name) })
+        // The dots first: lettering beside a dot is a settlement's name, not a line's.
         let lines = find(in: trace, lettering: lettering, calibration: calibration)
-        result.lines = name(lines, from: labels, notNaming: used, calibration: calibration, imageWidth: trace.width)
+        let dots = MapDots.find(in: trace, lettering: lettering, roads: lines, calibration: calibration)
+        let named = MapDots.name(dots, from: labels, notNaming: used, calibration: calibration)
+        result.dots = named.dots
+        result.lines = name(lines, from: labels, notNaming: used.union(named.used), calibration: calibration, imageWidth: trace.width)
         return result
     }
 }

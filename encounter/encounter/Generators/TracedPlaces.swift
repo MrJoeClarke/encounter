@@ -16,7 +16,7 @@ extension World {
     /// last trace made, except any that have been edited, linked or written about.
     @MainActor
     @discardableResult
-    func addTracedPlaces(from colours: [TracedColour], lines: [TracedLine] = [], for map: WorldMap, in context: ModelContext) -> GeneratedMapSummary {
+    func addTracedPlaces(from colours: [TracedColour], lines: [TracedLine] = [], dots: [TracedDot] = [], for map: WorldMap, in context: ModelContext) -> GeneratedMapSummary {
         var summary = GeneratedMapSummary(map: map)
         for page in pages ?? [] where page.wasTraced && page.wasGenerated(by: map) && !page.isDeleted {
             if page.isUneditedGeneration {
@@ -67,6 +67,19 @@ extension World {
             page.title = line.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? line.kind.title : line.name
             page.attributes["core.placeType"] = .text(line.kind.placeType)
             page.geometry = .line(line.points)
+            page.parent = parent
+            page.parentSource = .manual
+            page.markGenerated(by: map)
+            page.attributes["gen.traced"] = .text("1")
+            page.updateSearchText()
+            summary.created += 1
+        }
+        for dot in dots where dot.isIncluded {
+            let page = addPage(kind: .place, in: context)
+            page.title = dot.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? String(localized: "Settlement") : dot.name
+            page.attributes["core.placeType"] = .text("Settlement")
+            page.attributes["gen.kind"] = .text(dot.kind)
+            page.geometry = .point(dot.point)
             page.parent = parent
             page.parentSource = .manual
             page.markGenerated(by: map)
