@@ -95,6 +95,8 @@ struct TraceMapSheet: View {
                     }
                 }
             }
+            .themedScreen()
+            .themedRow()
         }
     }
 

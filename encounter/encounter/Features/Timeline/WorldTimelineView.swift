@@ -11,6 +11,7 @@ struct WorldTimelineView: View {
     let world: World
 
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.appTheme) private var theme
     @Environment(WorldNavigation.self) private var navigation
     @State private var filter = TimelineFilter()
 
@@ -62,15 +63,16 @@ struct WorldTimelineView: View {
                                 }
                             } header: {
                                 Text(Self.title(of: group))
-                                    .font(.headline)
+                                    .themedTitle(.headline)
                                     .padding(.horizontal)
                                     .padding(.vertical, 6)
                                     .frame(maxWidth: .infinity, alignment: .leading)
-                                    .background(.bar)
+                                    .background(theme.panel.map { AnyShapeStyle($0.themeColor) } ?? AnyShapeStyle(.bar))
                             }
                         }
                     }
                 }
+                .themedScreen()
             }
         }
         .navigationTitle("Timeline")

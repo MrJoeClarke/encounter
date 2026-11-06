@@ -171,7 +171,7 @@ struct MapDetailView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 TextField("Name", text: $map.name, prompt: Text("Untitled Map"))
-                    .font(.title2.weight(.semibold))
+                    .themedTitle(.title)
                     .textFieldStyle(.plain)
                 Menu("Map Options", systemImage: "ellipsis.circle") {
                     if map.kind == .scene {
