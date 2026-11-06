@@ -21,14 +21,14 @@ struct PagesBrowser: View {
     @Environment(\.horizontalSizeClass) private var sizeClass
 
     var body: some View {
-        if showsSideBySide(sizeClass) {
+        if showsSideBySide(sizeClass) && !opensFullScreen {
             ListDetailSplit {
                 PageListView(world: world, kind: kind, selection: selectedPage)
             } detail: {
                 detail
             }
         } else {
-            // The page opens on top of the list, in the navigation stack the world is already in.
+            // The page opens on top of the list, in the navigation stack the world is already in, so it has the whole width.
             PageListView(world: world, kind: kind, selection: selectedPage)
                 .navigationDestination(item: selectedPage) { page in
                     PageEditorView(page: page)
@@ -37,6 +37,9 @@ struct PagesBrowser: View {
                 }
         }
     }
+
+    /// Characters and places have long lists and full pages, so a page takes the whole screen and the list is a step back, rather than a column.
+    private var opensFullScreen: Bool { kind == .character || kind == .place }
 
     private var selectedPage: Binding<Page?> {
         Binding(

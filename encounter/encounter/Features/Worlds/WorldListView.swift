@@ -22,6 +22,14 @@ struct WorldListView: View {
     @State private var isImporting = false
     @State private var isShowingAbout = false
     @State private var transferResult: TransferResult?
+    @State private var searchText = ""
+
+    /// The worlds whose names contain the search text, ignoring case and accents.
+    private var shownWorlds: [World] {
+        let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !query.isEmpty else { return worlds }
+        return worlds.filter { $0.name.localizedStandardContains(query) }
+    }
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -37,16 +45,26 @@ struct WorldListView: View {
                         Button("Import World…") { isChoosingImportFile = true }
                     }
                 } else {
-                    List {
-                        ForEach(worlds) { world in
-                            NavigationLink(value: world) {
-                                WorldRow(world: world)
+                    ScrollView {
+                        if shownWorlds.isEmpty {
+                            ContentUnavailableView.search(text: searchText)
+                                .padding(.top, 60)
+                        } else {
+                            // Cover art in the manner of an album grid: as many columns as fit, each cover a square.
+                            LazyVGrid(columns: [GridItem(.adaptive(minimum: 170, maximum: 260), spacing: 20, alignment: .top)], spacing: 24) {
+                                ForEach(shownWorlds) { world in
+                                    NavigationLink(value: world) {
+                                        WorldCover(world: world)
+                                    }
+                                    .buttonStyle(.plain)
+                                }
                             }
-                            .themedListRow()
+                            .padding(20)
+                            EndMarkRow()
                         }
-                        EndMarkRow()
                     }
                     .themedScreen()
+                    .searchable(text: $searchText, prompt: "Search Worlds")
                 }
             }
             .themedBackground()
@@ -163,22 +181,41 @@ private enum TransferResult: Identifiable {
     }
 }
 
-private struct WorldRow: View {
+/// A world as a square cover with its name beneath, for the grid of worlds.
+private struct WorldCover: View {
+    @Environment(\.appTheme) private var theme
     let world: World
 
-    private let thumbnailSize: CGFloat = 44
-
     var body: some View {
-        HStack(spacing: 12) {
-            ThemedThumbnail(data: world.defaultImage?.thumbnailData, systemName: "globe.europe.africa", size: thumbnailSize)
+        VStack(alignment: .leading, spacing: 8) {
+            Color.clear
+                .aspectRatio(1, contentMode: .fit)
+                .background {
+                    if let data = world.defaultImage?.imageData ?? world.defaultImage?.thumbnailData {
+                        DataImage(data: data)
+                    } else {
+                        (theme.panel?.themeColor ?? Color.secondary.opacity(0.12))
+                            .overlay { SealIcon(systemName: "globe.europe.africa", size: 72) }
+                    }
+                }
+                .clipShape(RoundedRectangle(cornerRadius: theme.cornerRadius > 0 ? theme.cornerRadius : 10))
+                .overlay {
+                    RoundedRectangle(cornerRadius: theme.cornerRadius > 0 ? theme.cornerRadius : 10)
+                        .strokeBorder(.primary.opacity(0.12), lineWidth: 0.5)
+                }
+                .shadow(color: .black.opacity(0.2), radius: 6, y: 3)
             VStack(alignment: .leading, spacing: 2) {
                 Text(world.name.isEmpty ? String(localized: "Untitled World") : world.name)
                     .themedTitle(.headline)
+                    .lineLimit(2)
                 Text(world.systemTitle)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
+                    .lineLimit(1)
             }
         }
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
     }
 }
 
