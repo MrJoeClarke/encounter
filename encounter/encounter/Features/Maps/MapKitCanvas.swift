@@ -156,6 +156,8 @@ struct MapKitCanvas: PlatformViewRepresentable {
             let ground = map.style.background
             source.background = CGColor(red: ground.red, green: ground.green, blue: ground.blue, alpha: ground.alpha)
             source.paper = map.style.paper
+            // Its fine look is made now, off the main thread, so the first tile isn't waiting for it.
+            if let paper = map.style.paper { Task.detached(priority: .userInitiated) { paper.prepare() } }
             if map.isVector {
                 let around = map.style.surround
                 source.surround = CGColor(red: around.red, green: around.green, blue: around.blue, alpha: around.alpha)

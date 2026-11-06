@@ -45,3 +45,36 @@ struct PaperSpeedTests {
         #expect(seam < inside * 2.5 + 50, "seam \(seam) against \(inside) inside a tile")
     }
 }
+
+struct PaperFirstTileTests {
+    @Test func theFineLookIsMadeOnceAndQuicklyEvenWhenAskedForTogether() async throws {
+        // A seed nothing else uses, so nothing has made its picture yet.
+        let paper = PaperTexture(seed: 424_242)
+        let started = Date()
+        await withTaskGroup(of: Void.self) { group in
+            for _ in 0..<6 { group.addTask { paper.prepare() } }
+        }
+        let elapsed = Date().timeIntervalSince(started)
+        // Six asked at once take about as long as one, and one is brief even in a debug build.
+        #expect(elapsed < 1.5, "making the fine look took \(elapsed) seconds")
+        let again = Date()
+        paper.prepare()
+        #expect(Date().timeIntervalSince(again) < 0.05)
+    }
+
+    @Test func theFineLookRepeatsWithoutASeam() {
+        let paper = PaperTexture(seed: 424_243)
+        let look = paper.fineLook()
+        let n = PaperTexture.finePeriod
+        #expect(look.count == n * n)
+        // Where the picture repeats, the last column meets the first, and the last row the first, as smoothly as any two neighbours do.
+        var join = 0.0, inside = 0.0
+        for k in 0..<n {
+            join += Double(abs(look[k * n + n - 1] - look[k * n])) + Double(abs(look[(n - 1) * n + k] - look[k]))
+            inside += Double(abs(look[k * n + 239] - look[k * n + 240])) + Double(abs(look[239 * n + k] - look[240 * n + k]))
+        }
+        #expect(join < inside * 1.6 + 1, "join \(join) against \(inside) inside")
+        // And it is not flat.
+        #expect((look.max() ?? 0) - (look.min() ?? 0) > 0.05)
+    }
+}

@@ -88,29 +88,56 @@ nonisolated struct PaperTexture: Equatable, Sendable {
     nonisolated(unsafe) private static var fineKept: [String: [Float]] = [:]
     private static let fineLock = NSLock()
 
+    /// Makes the picture of the fine look now, if it hasn't been, so the first tile asked for doesn't have to wait for it. Safe to call
+    /// from anywhere, and any number of times.
+    func prepare() { _ = fineLook() }
+
+    /// A grid of random numbers from 0 to 1 that the fine layers are smooth noise between, `wrap` across and wrapping round.
+    private static func lattice(wrap: Int, salt: UInt64) -> [Double] {
+        (0..<(wrap * wrap)).map { i in
+            Double(hash(UInt64(i % wrap) &* 374761393 ^ UInt64(i / wrap) &* 668265263 ^ salt &* 2246822519) % 10001) / 10000
+        }
+    }
+
+    /// Smooth noise between the numbers of a lattice that wraps round, at a place measured in cells.
+    @inline(__always)
+    private static func smooth(_ table: [Double], wrap: Int, _ x: Double, _ y: Double) -> Double {
+        let x0 = x.rounded(.down), y0 = y.rounded(.down)
+        let fx = x - x0, fy = y - y0
+        let sx = fx * fx * (3 - 2 * fx), sy = fy * fy * (3 - 2 * fy)
+        let ix = ((Int(x0) % wrap) + wrap) % wrap, iy = ((Int(y0) % wrap) + wrap) % wrap
+        let jx = (ix + 1) % wrap, jy = (iy + 1) % wrap
+        let top = table[iy * wrap + ix] * (1 - sx) + table[iy * wrap + jx] * sx
+        let bottom = table[jy * wrap + ix] * (1 - sx) + table[jy * wrap + jx] * sx
+        return top * (1 - sy) + bottom * sy
+    }
+
     /// How much lighter or darker the crumpling and fibres of the paper make each pixel, over a square of `finePeriod` pixels that
-    /// repeats without a seam, made once for a seed. They are sized by the screen, not the map, so one picture serves every zoom.
-    private func fineLook() -> [Float] {
+    /// repeats without a seam, made once for a seed. They are sized by the screen, not the map, so one picture serves every zoom. Whoever
+    /// asks first makes it, and the others wait for it rather than each making their own.
+    func fineLook() -> [Float] {
         let key = "\(seed)|\(crumple)|\(fibre)"
         Self.fineLock.lock()
-        if let kept = Self.fineKept[key] { Self.fineLock.unlock(); return kept }
-        Self.fineLock.unlock()
+        defer { Self.fineLock.unlock() }
+        if let kept = Self.fineKept[key] { return kept }
         let period = Self.finePeriod
-        // Noise that repeats every `period` pixels: its lattice wraps after `period / wavelength` cells.
-        func layer(_ wavelength: Double, _ salt: UInt64, _ x: Int, _ y: Int) -> Double {
-            Self.wrappedNoise(Double(x) / wavelength, Double(y) / wavelength, wrap: Int((Double(period) / wavelength).rounded()), seed &+ salt) * 2 - 1
+        // Each layer is smooth noise over a lattice that wraps after a whole number of cells, so the picture repeats without a seam.
+        let layers: [(wavelength: Double, salt: UInt64)] = [(240, 10), (80, 11), (20, 12), (6, 13), (2.5, 14)]
+        let tables = layers.map { layer -> (wrap: Int, wavelength: Double, table: [Double]) in
+            let wrap = Int((Double(period) / layer.wavelength).rounded())
+            return (wrap, layer.wavelength, Self.lattice(wrap: wrap, salt: seed &+ layer.salt))
         }
         var look = [Float](repeating: 0, count: period * period)
         for y in 0..<period {
             for x in 0..<period {
-                let crumple = crumple * (layer(240, 10, x, y) + 0.8 * layer(80, 11, x, y) + 0.6 * layer(20, 12, x, y)) / 2.4
-                let fibre = fibre * (layer(6, 13, x, y) + 0.7 * layer(2.5, 14, x, y)) / 1.7
-                look[y * period + x] = Float(crumple + fibre)
+                let fx = Double(x), fy = Double(y)
+                func layer(_ i: Int) -> Double { Self.smooth(tables[i].table, wrap: tables[i].wrap, fx / tables[i].wavelength, fy / tables[i].wavelength) * 2 - 1 }
+                let crumpled = crumple * (layer(0) + 0.8 * layer(1) + 0.6 * layer(2)) / 2.4
+                let fibres = fibre * (layer(3) + 0.7 * layer(4)) / 1.7
+                look[y * period + x] = Float(crumpled + fibres)
             }
         }
-        Self.fineLock.lock()
         Self.fineKept[key] = look
-        Self.fineLock.unlock()
         return look
     }
 
