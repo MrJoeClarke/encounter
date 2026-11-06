@@ -19,7 +19,7 @@ struct NotesSection: View {
     @State private var correctedBody: AttributedString?
 
     var body: some View {
-        Section("Notes") {
+        ThemedSection("Notes") {
             TextEditor(text: $page.body, selection: $selection)
                 .environment(\.openURL, openMention)
                 .frame(minHeight: 200)

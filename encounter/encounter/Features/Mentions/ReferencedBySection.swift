@@ -15,7 +15,7 @@ struct ReferencedBySection: View {
     var body: some View {
         let backlinks = page.backlinks
         if !backlinks.isEmpty {
-            Section("Referenced By") {
+            ThemedSection("Referenced By") {
                 ForEach(backlinks) { backlink in
                     Button {
                         navigation.open(backlink.source)

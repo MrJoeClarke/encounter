@@ -145,6 +145,8 @@ struct GenerateSceneSheet: View {
                 }
             }
             .formStyle(.grouped)
+            .themedScreen()
+            .themedRow()
             .disabled(isMaking)
             .interactiveDismissDisabled(isMaking)
             .navigationTitle("Generate Scene")

@@ -25,7 +25,7 @@ struct ImagesSection<Owner: ImageOwner & Observable>: View {
     private let tileSize: CGFloat = 96
 
     var body: some View {
-        Section("Images") {
+        ThemedSection("Images") {
             let images = owner.sortedImages
             Group {
                 if images.isEmpty {

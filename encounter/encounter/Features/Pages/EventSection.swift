@@ -30,11 +30,11 @@ struct EventSection: View {
     private var calendar: CalendarDefinition? { page.world?.calendar }
 
     var body: some View {
-        Section("When") {
+        ThemedSection("When") {
             originControls
             dateControls
         }
-        Section("Where") {
+        ThemedSection("Where") {
             Picker("Location", selection: locationBinding) {
                 Text("Not Set").tag(Page?.none)
                 ForEach(sortedPlaces) { place in
@@ -146,7 +146,7 @@ struct EventSection: View {
     // MARK: Participants
 
     private var participantsSection: some View {
-        Section("Who Took Part") {
+        ThemedSection("Who Took Part") {
             let participants = page.linkedPages(role: LinkRole.participant)
             ForEach(participants) { participant in
                 HStack {
@@ -217,6 +217,8 @@ struct EventSection: View {
     }
     return Form { EventSection(page: event) }
         .formStyle(.grouped)
+        .themedScreen()
+        .themedRow()
         .environment(WorldNavigation())
         .frame(width: 560, height: 900)
         .modelContainer(container)

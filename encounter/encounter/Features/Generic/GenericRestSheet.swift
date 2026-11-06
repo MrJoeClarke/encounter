@@ -23,7 +23,7 @@ struct GenericRestSheet: View {
         NavigationStack {
             Form {
                 if let lines {
-                    Section("What the rest gave back") {
+                    ThemedSection("What the rest gave back") {
                         if lines.isEmpty { Text("Nothing needed restoring.") }
                         ForEach(lines, id: \.self) { Text($0) }
                     }
@@ -42,6 +42,8 @@ struct GenericRestSheet: View {
                 }
             }
             .formStyle(.grouped)
+            .themedScreen()
+            .themedRow()
             .navigationTitle(rest.name)
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)

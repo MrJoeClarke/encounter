@@ -29,6 +29,8 @@ struct ActionCardView: View {
                         content(card, sheet: sheet)
                     }
                     .formStyle(.grouped)
+                    .themedScreen()
+                    .themedRow()
                     .navigationTitle(card.title)
                     #if os(iOS)
                     .navigationBarTitleDisplayMode(.inline)
@@ -82,7 +84,7 @@ struct ActionCardView: View {
             castSection(spell, sheet: sheet)
         }
         if !card.rolls.isEmpty {
-            Section("Rolls") {
+            ThemedSection("Rolls") {
                 if rollsInApp, card.rolls.contains(where: { $0.kind == .attack }) || card.rolls.contains(where: \.allowsAdvantage) {
                     Picker("Roll with", selection: $mode) {
                         Text("Normal").tag(AdvantageMode.normal)
@@ -102,7 +104,7 @@ struct ActionCardView: View {
             Section { ForEach(card.notes, id: \.self) { Text($0).font(.callout) } }
         }
         if !card.text.isEmpty {
-            Section("Description") { Text(card.text).font(.callout) }
+            ThemedSection("Description") { Text(card.text).font(.callout) }
         }
     }
 
@@ -176,7 +178,7 @@ struct ActionCardView: View {
     /// For a roll made with real dice: type what the die showed and the right marks are made.
     @ViewBuilder
     private func deathSaveSection(_ sheet: CharacterSheet) -> some View {
-        Section("Record") {
+        ThemedSection("Record") {
             if !rollsInApp {
                 HStack {
                     TextField("What the die showed", text: $rolledOnTable)
@@ -204,7 +206,7 @@ struct ActionCardView: View {
     @ViewBuilder
     private func castSection(_ spell: SheetSpell, sheet: CharacterSheet) -> some View {
         if spell.level > 0 {
-            Section("Cast") {
+            ThemedSection("Cast") {
                 let levels = sheet.castableSlotLevels(for: spell)
                 if levels.isEmpty && !spell.isRitual {
                     Label("No spell slots left for this spell.", systemImage: "exclamationmark.circle").foregroundStyle(.secondary)

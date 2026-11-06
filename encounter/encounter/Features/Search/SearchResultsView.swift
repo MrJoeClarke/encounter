@@ -45,7 +45,9 @@ struct SearchResultsView: View {
                             .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
+                    .themedListRow()
                 }
+                .themedScreen()
             }
         }
         .navigationTitle("Search")

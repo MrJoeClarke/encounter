@@ -34,6 +34,8 @@ struct NewWorldSheet: View {
                 }
             }
             .formStyle(.grouped)
+            .themedScreen()
+            .themedRow()
             .navigationTitle("New World")
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)

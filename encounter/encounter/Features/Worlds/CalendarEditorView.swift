@@ -34,7 +34,7 @@ struct CalendarEditorView: View {
                     LabeledContent("Days in a Year", value: calendar.daysPerYear.formatted())
                 }
 
-                Section("Months") {
+                ThemedSection("Months") {
                     ForEach($calendar.months) { $month in
                         HStack {
                             TextField("Name", text: $month.name, prompt: Text("Month"))
@@ -76,7 +76,7 @@ struct CalendarEditorView: View {
                     Text("Optional. Year 0, month 1, day 1 is the first one listed.")
                 }
 
-                Section("Try a Date") {
+                ThemedSection("Try a Date") {
                     InWorldDateField(calendar: calendar, date: $sample)
                     LabeledContent("Reads As", value: calendar.format(sample, style: .long))
                 }
@@ -92,6 +92,8 @@ struct CalendarEditorView: View {
                 }
             }
             .formStyle(.grouped)
+            .themedScreen()
+            .themedRow()
 
             Divider()
             HStack {

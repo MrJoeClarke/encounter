@@ -72,6 +72,8 @@ struct GenericLevelUpView: View {
                 }
             }
             .formStyle(.grouped)
+            .themedScreen()
+            .themedRow()
             .navigationTitle("Level \(result == nil ? newLevel : newLevel - 1)")
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
@@ -92,7 +94,7 @@ struct GenericLevelUpView: View {
     private func choicesSections(_ rule: AdvancementRule) -> some View {
         let always = rule.required(onLevel: newLevel)
         if !always.isEmpty {
-            Section("This level gives") {
+            ThemedSection("This level gives") {
                 ForEach(always) { choice in
                     VStack(alignment: .leading, spacing: 6) {
                         Text(choice.title).font(.headline)
@@ -120,7 +122,7 @@ struct GenericLevelUpView: View {
             }
             ForEach(rule.choices.filter { $0.target != nil && (counts[$0.id] ?? 0) > 0 }) { choice in
                 ForEach(0..<(counts[choice.id] ?? 0), id: \.self) { index in
-                    Section("\(choice.title)\((counts[choice.id] ?? 0) > 1 ? " (\(index + 1))" : "")") { targetPicker(choice, key: "\(choice.id)#\(index)") }
+                    ThemedSection("\(choice.title)\((counts[choice.id] ?? 0) > 1 ? " (\(index + 1))" : "")") { targetPicker(choice, key: "\(choice.id)#\(index)") }
                 }
             }
         }
@@ -176,7 +178,7 @@ struct GenericLevelUpView: View {
 
     private func resultSection(_ result: LevelUpResult) -> some View {
         let labels = Dictionary(uniqueKeysWithValues: system.attributes.map { ($0.key, String(localized: $0.label)) })
-        return Section("What changed") {
+        return ThemedSection("What changed") {
             ForEach(result.changes, id: \.key) { change in Text("\(labels[change.key] ?? change.key): \(Int(change.from)) → \(Int(change.to))") }
             ForEach(result.notes, id: \.self) { Text($0) }
             if result.changes.isEmpty && result.notes.isEmpty { Text("Nothing else changed.") }

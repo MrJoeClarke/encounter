@@ -46,7 +46,7 @@ struct LibraryEntryView: View {
 
             let rows = attributeRows
             if !rows.isEmpty {
-                Section("Details") {
+                ThemedSection("Details") {
                     ForEach(rows) { row in
                         LabeledContent(row.label) {
                             Text(row.value)
@@ -87,7 +87,7 @@ struct LibraryEntryView: View {
             }
 
             if let attribution {
-                Section("Source") {
+                ThemedSection("Source") {
                     Text(attribution)
                         .font(.caption)
                         .foregroundStyle(.secondary)
@@ -96,6 +96,8 @@ struct LibraryEntryView: View {
             }
         }
         .formStyle(.grouped)
+        .themedScreen()
+        .themedRow()
         .navigationTitle(entry.name)
     }
 

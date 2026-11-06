@@ -190,6 +190,8 @@ struct GenerateWorldSheet: View {
                 }
             }
             .formStyle(.grouped)
+            .themedScreen()
+            .themedRow()
             .disabled(isMaking)
             .interactiveDismissDisabled(isMaking)
             .navigationTitle(step == .land ? "Generate World" : "Realms and Places")

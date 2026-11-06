@@ -13,7 +13,7 @@ struct AboutView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Encounter") {
+                ThemedSection("Encounter") {
                     Text("A world building tool for tabletop role-playing games.")
                 }
 
@@ -49,6 +49,8 @@ struct AboutView: View {
                 }
             }
             .formStyle(.grouped)
+            .themedScreen()
+            .themedRow()
             .navigationTitle("About")
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)

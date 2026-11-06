@@ -42,7 +42,7 @@ struct WorldListView: View {
                             NavigationLink(value: world) {
                                 WorldRow(world: world)
                             }
-                            .themedRow()
+                            .themedListRow()
                         }
                         EndMarkRow()
                     }

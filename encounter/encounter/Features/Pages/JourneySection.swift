@@ -16,7 +16,7 @@ struct JourneySection: View {
         let calendar = page.world?.calendar
         let stops = JourneyBuilder.stops(of: page, calendar: calendar)
         if !stops.isEmpty {
-            Section("Journey") {
+            ThemedSection("Journey") {
                 ForEach(stops) { stop in
                     Button {
                         navigation.open(stop.event)

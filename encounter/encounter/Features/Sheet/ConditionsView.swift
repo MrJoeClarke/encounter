@@ -76,7 +76,7 @@ struct ConditionInfoView: View {
             if let sheet = CharacterSheet(page: page) {
                 Form {
                     if condition == .exhaustion {
-                        Section("Level") {
+                        ThemedSection("Level") {
                             Stepper("Exhaustion level \(sheet.conditionState.exhaustion)", value: Binding(
                                 get: { sheet.conditionState.exhaustion },
                                 set: { sheet.setExhaustion($0) }
@@ -86,7 +86,7 @@ struct ConditionInfoView: View {
                             }
                         }
                     }
-                    Section("What It Does") {
+                    ThemedSection("What It Does") {
                         Text(sheet.rulesText(of: condition) ?? String(localized: "The rules text for this condition isn't in this edition's library."))
                             .font(.callout)
                     }
@@ -98,6 +98,8 @@ struct ConditionInfoView: View {
                     }
                 }
                 .formStyle(.grouped)
+                .themedScreen()
+                .themedRow()
                 .navigationTitle(condition.title)
                 #if os(iOS)
                 .navigationBarTitleDisplayMode(.inline)

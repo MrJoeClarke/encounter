@@ -171,6 +171,8 @@ struct NewVectorMapSheet: View {
                 }
             }
             .formStyle(.grouped)
+            .themedScreen()
+            .themedRow()
             .navigationTitle("New Vector Map")
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)

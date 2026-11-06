@@ -71,6 +71,8 @@ struct PlacePlacementSheet: View {
                 }
             }
             .formStyle(.grouped)
+            .themedScreen()
+            .themedRow()
 
             Divider()
             HStack {

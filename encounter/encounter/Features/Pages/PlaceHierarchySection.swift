@@ -25,7 +25,7 @@ struct PlaceHierarchySection: View {
     }
 
     var body: some View {
-        Section("Location") {
+        ThemedSection("Location") {
             if !page.ancestors.isEmpty {
                 breadcrumbs
             }

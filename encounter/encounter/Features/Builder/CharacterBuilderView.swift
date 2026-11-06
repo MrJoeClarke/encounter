@@ -26,6 +26,8 @@ struct CharacterBuilderView: View {
         NavigationStack {
             Form { stepContent }
                 .formStyle(.grouped)
+                .themedScreen()
+                .themedRow()
                 .navigationTitle(title)
                 #if os(iOS)
                 .navigationBarTitleDisplayMode(.inline)
@@ -177,7 +179,7 @@ private struct RaceStep: View {
     var body: some View {
         SourcePicker(sources: model.races, selection: model.draft.race) { model.chooseRace($0) }
         if !model.subraces.isEmpty {
-            Section("Subrace") {
+            ThemedSection("Subrace") {
                 Picker("Subrace", selection: $model.draft.subrace) {
                     Text("None").tag(String?.none)
                     ForEach(model.subraces) { Text($0.name).tag(String?.some($0.key)) }
@@ -212,7 +214,7 @@ private struct ClassStep: View {
     var body: some View {
         SourcePicker(sources: model.classes, selection: model.draft.characterClass) { model.chooseClass($0) }
         if !model.levelOneSubclasses.isEmpty {
-            Section("Subclass") {
+            ThemedSection("Subclass") {
                 Picker("Subclass", selection: $model.draft.subclass) {
                     Text("None").tag(String?.none)
                     ForEach(model.levelOneSubclasses) { Text($0.name).tag(String?.some($0.key)) }
@@ -220,7 +222,7 @@ private struct ClassStep: View {
             }
         }
         if let characterClass = model.characterClass {
-            Section("At a Glance") {
+            ThemedSection("At a Glance") {
                 if let die = characterClass.text("dnd5e.hitDie") { LabeledContent("Hit Die", value: die) }
                 if let saves = characterClass.text("dnd5e.savingThrows") { LabeledContent("Saving Throws", value: saves) }
                 if let armor = characterClass.text("dnd5e.armorProficiencies") { LabeledContent("Armor", value: armor) }
@@ -237,7 +239,7 @@ private struct BackgroundStep: View {
     var body: some View {
         SourcePicker(sources: model.backgrounds, selection: model.draft.background) { model.chooseBackground($0) }
         if let background = model.background {
-            Section("Gives You") {
+            ThemedSection("Gives You") {
                 ForEach(Self.facts, id: \.key) { fact in
                     if let text = background.text(fact.key) { LabeledContent(fact.label, value: text) }
                 }
@@ -360,7 +362,7 @@ private struct SkillsStep: View {
     var body: some View {
         let plan = model.plan
         if !plan.backgroundSkills.isEmpty {
-            Section("From Your Background") {
+            ThemedSection("From Your Background") {
                 ForEach(plan.backgroundSkills, id: \.self) { Label($0, systemImage: "checkmark.circle.fill") }
             }
         }
@@ -412,7 +414,7 @@ private struct ToolsStep: View {
         }
         let fixed = plan.tools.filter { tool in !plan.toolChoices.contains { $0.picks.contains(tool) } }
         if !fixed.isEmpty {
-            Section("Also Proficient With") {
+            ThemedSection("Also Proficient With") {
                 ForEach(fixed, id: \.self) { Label($0, systemImage: "checkmark.circle.fill") }
             }
         }
@@ -503,13 +505,13 @@ private struct ReviewStep: View {
             if let background = model.background { LabeledContent("Background", value: background.name) }
             if !model.draft.alignment.isEmpty { LabeledContent("Alignment", value: model.draft.alignment) }
         }
-        Section("Ability Scores") {
+        ThemedSection("Ability Scores") {
             ForEach(Ability.allCases) { ability in
                 let score = plan.scores[ability] ?? 10
                 LabeledContent(ability.rawValue, value: "\(score) (\(CharacterRules.modifierText(for: score)))")
             }
         }
-        Section("Worked Out") {
+        ThemedSection("Worked Out") {
             if let hitPoints = plan.hitPoints { LabeledContent("Hit Points", value: "\(hitPoints)") }
             if let armorClass = plan.armorClass { LabeledContent("Armor Class", value: "\(armorClass)") }
             LabeledContent("Proficiency Bonus", value: "+\(plan.proficiencyBonus)")
@@ -518,7 +520,7 @@ private struct ReviewStep: View {
             if !plan.tools.isEmpty { LabeledContent("Tools", value: plan.tools.joined(separator: ", ")) }
         }
         if !plan.equipment.isEmpty {
-            Section("Equipment") { ForEach(plan.equipment, id: \.self) { Text($0) } }
+            ThemedSection("Equipment") { ForEach(plan.equipment, id: \.self) { Text($0) } }
         }
         if !plan.problems.isEmpty {
             Section {
@@ -530,7 +532,7 @@ private struct ReviewStep: View {
             }
         }
         if !plan.notes.isEmpty {
-            Section("For You to Fill In") {
+            ThemedSection("For You to Fill In") {
                 ForEach(plan.notes, id: \.self) { Text($0).font(.callout) }
             }
         }

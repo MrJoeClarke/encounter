@@ -63,7 +63,9 @@ struct PagePickerSheet: View {
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
+                    .themedListRow()
                 }
+                .themedScreen()
             }
             Divider()
             HStack {

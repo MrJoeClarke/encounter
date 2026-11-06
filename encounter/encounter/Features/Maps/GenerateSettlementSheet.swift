@@ -192,6 +192,8 @@ struct GenerateSettlementSheet: View {
                 }
             }
             .formStyle(.grouped)
+            .themedScreen()
+            .themedRow()
             .disabled(isMaking)
             .interactiveDismissDisabled(isMaking)
             .navigationTitle("Generate Settlement")

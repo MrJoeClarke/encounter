@@ -50,6 +50,8 @@ struct LevelUpView: View {
                 if changes.isEmpty { choicesForm } else { resultForm }
             }
             .formStyle(.grouped)
+            .themedScreen()
+            .themedRow()
             .navigationTitle("Level \(context.level) → \(needs.newLevel)")
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
@@ -94,7 +96,7 @@ struct LevelUpView: View {
     }
 
     private var hitPointsSection: some View {
-        Section("Hit Points") {
+        ThemedSection("Hit Points") {
             Picker("Gain", selection: $rolling) {
                 Text("Average (\(LevelRules.averageRoll(hitDieSides: needs.hitDieSides)))").tag(false)
                 Text("Roll d\(needs.hitDieSides)").tag(true)
@@ -121,7 +123,7 @@ struct LevelUpView: View {
 
     /// What the level gives that needs no choice.
     private var gainsSection: some View {
-        Section("This Level Gives") {
+        ThemedSection("This Level Gives") {
             let bonus = CharacterRules.proficiencyBonus(atLevel: needs.newLevel)
             if bonus != CharacterRules.proficiencyBonus(atLevel: context.level) {
                 Label("Proficiency bonus +\(bonus)", systemImage: "plus.circle")
@@ -142,7 +144,7 @@ struct LevelUpView: View {
     }
 
     private var subclassSection: some View {
-        Section("Subclass") {
+        ThemedSection("Subclass") {
             Picker("Subclass", selection: $choices.subclass) {
                 Text("Choose…").tag(String?.none)
                 ForEach(context.subclasses) { Text($0.name).tag(Optional($0.key)) }
@@ -156,7 +158,7 @@ struct LevelUpView: View {
     // MARK: Ability Score Improvement
 
     private var improvementSection: some View {
-        Section("Ability Score Improvement") {
+        ThemedSection("Ability Score Improvement") {
             if !context.featOptions.isEmpty {
                 Picker("Take", selection: $takesFeat) {
                     Text("Ability scores").tag(false)
@@ -256,7 +258,7 @@ struct LevelUpView: View {
     }
 
     private var resultForm: some View {
-        Section("Now Level \(needs.newLevel)") {
+        ThemedSection("Now Level \(needs.newLevel)") {
             ForEach(changes, id: \.self) { Label($0, systemImage: "checkmark.circle") }
         }
     }

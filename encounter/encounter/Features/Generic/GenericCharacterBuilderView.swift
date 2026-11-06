@@ -27,6 +27,8 @@ struct GenericCharacterBuilderView: View {
             if let model {
                 Form { content(model) }
                     .formStyle(.grouped)
+                    .themedScreen()
+                    .themedRow()
                     .navigationTitle(model.step.title)
                     #if os(iOS)
                     .navigationBarTitleDisplayMode(.inline)
@@ -49,7 +51,7 @@ struct GenericCharacterBuilderView: View {
         let step = model.step
         switch step.kind {
         case .concept:
-            Section("Who is the character?") {
+            ThemedSection("Who is the character?") {
                 TextField("Name", text: Binding(get: { model.draft.name }, set: { model.draft.name = $0 }))
                 TextField("Summary", text: Binding(get: { model.draft.summary }, set: { model.draft.summary = $0 }), axis: .vertical)
                     .lineLimit(1...4)
@@ -171,7 +173,7 @@ struct GenericCharacterBuilderView: View {
     @ViewBuilder
     private func reviewContent(_ model: GenericBuilderModel) -> some View {
         let plan = model.plan
-        Section("Character") {
+        ThemedSection("Character") {
             LabeledContent("Name", value: model.draft.name.isEmpty ? "—" : model.draft.name)
             ForEach(model.flow.steps) { step in
                 switch step.kind {
@@ -198,14 +200,14 @@ struct GenericCharacterBuilderView: View {
             }
         }
         if !plan.derived.isEmpty {
-            Section("Starting numbers") {
+            ThemedSection("Starting numbers") {
                 ForEach(plan.derived.keys.sorted(), id: \.self) { key in
                     LabeledContent(model.system.attributes.first { $0.key == key }.map { String(localized: $0.label) } ?? key, value: Int(plan.derived[key] ?? 0).formatted())
                 }
             }
         }
         if !plan.problems.isEmpty {
-            Section("Still to do") {
+            ThemedSection("Still to do") {
                 ForEach(plan.problems, id: \.self) { Label($0, systemImage: "exclamationmark.circle").foregroundStyle(.orange) }
             }
         }

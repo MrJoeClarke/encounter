@@ -54,6 +54,8 @@ struct GenericRollSheet: View {
                 }
             }
             .formStyle(.grouped)
+            .themedScreen()
+            .themedRow()
             .navigationTitle(label)
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
@@ -73,7 +75,7 @@ struct GenericRollSheet: View {
 
     @ViewBuilder
     private func resultSection(_ result: CheckResult, model: RollModel) -> some View {
-        Section("Result") {
+        ThemedSection("Result") {
             HStack(alignment: .firstTextBaseline, spacing: 12) {
                 ForEach(Array(zip(model.dice, result.dice)), id: \.0.name) { die, value in
                     VStack {

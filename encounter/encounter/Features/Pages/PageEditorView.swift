@@ -123,7 +123,7 @@ struct PageEditorView: View {
 
             ImagesSection(owner: page)
 
-            Section("Tags") {
+            ThemedSection("Tags") {
                 ForEach(page.tags, id: \.self) { tag in
                     Text(tag)
                 }

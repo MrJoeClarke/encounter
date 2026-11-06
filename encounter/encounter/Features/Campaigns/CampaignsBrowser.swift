@@ -140,11 +140,11 @@ struct CampaignDetailView: View {
                 TextField("Name", text: $campaign.name, prompt: Text("Untitled Campaign"))
                     .font(.title2.weight(.semibold))
             }
-            Section("Summary") {
+            ThemedSection("Summary") {
                 TextEditor(text: $campaign.summary)
                     .frame(minHeight: 120)
             }
-            Section("Events") {
+            ThemedSection("Events") {
                 let events = sortedEvents
                 ForEach(events) { event in
                     Button {
@@ -174,6 +174,8 @@ struct CampaignDetailView: View {
             }
         }
         .formStyle(.grouped)
+        .themedScreen()
+        .themedRow()
         .navigationTitle(campaign.name.isEmpty ? String(localized: "Untitled Campaign") : campaign.name)
     }
 

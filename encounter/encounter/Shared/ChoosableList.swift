@@ -78,13 +78,13 @@ private struct Choosable<Choice: Hashable>: ViewModifier {
 
     func body(content: Content) -> some View {
         if showsSideBySide(sizeClass) {
-            content.themedRow().tag(value)
+            content.themedListRow().tag(value)
         } else {
             content
                 .contentShape(Rectangle())
                 .onTapGesture { choice = value }
                 .accessibilityAddTraits(.isButton)
-                .themedRow()
+                .themedListRow()
         }
     }
 }

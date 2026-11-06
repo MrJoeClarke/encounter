@@ -49,7 +49,7 @@ struct ContentReferenceField: View {
                 Text("None").tag(ContentReference.none)
 
                 if !candidates.isEmpty {
-                    Section("This World") {
+                    ThemedSection("This World") {
                         ForEach(candidates) { candidate in
                             Text(Mention.displayTitle(of: candidate.title))
                                 .tag(ContentReference.page(candidate))
@@ -58,7 +58,7 @@ struct ContentReferenceField: View {
                 }
 
                 if !libraryEntries.isEmpty || strayKey != nil {
-                    Section("Library") {
+                    ThemedSection("Library") {
                         ForEach(libraryEntries) { entry in
                             Text(entry.name).tag(ContentReference.library(entry.key))
                         }

@@ -200,6 +200,21 @@ struct ThemedRow: ViewModifier {
     }
 }
 
+/// A row of a plain list. The list's own selection highlight is kept, so no row background is set.
+struct ThemedListRow: ViewModifier {
+    @Environment(\.appTheme) private var theme
+
+    func body(content: Content) -> some View {
+        if theme.panel != nil {
+            content
+                .listRowSeparatorTint(theme.line?.themeColor)
+                .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+        } else {
+            content
+        }
+    }
+}
+
 /// How big a title is, which a theme turns into a font.
 enum ThemedTitleStyle {
     case large, title, headline, body
@@ -350,6 +365,8 @@ struct ThemedThumbnail: View {
 extension View {
     func themedScreen() -> some View { modifier(ThemedScreen()) }
     func themedRow() -> some View { modifier(ThemedRow()) }
+    /// A row of a plain list: on the paper itself, with the theme's fine line between rows and no panel block behind it.
+    func themedListRow() -> some View { modifier(ThemedListRow()) }
     func themedTitle(_ style: ThemedTitleStyle = .title) -> some View { modifier(ThemedTitle(style: style)) }
 }
 
@@ -627,4 +644,23 @@ extension View {
     /// A character sheet panel; small ones (a single figure) have no corner marks.
     func themedSheetPanel(corners: Bool = true) -> some View { modifier(ThemedSheetPanel(corners: corners)) }
     func themedBackground(inksText: Bool = false) -> some View { modifier(ThemedBackground(inksText: inksText)) }
+}
+
+/// A form or list section whose heading is in the theme's lettering. Without a theme, the system's heading.
+struct ThemedSection<Content: View>: View {
+    let title: LocalizedStringKey
+    @ViewBuilder var content: () -> Content
+
+    init(_ title: LocalizedStringKey, @ViewBuilder content: @escaping () -> Content) {
+        self.title = title
+        self.content = content
+    }
+
+    var body: some View {
+        Section {
+            content()
+        } header: {
+            ThemedLabel(title)
+        }
+    }
 }
