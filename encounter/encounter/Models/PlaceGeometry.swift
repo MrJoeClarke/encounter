@@ -27,6 +27,9 @@ nonisolated enum PlaceGeometry: Codable, Hashable, Sendable {
     case point(GridPoint)
     /// The corners in order, either way round. The last corner joins back to the first.
     case polygon([GridPoint])
+    /// An area made of several pieces, such as a realm that has islands: the outlines of the pieces, the biggest first. Each is a simple
+    /// polygon of its own, and they don't overlap.
+    case multiPolygon([[GridPoint]])
     /// The points of a line in order, such as a road or a river. It can bend and cross itself, but it has a length.
     case line([GridPoint])
 
@@ -46,6 +49,8 @@ nonisolated enum PlaceGeometry: Codable, Hashable, Sendable {
                 && corners.allSatisfy(\.isValid)
                 && area > 0
                 && Self.isSimple(corners)
+        case .multiPolygon(let pieces):
+            !pieces.isEmpty && pieces.allSatisfy { PlaceGeometry.polygon($0).isValid }
         case .line(let points):
             points.count >= 2 && points.allSatisfy(\.isValid) && length > 0
         }
@@ -55,8 +60,21 @@ nonisolated enum PlaceGeometry: Codable, Hashable, Sendable {
 
     /// Square metres. A point has none.
     var area: Double {
-        guard case .polygon(let corners) = self else { return 0 }
-        return abs(Self.signedArea(corners))
+        outlines.reduce(0) { $0 + abs(Self.signedArea($1)) }
+    }
+
+    /// The outlines of an area: one for a polygon, one for each piece of a multi-polygon, the biggest first, and none for a point or a line.
+    var outlines: [[GridPoint]] {
+        switch self {
+        case .polygon(let corners): [corners]
+        case .multiPolygon(let pieces): pieces
+        case .point, .line: []
+        }
+    }
+
+    /// The outline of an area's biggest piece, which is the whole of it unless it has several.
+    var largestOutline: [GridPoint]? {
+        outlines.max { abs(Self.signedArea($0)) < abs(Self.signedArea($1)) }
     }
 
     /// Metres along a line. A point or an area has none.
@@ -83,6 +101,9 @@ nonisolated enum PlaceGeometry: Codable, Hashable, Sendable {
                 remaining -= segment
             }
             return points.last ?? first
+        case .multiPolygon:
+            // The middle of the biggest piece, which is where the area is named and is at least in the area.
+            return largestOutline.map { PlaceGeometry.polygon($0).centre } ?? GridPoint(easting: 0, northing: 0)
         case .polygon(let corners):
             guard !corners.isEmpty else { return GridPoint(easting: 0, northing: 0) }
             let signed = Self.signedArea(corners)
@@ -111,6 +132,7 @@ nonisolated enum PlaceGeometry: Codable, Hashable, Sendable {
 
     /// Whether this is a polygon with `point` inside it or on its edge.
     func contains(_ point: GridPoint) -> Bool {
+        if case .multiPolygon(let pieces) = self { return pieces.contains { PlaceGeometry.polygon($0).contains(point) } }
         guard case .polygon(let corners) = self, corners.count >= 3 else { return false }
         var inside = false
         for (a, b) in Self.edges(of: corners) {
@@ -128,8 +150,17 @@ nonisolated enum PlaceGeometry: Codable, Hashable, Sendable {
     /// it is smaller than this one and none of it lies outside, which also catches a shape that leaves and
     /// re-enters a concave outline. The same shape doesn't hold itself.
     func contains(_ other: PlaceGeometry) -> Bool {
+        if case .multiPolygon(let pieces) = self {
+            // Held if it lies wholly in one piece, or, if it has pieces of its own, each of them does.
+            if case .multiPolygon(let inner) = other {
+                return inner.allSatisfy { piece in pieces.contains { PlaceGeometry.polygon($0).contains(PlaceGeometry.polygon(piece)) } }
+            }
+            return pieces.contains { PlaceGeometry.polygon($0).contains(other) }
+        }
         guard case .polygon(let outer) = self else { return false }
         switch other {
+        case .multiPolygon(let pieces):
+            return pieces.allSatisfy { contains(.polygon($0)) }
         case .point(let point):
             return contains(point)
         case .polygon(let inner):
@@ -159,7 +190,7 @@ nonisolated enum PlaceGeometry: Codable, Hashable, Sendable {
     func distance(toPoint point: GridPoint) -> Double? {
         switch self {
         case .point(let own): return own.distance(to: point)
-        case .polygon: return nil
+        case .polygon, .multiPolygon: return nil
         case .line(let points):
             return zip(points, points.dropFirst()).map { Self.distance(from: point, toSegment: $0.0, $0.1) }.min()
         }

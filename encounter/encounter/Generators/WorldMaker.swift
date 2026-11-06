@@ -1153,28 +1153,29 @@ nonisolated struct WorldMaker {
         let labels = fineLabels(of: categories)
         let regions = partitionOutlines(labels, minimumCells: 6)
         for realm in 0..<realmCount {
-            var first = true
-            // The biggest piece of land is the realm itself, and any other piece is an island of it with a name of its own.
+            // A realm is one place of several pieces: its biggest piece of land first, then its islands.
             let pieces = Array((regions[Self.category(ofRealm: realm)] ?? []).prefix(6))
-            for points in pieces {
-                let name = first ? realmNames[realm] : names.isle(of: realmNames[realm])
-                first = false
-                features.append(GeneratedFeature(name: name, placeType: "Region", summary: realmSummary(realm), shape: .polygon(points), kind: "realm \(realm)"))
+            if let main = pieces.first {
+                features.append(GeneratedFeature(
+                    name: realmNames[realm], placeType: "Region", summary: realmSummary(realm), shape: .polygon(main),
+                    otherParts: Array(pieces.dropFirst()), kind: "realm \(realm)"
+                ))
             }
         }
         // The land that carries on past the realms, to the edge of the map.
         for group in Set(stripGroup).filter({ $0 >= 0 }).sorted() {
-            for points in (groups[group].flatMap { regions[$0] } ?? []).prefix(4) {
+            let pieces = Array((groups[group].flatMap { regions[$0] } ?? []).prefix(4))
+            if let main = pieces.first {
                 features.append(GeneratedFeature(
                     name: names.named(String(localized: "The Far Lands")), placeType: "Region",
-                    summary: String(localized: "Land that carries on beyond the realms and off the map."), shape: .polygon(points), kind: "land"
+                    summary: String(localized: "Land that carries on beyond the realms and off the map."), shape: .polygon(main),
+                    otherParts: Array(pieces.dropFirst()), kind: "land"
                 ))
             }
         }
         // The coast is smoothed from the grid, so a place on a coastal cell can end up just off the land. Nudge it in.
-        let outlines = features.filter { $0.placeType == "Region" }.map { feature -> [V] in
-            if case .polygon(let p) = feature.shape { return p.map { V(x: $0.easting, y: $0.northing) } }
-            return []
+        let outlines = features.filter { $0.placeType == "Region" }.flatMap { feature in
+            feature.outlines.map { $0.map { V(x: $0.easting, y: $0.northing) } }
         }
         if !outlines.isEmpty {
             let middle = land.indices.filter { land[$0] }.map { centre(of: $0) }
@@ -1188,8 +1189,12 @@ nonisolated struct WorldMaker {
             }
         }
         if realmCount == 0 {
-            for points in (regions[1] ?? []).prefix(6) {
-                features.append(GeneratedFeature(name: names.named(String(localized: "The Land")), placeType: "Region", summary: String(localized: "The land."), shape: .polygon(points), kind: "realm 0"))
+            let pieces = Array((regions[1] ?? []).prefix(6))
+            if let main = pieces.first {
+                features.append(GeneratedFeature(
+                    name: names.named(String(localized: "The Land")), placeType: "Region", summary: String(localized: "The land."), shape: .polygon(main),
+                    otherParts: Array(pieces.dropFirst()), kind: "realm 0"
+                ))
             }
         }
         // Forests and mountains are traced on their own, so they are kept well in from the coast, and forests clear of mountains, so

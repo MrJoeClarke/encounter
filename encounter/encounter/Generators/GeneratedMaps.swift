@@ -230,7 +230,8 @@ extension World {
             // Which realm of the options a region is, so a settlement in it can use the realm's languages.
             if feature.kind.hasPrefix("realm "), let number = Int(feature.kind.dropFirst("realm ".count)) { page.attributes["gen.realm"] = .number(Double(number)) }
             switch feature.shape {
-            case .polygon(let points): page.geometry = .polygon(points.map(world))
+            case .polygon(let points):
+                page.geometry = feature.otherParts.isEmpty ? .polygon(points.map(world)) : .multiPolygon(([points] + feature.otherParts).map { $0.map(world) })
             case .line(let points): page.geometry = .line(points.map(world))
             case .point(let point): page.geometry = .point(world(point))
             }
@@ -288,8 +289,8 @@ extension Page {
         guard let world, let map = world.worldMap, let options = map.worldOptions, let spot = geometry?.centre else { return nil }
         let point = V(x: spot.easting, y: spot.northing)
         for region in world.pages ?? [] where !region.isDeleted && region.wasGenerated(by: map) {
-            guard let number = region.attributeNumber("gen.realm"), case .polygon(let corners)? = region.geometry,
-                  Plane.contains(corners.map { V(x: $0.easting, y: $0.northing) }, point) else { continue }
+            guard let number = region.attributeNumber("gen.realm"),
+                  (region.geometry?.outlines ?? []).contains(where: { Plane.contains($0.map { V(x: $0.easting, y: $0.northing) }, point) }) else { continue }
             return options.languages(forRealm: Int(number))
         }
         return nil

@@ -37,7 +37,16 @@ struct PlacePin: Identifiable {
 struct PlaceShape: Identifiable {
     let page: Page
     let corners: [GridPoint]
-    var id: UUID { page.id }
+    /// Which piece of the place this is, 0 for the only one or the first.
+    var part = 0
+    var id: UUID {
+        guard part > 0 else { return page.id }
+        // A piece after the first has an id of its own, the place's with its last byte changed by the piece's number.
+        var bytes = page.id.uuid
+        bytes.15 = bytes.15 &+ UInt8(truncatingIfNeeded: part)
+        bytes.14 = bytes.14 &+ UInt8(truncatingIfNeeded: part >> 8)
+        return UUID(uuid: bytes)
+    }
 }
 
 /// A place drawn as a line on the map: a road or a river.
@@ -304,7 +313,14 @@ struct MapKitCanvas: PlatformViewRepresentable {
             let zoom = (parent?.map.style ?? .dark).zoom
             let pinSpots = pins.map { calibration.gridPoint(atX: $0.pixelX, y: $0.pixelY) }
             var made: [PlaceLabelAnnotation] = []
-            for shape in shapes where !shape.page.title.isEmpty {
+            // A place of several pieces is named once, on its biggest piece.
+            var biggest: [UUID: PlaceShape] = [:]
+            for shape in shapes {
+                let area = PlaceGeometry.polygon(shape.corners).area
+                if let kept = biggest[shape.page.id], PlaceGeometry.polygon(kept.corners).area >= area { continue }
+                biggest[shape.page.id] = shape
+            }
+            for shape in shapes where !shape.page.title.isEmpty && biggest[shape.page.id]?.id == shape.id {
                 let type = shape.page.attributeText("core.placeType")
                 guard PlaceLabelKind.of(type: type) == .area else { continue }
                 // Well inside the area and away from its pins; the sea's name goes out on the open water and not where the land is.

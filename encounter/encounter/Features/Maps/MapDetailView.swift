@@ -253,9 +253,9 @@ struct MapDetailView: View {
 
     /// Places with an outline, which MapKit draws as shapes.
     private var shapes: [PlaceShape] {
-        map.visiblePlaces(among: places).compactMap { page in
-            guard case .polygon(let corners)? = page.geometry else { return nil }
-            return PlaceShape(page: page, corners: corners)
+        map.visiblePlaces(among: places).flatMap { page -> [PlaceShape] in
+            // A place of several pieces, such as a realm with islands, has a shape for each.
+            (page.geometry?.outlines ?? []).enumerated().map { PlaceShape(page: page, corners: $0.element, part: $0.offset) }
         }
     }
 

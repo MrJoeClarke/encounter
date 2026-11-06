@@ -272,8 +272,17 @@ nonisolated struct GeneratedFeature: Equatable, Sendable {
     var placeType: String
     var summary: String
     var shape: Shape
+    /// For an area that is made of several pieces, such as a realm with islands, the pieces after the first (which is `shape`, the
+    /// biggest).
+    var otherParts: [[GridPoint]] = []
     /// What sort of one it is, where the type isn't enough: a city, town or village, or which realm a region is.
     var kind = ""
+
+    /// The outlines of an area, the biggest first: its shape, and the pieces after it if it has any. None for a point or a line.
+    var outlines: [[GridPoint]] {
+        if case .polygon(let main) = shape { return [main] + otherParts }
+        return []
+    }
 }
 
 nonisolated struct GeneratedSettlement: Equatable, Sendable {

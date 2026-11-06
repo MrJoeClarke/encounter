@@ -196,11 +196,6 @@ nonisolated struct NameBank: Sendable {
         return named(firstOf: with(base))
     }
 
-    /// A piece of a realm that lies apart from the rest: "Isle of Carrowmere".
-    mutating func isle(of realm: String) -> String {
-        named(firstOf: [String(localized: "Isle of \(realm)"), String(localized: "\(realm) Isle"), String(localized: "Outer \(realm)")])
-    }
-
     /// The road that leaves a gate, named for the direction: "North Road".
     mutating func road(direction index: Int) -> String { named(NameTerms.road(direction(index))) }
 

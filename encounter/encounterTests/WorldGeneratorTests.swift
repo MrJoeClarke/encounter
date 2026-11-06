@@ -26,6 +26,11 @@ struct WorldGeneratorTests {
         }
     }
 
+    /// The pieces of an area: one for most, several for a realm with islands.
+    private func pieces(_ feature: GeneratedFeature) -> [[V]] {
+        feature.outlines.map { $0.map { V(x: $0.easting, y: $0.northing) } }
+    }
+
     private func settlements(_ world: GeneratedWorld) -> [(feature: GeneratedFeature, at: V)] {
         world.features(of: "Settlement").map { ($0, vs($0)[0]) }
     }
@@ -84,7 +89,7 @@ struct WorldGeneratorTests {
         for realms in [2, 3, 5, 7] {
             for seed in UInt64(1)...6 {
                 let world = make(.archipelago, realms: realms, seed: seed) { $0.islands = .few }
-                let outlines = world.features(of: "Region").filter { $0.kind != "land" }.map { vs($0) }
+                let outlines = world.features(of: "Region").filter { $0.kind != "land" }.flatMap { pieces($0) }
                 // An island for each realm, or one fewer when one island holds two.
                 #expect(outlines.count >= realms - 1, "\(realms) realms, seed \(seed): \(outlines.count) pieces")
                 let capitals = world.features.filter { $0.kind == "capital" }
@@ -193,7 +198,7 @@ struct WorldGeneratorTests {
                     }
                 }
                 // ...and the land beyond them is what reaches it.
-                #expect(far.contains { vs($0).contains { p in edges.contains { [p.y, world.extent - p.y, p.x, world.extent - p.x][$0] < slack } } })
+                #expect(far.contains { pieces($0).joined().contains { p in edges.contains { [p.y, world.extent - p.y, p.x, world.extent - p.x][$0] < slack } } })
             }
         }
     }
@@ -201,8 +206,9 @@ struct WorldGeneratorTests {
     @Test func manyIslandsMakeManySmallerOnesThanFew() {
         let few = make(.archipelago, realms: 3) { $0.islands = .few }
         let many = make(.archipelago, realms: 3) { $0.islands = .many }
-        #expect(many.features(of: "Region").count > few.features(of: "Region").count + 5)
-        #expect(many.features(of: "Region").count >= 8)
+        func pieceCount(_ world: GeneratedWorld) -> Int { world.features(of: "Region").reduce(0) { $0 + $1.outlines.count } }
+        #expect(pieceCount(many) > pieceCount(few) + 5)
+        #expect(pieceCount(many) >= 8)
     }
 
     @Test func aWorldSavedWithTheShapeIslandOpensAsAContinent() throws {
@@ -971,8 +977,8 @@ struct RoadNameTests {
 }
 
 struct RealmPieceTests {
-    @Test func aRealmsBiggestPieceHasTheRealmsNameAndOthersAreIslesWithoutNumbers() {
-        var isles = 0
+    @Test func aRealmIsOnePlaceMadeOfItsLandAndItsIslands() {
+        var withIslands = 0
         for seed in UInt64(1)...10 {
             var options = WorldOptions()
             options.shape = .archipelago
@@ -980,22 +986,43 @@ struct RealmPieceTests {
             options.seed = seed
             let world = WorldGenerator.generate(options)
             for realm in 0..<3 {
-                let pieces = world.features.filter { $0.kind == "realm \(realm)" }
-                guard pieces.count > 1 else { continue }
-                func area(_ f: GeneratedFeature) -> Double {
-                    if case .polygon(let p) = f.shape { return PlaceGeometry.polygon(p).area }
-                    return 0
-                }
-                let biggest = pieces.max { area($0) < area($1) }
-                let realmName = pieces.map(\.name).min { $0.count < $1.count } ?? ""
-                #expect(biggest?.name == realmName || !(biggest?.name.contains("Isle") ?? false))
-                for piece in pieces where piece.name != biggest?.name {
-                    isles += 1
-                    #expect(Int(piece.name.split(separator: " ").last ?? "") == nil, Comment(rawValue: piece.name))
-                }
+                let features = world.features.filter { $0.kind == "realm \(realm)" }
+                #expect(features.count == 1, "realm \(realm), seed \(seed): \(features.count) places")
+                guard let feature = features.first else { continue }
+                // No piece is named apart from the realm, so there are no names with numbers or "Isle of".
+                #expect(Int(feature.name.split(separator: " ").last ?? "") == nil && !feature.name.contains("Isle"), Comment(rawValue: feature.name))
+                if feature.otherParts.isEmpty { continue }
+                withIslands += 1
+                // The first piece is the biggest.
+                let areas = feature.outlines.map { PlaceGeometry.polygon($0).area }
+                #expect(areas.first == areas.max())
             }
         }
-        #expect(isles > 0)
+        #expect(withIslands > 0)
+    }
+
+    @Test func aPlaceWithPiecesHoldsWhatIsInAnyOfThem() {
+        let main = [GridPoint(easting: 0, northing: 0), GridPoint(easting: 1000, northing: 0), GridPoint(easting: 1000, northing: 1000), GridPoint(easting: 0, northing: 1000)]
+        let island = [GridPoint(easting: 3000, northing: 0), GridPoint(easting: 3400, northing: 0), GridPoint(easting: 3400, northing: 400), GridPoint(easting: 3000, northing: 400)]
+        let realm = PlaceGeometry.multiPolygon([main, island])
+        #expect(realm.isValid)
+        #expect(realm.contains(GridPoint(easting: 500, northing: 500)))
+        #expect(realm.contains(GridPoint(easting: 3200, northing: 200)))
+        #expect(!realm.contains(GridPoint(easting: 2000, northing: 200)))
+        #expect(realm.contains(PlaceGeometry.point(GridPoint(easting: 3200, northing: 200))))
+        #expect(abs(realm.area - (1_000_000 + 160_000)) < 1)
+        // Its middle is the middle of the biggest piece.
+        #expect(abs(realm.centre.easting - 500) < 1 && abs(realm.centre.northing - 500) < 1)
+        // A place with no pieces, or a piece that is not a proper polygon, is not valid.
+        #expect(!PlaceGeometry.multiPolygon([]).isValid)
+        #expect(!PlaceGeometry.multiPolygon([main, [GridPoint(easting: 0, northing: 0), GridPoint(easting: 1, northing: 1)]]).isValid)
+    }
+
+    @Test func piecesSurviveBeingSavedAsJSON() throws {
+        let piece = [GridPoint(easting: 0, northing: 0), GridPoint(easting: 10, northing: 0), GridPoint(easting: 10, northing: 10)]
+        let geometry = PlaceGeometry.multiPolygon([piece, piece.map { GridPoint(easting: $0.easting + 50, northing: $0.northing) }])
+        let back = try JSONDecoder().decode(PlaceGeometry.self, from: JSONEncoder().encode(geometry))
+        #expect(back == geometry)
     }
 }
 
@@ -1009,10 +1036,7 @@ struct SharedBorderTests {
     }
 
     private func polygons(_ world: GeneratedWorld, where match: (GeneratedFeature) -> Bool) -> [[GridPoint]] {
-        world.features.filter(match).compactMap { feature in
-            if case .polygon(let p) = feature.shape { return p }
-            return nil
-        }
+        world.features.filter(match).flatMap { $0.outlines }
     }
 
     @Test func realmsFitTogetherWithoutOverlapping() {

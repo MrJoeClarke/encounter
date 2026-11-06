@@ -20,7 +20,7 @@ enum PlacePinKind: String, Sendable {
         switch page.geometry {
         case .line?: return nil
         case .point?, nil: return named(made, type: type)
-        case .polygon?:
+        case .polygon?, .multiPolygon?:
             // Only a settlement or a landmark that has an outline keeps a pin, in the middle of it.
             return ["Settlement", "Landmark"].contains(type) ? named(made, type: type) : nil
         }

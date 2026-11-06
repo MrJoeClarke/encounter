@@ -104,7 +104,7 @@ extension WorldMap {
         func isOnMap(_ page: Page) -> Bool {
             guard page !== place, !page.isDeleted, let geometry = page.geometry else { return false }
             switch geometry {
-            case .polygon, .line: return true
+            case .polygon, .multiPolygon, .line: return true
             case .point: return pixel(of: page) != nil
             }
         }

@@ -111,7 +111,9 @@ struct RootLanguageTests {
             #expect(bank.river(using: &random).hasPrefix("River "))
             #expect(bank.manor(using: &random).hasSuffix(" Manor"))
             #expect(bank.realm(using: &random).contains(" of "))
-            #expect(bank.forest(using: &random).hasPrefix("The ") && bank.forest(using: &random).hasSuffix(" Forest"))
+            // A forest's plain word is the user's, in one of several shapes.
+            let forest = bank.forest(using: &random)
+            #expect(["Forest", "Wood", "Weald", "Holt", "Chase"].contains { forest.contains($0) }, Comment(rawValue: forest))
             #expect(bank.quarter(using: &random).hasSuffix(" Quarter"))
             #expect(bank.inn(using: &random).hasPrefix("The "))
             #expect(bank.marketSquare() == "Market Square")
