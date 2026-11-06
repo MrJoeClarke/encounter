@@ -72,7 +72,8 @@ enum WorldExporter {
                     settlementOptions: map.settlementOptions,
                     worldOptions: map.worldOptions,
                     sceneOptions: map.sceneOptions,
-                    style: map.styleID.isEmpty ? nil : map.styleID
+                    style: map.styleID.isEmpty ? nil : map.styleID,
+                    hidesPicture: map.showsPicture ? nil : true
                 )
             }
 

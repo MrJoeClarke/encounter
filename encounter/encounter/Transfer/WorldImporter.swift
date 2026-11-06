@@ -151,6 +151,7 @@ enum WorldImporter {
                 }
             }
             map.styleID = record.style ?? ""
+            map.showsPicture = record.hidesPicture != true
             map.calibration = record.calibration
             map.gridColumns = record.gridColumns ?? 0
             map.gridRows = record.gridRows ?? 0

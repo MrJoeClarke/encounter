@@ -148,8 +148,10 @@ struct MapKitCanvas: PlatformViewRepresentable {
         coordinator.calibration = calibration
 
         // The tiles are rebuilt when the map or its calibration changes.
-        let key = "\(map.id)|\(map.pixelWidth)x\(map.pixelHeight)|\(calibration.originEasting),\(calibration.originNorthing),\(calibration.metresPerPixel),\(calibration.rotation)|\(map.style.id)"
-        if coordinator.tileKey != key, let data = map.imageData ?? (map.isVector ? Data() : nil), map.pixelWidth > 0 {
+        let key = "\(map.id)|\(map.pixelWidth)x\(map.pixelHeight)|\(calibration.originEasting),\(calibration.originNorthing),\(calibration.metresPerPixel),\(calibration.rotation)|\(map.style.id)|\(map.showsPicture)"
+        // With the picture hidden there is no image to draw, so the map is drawn on its style's paper.
+        let picture = map.showsPicture ? map.imageData : Data()
+        if coordinator.tileKey != key, let data = picture ?? (map.isVector ? Data() : nil), map.pixelWidth > 0 {
             if let old = coordinator.overlay { view.removeOverlay(old) }
             let source = MapTileSource(imageData: data, pixelWidth: map.pixelWidth, pixelHeight: map.pixelHeight, calibration: calibration)
             // What the map is drawn on comes from its style.

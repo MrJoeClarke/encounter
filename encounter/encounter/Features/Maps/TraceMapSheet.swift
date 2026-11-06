@@ -251,6 +251,12 @@ struct TraceMapSheet: View {
         image = picture
         trace = found
         colours = found.areaColours
+        // The model's guess, if it is used: for colours whose names do not already say what they are.
+        if MapTypeGuesser.isUsed, let guesses = await MapTypeGuesser.guess(for: colours) {
+            for i in colours.indices where colours[i].named[0]?.type == nil {
+                if let guess = guesses[colours[i].id] { colours[i].type = guess }
+            }
+        }
         lines = found.lines
         dots = found.dots
     }

@@ -84,4 +84,18 @@ struct MapStyleChoiceTests {
         #expect(imported.mapStyleID == "watercolour")
         #expect((imported.maps ?? []).first?.styleID == "survey")
     }
+
+    @Test func aHiddenPictureStaysHiddenThroughExportAndImport() async throws {
+        let (world, context) = try makeWorld()
+        let root = try #require(world.rootPlace)
+        let map = try #require(world.addVectorMap(named: "Map", for: root, extentMetres: 1_000, kind: .world, in: context))
+        #expect(map.showsPicture)
+        map.showsPicture = false
+        try context.save()
+        let wrapper = try WorldPackage.fileWrapper(for: WorldExporter.makeContents(of: world))
+        let contents = try WorldPackage.contents(of: wrapper)
+        let target = ModelContext(try AppSchema.makeContainer(inMemory: true))
+        let (imported, _) = await WorldImporter.importWorld(contents, into: target)
+        #expect((imported.maps ?? []).first?.showsPicture == false)
+    }
 }

@@ -135,4 +135,6 @@ nonisolated struct MapRecord: Codable, Sendable {
     var sceneOptions: SceneOptions?
     /// The map's own style, if it has one. Optional, because older files don't have it.
     var style: String?
+    /// True if the picture of the map is hidden; absent otherwise.
+    var hidesPicture: Bool?
 }

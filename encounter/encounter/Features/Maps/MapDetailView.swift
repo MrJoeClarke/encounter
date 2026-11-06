@@ -172,6 +172,9 @@ struct MapDetailView: View {
                     }
                     styleMenus
                     journeyMenu
+                    if !map.isVector && map.imageData != nil {
+                        Toggle("Show Picture", isOn: $map.showsPicture)
+                    }
                     if !map.isVector && map.isCalibrated {
                         Button("Trace Features…", systemImage: "scribble.variable") { isTracing = true }
                     }

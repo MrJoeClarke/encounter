@@ -31,6 +31,8 @@ final class WorldMap {
     var generatorData: Data?
     /// The id of the `MapStyle` this map is drawn in. Empty means the world's.
     var styleID: String = ""
+    /// Whether the picture of a picture map is drawn. Switched off, the places traced from it are drawn on the style's paper by themselves.
+    var showsPicture: Bool = true
     var createdAt: Date = Date()
     var world: World?
     /// The place this map depicts, which lets a place open its own map. A world map has none.
