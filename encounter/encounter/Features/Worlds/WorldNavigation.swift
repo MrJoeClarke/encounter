@@ -83,6 +83,12 @@ final class WorldNavigation {
         selectedCampaign = nil
     }
 
+    /// The sidebar item that is already showing is chosen again. Characters and places, which show one page at a time in place of their list, return to the list.
+    func chooseAgain(_ item: WorldSidebarItem) {
+        guard item == selection, case .kind(let kind) = item, kind == .character || kind == .place else { return }
+        selectedPage = nil
+    }
+
     /// The kind of page New Page makes: the kind being shown, or a character if the screen shows no kind.
     var newPageKind: PageKind {
         if case .kind(let kind) = selection { kind } else { .character }

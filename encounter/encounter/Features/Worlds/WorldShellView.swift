@@ -257,6 +257,8 @@ struct WorldShellView: View {
             }
             .badge(badge)
             .tag(item)
+            // Choosing the item that is already showing returns to its list, which the list's own selection doesn't report.
+            .simultaneousGesture(TapGesture().onEnded { navigation.chooseAgain(item) })
         } else {
             Button {
                 navigation.choose(item)
