@@ -574,3 +574,20 @@ extension Page {
     .modelContainer(container)
     .frame(width: 900, height: 700)
 }
+
+#if DEBUG
+@MainActor
+private func mapPreview(_ width: WindowWidth, calibrated: Bool) -> some View {
+    let (container, map) = previewMap(calibrated: calibrated)
+    return NavigationStack {
+        MapDetailView(map: map)
+    }
+    .environment(WorldNavigation())
+    .modelContainer(container)
+    .inWindow(width, height: 700)
+}
+
+#Preview("Map, strip, not calibrated (320)") { mapPreview(.strip, calibrated: false) }
+#Preview("Map, strip, with places (320)") { mapPreview(.strip, calibrated: true) }
+#Preview("Map, half screen (507)") { mapPreview(.half, calibrated: true) }
+#endif

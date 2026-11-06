@@ -39,8 +39,8 @@ struct MapCalibrationPanel: View {
 
     @ViewBuilder
     private var summary: some View {
-        HStack {
-            if !map.canBeCalibrated {
+        if !map.canBeCalibrated {
+            summaryRow {
                 VStack(alignment: .leading, spacing: 2) {
                     Label("Needs a place", systemImage: "mappin.slash")
                     Text(map.place == nil
@@ -49,28 +49,51 @@ struct MapCalibrationPanel: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
-                Spacer()
-            } else if let calibration = map.calibration {
+            } buttons: {
+                EmptyView()
+            }
+        } else if let calibration = map.calibration {
+            summaryRow {
                 VStack(alignment: .leading, spacing: 2) {
                     Label("Calibrated", systemImage: "checkmark.seal")
                     Text(coverage(of: calibration))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
-                Spacer()
+            } buttons: {
                 Button("Recalibrate…") { begin() }
                 Button("Remove…", role: .destructive) { isConfirmingRemoval = true }
-            } else {
+            }
+        } else {
+            summaryRow {
                 VStack(alignment: .leading, spacing: 2) {
                     Label("Not calibrated", systemImage: "exclamationmark.triangle")
                     Text("Calibrate this map before putting places on it, so a position on it means a position in the world.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
-                Spacer()
+            } buttons: {
                 Button("Calibrate…") { begin() }
                     .buttonStyle(.borderedProminent)
             }
+        }
+    }
+
+    /// What the panel says with its buttons beside it, or under it where the window is too narrow for both (a Slide Over strip), so
+    /// neither has its words broken.
+    private func summaryRow<Info: View, Buttons: View>(@ViewBuilder _ info: () -> Info, @ViewBuilder buttons: () -> Buttons) -> some View {
+        let info = info(), buttons = buttons()
+        return ViewThatFits(in: .horizontal) {
+            HStack {
+                info
+                Spacer()
+                buttons
+            }
+            VStack(alignment: .leading, spacing: 8) {
+                info
+                HStack { buttons }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 

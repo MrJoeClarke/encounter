@@ -388,3 +388,16 @@ private func shapePreview(_ shape: WorldShape, _ coastline: WorldCoastline = .na
 #Preview("Parchment") { shapePreview(.continent, style: .parchment) }
 #Preview("Survey") { shapePreview(.continent, style: .survey) }
 #Preview("Watercolour") { shapePreview(.continent, style: .watercolour) }
+
+#if DEBUG
+#Preview("Generate a world, Slide Over strip (320)") {
+    let container = try! AppSchema.makeContainer(inMemory: true)
+    let context = ModelContext(container)
+    let world = World(name: "Aldara")
+    context.insert(world)
+    world.ensureRootPlace(in: context)
+    return GenerateWorldSheet(world: world) { _ in }
+        .modelContainer(container)
+        .inWindow(.strip, height: 900)
+}
+#endif

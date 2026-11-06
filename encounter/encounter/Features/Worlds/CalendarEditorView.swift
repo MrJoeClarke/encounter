@@ -101,7 +101,9 @@ struct CalendarEditorView: View {
             }
             .padding()
         }
+        #if os(macOS)
         .frame(minWidth: 420, minHeight: 520)
+        #endif
         // The sample date may no longer exist after the calendar changes.
         .onChange(of: calendar.months) { sample = calendar.clamped(sample) }
         .onChange(of: calendar.hoursPerDay) { sample = calendar.clamped(sample) }

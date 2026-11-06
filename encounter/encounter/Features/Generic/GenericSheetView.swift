@@ -85,6 +85,8 @@ struct GenericSheetView: View {
                     Button("Level Up", systemImage: "arrow.up.circle") { isLevellingUp = true }
                 }
             }
+            // In a narrow window the name gives way, not the words on the buttons.
+            .fixedSize(horizontal: true, vertical: false)
         }
     }
 
@@ -277,3 +279,17 @@ extension GenericConditionsBox {
         .frame(width: 900, height: 900)
         #endif
 }
+
+#if DEBUG
+#Preview("Daggerheart sheet, Slide Over strip (320)") {
+    let data = GenericPreviewData.make()
+    return NavigationStack { if let data { GenericSheetView(page: data.character).modelContainer(data.container) } }
+        .inWindow(.strip, height: 900)
+}
+
+#Preview("Daggerheart sheet, half screen (507)") {
+    let data = GenericPreviewData.make()
+    return NavigationStack { if let data { GenericSheetView(page: data.character).modelContainer(data.container) } }
+        .inWindow(.half, height: 900)
+}
+#endif

@@ -21,6 +21,7 @@ struct TraceMapSheet: View {
     @State private var lines: [TracedLine] = []
     @State private var dots: [TracedDot] = []
     @State private var problem: String?
+    @Environment(\.horizontalSizeClass) private var sizeClass
 
     var body: some View {
         NavigationStack {
@@ -97,8 +98,17 @@ struct TraceMapSheet: View {
         }
     }
 
+    /// A row's controls and its name: side by side, or the name under the controls in a narrow window, where they would be squeezed.
+    private func twoLine<Controls: View, Name: View>(@ViewBuilder _ controls: () -> Controls, @ViewBuilder name: () -> Name) -> some View {
+        let layout = sizeClass == .compact ? AnyLayout(VStackLayout(alignment: .leading, spacing: 6)) : AnyLayout(HStackLayout())
+        return layout {
+            HStack { controls() }
+            HStack { name() }
+        }
+    }
+
     private func row(_ colour: Binding<TracedColour>) -> some View {
-        HStack {
+        twoLine {
             RoundedRectangle(cornerRadius: 4)
                 .fill(Color(red: colour.wrappedValue.red, green: colour.wrappedValue.green, blue: colour.wrappedValue.blue))
                 .frame(width: 32, height: 24)
@@ -109,16 +119,17 @@ struct TraceMapSheet: View {
             }
             .labelsHidden()
             .fixedSize()
-            TextField("Name", text: colour.name)
-                .disabled(colour.wrappedValue.type == .ignore)
             Text(colour.wrappedValue.share, format: .percent.precision(.fractionLength(0)))
                 .font(.caption)
                 .foregroundStyle(.secondary)
+        } name: {
+            TextField("Name", text: colour.name)
+                .disabled(colour.wrappedValue.type == .ignore)
         }
     }
 
     private func dotRow(_ dot: Binding<TracedDot>) -> some View {
-        HStack {
+        twoLine {
             Toggle("Include", isOn: dot.isIncluded)
                 .labelsHidden()
             Image(systemName: "circle.fill")
@@ -132,37 +143,37 @@ struct TraceMapSheet: View {
             }
             .labelsHidden()
             .fixedSize()
+        } name: {
             TextField("Name", text: dot.name)
                 .disabled(!dot.wrappedValue.isIncluded)
-            if dot.wrappedValue.isNamed {
-                Text("read from the picture")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
+            if dot.wrappedValue.isNamed { readNote }
         }
     }
 
     private func lineRow(_ line: Binding<TracedLine>) -> some View {
-        HStack {
+        twoLine {
             Toggle("Include", isOn: line.isIncluded)
                 .labelsHidden()
             Image(systemName: line.wrappedValue.kind == .river ? "water.waves" : "road.lanes")
                 .foregroundStyle(line.wrappedValue.kind == .river ? Color.blue : Color.brown)
                 .frame(width: 24)
                 .accessibilityHidden(true)
+        } name: {
             TextField("Name", text: line.name)
                 .disabled(!line.wrappedValue.isIncluded)
-            if line.wrappedValue.isNamed {
-                Text("read from the picture")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
+            if line.wrappedValue.isNamed { readNote }
         }
+    }
+
+    private var readNote: some View {
+        Text("read from the picture")
+            .font(.caption)
+            .foregroundStyle(.secondary)
     }
 
     /// A piece of a colour's areas that has a name from the lettering on the picture.
     private func namedPiece(_ piece: Int, of colour: Binding<TracedColour>) -> some View {
-        HStack {
+        twoLine {
             Image(systemName: "text.cursor")
                 .foregroundStyle(.secondary)
                 .frame(width: 32)
@@ -175,13 +186,12 @@ struct TraceMapSheet: View {
             }
             .labelsHidden()
             .fixedSize()
+        } name: {
             TextField("Name", text: Binding(
                 get: { colour.wrappedValue.named[piece]?.name ?? "" },
                 set: { colour.wrappedValue.named[piece]?.name = $0 }
             ))
-            Text("read from the picture")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            readNote
         }
     }
 

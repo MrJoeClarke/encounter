@@ -87,7 +87,9 @@ struct PlacePlacementSheet: View {
             }
             .padding()
         }
+        #if os(macOS)
         .frame(minWidth: 380, minHeight: 240)
+        #endif
         .onAppear { titleIsFocused = true }
     }
 
@@ -110,3 +112,17 @@ struct PlacePlacementSheet: View {
     .frame(width: 420, height: 280)
     .modelContainer(container)
 }
+
+#if DEBUG
+#Preview("Place on map, Slide Over strip (320)") {
+    let container = SampleData.makePreviewContainer()
+    let world = (try? container.mainContext.fetch(FetchDescriptor<World>(sortBy: [SortDescriptor(\.name)])))?.first
+    return Group {
+        if let world {
+            PlacePlacementSheet(world: world, onCancel: {}, onPlace: { _, _, _ in })
+        }
+    }
+    .modelContainer(container)
+    .inWindow(.strip, height: 500)
+}
+#endif

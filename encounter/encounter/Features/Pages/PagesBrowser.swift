@@ -68,3 +68,23 @@ struct PagesBrowser: View {
     .frame(width: 900, height: 600)
     .modelContainer(container)
 }
+
+#if DEBUG
+@MainActor
+private func charactersPreview(_ width: WindowWidth) -> some View {
+    let container = SampleData.makePreviewContainer()
+    let world = (try? container.mainContext.fetch(FetchDescriptor<World>(sortBy: [SortDescriptor(\.name)])))?.first
+    return NavigationStack {
+        if let world {
+            PagesBrowser(world: world, kind: .character)
+        }
+    }
+    .environment(WorldNavigation())
+    .modelContainer(container)
+    .inWindow(width)
+}
+
+#Preview("Characters, strip (320)") { charactersPreview(.strip) }
+#Preview("Characters, half screen (507)") { charactersPreview(.half) }
+#Preview("Characters, 678") { charactersPreview(.wide) }
+#endif

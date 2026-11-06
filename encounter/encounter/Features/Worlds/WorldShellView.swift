@@ -51,6 +51,11 @@ struct WorldShellView: View {
                 isShowingDetail = true
                 columnVisibility = .automatic
             }
+            // A window made narrower (Split View, Slide Over, Stage Manager) changes from the menu beside the screen to the menu with
+            // the screen pushed over it. What was open stays open, instead of the window going back to the menu.
+            .onChange(of: sizeClass) { old, new in
+                if showsSideBySide(old) && !showsSideBySide(new) { isShowingDetail = true }
+            }
             .onChange(of: navigation.selectedPage) { if navigation.selectedPage != nil { isShowingDetail = true } }
             .onChange(of: navigation.selectedMap) { if navigation.selectedMap != nil { isShowingDetail = true } }
             .onChange(of: navigation.selectedCampaign) { if navigation.selectedCampaign != nil { isShowingDetail = true } }
@@ -247,3 +252,23 @@ struct WorldShellView: View {
     #endif
     .modelContainer(container)
 }
+
+#if DEBUG
+@MainActor
+private func shellPreview(_ width: WindowWidth) -> some View {
+    let container = SampleData.makePreviewContainer()
+    let world = (try? container.mainContext.fetch(FetchDescriptor<World>(sortBy: [SortDescriptor(\.name)])))?.first
+    return NavigationStack {
+        if let world {
+            WorldShellView(world: world) { _ in }
+        }
+    }
+    .environment(LinkRouter())
+    .modelContainer(container)
+    .inWindow(width)
+}
+
+#Preview("Shell, Slide Over strip (320)") { shellPreview(.strip) }
+#Preview("Shell, half screen (507)") { shellPreview(.half) }
+#Preview("Shell, narrowest with the menu beside (678)") { shellPreview(.wide) }
+#endif
