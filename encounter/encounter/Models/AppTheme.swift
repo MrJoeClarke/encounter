@@ -48,7 +48,7 @@ nonisolated struct AppTheme: Identifiable, Equatable, Sendable {
     /// Rings round the icons of menus and rows.
     var ringedIcons = false
 
-    static let defaultID = "standard"
+    static let defaultID = "parchment"
     /// The looks to choose from.
     static let all: [AppTheme] = [standard, parchment()]
 
