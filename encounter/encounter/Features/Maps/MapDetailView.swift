@@ -73,6 +73,12 @@ struct MapDetailView: View {
                 highlighted: selectedPlace,
                 onReading: { reading = $0 }
             )
+            // At the largest text sizes the header and the panel take most of the window; the map keeps some room.
+            .frame(minHeight: 160)
+            // The drawing of a map is not something VoiceOver can read, so it is described, and the places on it are said to be in the list.
+            .accessibilityElement(children: .contain)
+            .accessibilityLabel(Text("Map of \(map.name.isEmpty ? String(localized: "Untitled Map") : map.name), with \(pins.count + shapes.count + lines.count) places on it"))
+            .accessibilityHint(Text("All of its places are in the lists under Places in the menu."))
             .overlay {
                 // The compass rose and the scale, on the sheet of a map that is drawn.
                 if map.isVector, let reading {
@@ -585,7 +591,7 @@ private func mapPreview(_ width: WindowWidth, calibrated: Bool) -> some View {
     }
     .environment(WorldNavigation())
     .modelContainer(container)
-    .inWindow(width, height: 700)
+    .inWindow(width, height: 1000)
 }
 
 #Preview("Map, strip, not calibrated (320)") { mapPreview(.strip, calibrated: false) }

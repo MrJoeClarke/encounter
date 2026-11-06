@@ -201,7 +201,7 @@ nonisolated struct MapStyle: Identifiable, Equatable, Sendable {
     static let watercolour = MapStyle(
         id: "watercolour", title: String(localized: "Watercolour"), summary: String(localized: "Soft washes of colour on white paper, with wide pale edges."),
         background: color(0.98, 0.97, 0.94), ink: color(0.35, 0.3, 0.3), halo: color(1, 1, 1, 0.85),
-        pin: color(0.85, 0.5, 0.4), capitalPin: color(0.75, 0.35, 0.45),
+        pin: color(0.78, 0.38, 0.28), capitalPin: color(0.75, 0.35, 0.45),
         places: [
             "Water": Look(fill: color(0.55, 0.75, 0.88, 0.55), stroke: color(0.55, 0.75, 0.88, 0.6), lineWidth: 4),
             "Lake": Look(fill: color(0.5, 0.75, 0.85, 0.7), stroke: color(0.5, 0.75, 0.85, 0.7), lineWidth: 3),

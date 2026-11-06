@@ -82,7 +82,7 @@ struct MapCalibrationPanel: View {
     /// What the panel says with its buttons beside it, or under it where the window is too narrow for both (a Slide Over strip), so
     /// neither has its words broken.
     private func summaryRow<Info: View, Buttons: View>(@ViewBuilder _ info: () -> Info, @ViewBuilder buttons: () -> Buttons) -> some View {
-        let info = info(), buttons = buttons()
+        let info = info().fixedSize(horizontal: false, vertical: true), buttons = buttons()
         return ViewThatFits(in: .horizontal) {
             HStack {
                 info
@@ -92,6 +92,12 @@ struct MapCalibrationPanel: View {
             VStack(alignment: .leading, spacing: 8) {
                 info
                 HStack { buttons }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            // At the largest text sizes even the buttons need a line each.
+            VStack(alignment: .leading, spacing: 8) {
+                info
+                VStack(alignment: .leading, spacing: 8) { buttons }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }

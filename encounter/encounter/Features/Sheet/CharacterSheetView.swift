@@ -132,16 +132,25 @@ struct CharacterSheetView: View {
                     Text("+\(sheet.temporaryHitPoints) temporary").font(.callout).foregroundStyle(.blue)
                 }
             }
-            HStack {
-                TextField("Amount", value: $amount, format: .number)
-                    .frame(width: 70)
-                    .textFieldStyle(.roundedBorder)
-                    #if os(iOS)
-                    .keyboardType(.numberPad)
-                    #endif
+            // Beside each other where they fit; where they don't (a narrow window, or large text) the buttons go under the amount, with
+            // their words whole.
+            let amountField = TextField("Amount", value: $amount, format: .number)
+                .frame(width: 70)
+                .textFieldStyle(.roundedBorder)
+                #if os(iOS)
+                .keyboardType(.numberPad)
+                #endif
+            let hitPointButtons = Group {
                 Button("Damage") { sheet.takeDamage(amount); amount = 0 }
                 Button("Heal") { sheet.heal(amount); amount = 0 }
                 Button("Temp") { sheet.gainTemporaryHitPoints(amount); amount = 0 }
+            }
+            .lineLimit(1)
+            .fixedSize(horizontal: true, vertical: false)
+            ViewThatFits(in: .horizontal) {
+                HStack { amountField; hitPointButtons }
+                VStack(alignment: .leading) { amountField; HStack { hitPointButtons } }
+                VStack(alignment: .leading) { amountField; hitPointButtons }
             }
             .buttonStyle(.bordered)
             .disabled(false)
@@ -291,21 +300,35 @@ struct CharacterSheetView: View {
             }
             ForEach(attacks) { attack in
                 Button { action = .attack(attack.weapon.name) } label: {
-                    HStack {
-                        VStack(alignment: .leading, spacing: 1) {
-                            Text(attack.weapon.name)
-                            Text(attack.weapon.properties.joined(separator: ", ")).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                    let nameAndProperties = VStack(alignment: .leading, spacing: 1) {
+                        Text(attack.weapon.name)
+                        Text(attack.weapon.properties.joined(separator: ", ")).font(.caption).foregroundStyle(.secondary)
+                    }
+                    // Side by side, or one under the other where they would be squeezed, so nothing is cut short.
+                    ViewThatFits(in: .horizontal) {
+                        HStack {
+                            nameAndProperties.lineLimit(1)
+                            Spacer()
+                            attackResult(attack, alignment: .trailing)
                         }
-                        Spacer()
-                        VStack(alignment: .trailing, spacing: 1) {
-                            Text(bonus(attack.attackBonus) + " to hit").fontWeight(.medium)
-                            Text("\(attack.damage.text) \(attack.weapon.damageType)").font(.caption).foregroundStyle(.secondary)
+                        VStack(alignment: .leading, spacing: 4) {
+                            nameAndProperties
+                            attackResult(attack, alignment: .leading)
                         }
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
             }
+        }
+    }
+
+    /// What an attack does: its bonus to hit and its damage.
+    private func attackResult(_ attack: SheetAttack, alignment: HorizontalAlignment) -> some View {
+        VStack(alignment: alignment, spacing: 1) {
+            Text(bonus(attack.attackBonus) + " to hit").fontWeight(.medium)
+            Text("\(attack.damage.text) \(attack.weapon.damageType)").font(.caption).foregroundStyle(.secondary)
         }
     }
 
@@ -317,11 +340,18 @@ struct CharacterSheetView: View {
         if sheet.progression?.castsSpells == true || !spells.isEmpty {
             box("Spellcasting") {
                 if let ability = sheet.spellcastingAbility, let dc = sheet.spellSaveDC, let attack = sheet.spellAttackBonus {
-                    HStack {
-                        Text(ability.rawValue)
-                        Spacer()
-                        Text("Save DC \(dc)")
-                        Text("Attack \(bonus(attack))")
+                    ViewThatFits(in: .horizontal) {
+                        HStack {
+                            Text(ability.rawValue)
+                            Spacer()
+                            Text("Save DC \(dc)")
+                            Text("Attack \(bonus(attack))")
+                        }
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(ability.rawValue)
+                            Text("Save DC \(dc)")
+                            Text("Attack \(bonus(attack))")
+                        }
                     }
                     .font(.callout)
                 }
@@ -360,7 +390,8 @@ struct CharacterSheetView: View {
                 HStack(spacing: 6) {
                     Text(sheet.usesPactMagic ? String(localized: "Pact slots, \(ClassProgression.ordinal(index + 1)) level") : "\(ClassProgression.ordinal(index + 1))")
                         .font(.callout)
-                        .frame(width: sheet.usesPactMagic ? nil : 36, alignment: .leading)
+                        .frame(minWidth: sheet.usesPactMagic ? nil : 36, alignment: .leading)
+                        .fixedSize(horizontal: true, vertical: false)
                     ForEach(0..<maximum[index], id: \.self) { dot in
                         let isAvailable = dot >= used[index]
                         Button {
