@@ -41,10 +41,12 @@ struct WorldListView: View {
                         NavigationLink(value: world) {
                             WorldRow(world: world)
                         }
+                        .themedRow()
                     }
+                    .themedScreen()
                 }
             }
-            .navigationTitle("Worlds")
+            .themedNavigationTitle(String(localized: "Worlds"))
             .focusedSceneValue(\.worldListActions, WorldListActions(newWorld: { isCreatingWorld = true }, importWorld: { isChoosingImportFile = true }))
             .navigationDestination(for: World.self) { world in
                 WorldShellView(world: world, onDelete: delete)
@@ -164,30 +166,14 @@ private struct WorldRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            thumbnail
+            ThemedThumbnail(data: world.defaultImage?.thumbnailData, systemName: "globe.europe.africa", size: thumbnailSize)
             VStack(alignment: .leading, spacing: 2) {
                 Text(world.name.isEmpty ? String(localized: "Untitled World") : world.name)
-                    .font(.headline)
+                    .themedTitle(.headline)
                 Text(world.systemTitle)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
-        }
-    }
-
-    /// The world's default image, or a globe if it has none.
-    @ViewBuilder
-    private var thumbnail: some View {
-        if let data = world.defaultImage?.thumbnailData {
-            DataImage(data: data)
-                .frame(width: thumbnailSize, height: thumbnailSize)
-                .clipShape(RoundedRectangle(cornerRadius: 8))
-        } else {
-            Image(systemName: "globe.europe.africa")
-                .accessibilityHidden(true)
-                .foregroundStyle(.secondary)
-                .frame(width: thumbnailSize, height: thumbnailSize)
-                .background(.quaternary, in: RoundedRectangle(cornerRadius: 8))
         }
     }
 }
@@ -201,3 +187,9 @@ private struct WorldRow: View {
     WorldListView()
         .modelContainer(SampleData.makePreviewContainer(populated: false))
 }
+
+#if DEBUG
+#Preview("Worlds, Parchment and Ink") { WorldListView().modelContainer(SampleData.makePreviewContainer()).inTheme(.parchment) }
+#Preview("Worlds, Dark Tabletop") { WorldListView().modelContainer(SampleData.makePreviewContainer()).inTheme(.tabletop) }
+#Preview("Worlds, Modern Cartographer") { WorldListView().modelContainer(SampleData.makePreviewContainer()).inTheme(.cartographer) }
+#endif

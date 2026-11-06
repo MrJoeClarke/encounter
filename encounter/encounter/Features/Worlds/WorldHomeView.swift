@@ -19,19 +19,30 @@ struct WorldHomeView: View {
     @State private var exportError: String?
     @State private var isConfirmingDelete = false
     @State private var isEditingCalendar = false
+    @Environment(\.appTheme) private var theme
 
     var body: some View {
         Form {
+            // The banner is shown only by a theme that has surfaces of its own.
+            if theme.background != nil {
+                Section {
+                    WorldBanner(name: world.name, detail: world.systemTitle, imageData: world.defaultImage?.imageData ?? world.defaultImage?.thumbnailData)
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
+                }
+            }
             Section {
                 TextField("Name", text: $world.name, prompt: Text("Untitled World"))
-                    .font(.title2.weight(.semibold))
+                    .themedTitle()
                     // The root place is named after the world, so renaming the world renames it too.
                     .onChange(of: world.name) { old, _ in world.renameRootPlace(from: old) }
             }
 
-            Section("Summary") {
+            Section {
                 TextEditor(text: $world.summary)
                     .frame(minHeight: 140)
+            } header: {
+                ThemedLabel("Summary")
             }
 
             Section {
@@ -75,7 +86,9 @@ struct WorldHomeView: View {
             }
         }
         .formStyle(.grouped)
-        .navigationTitle("Home")
+        .themedScreen()
+        .themedRow()
+        .themedNavigationTitle(String(localized: "Home"))
         .sheet(isPresented: $isEditingCalendar) {
             if let calendar = world.calendar {
                 CalendarEditorView(world: world, calendar: calendar) { isEditingCalendar = false }

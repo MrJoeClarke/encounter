@@ -23,6 +23,7 @@ struct encounterApp: App {
     var body: some Scene {
         WindowGroup {
             WorldListView()
+                .appTheme()
                 .environment(linkRouter)
                 // Mention links come back from the system as encounter:// URLs.
                 .onOpenURL { linkRouter.open($0) }
@@ -40,6 +41,7 @@ struct encounterApp: App {
         WindowGroup("World", id: WindowRoute.windowID, for: WindowRoute.self) { $route in
             if let route {
                 WorldWindowView(route: route)
+                    .appTheme()
                     .environment(linkRouter)
             }
         }

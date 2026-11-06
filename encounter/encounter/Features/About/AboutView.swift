@@ -8,12 +8,24 @@ import SwiftUI
 /// About Encounter, including the attribution statements the content library's licence requires.
 struct AboutView: View {
     @Environment(\.dismiss) private var dismiss
+    @AppStorage("appThemeID") private var themeID = AppTheme.defaultID
 
     var body: some View {
         NavigationStack {
             Form {
                 Section("Encounter") {
                     Text("A world building tool for tabletop role-playing games.")
+                }
+
+                Section {
+                    Picker("Theme", selection: $themeID) {
+                        ForEach(AppTheme.all) { Text($0.title).tag($0.id) }
+                    }
+                    Text(AppTheme.theme(id: themeID).summary)
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                } header: {
+                    Text("Appearance")
                 }
 
                 Section {

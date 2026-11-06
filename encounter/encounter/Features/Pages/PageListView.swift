@@ -194,13 +194,14 @@ private struct PageRow: View {
 
     var body: some View {
         HStack(spacing: 10) {
-            thumbnail
+            ThemedThumbnail(data: page.defaultImage?.thumbnailData, systemName: page.kind.systemImage, size: thumbnailSize)
             VStack(alignment: .leading, spacing: 2) {
                 if page.title.isEmpty {
                     Text("Untitled")
                         .foregroundStyle(.secondary)
                 } else {
                     Text(page.title)
+                        .themedTitle(.body.weight(.medium))
                 }
                 if !page.summary.isEmpty {
                     Text(page.summary)
@@ -209,22 +210,6 @@ private struct PageRow: View {
                         .lineLimit(1)
                 }
             }
-        }
-    }
-
-    /// The default image's thumbnail, or the kind's icon if the page has no image.
-    @ViewBuilder
-    private var thumbnail: some View {
-        if let data = page.defaultImage?.thumbnailData {
-            DataImage(data: data)
-                .frame(width: thumbnailSize, height: thumbnailSize)
-                .clipShape(RoundedRectangle(cornerRadius: 6))
-        } else {
-            Image(systemName: page.kind.systemImage)
-    .accessibilityHidden(true)
-                .foregroundStyle(.secondary)
-                .frame(width: thumbnailSize, height: thumbnailSize)
-                .background(.quaternary, in: RoundedRectangle(cornerRadius: 6))
         }
     }
 }

@@ -56,8 +56,10 @@ struct ChoosableList<Choice: Hashable, Content: View>: View {
     var body: some View {
         if showsSideBySide(sizeClass) {
             List(selection: $choice, content: content)
+                .themedScreen()
         } else {
             List(content: content)
+                .themedScreen()
         }
     }
 }
@@ -70,12 +72,13 @@ private struct Choosable<Choice: Hashable>: ViewModifier {
 
     func body(content: Content) -> some View {
         if showsSideBySide(sizeClass) {
-            content.tag(value)
+            content.themedRow().tag(value)
         } else {
             content
                 .contentShape(Rectangle())
                 .onTapGesture { choice = value }
                 .accessibilityAddTraits(.isButton)
+                .themedRow()
         }
     }
 }

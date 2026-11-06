@@ -30,6 +30,7 @@ struct WorldShellView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(LinkRouter.self) private var linkRouter
     @Environment(\.horizontalSizeClass) private var sizeClass
+    @Environment(\.appTheme) private var theme
 
     private var isSearching: Bool {
         !navigation.searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -189,6 +190,7 @@ struct WorldShellView: View {
     private var sidebar: some View {
         if showsSideBySide(sizeClass) {
             List(selection: sidebarSelection) { sidebarRows }
+                .themedScreen()
                 // Above the list, not in it, so it is never one of its rows: it is where the user leaves the world.
                 .safeAreaInset(edge: .top, spacing: 0) {
                     if route == nil {
@@ -205,6 +207,7 @@ struct WorldShellView: View {
                 }
         } else {
             List { sidebarRows }
+                .themedScreen()
         }
     }
 
@@ -215,17 +218,21 @@ struct WorldShellView: View {
         row(.timeline, "Timeline", systemImage: "clock")
         row(.campaigns, "Campaigns", systemImage: "flag", badge: (world.campaigns ?? []).count)
 
-        Section("Pages") {
+        Section {
             ForEach(world.visibleKinds) { kind in
                 row(.kind(kind), kind.title, systemImage: kind.systemImage, badge: count(of: kind))
             }
+        } header: {
+            ThemedLabel("Pages")
         }
 
         if hasLibrary {
-            Section("Library") {
+            Section {
                 ForEach(Library.shared.lists(in: world.edition), id: \.self) { list in
                     row(.library(list), Library.shared.title(of: list, in: world.edition), systemImage: Library.shared.systemImage(of: list, in: world.edition))
                 }
+            } header: {
+                ThemedLabel("Library")
             }
         }
     }
@@ -238,9 +245,10 @@ struct WorldShellView: View {
             Label {
                 Text(title)
             } icon: {
-                Image(systemName: systemImage)
+                ThemedIcon(systemName: systemImage)
             }
             .badge(badge)
+            .themedRow()
             .tag(item)
         } else {
             Button {
@@ -250,14 +258,14 @@ struct WorldShellView: View {
                 Label {
                     Text(title)
                 } icon: {
-                    Image(systemName: systemImage)
+                    ThemedIcon(systemName: systemImage)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .badge(badge)
-            .listRowBackground(navigation.selection == item ? Color.accentColor.opacity(0.18) : nil)
+            .listRowBackground(navigation.selection == item ? (theme.accent?.themeColor ?? Color.accentColor).opacity(0.18) : theme.panel?.themeColor)
         }
     }
 
@@ -307,4 +315,10 @@ private func shellPreview(_ width: WindowWidth) -> some View {
 #Preview("Shell, Slide Over strip (320)") { shellPreview(.strip) }
 #Preview("Shell, half screen (507)") { shellPreview(.half) }
 #Preview("Shell, narrowest with the menu beside (678)") { shellPreview(.wide) }
+#Preview("Shell menu, Parchment and Ink") { shellPreview(.strip).inTheme(.parchment) }
+#Preview("Shell menu, Dark Tabletop") { shellPreview(.strip).inTheme(.tabletop) }
+#Preview("Shell menu, Modern Cartographer") { shellPreview(.strip).inTheme(.cartographer) }
+#Preview("Shell, Parchment and Ink") { shellPreview(.full).inTheme(.parchment) }
+#Preview("Shell, Dark Tabletop") { shellPreview(.full).inTheme(.tabletop) }
+#Preview("Shell, Modern Cartographer") { shellPreview(.full).inTheme(.cartographer) }
 #endif

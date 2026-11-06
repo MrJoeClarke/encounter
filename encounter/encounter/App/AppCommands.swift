@@ -45,11 +45,18 @@ struct AppCommands: Commands {
     @FocusedValue(\.worldListActions) private var list
     @FocusedValue(\.sheetActions) private var sheet
     @FocusedBinding(\.pageMode) private var mode
+    @AppStorage("appThemeID") private var themeID = AppTheme.defaultID
 
     /// The pages that have a shortcut of their own in the Go menu.
     static let shortcutKinds: [PageKind] = [.character, .place, .event, .item, .organisation]
 
     var body: some Commands {
+        // The look of the app, to try them one after another.
+        CommandGroup(after: .toolbar) {
+            Picker("Theme", selection: $themeID) {
+                ForEach(AppTheme.all) { Text($0.title).tag($0.id) }
+            }
+        }
         CommandGroup(replacing: .newItem) {
             Button(world?.newPageTitle ?? String(localized: "New Page")) { world?.newPage() }
                 .keyboardShortcut("n")
