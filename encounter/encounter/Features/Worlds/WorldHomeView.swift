@@ -40,6 +40,7 @@ struct WorldHomeView: View {
 
             Section {
                 TextEditor(text: $world.summary)
+                    .scrollContentBackground(.hidden)
                     .frame(minHeight: 140)
             } header: {
                 ThemedLabel("Summary")

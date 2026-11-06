@@ -190,7 +190,9 @@ struct WorldShellView: View {
     private var sidebar: some View {
         if showsSideBySide(sizeClass) {
             List(selection: sidebarSelection) { sidebarRows }
-                .themedScreen()
+                // The sidebar keeps the system's own material beside the screen, which a fill of the theme's would fight; its icons
+                // take the theme's accent.
+                .listItemTint(theme.accent.map { .fixed($0.themeColor) })
                 // Above the list, not in it, so it is never one of its rows: it is where the user leaves the world.
                 .safeAreaInset(edge: .top, spacing: 0) {
                     if route == nil {
@@ -248,7 +250,6 @@ struct WorldShellView: View {
                 ThemedIcon(systemName: systemImage)
             }
             .badge(badge)
-            .themedRow()
             .tag(item)
         } else {
             Button {

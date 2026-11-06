@@ -356,12 +356,12 @@ struct ThemedNavigationTitle: ViewModifier {
     let title: String
 
     func body(content: Content) -> some View {
+        // On the Mac the window already shows the title in its bar, and a toolbar item there is put in a bubble of its own.
+        #if os(iOS)
         if theme.titleDesign != nil || theme.ink != nil {
             content
                 .navigationTitle(title)
-                #if os(iOS)
                 .navigationBarTitleDisplayMode(.inline)
-                #endif
                 .toolbar {
                     ToolbarItem(placement: .principal) {
                         Text(title)
@@ -372,6 +372,9 @@ struct ThemedNavigationTitle: ViewModifier {
         } else {
             content.navigationTitle(title)
         }
+        #else
+        content.navigationTitle(title)
+        #endif
     }
 }
 
