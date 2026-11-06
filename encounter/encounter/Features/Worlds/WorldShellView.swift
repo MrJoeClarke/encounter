@@ -315,10 +315,8 @@ private func shellPreview(_ width: WindowWidth) -> some View {
 #Preview("Shell, Slide Over strip (320)") { shellPreview(.strip) }
 #Preview("Shell, half screen (507)") { shellPreview(.half) }
 #Preview("Shell, narrowest with the menu beside (678)") { shellPreview(.wide) }
-#Preview("Shell menu, Parchment Ornate") { shellPreview(.strip).inTheme(.parchment(.ornate)) }
-#Preview("Shell menu, Parchment Ornate at night") { shellPreview(.strip).inTheme(.parchment(.ornate, night: true)).preferredColorScheme(.dark) }
-#Preview("Shell home, Parchment Plain") { shellPreview(.full).inTheme(.parchment(.plain)) }
-#Preview("Shell home, Parchment Paper") { shellPreview(.full).inTheme(.parchment(.paper)) }
-#Preview("Shell home, Parchment Ornate") { shellPreview(.full).inTheme(.parchment(.ornate)) }
-#Preview("Shell home, Parchment Ornate at night") { shellPreview(.full).inTheme(.parchment(.ornate, night: true)).preferredColorScheme(.dark) }
+#Preview("Shell menu, Parchment and Ink") { shellPreview(.strip).inTheme(.parchment()) }
+#Preview("Shell menu, Parchment and Ink at night") { shellPreview(.strip).inTheme(.parchment(night: true)).preferredColorScheme(.dark) }
+#Preview("Shell home, Parchment and Ink") { shellPreview(.full).inTheme(.parchment()) }
+#Preview("Shell home, Parchment and Ink at night") { shellPreview(.full).inTheme(.parchment(night: true)).preferredColorScheme(.dark) }
 #endif

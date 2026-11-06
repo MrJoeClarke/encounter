@@ -41,19 +41,22 @@ nonisolated struct AppTheme: Identifiable, Equatable, Sendable {
     var grain = false
     /// Whether panels have a thin border.
     var borderedPanels = false
-    /// Flourishes: corners on the banner, a seal for a world without a picture, rules under titles and by labels.
+    /// Flourishes on a world's banner: corners, a rule under its name, and a seal for a world without a picture.
     var ornaments = false
+    /// A rule beside each section label.
+    var labelRules = false
+    /// Rings round the icons of menus and rows.
+    var ringedIcons = false
 
     static let defaultID = "standard"
     /// The looks to choose from.
-    static let all: [AppTheme] = [standard, parchment(.plain), parchment(.paper), parchment(.ornate)]
+    static let all: [AppTheme] = [standard, parchment()]
 
     /// The theme of an id. Parchment has a darker counterpart for when the device is in dark mode.
     static func theme(id: String, night: Bool = false) -> AppTheme {
         switch id {
-        case "parchment-plain": parchment(.plain, night: night)
-        case "parchment-paper": parchment(.paper, night: night)
-        case "parchment-ornate": parchment(.ornate, night: night)
+        // The variants tried first are all this one now.
+        case "parchment", "parchment-plain", "parchment-paper", "parchment-ornate": parchment(night: night)
         default: standard
         }
     }
@@ -65,25 +68,12 @@ nonisolated struct AppTheme: Identifiable, Equatable, Sendable {
         id: "standard", title: String(localized: "Standard"), summary: String(localized: "The look of the system: its blue, its type and its greys.")
     )
 
-    enum ParchmentVariant: String {
-        /// Warm colours and serif type.
-        case plain
-        /// And paper grain, and panels with fine borders.
-        case paper
-        /// And flourishes.
-        case ornate
-    }
-
-    /// Cream paper and ink-dark type by day, and by night dark brown with warm cream ink. Baskerville, as on the parchment map.
-    static func parchment(_ variant: ParchmentVariant, night: Bool = false) -> AppTheme {
+    /// Cream paper with a grain, ink-dark type, and a deep red, by day; by night dark brown with warm cream ink. Baskerville titles, as on
+    /// the parchment map, and flourishes on a world's banner.
+    static func parchment(night: Bool = false) -> AppTheme {
         var theme = AppTheme(
-            id: "parchment-\(variant.rawValue)",
-            title: String(localized: variant == .plain ? "Parchment and Ink: Plain" : (variant == .paper ? "Parchment and Ink: Paper" : "Parchment and Ink: Ornate")),
-            summary: variant == .plain
-                ? String(localized: "Warm paper, Baskerville and a deep red, like the parchment map. By night, dark brown with cream ink.")
-                : (variant == .paper
-                    ? String(localized: "As Plain, with paper grain behind the screens and panels with fine ink borders.")
-                    : String(localized: "As Paper, with flourishes: corners and a seal on the world’s banner, and rules under titles."))
+            id: "parchment", title: String(localized: "Parchment and Ink"),
+            summary: String(localized: "Paper grain, Baskerville and a deep red, like the parchment map, with flourishes on a world’s banner. By night, dark brown with cream ink.")
         )
         if night {
             theme.accent = color(0.92, 0.5, 0.4)
@@ -107,9 +97,8 @@ nonisolated struct AppTheme: Identifiable, Equatable, Sendable {
         theme.titleFontName = MapStyle.Lettering.baskerville.semibold
         theme.smallCapsLabels = true
         theme.cornerRadius = 6
-        theme.grain = variant != .plain
-        theme.borderedPanels = variant != .plain
-        theme.ornaments = variant == .ornate
+        theme.grain = true
+        theme.ornaments = true
         return theme
     }
 }
@@ -288,7 +277,7 @@ struct ThemedLabel: View {
                     .textCase(.uppercase)
                     .tracking(0.8)
                     .foregroundStyle(theme.secondaryInk?.themeColor ?? Color.secondary)
-                if theme.ornaments {
+                if theme.labelRules {
                     Rectangle().fill(theme.line?.themeColor ?? .secondary).frame(height: 0.75).accessibilityHidden(true)
                 }
             }
@@ -312,7 +301,7 @@ struct ThemedIcon: View {
                 .frame(width: size, height: size)
                 .background(accent.themeColor, in: RoundedRectangle(cornerRadius: theme.cornerRadius * 0.6))
                 .accessibilityHidden(true)
-        } else if theme.ornaments {
+        } else if theme.ringedIcons {
             Image(systemName: systemName)
                 .font(.system(size: size * 0.5, weight: .medium))
                 .foregroundStyle(theme.accent?.themeColor ?? Color.accentColor)
