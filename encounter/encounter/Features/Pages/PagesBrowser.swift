@@ -21,7 +21,23 @@ struct PagesBrowser: View {
     @Environment(\.horizontalSizeClass) private var sizeClass
 
     var body: some View {
-        if showsSideBySide(sizeClass) && !opensFullScreen {
+        if showsSideBySide(sizeClass) && opensFullScreen {
+            // The detail area of a split view has no navigation stack of its own on the Mac, so the list and the page swap
+            // places here, with a button to go back.
+            if let page = navigation.selectedPage {
+                PageEditorView(page: page)
+                    .id(page.id)
+                    .toolbar {
+                        ToolbarItem(placement: .navigation) {
+                            Button("\(String(localized: kind.title))", systemImage: "chevron.backward") { navigation.selectedPage = nil }
+                                .keyboardShortcut("[", modifiers: .command)
+                                .help("Back to the list")
+                        }
+                    }
+            } else {
+                PageListView(world: world, kind: kind, selection: selectedPage)
+            }
+        } else if showsSideBySide(sizeClass) {
             ListDetailSplit {
                 PageListView(world: world, kind: kind, selection: selectedPage)
             } detail: {
