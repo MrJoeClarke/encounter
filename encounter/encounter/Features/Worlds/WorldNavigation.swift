@@ -24,6 +24,8 @@ final class WorldNavigation {
     /// What the user has typed in the search field. While it isn't empty, the results are showing.
     var searchText = ""
     var searchScope: SearchScope = .all
+    /// Whether a character is showing as its sheet and not its page, which the editor sets and a restored window reads.
+    var showsSheet = false
 
     /// Shows the page: switches the sidebar to its kind and selects it.
     func open(_ page: Page) {

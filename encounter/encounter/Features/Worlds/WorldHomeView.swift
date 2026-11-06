@@ -11,7 +11,8 @@ struct WorldHomeView: View {
     @Bindable var world: World
     /// Called after the user confirms deletion. The caller leaves this screen and then deletes the world,
     /// so nothing is still showing a deleted world.
-    let onDelete: (World) -> Void
+    /// Nil where the screen is in a window of its own, which has no list of worlds to return to: the world is deleted from the main window.
+    let onDelete: ((World) -> Void)?
 
     @State private var exportDocument: WorldExportDocument?
     @State private var isExporting = false
@@ -67,8 +68,10 @@ struct WorldHomeView: View {
                 Text("Saves this world, with its images, as a package you can keep as a backup or import again.")
             }
 
-            Section {
-                Button("Delete World…", systemImage: "trash", role: .destructive) { isConfirmingDelete = true }
+            if onDelete != nil {
+                Section {
+                    Button("Delete World…", systemImage: "trash", role: .destructive) { isConfirmingDelete = true }
+                }
             }
         }
         .formStyle(.grouped)
@@ -98,7 +101,7 @@ struct WorldHomeView: View {
             Text(message)
         }
         .alert("Delete World?", isPresented: $isConfirmingDelete) {
-            Button("Delete", role: .destructive) { onDelete(world) }
+            Button("Delete", role: .destructive) { onDelete?(world) }
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("“\(world.name)” and all of its pages, maps and campaigns will be deleted. This can’t be undone.")

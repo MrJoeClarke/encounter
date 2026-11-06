@@ -35,5 +35,14 @@ struct encounterApp: App {
         }
         .modelContainer(modelContainer)
         .commands { AppCommands() }
+
+        // A world's screens in a window of their own, opened from a page, a map or a sheet with "Open in New Window".
+        WindowGroup("World", id: WindowRoute.windowID, for: WindowRoute.self) { $route in
+            if let route {
+                WorldWindowView(route: route)
+                    .environment(linkRouter)
+            }
+        }
+        .modelContainer(modelContainer)
     }
 }

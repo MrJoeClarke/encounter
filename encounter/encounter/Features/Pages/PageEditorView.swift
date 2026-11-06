@@ -20,6 +20,8 @@ struct PageEditorView: View {
     @FocusState private var titleIsFocused: Bool
     @State private var mode = PageEditorMode.page
     @Environment(\.dynamicTypeSize) private var typeSize
+    /// The window's navigation, to carry the page-or-sheet choice into and out of a saved or new window. Absent in previews.
+    @Environment(WorldNavigation.self) private var navigation: WorldNavigation?
 
     private var hasSheet: Bool { page.kind == .character && page.world?.rules.contains(.sheet) == true }
 
@@ -58,6 +60,8 @@ struct PageEditorView: View {
         }
         // The Character menu switches between the page and the sheet.
         .focusedSceneValue(\.pageMode, hasSheet ? $mode : nil)
+        .onAppear { if hasSheet, navigation?.showsSheet == true { mode = .sheet } }
+        .onChange(of: mode) { navigation?.showsSheet = (mode == .sheet) }
     }
 
     private var form: some View {

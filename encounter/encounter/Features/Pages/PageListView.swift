@@ -59,6 +59,10 @@ struct PageListView: View {
                         }
                             .choosable(page, in: $selection)
                             .contextMenu {
+                                OpenInNewWindowButtons(
+                                    route: WindowRoute.page(page),
+                                    sheetRoute: page.kind == .character && page.world?.rules.contains(.sheet) == true ? WindowRoute.page(page, showsSheet: true) : nil
+                                )
                                 if !page.isWorldRoot {
                                     Button("Delete…", systemImage: "trash", role: .destructive) { pageToDelete = page }
                                 }

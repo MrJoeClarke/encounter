@@ -179,6 +179,7 @@ struct MapDetailView: View {
                     if !map.isVector && map.isCalibrated {
                         Button("Trace Features…", systemImage: "scribble.variable") { isTracing = true }
                     }
+                    OpenInNewWindowButtons(route: WindowRoute.map(map))
                     Button("Delete Map…", systemImage: "trash", role: .destructive) { isConfirmingDelete = true }
                 }
                 .labelStyle(.iconOnly)

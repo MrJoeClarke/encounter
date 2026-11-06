@@ -13,6 +13,9 @@ struct WorldListView: View {
     @Query(sort: \World.createdAt) private var worlds: [World]
 
     @State private var path: [World] = []
+    /// The world this window had open, kept by the system for it, so it comes back to the same world after the app has been closed.
+    @SceneStorage("openWorldID") private var openWorldID = ""
+    @State private var hasRestoredWorld = false
     @State private var worldPendingDeletion: World?
     @State private var isCreatingWorld = false
     @State private var isChoosingImportFile = false
@@ -87,8 +90,15 @@ struct WorldListView: View {
             } message: { result in
                 result.message
             }
+            // The world this window had open comes back, once the worlds are there to find it in.
+            .onChange(of: worlds.count, initial: true) {
+                guard !hasRestoredWorld, !worlds.isEmpty else { return }
+                hasRestoredWorld = true
+                if path.isEmpty, let world = worlds.first(where: { $0.id.uuidString == openWorldID }) { path = [world] }
+            }
             // The world is deleted only once its screens have gone, so nothing is left showing a deleted world.
             .onChange(of: path) {
+                if hasRestoredWorld { openWorldID = path.last?.id.uuidString ?? "" }
                 if path.isEmpty, let world = worldPendingDeletion {
                     worldPendingDeletion = nil
                     modelContext.delete(world)

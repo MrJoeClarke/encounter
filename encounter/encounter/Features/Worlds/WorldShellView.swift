@@ -20,8 +20,10 @@ enum WorldSidebarItem: Hashable {
 /// selection using the rest of the window.
 struct WorldShellView: View {
     let world: World
-    /// Called when the user deletes the world from its home page.
-    let onDelete: (World) -> Void
+    /// Where a window made for a route starts. Nil in the main window, which starts at the world's home.
+    var route: WindowRoute?
+    /// Called when the user deletes the world from its home page. Nil in a window of its own, which has no list of worlds behind it.
+    let onDelete: ((World) -> Void)?
 
     @State private var navigation = WorldNavigation()
     @Environment(\.dismiss) private var dismiss
@@ -39,6 +41,9 @@ struct WorldShellView: View {
 
     /// On iOS, whether the screen chosen from the menu is open on top of it.
     @State private var isShowingDetail = false
+    /// Where this window was, kept by the system for it so it comes back to the same screen after the app has been closed.
+    @SceneStorage("windowRoute") private var savedRoute = ""
+    @State private var hasRestored = false
     /// Beside the screen, whether the menu is showing. Where it slides over the screen, choosing a row closes it.
     @State private var columnVisibility = NavigationSplitViewVisibility.automatic
 
@@ -66,7 +71,11 @@ struct WorldShellView: View {
                 navigation.open(world.addPage(kind: navigation.newPageKind, in: modelContext))
             })
             // Where the user has been, so Back and Forward can return to it.
-            .onChange(of: navigation.place) { old, new in navigation.record(from: old, to: new) }
+            .onChange(of: navigation.place) { old, new in
+                navigation.record(from: old, to: new)
+                saveRoute()
+            }
+            .onChange(of: navigation.showsSheet) { saveRoute() }
             // Beside the screen, Back and Forward (also in the Go menu, with their shortcuts) move through what was open in the
             // world. They never leave the world: "All Worlds" at the top of the menu does that.
             .navigationBarBackButtonHidden(showsSideBySide(sizeClass))
@@ -83,7 +92,10 @@ struct WorldShellView: View {
                 }
             }
             // Mention links that arrive from the system are opened in the world that's showing.
-            .onAppear { linkRouter.activate(world: world, navigation: navigation) }
+            .onAppear {
+                linkRouter.activate(world: world, navigation: navigation)
+                restore()
+            }
             .onDisappear { linkRouter.deactivate(navigation: navigation) }
             // If the rule system changes to one without a library while the library is showing, go home.
             .onChange(of: hasLibrary) {
@@ -91,6 +103,28 @@ struct WorldShellView: View {
                     navigation.choose(.home)
                 }
             }
+    }
+
+    /// Notes where the window is, for its coming back to it.
+    private func saveRoute() {
+        guard hasRestored, let data = try? JSONEncoder().encode(navigation.route(in: world)), let text = String(data: data, encoding: .utf8) else { return }
+        savedRoute = text
+    }
+
+    /// Takes the window back to where it was left, or where it was made to start, once.
+    private func restore() {
+        guard !hasRestored else { return }
+        defer { hasRestored = true }
+        let saved = savedRoute.data(using: .utf8).flatMap { try? JSONDecoder().decode(WindowRoute.self, from: $0) }
+        if let saved, saved.worldID == world.id {
+            navigation.apply(saved, in: world)
+        } else if let route, route.worldID == world.id {
+            navigation.apply(route, in: world)
+        } else {
+            return
+        }
+        // On a phone, or a narrow window, the screen is pushed over the menu.
+        if !showsSideBySide(sizeClass) { isShowingDetail = navigation.selection != .home || navigation.selectedPage != nil }
     }
 
     /// With room (a Mac, or an iPad at regular width) the menu sits beside the screen it chose. On a phone, or a
@@ -157,6 +191,7 @@ struct WorldShellView: View {
             List(selection: sidebarSelection) { sidebarRows }
                 // Above the list, not in it, so it is never one of its rows: it is where the user leaves the world.
                 .safeAreaInset(edge: .top, spacing: 0) {
+                    if route == nil {
                     Button { dismiss() } label: {
                         Label("All Worlds", systemImage: "chevron.backward")
                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -166,6 +201,7 @@ struct WorldShellView: View {
                     }
                     .buttonStyle(.plain)
                     .accessibilityHint("Leaves this world and shows every world")
+                    }
                 }
         } else {
             List { sidebarRows }
