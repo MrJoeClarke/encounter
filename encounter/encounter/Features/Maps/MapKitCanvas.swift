@@ -357,6 +357,10 @@ struct MapKitCanvas: PlatformViewRepresentable {
                     text: line.page.title, type: type, coordinate: WebMercator.coordinate(spot.point), angle: spot.degrees, priority: PlaceLabelKind.priority(type: type)
                 )
                 label.maxView = zoom.name(ofType: type)
+                // A name along a line needs the line to be as long as it is on screen, or it stands out from the line it names.
+                let ends = line.points.map { MKMapPoint(WebMercator.coordinate($0)) }
+                label.extent = zip(ends, ends.dropFirst()).reduce(0) { $0 + hypot($1.1.x - $1.0.x, $1.1.y - $1.0.y) }
+                label.textWidth = Double(MapGlyphs.label(line.page.title, type: type, style: parent?.map.style ?? .dark)?.size.width ?? 0)
                 made.append(label)
             }
             for pin in pins where !pin.page.title.isEmpty {
@@ -576,7 +580,10 @@ struct MapKitCanvas: PlatformViewRepresentable {
                 let mapStyle = parent?.map.style ?? MapStyle.dark
                 let type = line.page.attributeText("core.placeType")
                 let style = mapStyle.style(forPlaceType: type)
-                if let ink = InkRenderer.make(line: line, type: type, style: mapStyle, highlighted: line.page.id == parent?.highlighted?.id) { return ink }
+                if let ink = InkRenderer.make(
+                    line: line, type: type, style: mapStyle, highlighted: line.page.id == parent?.highlighted?.id,
+                    mapWidth: parent?.map.kind == .world && !sheetRect.isNull ? sheetRect.width : nil
+                ) { return ink }
                 let renderer = MKPolylineRenderer(overlay: line)
                 renderer.strokeColor = PlatformColor(style: style.stroke)
                 renderer.lineWidth = style.lineWidth

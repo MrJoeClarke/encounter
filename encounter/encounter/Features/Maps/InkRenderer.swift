@@ -16,6 +16,8 @@ final class InkRenderer: MKOverlayRenderer {
     private let wash: MapStyle.Wash?
     /// The accent colour the place is highlighted in, if it is the one chosen.
     private let highlight: CGColor?
+    /// How much of its own thickness the line is drawn at, for how many points per MapKit point the view has; nil for always all of it.
+    private let thickness: ((Double) -> Double)?
     private let isClosed: Bool
     private let fill: CGColor?
     private let stroke: CGColor
@@ -25,6 +27,7 @@ final class InkRenderer: MKOverlayRenderer {
 
     /// The outline of an area, and the holes cut in it.
     init(polygon: MKPolygon, fill: CGColor?, stroke: CGColor, width: Double, dash: [Double]?, hand: MapStyle.HandDrawn, decoration: InkDecoration? = nil, wash: MapStyle.Wash? = nil, highlight: CGColor? = nil) {
+        thickness = nil
         rings = ([polygon] + (polygon.interiorPolygons ?? [])).map(Self.mapPoints)
         bounds = polygon.boundingMapRect
         self.decoration = decoration
@@ -40,7 +43,8 @@ final class InkRenderer: MKOverlayRenderer {
     }
 
     /// A line.
-    init(line: MKPolyline, stroke: CGColor, width: Double, dash: [Double]?, hand: MapStyle.HandDrawn, highlight: CGColor? = nil) {
+    init(line: MKPolyline, stroke: CGColor, width: Double, dash: [Double]?, hand: MapStyle.HandDrawn, highlight: CGColor? = nil, thickness: ((Double) -> Double)? = nil) {
+        self.thickness = thickness
         rings = [Self.mapPoints(of: line)]
         bounds = line.boundingMapRect
         decoration = nil
@@ -125,6 +129,12 @@ final class InkRenderer: MKOverlayRenderer {
                 // An empty dash is a solid line drawn as one stroke, so a translucent halo has no darker beads where pieces overlap.
                 ? [(highlight, max(width * 1.6, 2.5), [])]
                 : [(highlight.copy(alpha: 0.32) ?? highlight, width + 9, []), (stroke, width, dash)]
+        }
+        // Thinner, and fainter, the further out the view is, or not drawn at all.
+        if let thickness {
+            let factor = thickness(Double(zoomScale))
+            guard factor > 0 else { return }
+            pens = pens.map { ($0.color.copy(alpha: $0.color.alpha * (0.6 + 0.4 * factor)) ?? $0.color, $0.width * factor, $0.dash) }
         }
         for pen in pens where pen.width > 0 { strokePass(pen, mapRect: mapRect, zoomScale: zoomScale, in: context) }
         if let decoration { drawDecoration(decoration, mapRect: mapRect, zoomScale: zoomScale, in: context) }

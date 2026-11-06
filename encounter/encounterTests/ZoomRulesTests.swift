@@ -59,4 +59,29 @@ struct ZoomRulesTests {
     @Test func buildingsAreNamedOnceZoomedIn() {
         #expect(PlaceLabelKind.of(type: "Building") == .area)
     }
+
+    @Test func aWebOfRoadsIsThinWhenTheWholeMapIsInViewAndFullWhenZoomedIn() {
+        let far = rules.lineFactor(type: "Road", span: 800)
+        let near = rules.lineFactor(type: "Road", span: 5_000)
+        #expect(far < 0.7 && far > 0.2)
+        #expect(near == 1)
+        #expect(rules.lineFactor(type: "Road", span: 1_600) > far)
+    }
+
+    @Test func streetsAndWallsAreLeftOutOfAWorldUntilZoomedIn() {
+        #expect(rules.lineFactor(type: "Street", span: 800) == 0)
+        #expect(rules.lineFactor(type: "Wall", span: 800) == 0)
+        #expect(rules.lineFactor(type: "Street", span: 3_000) == 1)
+        // A river is never left out, and a type with no rule is drawn in full.
+        #expect(rules.lineFactor(type: "River", span: 100) > 0.6)
+        #expect(rules.lineFactor(type: "Building", span: 100) == 1)
+    }
+
+    @Test func aLineRuleRisesSteadily() {
+        let rule = ZoomRules.LineRule(hiddenBelow: 1_000, fullAt: 2_000, least: 0.5)
+        #expect(rule.factor(span: 999) == 0)
+        #expect(rule.factor(span: 1_000) == 0.5)
+        #expect(abs(rule.factor(span: 1_500) - 0.75) < 1e-9)
+        #expect(rule.factor(span: 9_999) == 1)
+    }
 }

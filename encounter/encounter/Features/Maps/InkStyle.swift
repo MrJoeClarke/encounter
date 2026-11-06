@@ -31,10 +31,14 @@ extension InkRenderer {
     }
 
     /// The renderer for a line of a type in a style, or nil if the style doesn't draw that type by hand.
-    static func make(line: MKPolyline, type: String, style mapStyle: MapStyle, highlighted: Bool = false) -> InkRenderer? {
-        guard let hand = hand(for: type, in: mapStyle, highlighted: highlighted) else { return nil }
+    static func make(line: MKPolyline, type: String, style mapStyle: MapStyle, highlighted: Bool = false, mapWidth: Double? = nil) -> InkRenderer? {
+        // On a map of the world a line gets thinner as the view moves out, whatever the style, so it is drawn this way in every style.
+        let fades = mapWidth != nil && mapStyle.zoom.lines[type] != nil
+        guard let hand = hand(for: type, in: mapStyle, highlighted: highlighted || fades) else { return nil }
         let look = mapStyle.style(forPlaceType: type)
-        return InkRenderer(line: line, stroke: colour(look.stroke), width: look.lineWidth, dash: look.isDashed ? (look.dashPattern ?? [6, 4]) : nil, hand: hand, highlight: highlighted ? colour(mapStyle.accent) : nil)
+        return InkRenderer(line: line, stroke: colour(look.stroke), width: look.lineWidth, dash: look.isDashed ? (look.dashPattern ?? [6, 4]) : nil, hand: hand, highlight: highlighted ? colour(mapStyle.accent) : nil,
+            thickness: fades ? { [zoom = mapStyle.zoom] zoomScale in zoom.lineFactor(type: type, span: (mapWidth ?? 0) * zoomScale) } : nil
+        )
     }
 
     private static func hand(for type: String, in style: MapStyle, highlighted: Bool) -> MapStyle.HandDrawn? {
