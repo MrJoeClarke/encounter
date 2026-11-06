@@ -31,6 +31,8 @@ struct ListDetailSplit<List: View, Detail: View>: View {
                 .layoutPriority(1)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        // The paper behind both panes, so no gap between or around them shows the window's own, lighter colour.
+        .themedBackground()
         #else
         HStack(spacing: 0) {
             list()

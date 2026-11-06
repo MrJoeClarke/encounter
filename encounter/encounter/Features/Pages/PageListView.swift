@@ -72,6 +72,7 @@ struct PageListView: View {
                 }
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .themedBackground()
         .navigationTitle(Text(kind.title))
         .toolbar { toolbarItems }
