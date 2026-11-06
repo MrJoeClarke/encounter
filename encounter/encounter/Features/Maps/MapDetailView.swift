@@ -26,6 +26,9 @@ struct MapDetailView: View {
     @State private var outlineProblem: String?
     @AppStorage("showsMapGrid") private var showsGrid = true
     @State private var selectedPlace: Page?
+    /// Whether the picture is being traced for places, and what the last trace did.
+    @State private var isTracing = false
+    @State private var traceResult: String?
     /// The character whose journey is drawn as a line, if any.
     @State private var journeyCharacter: Page?
 
@@ -102,6 +105,21 @@ struct MapDetailView: View {
                 }
             }
         }
+        .sheet(isPresented: $isTracing) {
+            TraceMapSheet(map: map) { summary in
+                isTracing = false
+                if let summary {
+                    traceResult = summary.replaced + summary.kept > 0
+                        ? String(localized: "Added \(summary.created) places. \(summary.replaced) from the last trace were replaced, and \(summary.kept) that have been edited were kept.")
+                        : String(localized: "Added \(summary.created) places over the picture.")
+                }
+            }
+        }
+        .alert("Traced the Map", isPresented: Binding(get: { traceResult != nil }, set: { if !$0 { traceResult = nil } })) {
+            Button("OK") {}
+        } message: {
+            Text(traceResult ?? "")
+        }
         .alert(
             "Couldn’t Finish the Outline",
             isPresented: Binding(get: { outlineProblem != nil }, set: { if !$0 { outlineProblem = nil } })
@@ -154,6 +172,9 @@ struct MapDetailView: View {
                     }
                     styleMenus
                     journeyMenu
+                    if !map.isVector && map.isCalibrated {
+                        Button("Trace Features…", systemImage: "scribble.variable") { isTracing = true }
+                    }
                     Button("Delete Map…", systemImage: "trash", role: .destructive) { isConfirmingDelete = true }
                 }
                 .labelStyle(.iconOnly)
