@@ -84,7 +84,7 @@ struct LibraryBrowser: View {
             LibraryEntryView(entry: entry, world: world)
                 .id(entry.key)
         } else {
-            ContentUnavailableView("No Entry Selected", systemImage: "books.vertical")
+            ContentUnavailableView { ThemedEmptyLabel("No Entry Selected", systemImage: "books.vertical") }
         }
     }
 }

@@ -310,6 +310,7 @@ struct ThemedIcon: View {
                 .accessibilityHidden(true)
         } else {
             Image(systemName: systemName)
+                .foregroundStyle(theme.accent?.themeColor ?? Color.primary)
                 .accessibilityHidden(true)
         }
     }
@@ -328,6 +329,8 @@ struct ThemedThumbnail: View {
                 .frame(width: size, height: size)
                 .clipShape(RoundedRectangle(cornerRadius: theme.cornerRadius * 0.7))
                 .overlay { RoundedRectangle(cornerRadius: theme.cornerRadius * 0.7).strokeBorder(theme.line?.themeColor ?? .clear) }
+        } else if theme.ornaments {
+            SealIcon(systemName: systemName, size: size)
         } else {
             Image(systemName: systemName)
                 .accessibilityHidden(true)
@@ -382,14 +385,14 @@ extension View {
     func themedNavigationTitle(_ title: String) -> some View { modifier(ThemedNavigationTitle(title: title)) }
 }
 
-/// Fine double lines in the corners of a banner, like the frame of a map.
-private struct CornerFlourishes: View {
+/// Fine double lines in the corners of a banner or panel, like the frame of a map.
+struct CornerFlourishes: View {
     let colour: Color
     let inset: Double
+    var arm = 18.0
 
     var body: some View {
         Canvas { context, size in
-            let arm = 18.0
             for (x, y, dx, dy) in [(inset, inset, 1.0, 1.0), (size.width - inset, inset, -1.0, 1.0), (inset, size.height - inset, 1.0, -1.0), (size.width - inset, size.height - inset, -1.0, -1.0)] {
                 for offset in [0.0, 3.5] {
                     var path = Path()
@@ -490,4 +493,138 @@ struct WorldBanner: View {
                 .accessibilityHidden(true)
         }
     }
+}
+
+
+// MARK: Flourishes
+
+/// A wax seal with a symbol pressed into it: the mark of a page or a screen with nothing in it yet.
+struct SealIcon: View {
+    @Environment(\.appTheme) private var theme
+    let systemName: String
+    var size: Double = 36
+
+    var body: some View {
+        ZStack {
+            Image(systemName: "seal.fill")
+                .resizable()
+                .scaledToFit()
+                .foregroundStyle(theme.accent?.themeColor ?? Color.secondary)
+            Image(systemName: systemName)
+                .resizable()
+                .scaledToFit()
+                .padding(size * 0.26)
+                .foregroundStyle(theme.panel?.themeColor ?? Color.white)
+        }
+        .frame(width: size, height: size)
+        .accessibilityHidden(true)
+    }
+}
+
+/// The label of an empty screen: a seal where the theme has flourishes, and the system's own symbol where it has not.
+struct ThemedEmptyLabel: View {
+    @Environment(\.appTheme) private var theme
+    private let title: Text
+    let systemImage: String
+
+    init(_ title: LocalizedStringResource, systemImage: String) {
+        self.title = Text(title)
+        self.systemImage = systemImage
+    }
+
+    var body: some View {
+        if theme.ornaments {
+            VStack(spacing: 10) {
+                SealIcon(systemName: systemImage, size: 72)
+                title
+            }
+        } else {
+            Label { title } icon: { Image(systemName: systemImage) }
+        }
+    }
+}
+
+/// The mark at the end of a list or a page, like the end mark of a printed page.
+struct EndMark: View {
+    @Environment(\.appTheme) private var theme
+
+    var body: some View {
+        if theme.ornaments {
+            HStack(spacing: 10) {
+                Rectangle().fill(theme.line?.themeColor ?? .secondary).frame(height: 0.75)
+                Text("❦")
+                    .font(.body)
+                    .foregroundStyle(theme.accent?.themeColor ?? Color.secondary)
+                Rectangle().fill(theme.line?.themeColor ?? .secondary).frame(height: 0.75)
+            }
+            .frame(maxWidth: 220)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 12)
+            .accessibilityHidden(true)
+        }
+    }
+}
+
+/// The end mark as the last row of a list or form.
+struct EndMarkRow: View {
+    @Environment(\.appTheme) private var theme
+
+    var body: some View {
+        if theme.ornaments {
+            EndMark()
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
+        }
+    }
+}
+
+/// A panel of a character sheet: the theme's panel colour with a fine border and corner marks where it has flourishes, or the system's
+/// pale fill where it has none.
+struct ThemedSheetPanel: ViewModifier {
+    @Environment(\.appTheme) private var theme
+    var corners = true
+
+    func body(content: Content) -> some View {
+        if let panel = theme.panel {
+            content
+                .background(panel.themeColor, in: RoundedRectangle(cornerRadius: theme.cornerRadius))
+                .overlay { RoundedRectangle(cornerRadius: theme.cornerRadius).strokeBorder(theme.line?.themeColor ?? .clear, lineWidth: 0.75) }
+                .overlay {
+                    if theme.ornaments && corners { CornerFlourishes(colour: (theme.accent?.themeColor ?? .secondary).opacity(0.7), inset: 4, arm: 9) }
+                }
+        } else {
+            content.background(.quaternary.opacity(0.35), in: RoundedRectangle(cornerRadius: 12))
+        }
+    }
+}
+
+/// The theme's paper behind a screen that is not a list or form, such as a character sheet.
+struct ThemedBackground: ViewModifier {
+    @Environment(\.appTheme) private var theme
+    /// Whether text takes the theme's ink: for a sheet of facts, but not for an empty screen, whose prominent button must keep its own text.
+    var inksText = false
+
+    func body(content: Content) -> some View {
+        if let background = theme.background {
+            let painted = content.background {
+                Group {
+                    if theme.grain { PaperBackground(ground: background) } else { background.themeColor }
+                }
+                .ignoresSafeArea()
+            }
+            if inksText {
+                painted.foregroundStyle(theme.ink?.themeColor ?? Color.primary)
+            } else {
+                painted
+            }
+        } else {
+            content
+        }
+    }
+}
+
+extension View {
+    /// A character sheet panel; small ones (a single figure) have no corner marks.
+    func themedSheetPanel(corners: Bool = true) -> some View { modifier(ThemedSheetPanel(corners: corners)) }
+    func themedBackground(inksText: Bool = false) -> some View { modifier(ThemedBackground(inksText: inksText)) }
 }

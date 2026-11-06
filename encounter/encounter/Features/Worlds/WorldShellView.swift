@@ -195,6 +195,7 @@ struct WorldShellView: View {
                 .listItemTint(theme.accent.map { .fixed($0.themeColor) })
                 // Above the list, not in it, so it is never one of its rows: it is where the user leaves the world.
                 .safeAreaInset(edge: .top, spacing: 0) {
+                    VStack(spacing: 0) {
                     if route == nil {
                     Button { dismiss() } label: {
                         Label("All Worlds", systemImage: "chevron.backward")
@@ -205,6 +206,11 @@ struct WorldShellView: View {
                     }
                     .buttonStyle(.plain)
                     .accessibilityHint("Leaves this world and shows every world")
+                    }
+                    // A flourished rule under it, where the theme has flourishes.
+                    OrnamentalRule()
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 6)
                     }
                 }
         } else {

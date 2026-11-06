@@ -42,7 +42,7 @@ struct CampaignsBrowser: View {
             CampaignDetailView(campaign: campaign)
                 .id(campaign.id)
         } else {
-            ContentUnavailableView("No Campaign Selected", systemImage: "flag")
+            ContentUnavailableView { ThemedEmptyLabel("No Campaign Selected", systemImage: "flag") }
         }
     }
 }
@@ -67,7 +67,7 @@ struct CampaignsListView: View {
         Group {
             if campaigns.isEmpty {
                 ContentUnavailableView {
-                    Label("Campaigns", systemImage: "flag")
+                    ThemedEmptyLabel("Campaigns", systemImage: "flag")
                 } description: {
                     Text("A campaign groups the events of one game you run in this world. Events that aren’t part of one are backstory.")
                 } actions: {

@@ -85,11 +85,20 @@ struct WorldHomeView: View {
                     Button("Delete World…", systemImage: "trash", role: .destructive) { isConfirmingDelete = true }
                 }
             }
+
+            EndMarkRow()
         }
         .formStyle(.grouped)
         .themedScreen()
         .themedRow()
         .themedNavigationTitle(String(localized: "Home"))
+        #if os(macOS)
+        // The first field of a window is selected when it opens, which highlights the world's name as if it had been clicked.
+        .task {
+            try? await Task.sleep(for: .milliseconds(150))
+            NSApp.keyWindow?.makeFirstResponder(nil)
+        }
+        #endif
         .sheet(isPresented: $isEditingCalendar) {
             if let calendar = world.calendar {
                 CalendarEditorView(world: world, calendar: calendar) { isEditingCalendar = false }

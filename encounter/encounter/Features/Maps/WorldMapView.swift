@@ -19,14 +19,14 @@ struct WorldMapView: View {
                 .id(map.id)
         } else if let root = world.rootPlace {
             ContentUnavailableView {
-                Label("No World Map Yet", systemImage: "map")
+                ThemedEmptyLabel("No World Map Yet", systemImage: "map")
             } description: {
                 Text("Add an image of your world to see it here. You can then put places on it, and open their own maps from it.")
             } actions: {
                 AddMapControls(place: root)
             }
         } else {
-            ContentUnavailableView("No World Map", systemImage: "map")
+            ContentUnavailableView { ThemedEmptyLabel("No World Map", systemImage: "map") }
         }
     }
 }

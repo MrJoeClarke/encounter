@@ -56,6 +56,7 @@ struct CharacterSheetView: View {
                 }
                 .padding()
             }
+            .themedBackground(inksText: true)
             // The Character menu can take a rest.
             .focusedSceneValue(\.sheetActions, SheetActions(
                 rests: [SheetActions.Rest(name: String(localized: "Short Rest")) { sheet.shortRest() }, SheetActions.Rest(name: String(localized: "Long Rest")) { sheet.longRest() }],
@@ -74,12 +75,13 @@ struct CharacterSheetView: View {
 
     private func box<Content: View>(_ title: LocalizedStringKey, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(title).font(.headline)
+            Text(title).themedTitle(.headline)
+            OrnamentalRule()
             content()
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(12)
-        .background(.quaternary.opacity(0.35), in: RoundedRectangle(cornerRadius: 12))
+        .themedSheetPanel()
     }
 
     private func bonus(_ number: Int) -> String { number >= 0 ? "+\(number)" : "−\(-number)" }
@@ -117,7 +119,7 @@ struct CharacterSheetView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 10)
-        .background(.quaternary.opacity(0.35), in: RoundedRectangle(cornerRadius: 12))
+        .themedSheetPanel(corners: false)
         .contentShape(Rectangle())
     }
 
@@ -501,6 +503,37 @@ final class RollLog {
     return CharacterSheetView(page: page)
         .modelContainer(container)
         .frame(width: 1000, height: 900)
+}
+
+#Preview("Wizard, Parchment and Ink") {
+    let container = try! AppSchema.makeContainer(inMemory: true)
+    let context = container.mainContext
+    let world = World(name: "Preview", system: .dnd5e)
+    world.edition = .srd51
+    context.insert(world)
+    let page = world.addPage(kind: .character, in: context)
+    page.title = "Mira Vale"
+    page.characterRole = .playable
+    page.setReference(.library("srd51.race.human"), role: LinkRole.race, in: context)
+    page.setReference(.library("srd51.class.wizard"), role: LinkRole.characterClass, in: context)
+    page.setReference(.library("srd51.background.acolyte"), role: LinkRole.background, in: context)
+    page.setAttributeNumber("dnd5e.classLevel", 5)
+    page.setAttributeNumber("dnd5e.hitPoints", 28)
+    page.setAttributeNumber("dnd5e.currentHitPoints", 19)
+    page.setAttributeNumber("dnd5e.armorClass", 12)
+    page.setAttributeNumber("dnd5e.proficiencyBonus", 3)
+    page.setAttributeText("dnd5e.speed", "30 feet")
+    let scores: [Ability: Double] = [.strength: 8, .dexterity: 14, .constitution: 13, .intelligence: 17, .wisdom: 12, .charisma: 10]
+    for (ability, score) in scores { page.setAttributeNumber(ability.attributeKey, score) }
+    page.setAttributeText("dnd5e.savingThrowProficiencies", "Intelligence, Wisdom")
+    page.setAttributeText("dnd5e.skillProficiencies", "Arcana, History, Insight")
+    page.setAttributeText("dnd5e.spellSlotsUsed", "1,0,0")
+    page.attributes["dnd5e.equipment"] = .entries([EntryValue(name: "a dagger"), EntryValue(name: "a quarterstaff"), EntryValue(name: "a spellbook")])
+    page.attributes["dnd5e.spells"] = .entries(["Fire Bolt", "Light", "Magic Missile", "Shield", "Fireball", "Misty Step"].map { EntryValue(name: $0) })
+    return CharacterSheetView(page: page)
+        .modelContainer(container)
+        .frame(width: 1000, height: 900)
+        .inTheme(.parchment())
 }
 
 #Preview("Bard, down") {

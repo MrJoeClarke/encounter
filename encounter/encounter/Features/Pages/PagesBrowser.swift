@@ -51,7 +51,7 @@ struct PagesBrowser: View {
             PageEditorView(page: page)
                 .id(page.id)
         } else {
-            ContentUnavailableView("No Page Selected", systemImage: "doc.text")
+            ContentUnavailableView { ThemedEmptyLabel("No Page Selected", systemImage: "doc.text") }
         }
     }
 }

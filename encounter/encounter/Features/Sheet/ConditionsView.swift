@@ -57,7 +57,7 @@ struct ConditionsBox: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(12)
-            .background(.quaternary.opacity(0.35), in: RoundedRectangle(cornerRadius: 12))
+            .themedSheetPanel()
             .sheet(item: $inspecting) { condition in
                 ConditionInfoView(page: page, condition: condition) { inspecting = nil }
             }

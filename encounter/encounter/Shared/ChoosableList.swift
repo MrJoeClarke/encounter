@@ -55,11 +55,17 @@ struct ChoosableList<Choice: Hashable, Content: View>: View {
 
     var body: some View {
         if showsSideBySide(sizeClass) {
-            List(selection: $choice, content: content)
-                .themedScreen()
+            List(selection: $choice) {
+                content()
+                EndMarkRow()
+            }
+            .themedScreen()
         } else {
-            List(content: content)
-                .themedScreen()
+            List {
+                content()
+                EndMarkRow()
+            }
+            .themedScreen()
         }
     }
 }

@@ -36,7 +36,7 @@ struct WorldTimelineView: View {
             Divider()
             if events.isEmpty {
                 ContentUnavailableView {
-                    Label("No Events Yet", systemImage: "clock")
+                    ThemedEmptyLabel("No Events Yet", systemImage: "clock")
                 } description: {
                     Text("Events are things that happened in your world. Give them dates and they will appear here in order.")
                 } actions: {
@@ -45,7 +45,7 @@ struct WorldTimelineView: View {
                 }
             } else if groups.isEmpty {
                 ContentUnavailableView {
-                    Label("No Events Match", systemImage: "line.3.horizontal.decrease.circle")
+                    ThemedEmptyLabel("No Events Match", systemImage: "line.3.horizontal.decrease.circle")
                 } actions: {
                     Button("Clear Filters") { filter = TimelineFilter() }
                 }

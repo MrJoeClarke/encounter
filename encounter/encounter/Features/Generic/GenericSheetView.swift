@@ -42,6 +42,7 @@ struct GenericSheetView: View {
                 }
                 .padding()
             }
+            .themedBackground(inksText: true)
             // The Character menu can take a rest or level up.
             .focusedSceneValue(\.sheetActions, SheetActions(
                 rests: system.rests.map { rest in SheetActions.Rest(name: rest.name) { takeRest(rest) } },
@@ -114,21 +115,22 @@ struct GenericSheetView: View {
         }
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 12))
+        .themedSheetPanel()
     }
 
     // MARK: Rows
 
     private func card(_ section: SheetSectionValue) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text(section.section.title).font(.headline)
+            Text(section.section.title).themedTitle(.headline)
+            OrnamentalRule()
             ForEach(section.rows) { row in
                 rowView(row)
             }
         }
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 12))
+        .themedSheetPanel()
     }
 
     @ViewBuilder
@@ -246,7 +248,8 @@ struct GenericConditionsBox: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Conditions").font(.headline)
+            Text("Conditions").themedTitle(.headline)
+            OrnamentalRule()
             ForEach(system.conditions) { condition in
                 Toggle(condition.name, isOn: Binding(
                     get: { active.contains(condition.id) },
@@ -260,7 +263,7 @@ struct GenericConditionsBox: View {
         }
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 12))
+        .themedSheetPanel()
     }
 }
 

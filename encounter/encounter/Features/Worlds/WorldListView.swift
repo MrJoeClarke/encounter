@@ -28,7 +28,7 @@ struct WorldListView: View {
             Group {
                 if worlds.isEmpty {
                     ContentUnavailableView {
-                        Label("No Worlds", systemImage: "globe.europe.africa")
+                        ThemedEmptyLabel("No Worlds", systemImage: "globe.europe.africa")
                     } description: {
                         Text("Create a world to start building characters, places and events, or import one.")
                     } actions: {
@@ -37,15 +37,19 @@ struct WorldListView: View {
                         Button("Import World…") { isChoosingImportFile = true }
                     }
                 } else {
-                    List(worlds) { world in
-                        NavigationLink(value: world) {
-                            WorldRow(world: world)
+                    List {
+                        ForEach(worlds) { world in
+                            NavigationLink(value: world) {
+                                WorldRow(world: world)
+                            }
+                            .themedRow()
                         }
-                        .themedRow()
+                        EndMarkRow()
                     }
                     .themedScreen()
                 }
             }
+            .themedBackground()
             .themedNavigationTitle(String(localized: "Worlds"))
             .focusedSceneValue(\.worldListActions, WorldListActions(newWorld: { isCreatingWorld = true }, importWorld: { isChoosingImportFile = true }))
             .navigationDestination(for: World.self) { world in
@@ -190,5 +194,6 @@ private struct WorldRow: View {
 
 #if DEBUG
 #Preview("Worlds, Parchment and Ink") { WorldListView().modelContainer(SampleData.makePreviewContainer()).inTheme(.parchment()) }
+#Preview("No worlds, Parchment and Ink") { WorldListView().modelContainer(SampleData.makePreviewContainer(populated: false)).inTheme(.parchment()) }
 #Preview("Worlds, Parchment and Ink at night") { WorldListView().modelContainer(SampleData.makePreviewContainer()).inTheme(.parchment(night: true)).preferredColorScheme(.dark) }
 #endif

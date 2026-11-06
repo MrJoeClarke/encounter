@@ -68,8 +68,11 @@ struct PageEditorView: View {
         Form {
             Section {
                 TextField("Title", text: $page.title, prompt: Text("Untitled"))
-                    .font(.title2.weight(.semibold))
+                    .themedTitle(.title)
                     .focused($titleIsFocused)
+                // A fine rule under the title, where the theme has flourishes.
+                OrnamentalRule()
+                    .listRowSeparator(.hidden)
                 TextField("Summary", text: $page.summary, axis: .vertical)
                     .lineLimit(1...4)
                 LabeledContent("Type") {
@@ -135,8 +138,12 @@ struct PageEditorView: View {
             NotesSection(page: page)
 
             ReferencedBySection(page: page)
+
+            EndMarkRow()
         }
         .formStyle(.grouped)
+        .themedScreen()
+        .themedRow()
         .navigationTitle(page.title.isEmpty ? String(localized: "Untitled") : page.title)
         #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
@@ -201,3 +208,8 @@ private func previewEditor(titled title: String, height: CGFloat) -> some View {
     .frame(width: 600, height: height)
     .modelContainer(container)
 }
+
+#if DEBUG
+#Preview("Aria Vale, Parchment and Ink") { previewEditor(titled: "Aria Vale", height: 1200).inTheme(.parchment()) }
+#Preview("Aria Vale, Parchment and Ink at night") { previewEditor(titled: "Aria Vale", height: 1200).inTheme(.parchment(night: true)).preferredColorScheme(.dark) }
+#endif

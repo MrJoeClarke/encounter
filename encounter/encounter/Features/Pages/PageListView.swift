@@ -35,11 +35,7 @@ struct PageListView: View {
         Group {
             if pages.isEmpty {
                 ContentUnavailableView {
-                    Label {
-                        Text(kind.title)
-                    } icon: {
-                        Image(systemName: kind.systemImage)
-                    }
+                    ThemedEmptyLabel(kind.title, systemImage: kind.systemImage)
                 } description: {
                     Text(kind.emptyDescription)
                 } actions: {
@@ -76,6 +72,7 @@ struct PageListView: View {
                 }
             }
         }
+        .themedBackground()
         .navigationTitle(Text(kind.title))
         .toolbar { toolbarItems }
         .onChange(of: selection, initial: true) { _, page in
