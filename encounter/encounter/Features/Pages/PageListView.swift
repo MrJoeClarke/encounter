@@ -201,7 +201,7 @@ private struct PageRow: View {
                         .foregroundStyle(.secondary)
                 } else {
                     Text(page.title)
-                        .themedTitle(.body.weight(.medium))
+                        .themedTitle(.body)
                 }
                 if !page.summary.isEmpty {
                     Text(page.summary)

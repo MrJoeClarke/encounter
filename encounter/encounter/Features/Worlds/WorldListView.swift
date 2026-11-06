@@ -189,7 +189,8 @@ private struct WorldRow: View {
 }
 
 #if DEBUG
-#Preview("Worlds, Parchment and Ink") { WorldListView().modelContainer(SampleData.makePreviewContainer()).inTheme(.parchment) }
-#Preview("Worlds, Dark Tabletop") { WorldListView().modelContainer(SampleData.makePreviewContainer()).inTheme(.tabletop) }
-#Preview("Worlds, Modern Cartographer") { WorldListView().modelContainer(SampleData.makePreviewContainer()).inTheme(.cartographer) }
+#Preview("Worlds, Parchment Plain") { WorldListView().modelContainer(SampleData.makePreviewContainer()).inTheme(.parchment(.plain)) }
+#Preview("Worlds, Parchment Paper") { WorldListView().modelContainer(SampleData.makePreviewContainer()).inTheme(.parchment(.paper)) }
+#Preview("Worlds, Parchment Ornate") { WorldListView().modelContainer(SampleData.makePreviewContainer()).inTheme(.parchment(.ornate)) }
+#Preview("Worlds, Parchment Ornate at night") { WorldListView().modelContainer(SampleData.makePreviewContainer()).inTheme(.parchment(.ornate, night: true)).preferredColorScheme(.dark) }
 #endif

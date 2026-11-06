@@ -205,6 +205,31 @@ nonisolated struct PaperTexture: Equatable, Sendable {
         )
     }
 
+    /// A square of paper that repeats without a seam, to back a screen: `ground` with the fine look and the grain over it, and none of the
+    /// broad mottling, which would show where tiles meet. `strength` is how much of the fine look to use.
+    func seamlessTile(ground: (red: Double, green: Double, blue: Double), strength: Double = 1) -> CGImage? {
+        let size = Self.finePeriod
+        let fine = fineLook()
+        var pixels = [UInt8](repeating: 255, count: size * size * 4)
+        for row in 0..<size {
+            for column in 0..<size {
+                let g = 1 + (grain(atPixelX: column, y: row) - 1) * strength
+                let texture = 1 + Double(fine[row * size + column]) * strength
+                let i = (row * size + column) * 4
+                pixels[i] = Self.byte(ground.red * texture * g)
+                pixels[i + 1] = Self.byte(ground.green * texture * g)
+                pixels[i + 2] = Self.byte(ground.blue * texture * g)
+            }
+        }
+        guard let provider = CGDataProvider(data: Data(pixels) as CFData) else { return nil }
+        return CGImage(
+            width: size, height: size, bitsPerComponent: 8, bitsPerPixel: 32, bytesPerRow: size * 4,
+            space: CGColorSpace(name: CGColorSpace.sRGB) ?? CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.noneSkipLast.rawValue), provider: provider,
+            decode: nil, shouldInterpolate: false, intent: .defaultIntent
+        )
+    }
+
     private static func byte(_ value: Double) -> UInt8 { UInt8(min(max(value, 0), 1) * 255) }
 
     // MARK: Noise

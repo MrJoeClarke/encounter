@@ -136,7 +136,7 @@ struct WorldShellView: View {
         if showsSideBySide(sizeClass) {
             NavigationSplitView(columnVisibility: $columnVisibility) {
                 sidebar
-                    .navigationTitle(world.name)
+                    .themedNavigationTitle(world.name)
             } detail: {
                 if isSearching {
                     SearchResultsView(world: world)
@@ -154,7 +154,7 @@ struct WorldShellView: View {
                     SearchResultsView(world: world)
                 } else {
                     sidebar
-                        .navigationTitle(world.name)
+                        .themedNavigationTitle(world.name)
                 }
             }
             // The screen is presented by the world list's stack, so it doesn't see what is set on this view. It
@@ -265,7 +265,7 @@ struct WorldShellView: View {
             }
             .buttonStyle(.plain)
             .badge(badge)
-            .listRowBackground(navigation.selection == item ? (theme.accent?.themeColor ?? Color.accentColor).opacity(0.18) : theme.panel?.themeColor)
+            .listRowBackground(navigation.selection == item ? (theme.selection?.themeColor ?? (theme.accent?.themeColor ?? Color.accentColor).opacity(0.18)) : theme.panel?.themeColor)
         }
     }
 
@@ -315,10 +315,10 @@ private func shellPreview(_ width: WindowWidth) -> some View {
 #Preview("Shell, Slide Over strip (320)") { shellPreview(.strip) }
 #Preview("Shell, half screen (507)") { shellPreview(.half) }
 #Preview("Shell, narrowest with the menu beside (678)") { shellPreview(.wide) }
-#Preview("Shell menu, Parchment and Ink") { shellPreview(.strip).inTheme(.parchment) }
-#Preview("Shell menu, Dark Tabletop") { shellPreview(.strip).inTheme(.tabletop) }
-#Preview("Shell menu, Modern Cartographer") { shellPreview(.strip).inTheme(.cartographer) }
-#Preview("Shell, Parchment and Ink") { shellPreview(.full).inTheme(.parchment) }
-#Preview("Shell, Dark Tabletop") { shellPreview(.full).inTheme(.tabletop) }
-#Preview("Shell, Modern Cartographer") { shellPreview(.full).inTheme(.cartographer) }
+#Preview("Shell menu, Parchment Ornate") { shellPreview(.strip).inTheme(.parchment(.ornate)) }
+#Preview("Shell menu, Parchment Ornate at night") { shellPreview(.strip).inTheme(.parchment(.ornate, night: true)).preferredColorScheme(.dark) }
+#Preview("Shell home, Parchment Plain") { shellPreview(.full).inTheme(.parchment(.plain)) }
+#Preview("Shell home, Parchment Paper") { shellPreview(.full).inTheme(.parchment(.paper)) }
+#Preview("Shell home, Parchment Ornate") { shellPreview(.full).inTheme(.parchment(.ornate)) }
+#Preview("Shell home, Parchment Ornate at night") { shellPreview(.full).inTheme(.parchment(.ornate, night: true)).preferredColorScheme(.dark) }
 #endif

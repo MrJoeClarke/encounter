@@ -19,40 +19,45 @@ struct AppThemeTests {
         return (max(la, lb) + 0.05) / (min(la, lb) + 0.05)
     }
 
-    private var themed: [AppTheme] { AppTheme.all.filter { $0.background != nil } }
+    /// Every look to choose from, by day and by night.
+    private var looks: [(name: String, theme: AppTheme)] {
+        AppTheme.all.filter { $0.id != "standard" }.flatMap { theme in
+            [("\(theme.id) by day", AppTheme.theme(id: theme.id)), ("\(theme.id) by night", AppTheme.theme(id: theme.id, night: true))]
+        }
+    }
 
     @Test func thereIsAStandardThemeThatChangesNothing() {
         let standard = AppTheme.theme(id: "standard")
         #expect(standard.accent == nil && standard.background == nil && standard.panel == nil && standard.ink == nil)
         #expect(AppTheme.theme(id: "no-such-theme").id == "standard")
         #expect(Set(AppTheme.all.map(\.id)).count == AppTheme.all.count)
+        // Every id offered is one the app can make again.
+        #expect(AppTheme.all.allSatisfy { AppTheme.theme(id: $0.id).id == $0.id })
     }
 
-    @Test(arguments: ["parchment", "tabletop", "cartographer"])
-    func textReadsOnTheBackgroundAndThePanel(id: String) throws {
-        let theme = AppTheme.theme(id: id)
-        let ink = try #require(theme.ink), secondary = try #require(theme.secondaryInk)
-        let background = try #require(theme.background), panel = try #require(theme.panel)
-        for (name, text, ground) in [("ink on background", ink, background), ("ink on panel", ink, panel), ("secondary on background", secondary, background), ("secondary on panel", secondary, panel)] {
-            let ratio = contrast(text, ground)
-            #expect(ratio >= 4.5, "\(id): \(name) is \(ratio) to 1")
+    @Test func textReadsOnTheBackgroundAndThePanel() throws {
+        for (name, theme) in looks {
+            let ink = try #require(theme.ink), secondary = try #require(theme.secondaryInk)
+            let background = try #require(theme.background), panel = try #require(theme.panel)
+            for (what, text, ground) in [("ink on background", ink, background), ("ink on panel", ink, panel), ("secondary on background", secondary, background), ("secondary on panel", secondary, panel)] {
+                let ratio = contrast(text, ground)
+                #expect(ratio >= 4.5, "\(name): \(what) is \(ratio) to 1")
+            }
         }
     }
 
-    @Test(arguments: ["parchment", "tabletop", "cartographer"])
-    func theAccentCanBeReadAsTextOnTheBackgroundAndThePanel(id: String) throws {
-        let theme = AppTheme.theme(id: id)
-        let accent = try #require(theme.accent), background = try #require(theme.background), panel = try #require(theme.panel)
-        #expect(contrast(accent, background) >= 4.5, "\(id): the accent is \(contrast(accent, background)) to 1 on the background")
-        #expect(contrast(accent, panel) >= 4.5, "\(id): the accent is \(contrast(accent, panel)) to 1 on the panel")
+    @Test func theAccentCanBeReadAsTextOnTheBackgroundAndThePanel() throws {
+        for (name, theme) in looks {
+            let accent = try #require(theme.accent), background = try #require(theme.background), panel = try #require(theme.panel)
+            #expect(contrast(accent, background) >= 4.5, "\(name): the accent is \(contrast(accent, background)) to 1 on the background")
+            #expect(contrast(accent, panel) >= 4.5, "\(name): the accent is \(contrast(accent, panel)) to 1 on the panel")
+        }
     }
 
-    @Test(arguments: ["tabletop", "cartographer"])
-    func aTintedIconCanBeSeenOnItsSquare(id: String) throws {
-        let theme = AppTheme.theme(id: id)
-        let accent = try #require(theme.accent), panel = try #require(theme.panel)
-        #expect(theme.tintedIcons)
-        // The icon is drawn in the panel colour on a square of the accent.
-        #expect(contrast(panel, accent) >= 3, "\(id): the icon is \(contrast(panel, accent)) to 1 on its square")
+    @Test func theNightLookIsDarkAndTheDayLookIsLight() throws {
+        for theme in AppTheme.all.filter({ $0.id != "standard" }) {
+            let day = try #require(AppTheme.theme(id: theme.id).background), night = try #require(AppTheme.theme(id: theme.id, night: true).background)
+            #expect(luminance(day) > 0.5 && luminance(night) < 0.1, "\(theme.id)")
+        }
     }
 }
