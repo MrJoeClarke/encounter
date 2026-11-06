@@ -16,7 +16,7 @@ extension World {
     /// last trace made, except any that have been edited, linked or written about.
     @MainActor
     @discardableResult
-    func addTracedPlaces(from colours: [TracedColour], for map: WorldMap, in context: ModelContext) -> GeneratedMapSummary {
+    func addTracedPlaces(from colours: [TracedColour], lines: [TracedLine] = [], for map: WorldMap, in context: ModelContext) -> GeneratedMapSummary {
         var summary = GeneratedMapSummary(map: map)
         for page in pages ?? [] where page.wasTraced && page.wasGenerated(by: map) && !page.isDeleted {
             if page.isUneditedGeneration {
@@ -61,6 +61,18 @@ extension World {
                 page.updateSearchText()
                 summary.created += 1
             }
+        }
+        for line in lines where line.isIncluded && line.points.count >= 2 {
+            let page = addPage(kind: .place, in: context)
+            page.title = line.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? line.kind.title : line.name
+            page.attributes["core.placeType"] = .text(line.kind.placeType)
+            page.geometry = .line(line.points)
+            page.parent = parent
+            page.parentSource = .manual
+            page.markGenerated(by: map)
+            page.attributes["gen.traced"] = .text("1")
+            page.updateSearchText()
+            summary.created += 1
         }
         return summary
     }

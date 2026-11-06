@@ -61,4 +61,20 @@ struct TracedPlacesTests {
         let titles = (world.pages ?? []).filter { !$0.isDeleted && $0.wasTraced }.map(\.title).sorted()
         #expect(titles == ["Arden", "Arden, renamed", "Thornwood"])
     }
+
+    @Test func includedLinesBecomeRiversAndRoadsAndSwitchedOffOnesDoNot() throws {
+        let (world, map, context) = try setUp()
+        let path = [GridPoint(easting: 0, northing: 0), GridPoint(easting: 1000, northing: 500), GridPoint(easting: 2000, northing: 500)]
+        let lines = [
+            TracedLine(id: 0, kind: .river, points: path, name: "River Danus", isNamed: true),
+            TracedLine(id: 1, kind: .road, points: path, name: "Road 1", isNamed: false),
+            TracedLine(id: 2, kind: .road, points: path, name: "Road 2", isNamed: false, isIncluded: false),
+        ]
+        let summary = world.addTracedPlaces(from: [], lines: lines, for: map, in: context)
+        #expect(summary.created == 2)
+        let made = (world.pages ?? []).filter { $0.wasTraced }
+        #expect(made.first { $0.title == "River Danus" }?.attributeText("core.placeType") == "River")
+        #expect(made.first { $0.title == "Road 1" }?.attributeText("core.placeType") == "Road")
+        if case .line(let points)? = made.first?.geometry { #expect(points.count == 3) } else { Issue.record("expected a line") }
+    }
 }

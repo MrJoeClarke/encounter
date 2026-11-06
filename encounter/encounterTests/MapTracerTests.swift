@@ -20,7 +20,7 @@ struct MapTracerTests {
 
     /// A picture: pink land with a blue sea on the left, a green forest in a corner of the land, a thin dark outline between sea and
     /// land, a dark surround, and a little noise over all of it, as paper has. Pixels run from the top.
-    private func picture(river: Bool = false) throws -> CGImage {
+    private func picture(river: Bool = false, roads: Bool = false) throws -> CGImage {
         var bytes = [UInt8](repeating: 255, count: width * height * 4)
         func set(_ x: Int, _ y: Int, _ c: Colour) {
             guard x >= 0, y >= 0, x < width, y < height else { return }
@@ -38,6 +38,11 @@ struct MapTracerTests {
                 if x >= 260 && x < 360 && y >= 150 && y < 250 { c = green }
                 if x < 12 || y < 12 || x >= width - 12 || y >= height - 12 { c = ink }
                 if river && y >= 100 && y < 102 && x >= 143 && x < 388 { c = blue }
+                if roads {
+                    let brown: Colour = (110, 80, 50)
+                    if y >= 200 && y < 203 && x >= 150 && x < 380 { c = brown }
+                    if x >= 200 && x < 203 && y >= 203 && y < 280 { c = brown }
+                }
                 set(x, y, c)
             }
         }
@@ -150,5 +155,36 @@ struct MapTracerTests {
         }
         #expect(trace.areaColours.contains { $0.type == .water })
         #expect(trace.areaColours.count >= 3)
+    }
+
+    @Test func aRiverAndRoadsAreFollowedAlongTheirCentres() throws {
+        let image = try picture(river: true, roads: true)
+        let trace = try #require(MapTracer.trace(image: image, calibration: calibration))
+        let lines = MapLines.find(in: trace, lettering: [], calibration: calibration)
+        let rivers = lines.filter { $0.kind == .river }, roads = lines.filter { $0.kind == .road }
+        #expect(rivers.count == 1, "rivers \(rivers.count)")
+        let river = try #require(rivers.first)
+        // 2 pixels thick at 100 to 102 from the top, so its centre is north (300 - 101) pixels, of 10 metres each.
+        #expect(river.points.allSatisfy { abs($0.northing - 1990) < 60 })
+        #expect(abs((river.points.map(\.easting).min() ?? 0) - 1430) < 120 && abs((river.points.map(\.easting).max() ?? 0) - 3880) < 120)
+        // The road with a branch from its middle: the main road goes through the junction as one line, and the branch is another.
+        #expect(roads.count == 2, "roads \(roads.count)")
+        let main = try #require(roads.max { $0.points.count < $1.points.count || (($0.points.map(\.easting).max() ?? 0) - ($0.points.map(\.easting).min() ?? 0)) < (($1.points.map(\.easting).max() ?? 0) - ($1.points.map(\.easting).min() ?? 0)) })
+        #expect((main.points.map(\.easting).max() ?? 0) - (main.points.map(\.easting).min() ?? 0) > 2000)
+    }
+
+    @Test func lettersAreNotFollowedAsLinesAndNamesGoToTheLinesBesideThem() throws {
+        let image = try picture(river: true)
+        let trace = try #require(MapTracer.trace(image: image, calibration: calibration))
+        // Lettering beside the river, which names it, and a name far from any line, which does not.
+        let beside = MapLabel(name: "River Danus", description: "", x: 250, y: 95, height: 20, type: nil)
+        let town = MapLabel(name: "Ragusa", description: "", x: 260, y: 96, height: 20, type: nil)
+        let far = MapLabel(name: "Smyrna", description: "", x: 330, y: 270, height: 20, type: nil)
+        let named = MapLines.add(to: trace, lettering: [], labels: [town, beside, far], calibration: calibration)
+        #expect(named.lines.count == 1)
+        #expect(named.lines.first?.name == "River Danus")
+        #expect(named.lines.first?.isNamed == true)
+        let unnamed = MapLines.add(to: trace, lettering: [], labels: [far], calibration: calibration)
+        #expect(unnamed.lines.first?.name == "River 1")
     }
 }

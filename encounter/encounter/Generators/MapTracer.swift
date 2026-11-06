@@ -76,6 +76,12 @@ nonisolated struct MapTrace: Sendable {
     var labels: [Int16] = []
     var workingWidth = 0
     var workingHeight = 0
+    /// The colour (number in `strokeColours`) of each pixel that was taken off as a stroke, in the same order as `labels`; -1 for the rest.
+    var strokes: [Int16] = []
+    /// Lab colours (lightness, a, b) of the colours the picture was divided into before strokes were taken off.
+    var strokeColours: [[Float]] = []
+    /// The rivers and roads followed, once they have been looked for.
+    var lines: [TracedLine] = []
 
     /// The colour at a place in the picture, in its pixels from the top left, if it is one that has areas.
     func colour(atX x: Double, y: Double) -> TracedColour? {
@@ -123,7 +129,11 @@ nonisolated enum MapTracer {
 
         // Strokes are not areas: a colour that is only strokes, and the strokes of one that is also areas (a river in the sea's blue, an
         // outline in the surround's black), give their pixels to what they lie between.
+        let original = labels
         let thin = removeStrokes(&labels, count: centres.count, width: w, height: h, settings: settings)
+        // What was taken off is kept, with its colour, for following the lines in it.
+        var strokes = [Int16](repeating: -1, count: count)
+        for y in 0..<h { for x in 0..<w where labels[y * w + x] < 0 { strokes[(h - 1 - y) * w + x] = original[y * w + x] } }
         guard fill(&labels, width: w, height: h) else { return nil }
         // So are specks, and anything too small to be an area.
         let smallest = max(8, Int(settings.smallestPatch * Double(count)))
@@ -186,7 +196,7 @@ nonisolated enum MapTracer {
             colours.append(TracedColour(id: colours.count, red: r, green: g, blue: b, share: 0, isThin: true, type: .ignore, name: "", outlines: []))
         }
         name(&colours)
-        return MapTrace(colours: colours, width: image.width, height: image.height, labels: compact, workingWidth: w, workingHeight: h)
+        return MapTrace(colours: colours, width: image.width, height: image.height, labels: compact, workingWidth: w, workingHeight: h, strokes: strokes, strokeColours: centres.map { [$0.l, $0.a, $0.b] })
     }
 
     // MARK: Names

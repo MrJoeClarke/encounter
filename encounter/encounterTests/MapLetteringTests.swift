@@ -199,6 +199,11 @@ struct MapLetteringSampleTests {
         for colour in named.colours where !colour.outlines.isEmpty {
             print("LETTERS colour \(Int(colour.red * 255)),\(Int(colour.green * 255)),\(Int(colour.blue * 255)) is \(colour.type) pieces \(colour.outlines.count) names \(colour.named.sorted { $0.key < $1.key }.map { "\($0.key): \($0.value.name) [\(String(describing: $0.value.type))]" })")
         }
+        let withLines = MapLines.add(to: named, lettering: lines, labels: labels, calibration: calibration)
+        for line in withLines.lines {
+            let length = zip(line.points, line.points.dropFirst()).reduce(0.0) { $0 + hypot($1.1.easting - $1.0.easting, $1.1.northing - $1.0.northing) }
+            print("LETTERS line \(line.kind) '\(line.name)' named \(line.isNamed) points \(line.points.count) length \(Int(length / 100)) px")
+        }
         #expect(!lines.isEmpty)
     }
 }
