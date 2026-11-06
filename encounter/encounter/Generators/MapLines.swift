@@ -38,6 +38,9 @@ nonisolated enum MapLines {
         var shortest = 40.0
         /// How near two ends must be to be taken as one place.
         var meet = 4.0
+        /// How far apart the ends of a line may be to be joined across a gap, if they point at each other: set from the height of the
+        /// lettering, which is what covers a line.
+        var gap = 16.0
     }
 
     /// What sort of line a stroke of this colour (Lab) is: blue ones are rivers, brown ones are roads. Black and grey are lettering and
@@ -68,6 +71,14 @@ nonisolated enum MapLines {
                 for x in max(0, x0)...min(w - 1, max(x0, x1)) { blank[(h - 1 - row) * w + x] = true }
             }
         }
+        // The body of the sea, apart from rivers and narrow bays: where the water is wide.
+        let waterLabels = Set(trace.colours.filter { $0.type == .water && !$0.outlines.isEmpty }.map { Int16($0.id) })
+        let seaMask = trace.labels.map { waterLabels.contains($0) }
+        let seaCounts = MapTracer.windowCounts(seaMask, width: w, height: h, radius: 9)
+        let seaCore = seaMask.indices.map { seaCounts.counts[$0] == seaCounts.sizes[$0] }
+        var settings = settings
+        // A name written over a line covers about the height of its lettering of it.
+        if typical > 0 { settings.gap = min(max(typical * 1.3 * max(sx, sy), 16), 60) }
         var found: [(kind: TracedLineKind, points: [V])] = []
         for kind in [TracedLineKind.river, .road] {
             // The colours of one sort of line are taken together: a stroke has an edge of mixed colour that is a colour of its own.
@@ -75,12 +86,13 @@ nonisolated enum MapLines {
             guard !colours.isEmpty else { continue }
             var mask = [Bool](repeating: false, count: w * h)
             var any = false
-            for i in mask.indices where colours.contains(trace.strokes[i]) && !blank[i] { mask[i] = true; any = true }
+            let wide = kind == .river && trace.wideStrokes.count == w * h
+            for i in mask.indices where !blank[i] && (colours.contains(trace.strokes[i]) || (wide && trace.wideStrokes[i] >= 0 && colours.contains(trace.wideStrokes[i]))) { mask[i] = true; any = true }
             guard any else { continue }
             removeSpecks(&mask, width: w, height: h, smallest: settings.smallestStroke)
             let stroke = mask
             thin(&mask, width: w, height: h)
-            for line in follow(mask, width: w, height: h, settings: settings) where !isBorder(line, in: trace, stroke: stroke) && !isCoast(line, in: trace) { found.append((kind, line)) }
+            for line in follow(mask, width: w, height: h, settings: settings, blank: blank) where !isBorder(line, in: trace, stroke: stroke) && !isCoast(line, in: trace, core: seaCore) { found.append((kind, line)) }
         }
         return found.enumerated().map { index, line in
             let smooth = smoothed(line.points)
@@ -91,10 +103,9 @@ nonisolated enum MapLines {
 
     /// Whether a line runs along the edge of the sea, as a narrow bay or the strip of shallows by a coast does, and is not a river: most
     /// places along it have the sea within a few pixels.
-    private static func isCoast(_ line: [V], in trace: MapTrace) -> Bool {
+    private static func isCoast(_ line: [V], in trace: MapTrace, core: [Bool]) -> Bool {
         let w = trace.workingWidth, h = trace.workingHeight
-        let sea = Set(trace.colours.filter { $0.type == .water && !$0.outlines.isEmpty }.map { Int16($0.id) })
-        guard !sea.isEmpty, line.count >= 2, trace.labels.count == w * h else { return false }
+        guard line.count >= 2, core.count == w * h, core.contains(true) else { return false }
         var near = 0, total = 0
         var travelled = 0.0
         for (a, b) in zip(line, line.dropFirst()) {
@@ -107,7 +118,7 @@ nonisolated enum MapLines {
             for dy in stride(from: -8, through: 8, by: 4) {
                 for dx in stride(from: -8, through: 8, by: 4) {
                     let x = cx + dx, y = cy + dy
-                    if x >= 0, y >= 0, x < w, y < h, sea.contains(trace.labels[y * w + x]) { found = true }
+                    if x >= 0, y >= 0, x < w, y < h, core[y * w + x] { found = true }
                 }
             }
             if found { near += 1 }
@@ -220,7 +231,7 @@ nonisolated enum MapLines {
     // MARK: Following
 
     /// The lines along a thinned mask, from end to end of each, in working pixels.
-    private static func follow(_ mask: [Bool], width: Int, height: Int, settings: Settings) -> [[V]] {
+    private static func follow(_ mask: [Bool], width: Int, height: Int, settings: Settings, blank: [Bool]) -> [[V]] {
         let around = [(0, -1), (1, -1), (1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1)]
         func ring(_ i: Int) -> [Bool] {
             let x = i % width, y = i / width
@@ -280,7 +291,17 @@ nonisolated enum MapLines {
             return length(points) >= settings.spur || isLooseEnd(chain[0]) == isLooseEnd(chain[chain.count - 1])
         }
         var lines: [[V]] = chains.map { $0.map { V(x: Double($0 % width) + 0.5, y: Double($0 / width) + 0.5) } }
-        lines = join(lines, meet: settings.meet)
+        // Whether lettering that was blanked lies between two points: it may be what has covered the line there.
+        func covered(_ p: V, _ q: V) -> Bool {
+            let steps = max(Int(p.distance(to: q)), 1)
+            for k in 0...steps {
+                let t = Double(k) / Double(steps)
+                let x = Int(p.x + (q.x - p.x) * t), y = Int(p.y + (q.y - p.y) * t)
+                if x >= 0, y >= 0, x < width, y < height, blank[y * width + x] { return true }
+            }
+            return false
+        }
+        lines = join(lines, meet: settings.meet, gap: settings.gap, covered: covered)
         return lines.filter { length($0) >= settings.shortest }
     }
 
@@ -290,7 +311,7 @@ nonisolated enum MapLines {
 
     /// Joins lines that meet end to end where one carries on in the same direction as the other, as a road through a crossing or a river
     /// through a junction does, most nearly straight first.
-    private static func join(_ input: [[V]], meet: Double) -> [[V]] {
+    private static func join(_ input: [[V]], meet: Double, gap: Double, covered: (V, V) -> Bool) -> [[V]] {
         var lines = input
         /// The way a line leaves from one of its ends, from a few pixels in.
         func direction(_ line: [V], atStart: Bool) -> V {
@@ -301,7 +322,7 @@ nonisolated enum MapLines {
             return V(x: d.x / n, y: d.y / n)
         }
         while true {
-            var best: (a: Int, aStart: Bool, b: Int, bStart: Bool, cosine: Double)?
+            var best: (a: Int, aStart: Bool, b: Int, bStart: Bool, score: Double)?
             for a in lines.indices {
                 for aStart in [true, false] {
                     let pa = aStart ? lines[a][0] : lines[a][lines[a].count - 1]
@@ -309,10 +330,23 @@ nonisolated enum MapLines {
                     for b in lines.indices where b > a {
                         for bStart in [true, false] {
                             let pb = bStart ? lines[b][0] : lines[b][lines[b].count - 1]
-                            guard pa.distance(to: pb) <= meet else { continue }
+                            let apart = pa.distance(to: pb)
+                            // Across lettering, which may be as wide as a name is long, the ends can be far apart; elsewhere not.
+                            let reach = apart > max(meet, gap) && apart <= 160 && covered(pa, pb) ? 160 : max(meet, gap)
+                            guard apart <= reach else { continue }
                             let db = direction(lines[b], atStart: bStart)
                             let cosine = da.x * db.x + da.y * db.y
-                            if cosine < -0.7, cosine < (best?.cosine ?? 0) { best = (a, aStart, b, bStart, cosine) }
+                            var score: Double?
+                            if apart <= meet {
+                                // Meeting end to end: the straighter the better, and before any across a gap.
+                                if cosine < -0.7 { score = cosine }
+                            } else if apart <= reach, cosine < -0.8 {
+                                // Across a gap, as where lettering or a bridge covers the line: both lines must point at the other's end.
+                                let across = V(x: (pb.x - pa.x) / apart, y: (pb.y - pa.y) / apart)
+                                // da points into line a from its end, away from the gap, and db into b away from it too.
+                                if -(da.x * across.x + da.y * across.y) > 0.8, db.x * across.x + db.y * across.y > 0.8 { score = 10 + apart / max(gap, reach) }
+                            }
+                            if let score, score < (best?.score ?? .infinity) { best = (a, aStart, b, bStart, score) }
                         }
                     }
                 }

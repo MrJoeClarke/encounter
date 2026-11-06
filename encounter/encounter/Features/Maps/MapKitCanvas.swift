@@ -167,7 +167,11 @@ struct MapKitCanvas: PlatformViewRepresentable {
             let overlay = MapTileOverlay(source: source)
             view.insertOverlay(overlay, at: 0, level: .aboveLabels)
             coordinator.overlay = overlay
-            if coordinator.mapID != map.id { coordinator.show(source, in: view) }
+            // The view is fitted to the map when it is opened, and again when its extent changes (it is calibrated), or the limits on
+            // zooming out would stay those of the made-up scale an uncalibrated picture is shown at.
+            let extent = "\(map.id)|\(map.pixelWidth)x\(map.pixelHeight)|\(calibration.originEasting),\(calibration.originNorthing),\(calibration.metresPerPixel),\(calibration.rotation)"
+            if coordinator.mapID != map.id || coordinator.shownExtent != extent { coordinator.show(source, in: view) }
+            coordinator.shownExtent = extent
             coordinator.mapID = map.id
             coordinator.tileKey = key
         }
@@ -201,6 +205,8 @@ struct MapKitCanvas: PlatformViewRepresentable {
         /// The place that was highlighted when the shapes and lines were last drawn.
         var drawnHighlightID: UUID?
         var mapID: UUID?
+        /// The size and calibration of the map the view was last fitted to.
+        var shownExtent = ""
         private var pinAnnotations: [UUID: PlaceAnnotation] = [:]
         private var markAnnotations: [MarkAnnotation] = []
         private var shapeOverlays: [UUID: PlaceOverlay] = [:]

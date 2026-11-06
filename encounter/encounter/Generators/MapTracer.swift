@@ -83,6 +83,8 @@ nonisolated struct MapTrace: Sendable {
     /// The colour (number in `strokeColours`) each pixel had before anything was taken off it, in the same order as `labels`.
     var classes: [Int16] = []
     /// The number (in `labels`) of the dark surround of the picture, or -1 if it has none.
+    /// What of the water (by colour, in the same order as `labels`) is narrower than a dozen pixels, and may be a river; -1 elsewhere.
+    var wideStrokes: [Int16] = []
     var surround: Int16 = -1
     /// The rivers and roads followed, once they have been looked for.
     var lines: [TracedLine] = []
@@ -136,9 +138,17 @@ nonisolated enum MapTracer {
         // Strokes are not areas: a colour that is only strokes, and the strokes of one that is also areas (a river in the sea's blue, an
         // outline in the surround's black), give their pixels to what they lie between.
         let original = labels
-        // Water is held to wider strokes than other colours: a river as wide as a dozen pixels is a line on a map, not an area.
-        let water = Set(centres.indices.filter { guess(l: centres[$0].l, a: centres[$0].a, b: centres[$0].b) == .water })
-        let thin = removeStrokes(&labels, count: centres.count, width: w, height: h, settings: settings, wide: water)
+        let thin = removeStrokes(&labels, count: centres.count, width: w, height: h, settings: settings)
+        // A river a dozen pixels wide is a line on a map, though it is an area of the sea's colour here: what of the water is narrower
+        // than that is kept apart, for following as a line. The outlines of the water are not changed by it.
+        var wideStrokes = [Int16](repeating: -1, count: count)
+        for colour in centres.indices where guess(l: centres[colour].l, a: centres[colour].a, b: centres[colour].b) == .water {
+            let mask = original.map { Int($0) == colour }
+            let eroded = windowCounts(mask, width: w, height: h, radius: settings.thinRadius * 3)
+            let core = mask.indices.map { eroded.counts[$0] == eroded.sizes[$0] }
+            let grown = windowCounts(core, width: w, height: h, radius: settings.thinRadius * 3)
+            for y in 0..<h { for x in 0..<w where mask[y * w + x] && grown.counts[y * w + x] == 0 { wideStrokes[(h - 1 - y) * w + x] = Int16(colour) } }
+        }
         // What was taken off is kept, with its colour, for following the lines in it.
         var strokes = [Int16](repeating: -1, count: count)
         for y in 0..<h { for x in 0..<w where labels[y * w + x] < 0 { strokes[(h - 1 - y) * w + x] = original[y * w + x] } }
@@ -205,7 +215,7 @@ nonisolated enum MapTracer {
             colours.append(TracedColour(id: colours.count, red: r, green: g, blue: b, share: 0, isThin: true, type: .ignore, name: "", outlines: []))
         }
         name(&colours)
-        return MapTrace(colours: colours, width: image.width, height: image.height, labels: compact, workingWidth: w, workingHeight: h, strokes: strokes, strokeColours: centres.map { [$0.l, $0.a, $0.b] }, classes: classesUp, surround: outside.flatMap { number[$0] } ?? -1)
+        return MapTrace(colours: colours, width: image.width, height: image.height, labels: compact, workingWidth: w, workingHeight: h, strokes: strokes, strokeColours: centres.map { [$0.l, $0.a, $0.b] }, classes: classesUp, wideStrokes: wideStrokes, surround: outside.flatMap { number[$0] } ?? -1)
     }
 
     // MARK: Names
@@ -372,7 +382,7 @@ nonisolated enum MapTracer {
         while changed {
             changed = false
             outer: for i in merged.indices {
-                for j in merged.indices where j > i && Double(distance(merged[i].0, merged[j].0)) < settings.separation {
+                for j in merged.indices where j > i && Double(distance(merged[i].0, merged[j].0)) < limit(merged[i].0, merged[j].0, settings) {
                     let total = Float(merged[i].1 + merged[j].1)
                     let wi = Float(merged[i].1) / total, wj = Float(merged[j].1) / total
                     merged[i].0 = (merged[i].0.l * wi + merged[j].0.l * wj, merged[i].0.a * wi + merged[j].0.a * wj, merged[i].0.b * wi + merged[j].0.b * wj)
@@ -384,6 +394,12 @@ nonisolated enum MapTracer {
             }
         }
         return merged.map(\.0)
+    }
+
+    /// How near two colours must be to be one. Shades of water are a sea, which is darker out from the coast, so they are joined more
+    /// readily than other colours.
+    private static func limit(_ a: LabColour, _ b: LabColour, _ settings: Settings) -> Double {
+        guess(l: a.l, a: a.a, b: a.b) == .water && guess(l: b.l, a: b.a, b: b.b) == .water ? settings.separation * 3 : settings.separation
     }
 
     private static func assign(_ raster: Raster, to centres: [LabColour], labels: inout [Int16]) {
@@ -425,11 +441,11 @@ nonisolated enum MapTracer {
 
     /// Takes the colour off strokes: what is left of a colour's pixels after taking `thinRadius` off every edge and putting it back is
     /// the part of it that is wide enough to be an area. Returns which colours are only strokes, which have nothing left.
-    private static func removeStrokes(_ labels: inout [Int16], count colours: Int, width: Int, height: Int, settings: Settings, wide: Set<Int> = []) -> [Bool] {
+    private static func removeStrokes(_ labels: inout [Int16], count colours: Int, width: Int, height: Int, settings: Settings) -> [Bool] {
         var result = [Bool](repeating: false, count: colours)
         var keep = [Bool](repeating: false, count: labels.count)
         for colour in 0..<colours {
-            let r = wide.contains(colour) ? settings.thinRadius * 3 : settings.thinRadius
+            let r = settings.thinRadius
             let mask = labels.map { Int($0) == colour }
             let before = mask.reduce(0) { $0 + ($1 ? 1 : 0) }
             guard before > 0 else { result[colour] = true; continue }

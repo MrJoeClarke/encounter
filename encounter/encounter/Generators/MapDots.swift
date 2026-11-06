@@ -18,6 +18,8 @@ nonisolated struct TracedDot: Identifiable, Equatable, Sendable {
     /// "city", "town" or "village", by how big its dot is beside the others.
     var kind: String
     var isIncluded = true
+    /// Whether it is thick enough to be a dot on its own. A thinner one (a bridge looks just like it) is kept only with a name beside it.
+    var isFirm = true
 }
 
 /// Finds the dots of a picture: small, solid, round and dark, and not part of any lettering.
@@ -63,7 +65,7 @@ nonisolated enum MapDots {
             for i in solid.indices where mask[i] && grown.counts[i] > 0 { solid[i] = true }
         }
 
-        var found: [(x: Double, y: Double, size: Double)] = []
+        var found: [(x: Double, y: Double, size: Double, firm: Bool)] = []
         var seen = [Bool](repeating: false, count: w * h)
         for start in solid.indices where solid[start] && !seen[start] {
             var piece = [start]
@@ -92,18 +94,18 @@ nonisolated enum MapDots {
             let radius = Double(thickest) + 0.5
             // A disc, with at most a short tail: not much more than a disc's area and not much longer than it is wide.
             let longest = Double(max(maxX - minX, maxY - minY) + 1)
-            guard area <= (thickest == 1 ? 5 : 3.5) * .pi * radius * radius, longest <= 7 * radius else { continue }
+            guard area <= (thickest == 1 ? 7 : 3.5) * .pi * radius * radius, longest <= (thickest == 1 ? 10 : 7) * radius else { continue }
             // Not at the very edge of the picture, where what is left of a torn surround is.
             let middleX = Double(minX + maxX) / 2, middleY = Double(minY + maxY) / 2
             guard middleX > 0.05 * Double(w), middleX < 0.95 * Double(w), middleY > 0.05 * Double(h), middleY < 0.95 * Double(h) else { continue }
             let cx = core.reduce(0.0) { $0 + Double($1 % w) + 0.5 } / Double(core.count)
             let cy = core.reduce(0.0) { $0 + Double($1 / w) + 0.5 } / Double(core.count)
             // In the picture's pixels from the top left.
-            found.append((cx / sx, (Double(h) - cy) / sy, 2 * radius / sx))
+            found.append((cx / sx, (Double(h) - cy) / sy, 2 * radius / sx, thickest >= 2))
         }
         // A dark blob that a road runs through, well in from both its ends, is a bridge and not a settlement.
         let metres = calibration.metresPerPixel
-        func isBridge(_ dot: (x: Double, y: Double, size: Double)) -> Bool {
+        func isBridge(_ dot: (x: Double, y: Double, size: Double, firm: Bool)) -> Bool {
             let here = calibration.gridPoint(atX: dot.x, y: dot.y)
             // Where a road ends, or roads meet, there is a settlement; a road that just goes on through is crossing something.
             for road in roads where road.kind == .road && road.points.count >= 2 {
@@ -130,7 +132,7 @@ nonisolated enum MapDots {
         found = found.enumerated().filter { entry in
             !found.enumerated().contains { other in
                 (other.element.size > entry.element.size || (other.element.size == entry.element.size && other.offset < entry.offset))
-                    && hypot(other.element.x - entry.element.x, other.element.y - entry.element.y) < 1.5 * (other.element.size + entry.element.size)
+                    && hypot(other.element.x - entry.element.x, other.element.y - entry.element.y) < 2.5 * (other.element.size + entry.element.size)
             }
         }.map(\.element)
         let sizes = found.map(\.size).sorted()
@@ -139,7 +141,7 @@ nonisolated enum MapDots {
             let kind = dot.size >= 1.3 * typical ? "city" : (dot.size <= 0.75 * typical ? "village" : "town")
             return TracedDot(
                 id: index, point: calibration.gridPoint(atX: dot.x, y: dot.y), size: dot.size,
-                name: "", isNamed: false, kind: kind
+                name: "", isNamed: false, kind: kind, isFirm: dot.firm
             )
         }
     }
@@ -172,6 +174,8 @@ nonisolated enum MapDots {
             result[pair.dot].isNamed = true
             taken.insert(labels[pair.label].name)
         }
+        // A dot that is not thick and has no name beside it is as likely a bridge as a settlement.
+        result = result.filter { $0.isNamed || $0.isFirm }
         var number = 0
         for i in result.indices where !result[i].isNamed {
             number += 1

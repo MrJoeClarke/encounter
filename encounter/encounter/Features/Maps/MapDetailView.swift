@@ -145,7 +145,8 @@ struct MapDetailView: View {
     /// Choose how this map is drawn, and how the world's maps are drawn unless they choose for themselves.
     @ViewBuilder
     private var styleMenus: some View {
-        if map.isVector {
+        // A picture's places are drawn in a style too, over the picture or, with the picture hidden, on the style's paper.
+        if map.isVector || map.imageData != nil {
             Picker("Style of This Map", selection: $map.styleID) {
                 Text("World’s Style (\(MapStyle.style(id: map.world?.mapStyleID ?? "").title))").tag("")
                 ForEach(MapStyle.all) { Text($0.title).tag($0.id) }

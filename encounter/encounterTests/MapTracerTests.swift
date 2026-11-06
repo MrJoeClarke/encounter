@@ -20,7 +20,7 @@ struct MapTracerTests {
 
     /// A picture: pink land with a blue sea on the left, a green forest in a corner of the land, a thin dark outline between sea and
     /// land, a dark surround, and a little noise over all of it, as paper has. Pixels run from the top.
-    private func picture(river: Bool = false, roads: Bool = false, dots: Bool = false) throws -> CGImage {
+    private func picture(river: Bool = false, roads: Bool = false, dots: Bool = false, deepSea: Bool = false) throws -> CGImage {
         var bytes = [UInt8](repeating: 255, count: width * height * 4)
         func set(_ x: Int, _ y: Int, _ c: Colour) {
             guard x >= 0, y >= 0, x < width, y < height else { return }
@@ -34,6 +34,8 @@ struct MapTracerTests {
             for x in 0..<width {
                 var c = pink
                 if x < 140 { c = blue }
+                // The sea is darker farther out from the coast.
+                if deepSea && x < 70 { c = (105, 155, 195) }
                 if x >= 140 && x < 143 { c = ink }
                 if x >= 260 && x < 360 && y >= 150 && y < 250 { c = green }
                 if x < 12 || y < 12 || x >= width - 12 || y >= height - 12 { c = ink }
@@ -214,5 +216,21 @@ struct MapTracerTests {
         let trace = try #require(MapTracer.trace(image: try picture(river: true, roads: true), calibration: calibration))
         let named = MapLines.add(to: trace, lettering: [], labels: [], calibration: calibration)
         #expect(named.dots.isEmpty, "found \(named.dots.count) dots")
+    }
+
+    @Test func shadesOfTheSeaAreOneSea() throws {
+        let trace = try #require(MapTracer.trace(image: try picture(deepSea: true), calibration: calibration))
+        #expect(trace.areaColours.filter { $0.type == .water }.count == 1, "water colours \(trace.areaColours.filter { $0.type == .water }.count)")
+    }
+
+    @Test func aRiverWithLetteringOverItIsOneRiver() throws {
+        let trace = try #require(MapTracer.trace(image: try picture(river: true), calibration: calibration))
+        // A name written along the river, which hides a stretch of it, 60 pixels long.
+        let over = MapLettering.Line(text: "Elsewhere", x: 250, y: 101, width: 60, height: 20)
+        let others = [MapLettering.Line(text: "Another", x: 100, y: 250, width: 100, height: 20)]
+        let named = MapLines.add(to: trace, lettering: [over] + others, labels: [], calibration: calibration)
+        #expect(named.lines.filter { $0.kind == .river }.count == 1, "rivers \(named.lines.filter { $0.kind == .river }.count)")
+        let river = try #require(named.lines.first { $0.kind == .river })
+        #expect((river.points.map(\.easting).max() ?? 0) - (river.points.map(\.easting).min() ?? 0) > 2300)
     }
 }
