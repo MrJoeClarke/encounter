@@ -20,6 +20,8 @@ final class CharacterBuilderModel {
     let world: World
     var draft = CharacterDraft()
     var step = Step.concept
+    /// Whether the user has set a standard array number themselves. Until they have, the scores follow the class and its bonuses.
+    var scoresEdited = false
 
     let races: [ContentSource]
     let classes: [ContentSource]
@@ -105,15 +107,42 @@ final class CharacterBuilderModel {
     /// Moves between the three ways of setting scores, starting each from a sensible set.
     func chooseMethod(_ method: ScoreMethod) {
         draft.method = method
+        scoresEdited = false
         switch method {
         case .standardArray: draft.scores = Dictionary(uniqueKeysWithValues: zip(Ability.allCases, CharacterRules.standardArray))
         case .pointBuy: draft.scores = Dictionary(uniqueKeysWithValues: Ability.allCases.map { ($0, 8) })
         case .manual: draft.scores = Dictionary(uniqueKeysWithValues: Ability.allCases.map { ($0, 10) })
         }
+        refreshRecommendation()
+    }
+
+    // MARK: Recommended scores
+
+    /// The abilities the chosen class wants most, if the class is one the rules describe.
+    var recommendedPriorities: [Ability]? {
+        characterClass.flatMap { AbilityRecommender.priorities(forClass: $0.name) }
+    }
+
+    /// Everything the recommendation depends on, so a screen can see when it should be worked out again.
+    var recommendationKey: String {
+        "\(String(describing: draft.characterClass))|\(String(describing: draft.race))|\(String(describing: draft.subrace))|\(String(describing: draft.background))|\(draft.raceBonusChoices.map(\.rawValue))|\(String(describing: draft.backgroundBonus))|\(draft.method)"
+    }
+
+    /// Lays the standard array out as the class suggests, after the race's and background's bonuses.
+    func applyRecommendation() {
+        guard draft.method == .standardArray, let priorities = recommendedPriorities else { return }
+        draft.scores = AbilityRecommender.arrangement(priorities: priorities, bonuses: plan.bonuses)
+        scoresEdited = false
+    }
+
+    /// Follows the class while the user hasn't set a number themselves.
+    func refreshRecommendation() {
+        if !scoresEdited { applyRecommendation() }
     }
 
     /// Gives an ability a number from the standard array, swapping it with the ability that had it.
     func assign(_ value: Int, to ability: Ability) {
+        scoresEdited = true
         guard let other = Ability.allCases.first(where: { draft.scores[$0] == value && $0 != ability }) else {
             draft.scores[ability] = value
             return

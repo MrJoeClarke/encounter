@@ -297,6 +297,14 @@ private struct AbilitiesStep: View {
     @Bindable var model: CharacterBuilderModel
 
     var body: some View {
+        Group { sections }
+            // The scores follow the class, race and background until the user sets one themselves.
+            .onAppear { model.refreshRecommendation() }
+            .onChange(of: model.recommendationKey) { model.refreshRecommendation() }
+    }
+
+    @ViewBuilder
+    private var sections: some View {
         Section {
             Picker("Method", selection: Binding(get: { model.draft.method }, set: { model.chooseMethod($0) })) {
                 Text("Standard Array").tag(ScoreMethod.standardArray)
@@ -314,6 +322,20 @@ private struct AbilitiesStep: View {
         Section {
             ForEach(Ability.allCases) { ability in
                 row(for: ability)
+            }
+        } footer: {
+            recommendation
+        }
+    }
+
+    /// What the suggestion is based on, and a button to apply it again after the user has changed the numbers.
+    @ViewBuilder
+    private var recommendation: some View {
+        if model.draft.method == .standardArray, let priorities = model.recommendedPriorities, let name = model.characterClass?.name {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("A \(name) usually wants \(priorities.prefix(3).map(\.rawValue).joined(separator: ", ")) highest. Suggested numbers take your species and background bonuses into account.")
+                Button("Suggest Scores for \(name)", systemImage: "wand.and.stars") { model.applyRecommendation() }
+                    .disabled(!model.scoresEdited)
             }
         }
     }
