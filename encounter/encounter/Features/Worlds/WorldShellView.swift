@@ -47,6 +47,9 @@ struct WorldShellView: View {
     @State private var hasRestored = false
     /// Beside the screen, whether the menu is showing. Where it slides over the screen, choosing a row closes it.
     @State private var columnVisibility = NavigationSplitViewVisibility.automatic
+    /// Whether the sidebar has the keyboard focus. A list shows its chosen row in the accent colour only while it has it,
+    /// and in grey otherwise, so the sidebar takes it when a world opens.
+    @FocusState private var sidebarHasFocus: Bool
 
     var body: some View {
         layout
@@ -190,6 +193,12 @@ struct WorldShellView: View {
     private var sidebar: some View {
         if showsSideBySide(sizeClass) {
             List(selection: sidebarSelection) { sidebarRows }
+                .focused($sidebarHasFocus)
+                .task {
+                    // After the window has settled, or the first responder is set again over it.
+                    try? await Task.sleep(for: .milliseconds(250))
+                    sidebarHasFocus = true
+                }
                 // The sidebar keeps the system's own material beside the screen, which a fill of the theme's would fight; its icons
                 // take the theme's accent.
                 .listItemTint(theme.accent.map { .fixed($0.themeColor) })

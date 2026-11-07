@@ -74,6 +74,7 @@ struct PageEditorView: View {
                         .focused($titleIsFocused)
                     OrnamentalRule()
                 }
+                .listRowSeparator(.hidden, edges: .bottom)
                 TextField("Summary", text: $page.summary, axis: .vertical)
                     .lineLimit(1...4)
                 LabeledContent("Type") {
