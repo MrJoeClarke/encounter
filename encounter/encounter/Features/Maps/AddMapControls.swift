@@ -37,6 +37,11 @@ struct AddMapControls: View {
             HStack { buttons }
             VStack { buttons }
         }
+        #if os(iOS)
+        // On a touch screen these are bordered, full-size buttons, not small plain text.
+        .buttonStyle(.bordered)
+        .controlSize(.large)
+        #endif
         .sheet(isPresented: $isGeneratingSettlement) {
             GenerateSettlementSheet(place: place) { map in
                 isGeneratingSettlement = false
