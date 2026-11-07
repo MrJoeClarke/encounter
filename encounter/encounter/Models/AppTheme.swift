@@ -295,6 +295,8 @@ struct ThemedLabel: View {
                     .font(theme.titleFontName.map { .custom($0, size: 17, relativeTo: .headline) } ?? .footnote.weight(.semibold))
                     .textCase(nil)
                     .foregroundStyle(theme.ink?.themeColor ?? Color.primary)
+                    // A little room before the first row under it.
+                    .padding(.bottom, 6)
                 if theme.labelRules {
                     Rectangle().fill(theme.line?.themeColor ?? .secondary).frame(height: 0.75).accessibilityHidden(true)
                 }

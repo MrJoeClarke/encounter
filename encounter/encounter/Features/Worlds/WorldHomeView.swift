@@ -96,7 +96,8 @@ struct WorldHomeView: View {
         // The first field of a window is selected when it opens, which highlights the world's name as if it had been clicked.
         .task {
             try? await Task.sleep(for: .milliseconds(150))
-            NSApp.keyWindow?.makeFirstResponder(nil)
+            // Only a field being edited is let go. Clearing the first responder otherwise would take the keyboard focus from the sidebar.
+            if let window = NSApp.keyWindow, window.firstResponder is NSText { window.makeFirstResponder(nil) }
         }
         #endif
         .sheet(isPresented: $isEditingCalendar) {
