@@ -656,6 +656,12 @@ struct ThemedSection<Content: View>: View {
         self.content = content
     }
 
+    /// A heading that is already a string, such as one from a rule system's data.
+    init<S: StringProtocol>(_ title: S, @ViewBuilder content: @escaping () -> Content) {
+        self.title = LocalizedStringKey(String(title))
+        self.content = content
+    }
+
     var body: some View {
         Section {
             content()

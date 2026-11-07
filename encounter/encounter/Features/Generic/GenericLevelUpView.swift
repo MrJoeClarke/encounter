@@ -74,7 +74,7 @@ struct GenericLevelUpView: View {
             .formStyle(.grouped)
             .themedScreen()
             .themedRow()
-            .navigationTitle("Level \(result == nil ? newLevel : newLevel - 1)")
+            .themedNavigationTitle(String(localized: "Level \(result == nil ? newLevel : newLevel - 1)"))
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
             #endif
@@ -97,7 +97,7 @@ struct GenericLevelUpView: View {
             ThemedSection("This level gives") {
                 ForEach(always) { choice in
                     VStack(alignment: .leading, spacing: 6) {
-                        Text(choice.title).font(.headline)
+                        Text(choice.title).themedTitle(.headline)
                         targetPicker(choice, key: choice.id)
                     }
                 }

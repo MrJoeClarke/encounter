@@ -28,7 +28,7 @@ struct CharacterBuilderView: View {
                 .formStyle(.grouped)
                 .themedScreen()
                 .themedRow()
-                .navigationTitle(title)
+                .themedNavigationTitle(String(localized: title))
                 #if os(iOS)
                 .navigationBarTitleDisplayMode(.inline)
                 #endif

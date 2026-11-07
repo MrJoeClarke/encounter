@@ -44,7 +44,7 @@ struct GenericRestSheet: View {
             .formStyle(.grouped)
             .themedScreen()
             .themedRow()
-            .navigationTitle(rest.name)
+            .themedNavigationTitle(rest.name)
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
             #endif

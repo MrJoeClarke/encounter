@@ -58,7 +58,7 @@ struct LibraryEntryView: View {
             }
 
             if !entry.entries.isEmpty {
-                Section(entriesTitle) {
+                ThemedSection(String(localized: entriesTitle)) {
                     ForEach(entry.entries.indices, id: \.self) { index in
                         EntryText(entry: entry.entries[index])
                     }
@@ -67,7 +67,7 @@ struct LibraryEntryView: View {
 
             let children = Library.shared.children(of: entry, in: LibraryEdition(key: entry.key) ?? world.edition)
             if !children.isEmpty {
-                Section(entry.kind == .class ? "Subclasses" : "Subraces") {
+                ThemedSection(entry.kind == .class ? "Subclasses" : "Subraces") {
                     ForEach(children) { child in
                         Button {
                             navigation.openLibraryEntry(child)

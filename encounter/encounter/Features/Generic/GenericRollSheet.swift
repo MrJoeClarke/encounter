@@ -56,7 +56,7 @@ struct GenericRollSheet: View {
             .formStyle(.grouped)
             .themedScreen()
             .themedRow()
-            .navigationTitle(label)
+            .themedNavigationTitle(label)
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
             #endif
@@ -79,7 +79,7 @@ struct GenericRollSheet: View {
             HStack(alignment: .firstTextBaseline, spacing: 12) {
                 ForEach(Array(zip(model.dice, result.dice)), id: \.0.name) { die, value in
                     VStack {
-                        Text("\(value)").font(.system(size: 34, weight: .bold)).monospacedDigit()
+                        Text("\(value)").themedTitle(.large).monospacedDigit()
                         Text(die.name).font(.caption).foregroundStyle(.secondary)
                     }
                     .frame(maxWidth: .infinity)
@@ -92,7 +92,7 @@ struct GenericRollSheet: View {
                 }
             }
             LabeledContent("Total", value: result.total.formatted())
-            Text(summary(result, model: model)).font(.headline)
+            Text(summary(result, model: model)).themedTitle(.headline)
             // The die that showed more can give the roller something back, such as a Hope.
             if let name = result.higherDie, let die = model.dice.first(where: { $0.name == name }), let resource = die.gains {
                 if let definition = system.resources.first(where: { $0.id == resource }) {

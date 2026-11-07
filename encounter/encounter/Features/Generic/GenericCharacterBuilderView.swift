@@ -29,7 +29,7 @@ struct GenericCharacterBuilderView: View {
                     .formStyle(.grouped)
                     .themedScreen()
                     .themedRow()
-                    .navigationTitle(model.step.title)
+                    .themedNavigationTitle(model.step.title)
                     #if os(iOS)
                     .navigationBarTitleDisplayMode(.inline)
                     #endif
@@ -111,11 +111,11 @@ struct GenericCharacterBuilderView: View {
             if !isRequired { Text("You can leave this empty.") }
         }
         if let selected {
-            Section(selected.name) {
+            ThemedSection(selected.name) {
                 if !selected.summary.isEmpty { Text(selected.summary) }
                 ForEach(Array(selected.entries.enumerated()), id: \.offset) { _, entry in
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(entry.name).font(.headline)
+                        Text(entry.name).themedTitle(.headline)
                         Text(entry.text).font(.callout).foregroundStyle(.secondary)
                     }
                 }
@@ -184,15 +184,15 @@ struct GenericCharacterBuilderView: View {
         }
         ForEach(model.flow.steps) { step in
             if case .names = step.kind {
-                Section(step.title) { ForEach((model.draft.names[step.id] ?? []).filter { !$0.isEmpty }, id: \.self) { Text($0) } }
+                ThemedSection(step.title) { ForEach((model.draft.names[step.id] ?? []).filter { !$0.isEmpty }, id: \.self) { Text($0) } }
             }
             if case .pickEntries(_, _, _, _) = step.kind {
-                Section(step.title) {
+                ThemedSection(step.title) {
                     ForEach(model.draft.picks[step.id] ?? [], id: \.self) { key in Text(Library.shared.entry(forKey: key)?.name ?? key) }
                 }
             }
             if case .numbers(let rule) = step.kind {
-                Section(step.title) {
+                ThemedSection(step.title) {
                     ForEach(rule.entries, id: \.key) { entry in
                         LabeledContent(entry.label, value: Self.signed(model.draft.numbers[entry.key] ?? 0))
                     }

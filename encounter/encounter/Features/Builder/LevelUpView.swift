@@ -52,7 +52,7 @@ struct LevelUpView: View {
             .formStyle(.grouped)
             .themedScreen()
             .themedRow()
-            .navigationTitle("Level \(context.level) → \(needs.newLevel)")
+            .themedNavigationTitle(String(localized: "Level \(context.level) → \(needs.newLevel)"))
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
             #endif
