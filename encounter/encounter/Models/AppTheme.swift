@@ -682,12 +682,12 @@ struct ThemedSection<Content: View>: View {
 }
 
 extension View {
-    /// Buttons of an empty screen at the size of a touch target: bordered and large on a phone or iPad, as they are on the Mac already.
+    /// Buttons of an empty screen, the same everywhere: bordered (the main one asks for prominent itself), and large on a phone or iPad.
     func emptyStateButtons() -> some View {
         #if os(iOS)
         buttonStyle(.bordered).controlSize(.large)
         #else
-        self
+        buttonStyle(.bordered)
         #endif
     }
 }

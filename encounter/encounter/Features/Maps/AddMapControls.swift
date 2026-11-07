@@ -37,11 +37,8 @@ struct AddMapControls: View {
             HStack { buttons }
             VStack { buttons }
         }
-        #if os(iOS)
-        // On a touch screen these are bordered, full-size buttons, not small plain text.
-        .buttonStyle(.bordered)
-        .controlSize(.large)
-        #endif
+        // The same as the buttons of every empty screen: the main one prominent, the others bordered, all large on a touch screen.
+        .emptyStateButtons()
         .sheet(isPresented: $isGeneratingSettlement) {
             GenerateSettlementSheet(place: place) { map in
                 isGeneratingSettlement = false
@@ -95,6 +92,7 @@ struct AddMapControls: View {
     @ViewBuilder
     private var buttons: some View {
         Button("Add Map…", systemImage: "map") { isChoosingFiles = true }
+            .buttonStyle(.borderedProminent)
         PhotosPicker(selection: $photoSelection, maxSelectionCount: 1, matching: .images) {
             Label("From Photos", systemImage: "photo.on.rectangle")
         }
