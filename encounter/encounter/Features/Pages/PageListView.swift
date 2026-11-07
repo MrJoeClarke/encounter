@@ -39,11 +39,14 @@ struct PageListView: View {
                 } description: {
                     Text(kind.emptyDescription)
                 } actions: {
-                    Button("New \(String(localized: kind.singularTitle))", action: addPage)
-                        .buttonStyle(.borderedProminent)
-                    if canBuildCharacter {
-                        Button("Build Character…") { isBuildingCharacter = true }
+                    Group {
+                        Button("New \(String(localized: kind.singularTitle))", action: addPage)
+                            .buttonStyle(.borderedProminent)
+                        if canBuildCharacter {
+                            Button("Build Character…") { isBuildingCharacter = true }
+                        }
                     }
+                    .emptyStateButtons()
                 }
             } else {
                 ChoosableList(choice: $selection) {

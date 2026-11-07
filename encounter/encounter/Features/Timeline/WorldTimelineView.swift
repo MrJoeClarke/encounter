@@ -43,6 +43,7 @@ struct WorldTimelineView: View {
                 } actions: {
                     Button("New Event", action: addEvent)
                         .buttonStyle(.borderedProminent)
+                        .emptyStateButtons()
                 }
             } else if groups.isEmpty {
                 ContentUnavailableView {

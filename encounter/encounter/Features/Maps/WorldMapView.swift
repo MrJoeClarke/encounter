@@ -24,6 +24,7 @@ struct WorldMapView: View {
                 Text("Add an image of your world to see it here. You can then put places on it, and open their own maps from it.")
             } actions: {
                 AddMapControls(place: root)
+                    .emptyStateButtons()
             }
         } else {
             ContentUnavailableView { ThemedEmptyLabel("No World Map", systemImage: "map") }

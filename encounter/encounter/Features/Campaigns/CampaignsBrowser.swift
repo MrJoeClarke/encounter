@@ -73,6 +73,7 @@ struct CampaignsListView: View {
                 } actions: {
                     Button("New Campaign", action: addCampaign)
                         .buttonStyle(.borderedProminent)
+                        .emptyStateButtons()
                 }
             } else {
                 ChoosableList(choice: $selection) {

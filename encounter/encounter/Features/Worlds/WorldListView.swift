@@ -40,9 +40,12 @@ struct WorldListView: View {
                     } description: {
                         Text("Create a world to start building characters, places and events, or import one.")
                     } actions: {
-                        Button("Create World") { isCreatingWorld = true }
-                            .buttonStyle(.borderedProminent)
-                        Button("Import World…") { isChoosingImportFile = true }
+                        Group {
+                            Button("Create World") { isCreatingWorld = true }
+                                .buttonStyle(.borderedProminent)
+                            Button("Import World…") { isChoosingImportFile = true }
+                        }
+                        .emptyStateButtons()
                     }
                 } else {
                     ScrollView {
