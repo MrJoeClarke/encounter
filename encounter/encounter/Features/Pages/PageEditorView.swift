@@ -67,12 +67,13 @@ struct PageEditorView: View {
     private var form: some View {
         Form {
             Section {
-                TextField("Title", text: $page.title, prompt: Text("Untitled"))
-                    .themedTitle(.title)
-                    .focused($titleIsFocused)
-                // A fine rule under the title, where the theme has flourishes.
-                OrnamentalRule()
-                    .listRowSeparator(.hidden)
+                // A fine rule under the title, where the theme has flourishes, in the title's own row so the rows' lines don't double it.
+                VStack(spacing: 6) {
+                    TextField("Title", text: $page.title, prompt: Text("Untitled"))
+                        .themedTitle(.title)
+                        .focused($titleIsFocused)
+                    OrnamentalRule()
+                }
                 TextField("Summary", text: $page.summary, axis: .vertical)
                     .lineLimit(1...4)
                 LabeledContent("Type") {

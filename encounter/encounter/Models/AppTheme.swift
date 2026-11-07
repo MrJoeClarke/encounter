@@ -310,9 +310,14 @@ struct ThemedIcon: View {
     @Environment(\.appTheme) private var theme
     let systemName: String
     var size: Double = 28
+    /// Leaves the colour to the system, which tints a sidebar's icons and turns them white on the chosen row.
+    var inheritsColour = false
 
     var body: some View {
-        if theme.tintedIcons, let accent = theme.accent {
+        if inheritsColour {
+            Image(systemName: systemName)
+                .accessibilityHidden(true)
+        } else if theme.tintedIcons, let accent = theme.accent {
             Image(systemName: systemName)
                 .font(.system(size: size * 0.5, weight: .semibold))
                 .foregroundStyle(theme.panel?.themeColor ?? Color.white)

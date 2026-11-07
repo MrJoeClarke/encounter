@@ -253,7 +253,7 @@ struct WorldShellView: View {
             Label {
                 Text(title)
             } icon: {
-                ThemedIcon(systemName: systemImage)
+                ThemedIcon(systemName: systemImage, inheritsColour: true)
             }
             .badge(badge)
             .tag(item)
