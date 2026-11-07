@@ -117,7 +117,7 @@ struct PageEditorView: View {
                         AttributeFieldView(definition: definition, page: page)
                     }
                 } header: {
-                    Text(group.heading)
+                    ThemedLabel(resource: group.heading)
                 }
             }
 

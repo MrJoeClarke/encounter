@@ -106,7 +106,7 @@ struct GenerateSettlementSheet: View {
                         }
                     }
                 } header: {
-                    Text("Settlement")
+                    ThemedLabel("Settlement")
                 } footer: {
                     Text("The same seed and choices always make the same settlement.")
                 }
@@ -128,7 +128,7 @@ struct GenerateSettlementSheet: View {
                         }
                     }
                 } header: {
-                    Text("Gates and Main Square")
+                    ThemedLabel("Gates and Main Square")
                 }
                 Section {
                     Toggle("Choose for Me", isOn: Binding(
@@ -152,7 +152,7 @@ struct GenerateSettlementSheet: View {
                         if !hasRiver { Text("A harbour needs a river.").font(.caption).foregroundStyle(.secondary) }
                     }
                 } header: {
-                    Text("Quarters")
+                    ThemedLabel("Quarters")
                 } footer: {
                     Text("Each takes the wards that suit it: the wealthy and the temple near the square, craftsmen near the gates and the river, slums out by the wall.")
                 }
@@ -167,7 +167,7 @@ struct GenerateSettlementSheet: View {
                         ))
                     }
                 } header: {
-                    Text("Landmarks")
+                    ThemedLabel("Landmarks")
                 } footer: {
                     Text("A castle takes a whole ward. The others take the ground they need in a ward that suits them.")
                 }
@@ -175,7 +175,7 @@ struct GenerateSettlementSheet: View {
                     Toggle("Inns and Taverns", isOn: $options.inns)
                     Toggle("Merchants", isOn: $options.merchants)
                 } header: {
-                    Text("Inns and Merchants")
+                    ThemedLabel("Inns and Merchants")
                 } footer: {
                     Text("A number to suit the size, facing the streets and spread round the settlement. Other buildings are for you to add.")
                 }

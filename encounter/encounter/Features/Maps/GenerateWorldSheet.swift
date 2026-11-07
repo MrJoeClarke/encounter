@@ -107,7 +107,7 @@ struct GenerateWorldSheet: View {
                         }
                     }
                 } header: {
-                    Text("World")
+                    ThemedLabel("World")
                 } footer: {
                     Text("\(options.shape.summary) Each realm has a capital city. The same seed and choices always make the same world.")
                 }
@@ -120,7 +120,7 @@ struct GenerateWorldSheet: View {
                     }
                     Stepper("Rivers: \(options.rivers)", value: $options.rivers, in: 0...12)
                 } header: {
-                    Text("Land")
+                    ThemedLabel("Land")
                 }
                 Section {
                     distanceField("Between cities", metres: $options.citySpacing, minimum: 5_000)
@@ -128,7 +128,7 @@ struct GenerateWorldSheet: View {
                     distanceField("Between villages", metres: $options.villageSpacing, minimum: 2_000)
                     Toggle("Keep settlements already on the map", isOn: $options.includeExisting)
                 } header: {
-                    Text("Settlements")
+                    ThemedLabel("Settlements")
                 } footer: {
                     Text("About how far apart places of each kind are. Roads join them, and rivers and mountains slow the roads. Settlements are pins; make a settlement’s own map from its page.")
                 }
@@ -136,14 +136,14 @@ struct GenerateWorldSheet: View {
                 Section {
                     NamingStylePicker(styleID: $options.namingStyle)
                 } header: {
-                    Text("Names")
+                    ThemedLabel("Names")
                 } footer: {
                     Text("The language the names come from unless a realm below has its own. Names change as you choose, and the land stays as it is.")
                 }
                 Section {
                     RealmLanguagesEditor(options: $options, realmNames: realmNames)
                 } header: {
-                    Text("Realms")
+                    ThemedLabel("Realms")
                 } footer: {
                     Text("Each realm's name and its settlements' names come from its languages. A description can be written for it, and is kept as the realm's page. Suggest Languages reads a description and picks the languages.")
                 }
@@ -176,7 +176,7 @@ struct GenerateWorldSheet: View {
                     }
                     Button("Add Place", systemImage: "plus") { options.locations.append(WorldLocation()) }
                 } header: {
-                    Text("Places")
+                    ThemedLabel("Places")
                 } footer: {
                     Text("Places you want in the world, added to what is generated. One with no spot is put where it suits its kind. A capital city takes one of the realms.")
                 }

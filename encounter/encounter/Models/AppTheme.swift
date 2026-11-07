@@ -92,7 +92,8 @@ nonisolated struct AppTheme: Identifiable, Equatable, Sendable {
             theme.line = color(0.55, 0.45, 0.35, 0.45)
             theme.selection = color(0.85, 0.65, 0.2, 0.3)
         }
-        theme.bodyDesign = .serif
+        // Titles and names are Baskerville; everything under them is the system sans, so the serif marks the level of a thing.
+        theme.bodyDesign = nil
         theme.titleDesign = .serif
         theme.titleFontName = MapStyle.Lettering.baskerville.semibold
         theme.smallCapsLabels = true
@@ -283,12 +284,15 @@ struct ThemedLabel: View {
     let text: LocalizedStringKey
 
     init(_ text: LocalizedStringKey) { self.text = text }
+    /// A heading from data, such as a rule system's attribute group.
+    init(resource: LocalizedStringResource) { self.text = LocalizedStringKey(String(localized: resource)) }
 
     var body: some View {
         if theme.smallCapsLabels {
             HStack(spacing: 8) {
+                // Headings are in the title face, a step below the titles, so the serif marks every level above the body.
                 Text(text)
-                    .font(.footnote.weight(.semibold))
+                    .font(theme.titleFontName.map { .custom($0, size: 14, relativeTo: .subheadline) } ?? .footnote.weight(.semibold))
                     .textCase(.uppercase)
                     .tracking(0.8)
                     .foregroundStyle(theme.secondaryInk?.themeColor ?? Color.secondary)

@@ -99,7 +99,7 @@ struct GenerateSceneSheet: View {
                         }
                     }
                 } header: {
-                    Text("Scene")
+                    ThemedLabel("Scene")
                 } footer: {
                     Text("\(options.kind.summary) Each square is five feet. The same seed and choices always make the same scene.")
                 }
@@ -130,7 +130,7 @@ struct GenerateSceneSheet: View {
                         Toggle("Fill the building’s outline", isOn: $options.fitOutline)
                     }
                 } header: {
-                    Text("Layout")
+                    ThemedLabel("Layout")
                 }
                 if place.geometry == nil {
                     Section {
