@@ -290,12 +290,11 @@ struct ThemedLabel: View {
     var body: some View {
         if theme.smallCapsLabels {
             HStack(spacing: 8) {
-                // Headings are in the title face, a step below the titles, so the serif marks every level above the body.
+                // Headings are in the title face in ordinary title case, a step below the titles, so the serif marks every level above the body.
                 Text(text)
-                    .font(theme.titleFontName.map { .custom($0, size: 14, relativeTo: .subheadline) } ?? .footnote.weight(.semibold))
-                    .textCase(.uppercase)
-                    .tracking(0.8)
-                    .foregroundStyle(theme.secondaryInk?.themeColor ?? Color.secondary)
+                    .font(theme.titleFontName.map { .custom($0, size: 17, relativeTo: .headline) } ?? .footnote.weight(.semibold))
+                    .textCase(nil)
+                    .foregroundStyle(theme.ink?.themeColor ?? Color.primary)
                 if theme.labelRules {
                     Rectangle().fill(theme.line?.themeColor ?? .secondary).frame(height: 0.75).accessibilityHidden(true)
                 }
