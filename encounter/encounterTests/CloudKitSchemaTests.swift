@@ -4,6 +4,7 @@
 //
 
 import Testing
+import Foundation
 import SwiftData
 @testable import encounter
 
@@ -41,5 +42,21 @@ struct CloudKitSchemaTests {
                 #expect(relationship.deleteRule != .deny, "\(entity.name).\(relationship.name) denies deletion")
             }
         }
+    }
+
+    @Test func noAttributeHasADefaultCloudKitCannotHold() {
+        // CloudKit's schema check puts every attribute's default in a record. A Swift value with no Foundation counterpart, such as
+        // an empty AttributedString, stops the app with an exception that can't be caught.
+        var bad: [String] = []
+        for entity in entities {
+            for attribute in entity.attributes {
+                guard let value = attribute.defaultValue else { continue }
+                let box = value as AnyObject
+                if String(describing: type(of: box)).contains("SwiftValue") || !(box is NSObject) {
+                    bad.append("\(entity.name).\(attribute.name)")
+                }
+            }
+        }
+        #expect(bad.isEmpty, "\(bad)")
     }
 }

@@ -16,7 +16,15 @@ final class Page {
     var kindRaw: String = PageKind.character.rawValue
     /// Only meaningful when `kind == .character`.
     var characterRoleRaw: String?
-    var body: AttributedString = AttributedString()
+    /// The notes as stored. Optional because CloudKit's schema check fills a record with each attribute's default, and an empty
+    /// `AttributedString` can't go in one. Named `body` in the stores made before, so they carry over.
+    @Attribute(originalName: "body")
+    var storedBody: AttributedString?
+    /// The notes. Empty when none were ever written.
+    var body: AttributedString {
+        get { storedBody ?? AttributedString() }
+        set { storedBody = newValue }
+    }
     /// The notes as plain text (mentions as their titles), so they can be searched in the database. Derived
     /// from `body`: call `updateSearchText()` after changing `body`.
     var bodyText: String = ""

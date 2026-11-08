@@ -45,10 +45,15 @@ enum AppSchema {
         #endif
     }
 
+    /// Whether the unit tests are running the app as their host, which must not touch a real iCloud container.
+    private static var isRunningUnitTests: Bool {
+        ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
+    }
+
     /// The container for the models. Only a store on disk syncs, and only when asked: previews and tests keep to themselves.
     static func makeContainer(inMemory: Bool = false, syncsWithICloud: Bool = false) throws -> ModelContainer {
         let schema = Schema(models)
-        let database: ModelConfiguration.CloudKitDatabase = syncsWithICloud && !inMemory && appHasICloudContainer ? .private(cloudKitContainerID) : .none
+        let database: ModelConfiguration.CloudKitDatabase = syncsWithICloud && !inMemory && appHasICloudContainer && !isRunningUnitTests ? .private(cloudKitContainerID) : .none
         let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: inMemory, cloudKitDatabase: database)
         return try ModelContainer(for: schema, configurations: [configuration])
     }
