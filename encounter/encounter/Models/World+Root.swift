@@ -39,12 +39,15 @@ extension World {
         return root
     }
 
-    /// Makes every world have a root place. Cheap when they all do.
+    /// Makes every world that never had one have a root place. Cheap when they all do.
+    ///
+    /// A world that names a root place whose page isn't here is left alone: with iCloud sync the world can arrive before its pages,
+    /// and making another root place then would leave it with two.
     @MainActor
     static func ensureRootPlaces(in context: ModelContext) {
         let worlds = (try? context.fetch(FetchDescriptor<World>())) ?? []
         var changed = false
-        for world in worlds where world.rootPlace == nil {
+        for world in worlds where world.rootPlaceID == nil {
             world.ensureRootPlace(in: context)
             changed = true
         }

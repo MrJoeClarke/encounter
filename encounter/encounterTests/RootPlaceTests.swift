@@ -150,6 +150,19 @@ struct RootPlaceTests {
         #expect(second.rootPlace === kept)
     }
 
+    @Test func aWorldWhoseRootPlaceHasNotArrivedYetIsNotGivenAnother() throws {
+        // With iCloud sync a world can arrive before its pages. It already names its root place, so none is made.
+        let context = ModelContext(try AppSchema.makeContainer(inMemory: true))
+        let world = World(name: "Synced")
+        context.insert(world)
+        let expected = UUID()
+        world.rootPlaceID = expected
+
+        World.ensureRootPlaces(in: context)
+        #expect(world.rootPlaceID == expected)
+        #expect((world.pages ?? []).isEmpty)
+    }
+
     @Test func theWorldMapIsTheMapOfTheRootPlace() async throws {
         let (world, context) = try makeWorld()
         let root = world.ensureRootPlace(in: context)
