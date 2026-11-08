@@ -22,8 +22,9 @@ enum SyncStartup: Equatable {
 @Observable
 final class SyncMonitor {
     private(set) var isWorking = false
-    private(set) var lastImport: Date?
-    private(set) var lastExport: Date?
+    /// When changes were last received and sent, kept between launches so the screen isn't blank after each one.
+    private(set) var lastImport: Date? = UserDefaults.standard.object(forKey: "iCloudLastImport") as? Date
+    private(set) var lastExport: Date? = UserDefaults.standard.object(forKey: "iCloudLastExport") as? Date
     private(set) var lastError: String?
 
     private var observer: NSObjectProtocol?
@@ -49,8 +50,12 @@ final class SyncMonitor {
         isWorking = false
         if succeeded {
             switch type {
-            case .import: lastImport = end
-            case .export: lastExport = end
+            case .import:
+                lastImport = end
+                UserDefaults.standard.set(end, forKey: "iCloudLastImport")
+            case .export:
+                lastExport = end
+                UserDefaults.standard.set(end, forKey: "iCloudLastExport")
             case .setup: break
             @unknown default: break
             }
