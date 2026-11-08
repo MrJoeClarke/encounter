@@ -16,10 +16,6 @@ final class Page {
     var kindRaw: String = PageKind.character.rawValue
     /// Only meaningful when `kind == .character`.
     var characterRoleRaw: String?
-    /// The notes as an older version stored them, as a rich text value CloudKit can't sync. Only read, to move into `bodyData`
-    /// once (`moveLegacyNotes`); it goes from the model in the update that follows, when every device has moved its notes.
-    @Attribute(originalName: "body")
-    var storedBody: AttributedString?
     /// The notes, encoded as JSON, which CloudKit can hold. Use `body`.
     var bodyData: Data?
     @Transient private var cachedBody: (data: Data, text: AttributedString)?
@@ -27,20 +23,16 @@ final class Page {
     /// The notes. Empty when none were ever written.
     var body: AttributedString {
         get {
-            if let bodyData {
-                if let cachedBody, cachedBody.data == bodyData { return cachedBody.text }
-                if let decoded = try? JSONDecoder().decode(AttributedString.self, from: bodyData) {
-                    cachedBody = (bodyData, decoded)
-                    return decoded
-                }
-            }
-            return storedBody ?? AttributedString()
+            guard let bodyData else { return AttributedString() }
+            if let cachedBody, cachedBody.data == bodyData { return cachedBody.text }
+            guard let decoded = try? JSONDecoder().decode(AttributedString.self, from: bodyData) else { return AttributedString() }
+            cachedBody = (bodyData, decoded)
+            return decoded
         }
         set {
             guard let data = try? JSONEncoder().encode(newValue) else { return }
             cachedBody = (data, newValue)
             bodyData = data
-            storedBody = nil
         }
     }
 

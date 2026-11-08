@@ -50,10 +50,6 @@ enum AppSchema {
         ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
     }
 
-    /// Whether the models can be mirrored by CloudKit yet. They can't while `Page.storedBody` is in them: it holds rich text, which
-    /// CloudKit has no type for. The next update removes it, once every device has moved its notes into `bodyData`.
-    static let modelsCanSync = false
-
     /// How the store was opened, so the About screen can say whether the app is syncing and, if not, why.
     static private(set) var startup: SyncStartup = .switchedOff
 
@@ -62,9 +58,7 @@ enum AppSchema {
         let schema = Schema(models)
         var database: ModelConfiguration.CloudKitDatabase = .none
         if syncsWithICloud && !inMemory {
-            if !modelsCanSync {
-                startup = .unavailable("Your notes are being moved to a form iCloud can hold. Sync starts with the next update.")
-            } else if !appHasICloudContainer {
+            if !appHasICloudContainer {
                 startup = .unavailable("This build of the app isn’t signed with the iCloud container.")
             } else if isRunningUnitTests {
                 startup = .switchedOff
