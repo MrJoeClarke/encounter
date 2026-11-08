@@ -6,7 +6,7 @@
 import SwiftUI
 import SwiftData
 
-/// One kind of page in a world: the list of pages beside the editor for the selected page.
+/// One kind of page in a world, with no library entries to mix in: the list of pages, which the selected page's editor takes the place of.
 ///
 /// This sits in the detail area of the world's sidebar split, so that screens such as the home page can
 /// use the whole width instead of being squeezed into a middle column. The caller should give it `.id(kind)`
@@ -21,7 +21,7 @@ struct PagesBrowser: View {
     @Environment(\.horizontalSizeClass) private var sizeClass
 
     var body: some View {
-        if showsSideBySide(sizeClass) && opensFullScreen {
+        if showsSideBySide(sizeClass) {
             // The detail area of a split view has no navigation stack of its own on the Mac, so the list and the page swap
             // places here. The window's back button, or choosing the kind in the sidebar again, returns to the list.
             if let page = navigation.selectedPage {
@@ -29,12 +29,6 @@ struct PagesBrowser: View {
                     .id(page.id)
             } else {
                 PageListView(world: world, kind: kind, selection: selectedPage)
-            }
-        } else if showsSideBySide(sizeClass) {
-            ListDetailSplit {
-                PageListView(world: world, kind: kind, selection: selectedPage)
-            } detail: {
-                detail
             }
         } else {
             // The page opens on top of the list, in the navigation stack the world is already in, so it has the whole width.
@@ -47,24 +41,11 @@ struct PagesBrowser: View {
         }
     }
 
-    /// Characters and places have long lists and full pages, so a page takes the whole screen and the list is a step back, rather than a column.
-    private var opensFullScreen: Bool { kind == .character || kind == .place }
-
     private var selectedPage: Binding<Page?> {
         Binding(
             get: { navigation.selectedPage },
             set: { navigation.selectedPage = $0 }
         )
-    }
-
-    @ViewBuilder
-    private var detail: some View {
-        if let page = navigation.selectedPage {
-            PageEditorView(page: page)
-                .id(page.id)
-        } else {
-            ContentUnavailableView { ThemedEmptyLabel("No Page Selected", systemImage: "doc.text") }
-        }
     }
 }
 

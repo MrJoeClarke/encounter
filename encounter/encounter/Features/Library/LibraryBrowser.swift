@@ -91,7 +91,7 @@ struct LibraryBrowser: View {
 
 /// A row in the library list, in the same style as the world's page lists: an icon and the name, with a line
 /// of detail beneath.
-private struct LibraryRow: View {
+struct LibraryRow: View {
     let entry: LibraryEntry
     let system: any RuleSystem
 
@@ -106,6 +106,7 @@ private struct LibraryRow: View {
                 .background(.quaternary, in: RoundedRectangle(cornerRadius: 6))
             VStack(alignment: .leading, spacing: 2) {
                 Text(entry.name)
+                    .themedTitle(.body)
                 if let detail {
                     Text(detail)
                         .font(.subheadline)

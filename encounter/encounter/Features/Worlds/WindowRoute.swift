@@ -71,7 +71,13 @@ extension WorldNavigation {
             choose(.home)
         case .kind(let raw):
             if let kind = PageKind(rawValue: raw) {
-                if let page = world.pages?.first(where: { $0.id == route.pageID && !$0.isDeleted }) { open(page) } else { choose(.kind(kind)) }
+                if let page = world.pages?.first(where: { $0.id == route.pageID && !$0.isDeleted }) {
+                    open(page)
+                } else if let key = route.libraryKey, let entry = Library.shared.entry(forKey: key) {
+                    openLibraryEntry(entry)
+                } else {
+                    choose(.kind(kind))
+                }
             }
         case .worldMap:
             choose(.worldMap)
@@ -81,7 +87,11 @@ extension WorldNavigation {
         case .campaigns:
             if let campaign = world.campaigns?.first(where: { $0.id == route.campaignID && !$0.isDeleted }) { openCampaign(campaign) } else { choose(.campaigns) }
         case .library:
-            if let key = route.libraryKey, let entry = Library.shared.entry(forKey: key) { openLibraryEntry(entry) }
+            if let page = world.pages?.first(where: { $0.id == route.pageID && !$0.isDeleted }) {
+                open(page)
+            } else if let key = route.libraryKey, let entry = Library.shared.entry(forKey: key) {
+                openLibraryEntry(entry)
+            }
         }
     }
 }

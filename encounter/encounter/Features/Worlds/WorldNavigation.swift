@@ -29,7 +29,7 @@ final class WorldNavigation {
 
     /// Shows the page: switches the sidebar to its kind and selects it.
     func open(_ page: Page) {
-        selection = .kind(page.kind)
+        selection = ContentList(page: page)?.sidebarItem ?? .kind(page.kind)
         selectedPage = page
         selectedLibraryKey = nil
         searchText = ""
@@ -63,7 +63,7 @@ final class WorldNavigation {
 
     /// Shows the library entry: switches the sidebar to its list and selects it.
     func openLibraryEntry(_ entry: LibraryEntry) {
-        selection = .library(LibraryList(of: entry))
+        selection = ContentList(entry: entry)?.sidebarItem ?? .library(LibraryList(of: entry))
         selectedLibraryKey = entry.key
         selectedPage = nil
         searchText = ""
@@ -83,15 +83,23 @@ final class WorldNavigation {
         selectedCampaign = nil
     }
 
-    /// The sidebar item that is already showing is chosen again. Characters and places, which show one page at a time in place of their list, return to the list.
+    /// The sidebar item that is already showing is chosen again. A list of pages or entries shows one at a time in place of the list, so it returns to the list.
     func chooseAgain(_ item: WorldSidebarItem) {
-        guard item == selection, case .kind(let kind) = item, kind == .character || kind == .place else { return }
-        selectedPage = nil
+        guard item == selection else { return }
+        switch item {
+        case .kind, .library:
+            selectedPage = nil
+            selectedLibraryKey = nil
+        default:
+            return
+        }
     }
 
     /// The kind of page New Page makes: the kind being shown, or a character if the screen shows no kind.
     var newPageKind: PageKind {
-        if case .kind(let kind) = selection { kind } else { .character }
+        if let list = ContentList(selection) { return list.pageKind }
+        if case .kind(let kind) = selection { return kind }
+        return .character
     }
 
     // MARK: Back and forward

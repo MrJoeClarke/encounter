@@ -173,8 +173,13 @@ struct WorldShellView: View {
         case .home:
             WorldHomeView(world: world, onDelete: onDelete)
         case .kind(let kind):
-            PagesBrowser(world: world, kind: kind)
-                .id(kind)
+            if let list = ContentList(.kind(kind)) {
+                ContentBrowser(world: world, list: list)
+                    .id(list)
+            } else {
+                PagesBrowser(world: world, kind: kind)
+                    .id(kind)
+            }
         case .worldMap:
             WorldMapView(world: world)
         case .timeline:
@@ -182,8 +187,14 @@ struct WorldShellView: View {
         case .campaigns:
             CampaignsBrowser(world: world)
         case .library(let list):
-            LibraryBrowser(world: world, list: list)
-                .id(list)
+            // Skills and conditions have no list of their own in the sidebar. They are opened from a link or a search.
+            if let content = ContentList(.library(list)) {
+                ContentBrowser(world: world, list: content)
+                    .id(content)
+            } else {
+                LibraryBrowser(world: world, list: list)
+                    .id(list)
+            }
         }
     }
 
@@ -236,22 +247,34 @@ struct WorldShellView: View {
         row(.campaigns, "Campaigns", systemImage: "flag", badge: (world.campaigns ?? []).count)
 
         Section {
-            ForEach(world.visibleKinds) { kind in
-                row(.kind(kind), kind.title, systemImage: kind.systemImage, badge: count(of: kind))
+            ForEach(storyKinds) { kind in
+                row(.kind(kind), kind.title, systemImage: kind.systemImage, badge: badge(of: kind))
             }
         } header: {
-            ThemedLabel("Pages")
+            ThemedLabel("Story")
         }
 
-        if hasLibrary {
+        let lists = ContentList.lists(in: world)
+        if !lists.isEmpty {
             Section {
-                ForEach(Library.shared.lists(in: world.edition), id: \.self) { list in
-                    row(.library(list), Library.shared.title(of: list, in: world.edition), systemImage: Library.shared.systemImage(of: list, in: world.edition))
+                ForEach(lists, id: \.self) { list in
+                    row(list.sidebarItem, list.title(in: world), systemImage: list.systemImage(in: world), badge: ContentLists.count(in: list, world: world))
                 }
             } header: {
                 ThemedLabel("Library")
             }
         }
+    }
+
+    /// The kinds of page that tell the world's story: the ones that aren't rules content, which has lists of its own under the library.
+    private var storyKinds: [PageKind] {
+        world.visibleKinds.filter { !ContentList.kinds.contains($0) && $0 != .contentEntry }
+    }
+
+    /// The number beside a kind in the menu: its pages, and for items the library's equipment too.
+    private func badge(of kind: PageKind) -> Int {
+        if let list = ContentList(.kind(kind)) { return ContentLists.count(in: list, world: world) }
+        return count(of: kind)
     }
 
     /// One row of the menu. Beside the screen it is a selectable row. Otherwise it is a button that opens its

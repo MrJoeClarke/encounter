@@ -188,7 +188,7 @@ struct PageListView: View {
     }
 }
 
-private struct PageRow: View {
+struct PageRow: View {
     let page: Page
 
     private let thumbnailSize: CGFloat = 40
