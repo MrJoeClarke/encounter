@@ -50,11 +50,40 @@ enum AppSchema {
         ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
     }
 
+    /// Whether the models can be mirrored by CloudKit yet. They can't while `Page.storedBody` is in them: it holds rich text, which
+    /// CloudKit has no type for. The next update removes it, once every device has moved its notes into `bodyData`.
+    static let modelsCanSync = false
+
+    /// How the store was opened, so the About screen can say whether the app is syncing and, if not, why.
+    static private(set) var startup: SyncStartup = .switchedOff
+
     /// The container for the models. Only a store on disk syncs, and only when asked: previews and tests keep to themselves.
     static func makeContainer(inMemory: Bool = false, syncsWithICloud: Bool = false) throws -> ModelContainer {
         let schema = Schema(models)
-        let database: ModelConfiguration.CloudKitDatabase = syncsWithICloud && !inMemory && appHasICloudContainer && !isRunningUnitTests ? .private(cloudKitContainerID) : .none
+        var database: ModelConfiguration.CloudKitDatabase = .none
+        if syncsWithICloud && !inMemory {
+            if !modelsCanSync {
+                startup = .unavailable("Your notes are being moved to a form iCloud can hold. Sync starts with the next update.")
+            } else if !appHasICloudContainer {
+                startup = .unavailable("This build of the app isn’t signed with the iCloud container.")
+            } else if isRunningUnitTests {
+                startup = .switchedOff
+            } else {
+                database = .private(cloudKitContainerID)
+                startup = .syncing
+            }
+        } else if !inMemory {
+            startup = .switchedOff
+        }
         let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: inMemory, cloudKitDatabase: database)
-        return try ModelContainer(for: schema, configurations: [configuration])
+        do {
+            return try ModelContainer(for: schema, configurations: [configuration])
+        } catch {
+            guard case .syncing = startup else { throw error }
+            // The store won't load with sync, so the device's own copy is opened and the reason kept to show.
+            startup = .unavailable("iCloud sync couldn’t start: \(error.localizedDescription)")
+            let local = ModelConfiguration(schema: schema, isStoredInMemoryOnly: inMemory, cloudKitDatabase: .none)
+            return try ModelContainer(for: schema, configurations: [local])
+        }
     }
 }

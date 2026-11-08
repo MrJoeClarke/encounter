@@ -16,15 +16,34 @@ final class Page {
     var kindRaw: String = PageKind.character.rawValue
     /// Only meaningful when `kind == .character`.
     var characterRoleRaw: String?
-    /// The notes as stored. Optional because CloudKit's schema check fills a record with each attribute's default, and an empty
-    /// `AttributedString` can't go in one. Named `body` in the stores made before, so they carry over.
+    /// The notes as an older version stored them, as a rich text value CloudKit can't sync. Only read, to move into `bodyData`
+    /// once (`moveLegacyNotes`); it goes from the model in the update that follows, when every device has moved its notes.
     @Attribute(originalName: "body")
     var storedBody: AttributedString?
+    /// The notes, encoded as JSON, which CloudKit can hold. Use `body`.
+    var bodyData: Data?
+    @Transient private var cachedBody: (data: Data, text: AttributedString)?
+
     /// The notes. Empty when none were ever written.
     var body: AttributedString {
-        get { storedBody ?? AttributedString() }
-        set { storedBody = newValue }
+        get {
+            if let bodyData {
+                if let cachedBody, cachedBody.data == bodyData { return cachedBody.text }
+                if let decoded = try? JSONDecoder().decode(AttributedString.self, from: bodyData) {
+                    cachedBody = (bodyData, decoded)
+                    return decoded
+                }
+            }
+            return storedBody ?? AttributedString()
+        }
+        set {
+            guard let data = try? JSONEncoder().encode(newValue) else { return }
+            cachedBody = (data, newValue)
+            bodyData = data
+            storedBody = nil
+        }
     }
+
     /// The notes as plain text (mentions as their titles), so they can be searched in the database. Derived
     /// from `body`: call `updateSearchText()` after changing `body`.
     var bodyText: String = ""

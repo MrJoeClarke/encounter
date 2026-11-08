@@ -24,18 +24,28 @@ struct encounterApp: App {
     }()
 
     @State private var linkRouter = LinkRouter()
+    @State private var syncMonitor: SyncMonitor = {
+        let monitor = SyncMonitor()
+        monitor.start()
+        return monitor
+    }()
 
     var body: some Scene {
         WindowGroup {
             WorldListView()
                 .appTheme()
                 .environment(linkRouter)
+                .environment(syncMonitor)
                 // Mention links come back from the system as encounter:// URLs.
                 .onOpenURL { linkRouter.open($0) }
                 // Without this, each incoming URL would open a new window instead of using this one.
                 .handlesExternalEvents(preferring: ["*"], allowing: ["*"])
                 // Notes written before their plain text was kept need it filled in so they can be searched.
-                .task { Page.backfillSearchText(in: modelContainer.mainContext) }
+                .task {
+                    // Notes an older version stored as rich text move into the form iCloud can hold, before anything reads them.
+                    Page.moveLegacyNotes(in: modelContainer.mainContext)
+                    Page.backfillSearchText(in: modelContainer.mainContext)
+                }
                 // Worlds from before there were root places get one, with their places and world map inside it.
                 .task { World.ensureRootPlaces(in: modelContainer.mainContext) }
         }
@@ -48,6 +58,7 @@ struct encounterApp: App {
                 WorldWindowView(route: route)
                     .appTheme()
                     .environment(linkRouter)
+                    .environment(syncMonitor)
             }
         }
         .modelContainer(modelContainer)

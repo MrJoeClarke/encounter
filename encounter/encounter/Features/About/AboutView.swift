@@ -12,6 +12,8 @@ struct AboutView: View {
     @AppStorage("appThemeID") private var themeID = AppTheme.defaultID
     @AppStorage(AppSchema.syncDefaultsKey) private var syncsWithICloud = true
     @State private var iCloudStatus: LocalizedStringResource?
+    /// Present in the running app, not in previews.
+    @Environment(SyncMonitor.self) private var monitor: SyncMonitor?
 
     var body: some View {
         NavigationStack {
@@ -38,6 +40,7 @@ struct AboutView: View {
                             .font(.callout)
                             .foregroundStyle(.secondary)
                     }
+                    syncDetails
                 } header: {
                     ThemedLabel("iCloud")
                 } footer: {
@@ -85,6 +88,35 @@ struct AboutView: View {
 }
 
 extension AboutView {
+    /// How sync is doing: whether the store opened with iCloud, and when it last sent and received changes.
+    @ViewBuilder
+    var syncDetails: some View {
+        switch AppSchema.startup {
+        case .switchedOff:
+            EmptyView()
+        case .unavailable(let reason):
+            Label(reason, systemImage: "exclamationmark.triangle")
+                .font(.callout)
+                .foregroundStyle(.secondary)
+        case .syncing:
+            if let monitor {
+                LabeledContent("Status", value: monitor.isWorking ? String(localized: "Syncing…") : String(localized: "Up to date"))
+                LabeledContent("Last Sent", value: Self.time(monitor.lastExport))
+                LabeledContent("Last Received", value: Self.time(monitor.lastImport))
+                if let error = monitor.lastError {
+                    Label(error, systemImage: "exclamationmark.triangle")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                        .textSelection(.enabled)
+                }
+            }
+        }
+    }
+
+    private static func time(_ date: Date?) -> String {
+        date.map { $0.formatted(date: .abbreviated, time: .shortened) } ?? String(localized: "Not yet")
+    }
+
     /// Whether this device is signed in to iCloud, in words. Not asked in a preview, which has no iCloud entitlement.
     static func accountStatusText() async -> LocalizedStringResource? {
         guard ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] != "1" else { return nil }
