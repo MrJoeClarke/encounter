@@ -88,6 +88,7 @@ extension AboutView {
     /// Whether this device is signed in to iCloud, in words. Not asked in a preview, which has no iCloud entitlement.
     static func accountStatusText() async -> LocalizedStringResource? {
         guard ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] != "1" else { return nil }
+        guard AppSchema.appHasICloudContainer else { return "iCloud sync isn’t set up in this build of the app, so your worlds stay on this device." }
         do {
             switch try await CKContainer(identifier: AppSchema.cloudKitContainerID).accountStatus() {
             case .available: return "This device is signed in to iCloud."

@@ -3,7 +3,9 @@
 //  encounter
 //
 
+import Foundation
 import SwiftData
+import Security
 
 /// The SwiftData schema and container factory.
 ///
@@ -30,10 +32,23 @@ enum AppSchema {
         UserDefaults.standard.object(forKey: syncDefaultsKey) as? Bool ?? true
     }
 
+    /// Whether this build of the app is signed with the CloudKit container. Opening the store with CloudKit when it isn't stops the app
+    /// with an exception that can't be caught, so sync is only tried when it is. Only the Mac can look; elsewhere a signed build is trusted.
+    static var appHasICloudContainer: Bool {
+        #if os(macOS)
+        guard let task = SecTaskCreateFromSelf(nil),
+              let value = SecTaskCopyValueForEntitlement(task, "com.apple.developer.icloud-container-identifiers" as CFString, nil) as? [String]
+        else { return false }
+        return value.contains(cloudKitContainerID)
+        #else
+        return true
+        #endif
+    }
+
     /// The container for the models. Only a store on disk syncs, and only when asked: previews and tests keep to themselves.
     static func makeContainer(inMemory: Bool = false, syncsWithICloud: Bool = false) throws -> ModelContainer {
         let schema = Schema(models)
-        let database: ModelConfiguration.CloudKitDatabase = syncsWithICloud && !inMemory ? .private(cloudKitContainerID) : .none
+        let database: ModelConfiguration.CloudKitDatabase = syncsWithICloud && !inMemory && appHasICloudContainer ? .private(cloudKitContainerID) : .none
         let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: inMemory, cloudKitDatabase: database)
         return try ModelContainer(for: schema, configurations: [configuration])
     }
