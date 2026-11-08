@@ -12,9 +12,14 @@ import SwiftData
 struct encounterApp: App {
     private let modelContainer: ModelContainer = {
         do {
-            return try AppSchema.makeContainer()
+            return try AppSchema.makeContainer(syncsWithICloud: AppSchema.syncIsEnabled)
         } catch {
-            fatalError("Could not create ModelContainer: \(error)")
+            // If sync can't start (no iCloud account set up for the app, or the capability missing), the device's own copy is still opened.
+            do {
+                return try AppSchema.makeContainer()
+            } catch {
+                fatalError("Could not create ModelContainer: \(error)")
+            }
         }
     }()
 
