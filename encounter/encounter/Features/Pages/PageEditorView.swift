@@ -19,6 +19,8 @@ struct PageEditorView: View {
     @State private var newTag = ""
     @FocusState private var titleIsFocused: Bool
     @State private var mode = PageEditorMode.page
+    @State private var isConfirmingDelete = false
+    @Environment(\.modelContext) private var modelContext
     @Environment(\.dynamicTypeSize) private var typeSize
     /// The window's navigation, to carry the page-or-sheet choice into and out of a saved or new window. Absent in previews.
     @Environment(WorldNavigation.self) private var navigation: WorldNavigation?
@@ -57,6 +59,21 @@ struct PageEditorView: View {
             } else {
                 form
             }
+        }
+        // Deleting from the page itself, so it can be found without knowing to right-click a row in the list. The world's top place can't be deleted.
+        .toolbar {
+            if !page.isWorldRoot {
+                ToolbarItem {
+                    Button("Delete", systemImage: "trash", role: .destructive) { isConfirmingDelete = true }
+                        .help("Delete this page")
+                }
+            }
+        }
+        .alert("Delete Page?", isPresented: $isConfirmingDelete) {
+            Button("Delete", role: .destructive, action: deletePage)
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("“\(page.title.isEmpty ? String(localized: "Untitled") : page.title)” and its links will be deleted. This can’t be undone.")
         }
         // The Character menu switches between the page and the sheet.
         .focusedSceneValue(\.pageMode, hasSheet ? $mode : nil)
@@ -153,6 +170,15 @@ struct PageEditorView: View {
         .onAppear {
             if page.title.isEmpty { titleIsFocused = true }
         }
+    }
+
+    private func deletePage() {
+        guard !page.isWorldRoot else { return }
+        // Leave the page first so nothing is still showing a deleted page.
+        navigation?.selectedPage = nil
+        // Places inside a deleted place move up a level rather than being lost.
+        page.liftChildrenToParent()
+        modelContext.delete(page)
     }
 
     private var roleBinding: Binding<CharacterRole> {

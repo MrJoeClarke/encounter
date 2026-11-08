@@ -613,12 +613,12 @@ struct LibraryTests {
         let champion = try #require(library.entry(forKey: "srd51.subclass.champion"))
 
         navigation.openLibraryEntry(hill)
-        #expect(navigation.selection == .library(LibraryList(.race)))
+        #expect(navigation.selection == .kind(.race))
         #expect(navigation.selectedLibraryKey == "srd51.race.hill-dwarf")
 
         // A subclass is listed under Classes.
         navigation.openLibraryEntry(champion)
-        #expect(navigation.selection == .library(LibraryList(.class)))
+        #expect(navigation.selection == .kind(.characterClass))
         #expect(navigation.selectedLibraryKey == "srd51.subclass.champion")
     }
 
@@ -771,7 +771,7 @@ struct LibraryTests {
         router.activate(world: world, navigation: navigation)
 
         #expect(router.open(Mention.url(forLibraryKey: "srd51.class.fighter")))
-        #expect(navigation.selection == .library(LibraryList(.class)))
+        #expect(navigation.selection == .kind(.characterClass))
         #expect(navigation.selectedLibraryKey == "srd51.class.fighter")
         #expect(!router.open(Mention.url(forLibraryKey: "srd51.class.nobody")))
     }
