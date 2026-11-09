@@ -17,14 +17,14 @@ A multiplatform (macOS, iOS, iPadOS) SwiftUI app for building and browsing campa
 10. A shared, read-only D&D 5e content library (races and their traits, classes and their features), in both SRD editions, that creators can base their own custom types on.
 11. A guided character builder that creates a playable character from that content, starting at level 1 and then supporting higher levels.
 
-**Non-goals for v1:** CloudKit sync, sharing or collaboration, player and DM visibility controls, other TTRPG systems, other import/export formats (Markdown, VTT), a combat tracker.
+**Non-goals for v1** (CloudKit sync has since been built, as milestone 20; sharing and DM and player visibility are specified as milestone 22): other TTRPG systems, other import/export formats (Markdown, VTT), a combat tracker.
 
 ## 2. Technical Decisions
 
 | Area | Decision | Reason |
 |---|---|---|
 | UI | SwiftUI only. `NavigationSplitView` is the shell and adapts to Mac, iPad and iPhone. | One codebase, native behaviour on each platform. |
-| Persistence | SwiftData, with a CloudKit-compatible schema from day one. | CloudKit can be enabled later with no migration pain. |
+| Persistence | SwiftData, with a CloudKit-compatible schema from day one, synced through CloudKit's private database (milestone 20). | Sharing (milestone 22) will replace SwiftData's own sync with `CKSyncEngine` underneath the same models. |
 | Concurrency | async/await and `@Observable`. No Combine. | Project guideline. |
 | Tests | Swift Testing for unit tests, XCUIAutomation for UI tests. | Project guideline. |
 | Targets | One multiplatform app target. Minimum OS is 27 on iOS, iPadOS and macOS. | Gives `TextEditor` with `AttributedString`, drag-to-reorder (`reorderable()`) and current SwiftUI APIs. |
@@ -35,8 +35,9 @@ A multiplatform (macOS, iOS, iPadOS) SwiftUI app for building and browsing campa
 - All relationships are optional, with explicit inverses.
 - Large blobs (map images) use `@Attribute(.externalStorage)`.
 - Enums are stored as raw-value strings.
+- No attribute of a type CloudKit has no counterpart for, and none whose default CloudKit can't put in a record. Rich text (`AttributedString`) is one: it is stored as JSON `Data` (`Page.bodyData`) with a computed `body` over it. `CloudKitSchemaTests` checks these rules.
 
-Later, enabling CloudKit means adding the iCloud capability and a `ModelConfiguration(cloudKitDatabase:)`. The schema needs no changes.
+The iCloud capability and the CloudKit container are in place and sync is on (see the iCloud sync note in 7.1). The original expectation that enabling CloudKit needed no schema change turned out to be wrong for the notes, which had to be moved to data.
 
 ## 3. Domain Model
 
@@ -71,7 +72,7 @@ Page                      one entity for all page types, discriminated by `kind`
  │                  non-playable characters, with the "monster" distinction coming from tags or
  │                  a creature-type attribute for now)
  ├─ images: [PageImage]             (many; exactly one flagged as default)
- ├─ body: AttributedString          (rich text with @mention runs)
+ ├─ body: AttributedString          (rich text with @mention runs; stored as JSON Data in bodyData, since CloudKit can't hold rich text)
  ├─ attributes: [String: AttributeValue]   (Codable, key-addressed)
  ├─ parent: Page?                   (hierarchy; used mainly for Places)
  ├─ tags: [String]
@@ -206,8 +207,8 @@ protocol RuleSystem {
 - **Not done:** the `@` mention picker still matches titles with its own query and order. Core Spotlight indexing is still later.
 
 ### 5.4a Navigation on iOS and macOS
-- **macOS** shows the world's menu beside the screen it chose (`NavigationSplitView`), and each list beside its editor (`HSplitView`).
-- **iPad at regular width** (and an iPad window wide enough) is laid out like the Mac: the menu beside the screen, and each list beside its editor (a fixed-width list and a divider, since `HSplitView` is macOS only). In a narrow window the menu slides over the screen and closes when a row is chosen.
+- **macOS** shows the world's menu beside the screen it chose (`NavigationSplitView`). Since 8 November 2026 a list of pages or library entries is not shown beside its editor: choosing a row replaces the list with that page or entry across the whole detail area, and the window's back button, or choosing the same item in the menu again, returns to the list. Campaigns still keep their list beside the page.
+- **iPad at regular width** (and an iPad window wide enough) is laid out like the Mac: the menu beside the screen, and a chosen page taking the place of its list. In a narrow window the menu slides over the screen and closes when a row is chosen.
 - **iPhone and narrow iPad windows** (compact width) use a single navigation stack, the one the world list already has. The world's menu is a list of buttons that push the chosen screen, and a list pushes its editor on top of it. Something opened from elsewhere (a link, a pin, a search result) pushes its screen too. A split view inside that stack doesn't navigate when collapsed, so it isn't used there.
 - Screens pushed this way don't inherit what was set inside the world screen, so `WorldNavigation` is passed to each one explicitly.
 
@@ -285,7 +286,7 @@ A guided flow that produces a playable character page.
 1. **Name and concept:** name, alignment, optional portrait.
 2. **Race or species:** pick from the library or the world's own pages, and from subraces where there are any. Traits and ability bonuses are shown.
 3. **Class:** pick from the library or the world's own pages, with a summary of the features for the chosen level.
-4. **Ability scores:** standard array, point buy, or manual entry. Rolling in the app can come later. Racial bonuses are applied and the modifiers shown.
+4. **Ability scores:** standard array, point buy, or manual entry. Rolling in the app can come later. Racial bonuses are applied and the modifiers shown. For the standard array the builder suggests an arrangement from the class (`AbilityRecommender`: a table of each class's priorities, tried against every arrangement of the array, counting the species and background bonuses). It follows the class, species and background until the user sets a number, and a button suggests again.
 5. **Review:** a summary with derived values such as proficiency bonus, hit points and armor class (10 plus Dexterity modifier, until equipment exists).
 6. **Create:** makes a playable character page with its race and class references and all attributes filled in. The creator can then edit it like any other page.
 
@@ -586,6 +587,7 @@ What was built, checked and left, by step. Written as it happened, so a note may
 - **Parked earlier (decided 3 November 2026):** the D&D sheet and other screens at large text, contrast, and VoiceOver reading order, which need checking in the running app: the iPhone simulator would not launch previews reliably for the last part of this step, so that picker change has not been seen, and the D&D sheet preview takes too long to render.
 - **Map and generator refinements, moved here from the "Later" notes in 15:** naming conventions that aren't English-flavoured (a naming style per settlement and world); rivers from the world map carried into settlements, with a road along each bank; more convincing continent, coast and island shapes (bays, peninsulas, archipelagos, lakes); vector map styling and better pins (quarters shown differently from buildings); vectorising features of an uploaded map image. See the "Later" notes in 15 for the detail of each.
 - **19f, map styling, naming and vectorising (built):** the four map styles, labels, zoom rules, highlighting, multi-polygon realms and naming are described under 5.3 and 5.9; vectorising an uploaded map (Trace Features…) is built through all five steps and parked after first use, with its open issues listed under "Parked" in the vectorising note of 5.9.
+- **Layout and look, later changes (6 to 9 November 2026).** The list of worlds is a searchable grid of covers (the world's default picture, or a seal), not a list. Parchment and Ink is the default look, with Baskerville for titles, names and section headings (in ordinary title case) over the system sans for everything else, and the app's accent colour (`AccentColor` in the asset catalog) is its red so the Mac's selection follows it. Empty screens use bordered buttons with the main one filled, large on touch screens (`emptyStateButtons`). Every page has a Delete button in its toolbar. The app icon is `Icon.icon` (Icon Composer). Phone testing: run from Xcode over a cable, then "Connect via network" in Devices and Simulators for wireless.
 - **One list per kind of content (built 8 November 2026).** The sidebar has two groups, **Story** (Characters, Places, Events, Organisations, Items) and **Library** (Races or Species, Classes, Backgrounds, Feats, Spells and a system's own kinds of entry, such as domain cards). A kind that exists both as the world's pages and as the library's entries is one list, `ContentBrowser`, with a filter of **All Content**, **My Content** and **Library**, chosen per list and per world and kept (`@AppStorage`, key `contentFilter.<world>.<list>`); the filter only appears where the library has entries of that kind. Items merge the library's equipment with the world's items and add **In Use**: items on a character's equipment attribute (matched by name) or that a character links to (`ItemUsage`). Skills and conditions are part of the rule system, so they have no list (a link or search still opens them). A copy of a library entry and its original both show. Every list now opens its page or entry across the whole detail area, with the window's back button, or choosing the list in the sidebar again, to return (campaigns still keep a list beside the page). The filter is drawn by hand, not a system segmented control, whose labels went pale on the paper. `ContentList` (`Models/ContentList.swift`) says which list a sidebar item, page or entry belongs to; the sidebar names a merged list by its page kind (or, for a system's own entries, by the library list).
 - **Sharing and publishing (specified 8 November 2026, not built).** Two levels of sharing: DMs building a world together (full access, drafts and unpublished pages included), and a DM sharing a world with players.
   - **Why SwiftData's sync can't do it.** It mirrors one private zone and has no shared database. Sharing needs a record zone per world and `CKShare`, so 22b swaps the sync layer for `CKSyncEngine` underneath the same SwiftData models. Local changes are found with SwiftData's change history; incoming records are applied by `id`. Images and maps travel as `CKAsset`s. Conflicts stay last writer wins per field. The models already follow the CloudKit rules.
@@ -642,7 +644,7 @@ Please edit anything here that doesn't suit you.
 **Git and safety**
 12. I only commit when you ask. I work on a feature branch, not `main`.
 13. I ask before deleting files, changing project or signing settings, or adding capabilities and entitlements.
-14. No CloudKit or iCloud capability until you say the developer account is ready.
+14. The iCloud and push capabilities were added on 8 November 2026, once the developer account was ready. Any further capability or entitlement is asked about first (rule 13).
 
 ## 9. Decisions Made
 
