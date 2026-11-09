@@ -21,6 +21,8 @@ struct WorldHomeView: View {
     @State private var isEditingCalendar = false
     @State private var isConfirmingPublishAll = false
     @Environment(\.appTheme) private var theme
+    @Environment(\.startPlayerPreview) private var startPlayerPreview
+    @Environment(\.isPlayerPreview) private var isPlayerPreview
 
     var body: some View {
         Form {
@@ -75,13 +77,19 @@ struct WorldHomeView: View {
 
             ImagesSection(owner: world)
 
+            // Not in the player's view, which is a copy that publishes nothing.
+            if !isPlayerPreview {
             Section {
                 Button("Publish All Pages…", systemImage: "eye") { isConfirmingPublishAll = true }
                     .disabled(hiddenPageCount == 0)
+                if let startPlayerPreview {
+                    Button("View as Player", systemImage: "person.2", action: startPlayerPreview)
+                }
             } header: {
                 ThemedLabel("Publishing")
             } footer: {
-                Text("Pages are hidden from players until published. This publishes every hidden page as it is now, \(hiddenPageCount) in all.")
+                Text("Pages are hidden from players until published. This publishes every hidden page as it is now, \(hiddenPageCount) in all. View as Player shows the world as they see it.")
+            }
             }
 
             Section {

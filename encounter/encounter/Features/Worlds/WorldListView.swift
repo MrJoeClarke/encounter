@@ -74,7 +74,7 @@ struct WorldListView: View {
             .themedNavigationTitle(String(localized: "Worlds"))
             .focusedSceneValue(\.worldListActions, WorldListActions(newWorld: { isCreatingWorld = true }, importWorld: { isChoosingImportFile = true }))
             .navigationDestination(for: World.self) { world in
-                WorldShellView(world: world, onDelete: delete)
+                WorldRoot(world: world, onDelete: delete)
             }
             .toolbar {
                 ToolbarItem {

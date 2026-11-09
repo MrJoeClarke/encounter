@@ -21,6 +21,7 @@ struct PageEditorView: View {
     @State private var mode = PageEditorMode.page
     @State private var isConfirmingDelete = false
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.isPlayerPreview) private var isPlayerPreview
     @Environment(\.dynamicTypeSize) private var typeSize
     /// The window's navigation, to carry the page-or-sheet choice into and out of a saved or new window. Absent in previews.
     @Environment(WorldNavigation.self) private var navigation: WorldNavigation?
@@ -62,7 +63,7 @@ struct PageEditorView: View {
         }
         // Deleting from the page itself, so it can be found without knowing to right-click a row in the list. The world's top place can't be deleted.
         .toolbar {
-            if !page.isWorldRoot {
+            if !page.isWorldRoot && !isPlayerPreview {
                 ToolbarItem {
                     Button("Delete", systemImage: "trash", role: .destructive) { isConfirmingDelete = true }
                         .help("Delete this page")

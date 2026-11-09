@@ -24,6 +24,8 @@ struct WorldShellView: View {
     var route: WindowRoute?
     /// Called when the user deletes the world from its home page. Nil in a window of its own, which has no list of worlds behind it.
     let onDelete: ((World) -> Void)?
+    /// Whether this is the player's view of the world, a copy that mustn't save where the window was or take the world's links.
+    var isPlayerPreview = false
 
     @State private var navigation = WorldNavigation()
     @Environment(\.dismiss) private var dismiss
@@ -97,10 +99,10 @@ struct WorldShellView: View {
             }
             // Mention links that arrive from the system are opened in the world that's showing.
             .onAppear {
-                linkRouter.activate(world: world, navigation: navigation)
+                if !isPlayerPreview { linkRouter.activate(world: world, navigation: navigation) }
                 restore()
             }
-            .onDisappear { linkRouter.deactivate(navigation: navigation) }
+            .onDisappear { if !isPlayerPreview { linkRouter.deactivate(navigation: navigation) } }
             // If the rule system changes to one without a library while the library is showing, go home.
             .onChange(of: hasLibrary) {
                 if !hasLibrary, case .library = navigation.selection {
@@ -111,13 +113,13 @@ struct WorldShellView: View {
 
     /// Notes where the window is, for its coming back to it.
     private func saveRoute() {
-        guard hasRestored, let data = try? JSONEncoder().encode(navigation.route(in: world)), let text = String(data: data, encoding: .utf8) else { return }
+        guard !isPlayerPreview, hasRestored, let data = try? JSONEncoder().encode(navigation.route(in: world)), let text = String(data: data, encoding: .utf8) else { return }
         savedRoute = text
     }
 
     /// Takes the window back to where it was left, or where it was made to start, once.
     private func restore() {
-        guard !hasRestored else { return }
+        guard !hasRestored, !isPlayerPreview else { return }
         defer { hasRestored = true }
         let saved = savedRoute.data(using: .utf8).flatMap { try? JSONDecoder().decode(WindowRoute.self, from: $0) }
         if let saved, saved.worldID == world.id {
