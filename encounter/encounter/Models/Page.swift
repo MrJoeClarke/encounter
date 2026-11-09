@@ -42,6 +42,12 @@ final class Page {
     /// Values keyed by stable attribute key, e.g. "dnd5e.armorClass".
     var attributes: [String: AttributeValue] = [:]
     var tags: [String] = []
+    /// Whether players can see this page. Pages start hidden. What they see is `publishedData`, not the page as it is being edited.
+    var isPublished: Bool = false
+    /// The published version of the page, as JSON (`PublishedPage`). Kept when the page is unpublished, so publishing again starts from it.
+    var publishedData: Data?
+    /// The DM's own notes on the page, which are never published.
+    var dmNotes: String = ""
     var createdAt: Date = Date()
     var updatedAt: Date = Date()
 

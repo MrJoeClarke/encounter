@@ -19,6 +19,7 @@ struct WorldHomeView: View {
     @State private var exportError: String?
     @State private var isConfirmingDelete = false
     @State private var isEditingCalendar = false
+    @State private var isConfirmingPublishAll = false
     @Environment(\.appTheme) private var theme
 
     var body: some View {
@@ -75,6 +76,15 @@ struct WorldHomeView: View {
             ImagesSection(owner: world)
 
             Section {
+                Button("Publish All Pages…", systemImage: "eye") { isConfirmingPublishAll = true }
+                    .disabled(hiddenPageCount == 0)
+            } header: {
+                ThemedLabel("Publishing")
+            } footer: {
+                Text("Pages are hidden from players until published. This publishes every hidden page as it is now, \(hiddenPageCount) in all.")
+            }
+
+            Section {
                 Button("Export World…", systemImage: "square.and.arrow.up", action: export)
             } footer: {
                 Text("Saves this world, with its images, as a package you can keep as a backup or import again.")
@@ -124,12 +134,23 @@ struct WorldHomeView: View {
         } message: { message in
             Text(message)
         }
+        .alert("Publish All Pages?", isPresented: $isConfirmingPublishAll) {
+            Button("Publish") { world.publishAllHiddenPages() }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("^[\(hiddenPageCount) page](inflect: true) will become visible to players, as they are now.")
+        }
         .alert("Delete World?", isPresented: $isConfirmingDelete) {
             Button("Delete", role: .destructive) { onDelete?(world) }
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("“\(world.name)” and all of its pages, maps and campaigns will be deleted. This can’t be undone.")
         }
+    }
+
+    /// Pages players can't see yet, not counting the world's own place, which they always can.
+    private var hiddenPageCount: Int {
+        (world.pages ?? []).filter { !$0.isDeleted && !$0.isPublished && !$0.isWorldRoot }.count
     }
 
     private func export() {

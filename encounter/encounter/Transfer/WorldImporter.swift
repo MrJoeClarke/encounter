@@ -77,6 +77,9 @@ enum WorldImporter {
             page.startDate = record.startDate
             page.endDate = record.endDate
             page.basedOnKey = record.basedOnKey
+            page.isPublished = record.isPublished ?? false
+            page.publishedData = record.publishedData
+            page.dmNotes = record.dmNotes ?? ""
             context.insert(page)
             page.world = world
             // A shape that isn't valid on the plane would break the spatial checks, so it is dropped.

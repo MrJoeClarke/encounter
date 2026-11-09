@@ -211,6 +211,8 @@ struct PageRow: View {
                         .lineLimit(1)
                 }
             }
+            Spacer(minLength: 4)
+            PublishMark(page: page)
         }
     }
 }

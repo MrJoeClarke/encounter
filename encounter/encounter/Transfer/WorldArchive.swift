@@ -92,6 +92,10 @@ nonisolated struct PageRecord: Codable, Sendable {
     var images: [ImageRecord]
     /// The library entry this page was made from. Optional, because older files don't have it.
     var basedOnKey: String?
+    /// Publishing. Optional, because older files don't have it: their pages come in hidden.
+    var isPublished: Bool?
+    var publishedData: Data?
+    var dmNotes: String?
 }
 
 nonisolated struct ImageRecord: Codable, Sendable {

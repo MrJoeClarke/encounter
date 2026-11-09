@@ -110,6 +110,8 @@ struct PageEditorView: View {
                 }
             }
 
+            PublishingSection(page: page)
+
             if page.kind == .character, page.world?.rules.contains(.advancement) == true {
                 if page.world.map({ RuleSystems.system(forKey: $0.systemRaw).usesGenericScreens }) == true {
                     GenericLevelUpSection(page: page)
@@ -155,6 +157,8 @@ struct PageEditorView: View {
             }
 
             NotesSection(page: page)
+
+            DMNotesSection(page: page)
 
             ReferencedBySection(page: page)
 

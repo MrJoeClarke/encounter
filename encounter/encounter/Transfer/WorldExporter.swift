@@ -39,7 +39,10 @@ enum WorldExporter {
                 parentSource: page.parentSourceRaw,
                 geometry: page.geometry,
                 images: imageRecords(for: page, files: &files),
-                basedOnKey: page.basedOnKey
+                basedOnKey: page.basedOnKey,
+                isPublished: page.isPublished,
+                publishedData: page.publishedData,
+                dmNotes: page.dmNotes.isEmpty ? nil : page.dmNotes
             ))
 
             for link in page.outgoingLinks ?? [] {
